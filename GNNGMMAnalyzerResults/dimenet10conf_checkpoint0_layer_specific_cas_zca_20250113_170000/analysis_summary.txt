@@ -1,0 +1,32 @@
+GNN GMM Analysis Summary (Layer-Specific Components)
+============================================================
+
+Model Type: dimenet-10conf
+Checkpoint Index: 0
+Sample Fraction: 1.0
+
+Layer-Specific Component Counts:
+  emb: 5 components
+  output_block_0: 9 components
+  output_block_1: 7 components
+  output_block_2: 8 components
+  output_block_3: 8 components
+  output_block_4: 4 components
+  u_mlp_input: 6 components
+  u_mlp_l1: 2 components
+  u_mlp_l2: 12 components
+
+Layer Information:
+  Layer 0: emb - Shape: (152, 128) - Components: 5
+  Layer 1: output_block_0 - Shape: (152, 256) - Components: 9
+  Layer 2: output_block_1 - Shape: (152, 256) - Components: 7
+  Layer 3: output_block_2 - Shape: (152, 256) - Components: 8
+  Layer 4: output_block_3 - Shape: (152, 256) - Components: 8
+  Layer 5: output_block_4 - Shape: (152, 256) - Components: 4
+  Layer 6: u_mlp_input - Shape: (152, 260) - Components: 6
+  Layer 7: u_mlp_l1 - Shape: (152, 130) - Components: 2
+  Layer 8: u_mlp_l2 - Shape: (152, 130) - Components: 12
+
+Analysis completed successfully!
+Total layers analyzed: 9
+Output directory: /global/cfs/cdirs/m636/nhadler/projects/latent-spaces/GNNGMMAnalyzerResults/dimenet10conf_checkpoint0_layer_specific_cas_zca_20250113_170000

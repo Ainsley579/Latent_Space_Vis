@@ -1,0 +1,22 @@
+GNN GMM Analysis Summary
+==================================================
+
+Model Type: dimenet-10conf
+Checkpoint Index: 0
+Sample Fraction: 1.0
+Optimal Components: 12
+
+Layer Information:
+  Layer 0: emb - Shape: (152, 128)
+  Layer 1: output_block_0 - Shape: (152, 256)
+  Layer 2: output_block_1 - Shape: (152, 256)
+  Layer 3: output_block_2 - Shape: (152, 256)
+  Layer 4: output_block_3 - Shape: (152, 256)
+  Layer 5: output_block_4 - Shape: (152, 256)
+  Layer 6: u_mlp_input - Shape: (152, 260)
+  Layer 7: u_mlp_l1 - Shape: (152, 130)
+  Layer 8: u_mlp_l2 - Shape: (152, 130)
+
+Analysis completed successfully!
+Total layers analyzed: 9
+Output directory: /global/cfs/cdirs/m636/nhadler/projects/latent-spaces/GNNGMMAnalyzerResults/dimenet10conf_checkpoint0_unique_cas_zca_20250113_161600

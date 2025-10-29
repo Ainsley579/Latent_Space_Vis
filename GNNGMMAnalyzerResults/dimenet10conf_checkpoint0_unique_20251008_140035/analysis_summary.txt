@@ -1,0 +1,22 @@
+GNN GMM Analysis Summary
+==================================================
+
+Model Type: dimenet-10conf
+Checkpoint Index: 0
+Sample Fraction: 1.0
+Optimal Components: 4
+
+Layer Information:
+  Layer 0: emb - Shape: (374, 128)
+  Layer 1: output_block_0 - Shape: (374, 256)
+  Layer 2: output_block_1 - Shape: (374, 256)
+  Layer 3: output_block_2 - Shape: (374, 256)
+  Layer 4: output_block_3 - Shape: (374, 256)
+  Layer 5: output_block_4 - Shape: (374, 256)
+  Layer 6: u_mlp_input - Shape: (374, 260)
+  Layer 7: u_mlp_l1 - Shape: (374, 130)
+  Layer 8: u_mlp_l2 - Shape: (374, 130)
+
+Analysis completed successfully!
+Total layers analyzed: 9
+Output directory: ../GNNGMMAnalyzerResults/test_continuity_summary_fixed_20251008_140035
