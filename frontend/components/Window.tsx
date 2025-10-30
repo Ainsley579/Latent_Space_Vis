@@ -12,16 +12,17 @@ interface WindowProps {
 }
 
 export default function Window({ id, title, onClose, children, totalWindows = 1 }: WindowProps) {
-  const width =
-    totalWindows <= 1
-      ? "100%"
-      : "calc(50% - 0.5rem)";
+  // const width =
+  //   totalWindows <= 1
+  //     ? "100%"
+  //     : "calc(50% - 0.5rem)";
+  const width = "100%";
   const height = totalWindows <= 2 ? "100vh" : "50vh";
 
   return (
     <div
       className="bg-white rounded shadow-md p-3 transition-all duration-300 ease-in-out box-border"
-      style={{ width, height }}
+      style={{ width, height}}
     >
       <div className="flex justify-between items-center border-b pb-1 mb-2">
         <h3 className="font-semibold">{title}</h3>

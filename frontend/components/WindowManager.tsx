@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Window from "./Window";
 import SankeyDiagram from "./SankeyDiagram";
 import ScatterPlot from "./ScatterPlot";
@@ -12,6 +12,15 @@ interface WindowData {
 
 export default function WindowManager() {
   const [windows, setWindows] = useState<WindowData[]>([]);
+  const windowRefs = useRef<HTMLDivElement[]>([]);
+
+  const syncScroll = (index: number, scrollTop: number) => {
+    windowRefs.current.forEach((ref, i) => {
+      if (i !== index && ref) {
+        ref.scrollTop = scrollTop;
+      }
+    });
+  };
 
   const openWindow = () => {
     const id = Date.now().toString();
@@ -61,9 +70,16 @@ export default function WindowManager() {
           }));
 
     const content = (
-      <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
-        <SankeyDiagram data={sankeyData} />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          alignItems: "center",
+        }}
+      >
         <ScatterPlot data={scatterData} />
+        <SankeyDiagram data={sankeyData} />
       </div>
     );
 
@@ -90,11 +106,36 @@ export default function WindowManager() {
         + New Window
       </button>
 
-      <div className="flex flex-wrap gap-2">
-        {windows.map((w) => (
-          <Window key={w.id} id={w.id} title={w.title} onClose={closeWindow} totalWindows={windows.length}>
-            {w.content}
-          </Window>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: "0.5rem",
+        }}
+      >
+        {windows.map((w, idx) => (
+          <div
+            key={w.id}
+            ref={(el) => {
+              if (el) windowRefs.current[idx] = el;
+            }}
+            onScroll={(e) =>
+              syncScroll(idx, (e.target as HTMLDivElement).scrollTop)
+            }
+            style={{
+              height: windows.length <= 2 ? "100vh" : "50vh",
+              overflowY: "auto",
+            }}
+          >
+            <Window
+              id={w.id}
+              title={w.title}
+              onClose={closeWindow}
+              totalWindows={windows.length}
+            >
+              {w.content}
+            </Window>
+          </div>
         ))}
       </div>
     </div>
