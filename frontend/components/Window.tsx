@@ -1,5 +1,7 @@
 "use client";
 import React from "react";
+import SankeyDiagram from "./SankeyDiagram";
+import ScatterPlot from "./ScatterPlot";
 
 interface WindowProps {
   id: string;

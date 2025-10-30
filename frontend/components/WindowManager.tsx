@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import Window from "./Window";
+import SankeyDiagram from "./SankeyDiagram";
+import ScatterPlot from "./ScatterPlot";
 
 interface WindowData {
   id: string;
@@ -13,12 +15,64 @@ export default function WindowManager() {
 
   const openWindow = () => {
     const id = Date.now().toString();
+    const windowIndex = windows.length + 1;
+
+    // 根据窗口序号生成不同的假数据
+    const sankeyData =
+      windowIndex % 2 === 1
+        ? {
+            id: windowIndex,
+            nodes: [
+              { name: "A" },
+              { name: "B" },
+              { name: "C" },
+            ],
+            links: [
+              { source: 0, target: 1, value: 8 + windowIndex },
+              { source: 1, target: 2, value: 4 + windowIndex },
+            ],
+          }
+        : {
+            id: windowIndex,
+            nodes: [
+              { name: "X" },
+              { name: "Y" },
+              { name: "Z" },
+              { name: "W" },
+            ],
+            links: [
+              { source: 0, target: 2, value: 5 + windowIndex },
+              { source: 1, target: 2, value: 3 + windowIndex },
+              { source: 1, target: 3, value: 6 + windowIndex },
+            ],
+          };
+
+    const scatterData =
+      windowIndex % 2 === 1
+        ? Array.from({ length: 15 }, (_, i) => ({
+            x: Math.random() * 100,
+            y: Math.random() * 100,
+            label: `A${windowIndex}-${i}`,
+          }))
+        : Array.from({ length: 15 }, (_, i) => ({
+            x: Math.random() * 50 + 50,
+            y: Math.random() * 50,
+            label: `B${windowIndex}-${i}`,
+          }));
+
+    const content = (
+      <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
+        <SankeyDiagram data={sankeyData} />
+        <ScatterPlot data={scatterData} />
+      </div>
+    );
+
     setWindows((prev) => [
       ...prev,
       {
         id,
         title: `Window ${prev.length + 1}`,
-        content: <p>This is window #{prev.length + 1}</p>,
+        content,
       },
     ]);
   };
