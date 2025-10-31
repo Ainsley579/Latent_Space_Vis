@@ -76,6 +76,7 @@ export default function WindowManager() {
           flexDirection: "column",
           gap: "1rem",
           alignItems: "center",
+          height: "100%",
         }}
       >
         <ScatterPlot data={scatterData} />
@@ -109,7 +110,10 @@ export default function WindowManager() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gridTemplateColumns:
+            windows.length === 1
+              ? "repeat(1, 1fr)" // ✅ 一个窗口时占满整行
+              : "repeat(2, minmax(0, 1fr))", // ✅ 两个以上时两列
           gap: "0.5rem",
         }}
       >

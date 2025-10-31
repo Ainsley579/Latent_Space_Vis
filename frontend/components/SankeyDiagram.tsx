@@ -1,6 +1,11 @@
 "use client";
 import * as d3 from "d3";
-import { sankey, sankeyLinkHorizontal, SankeyNodeMinimal, SankeyLinkMinimal } from "d3-sankey";
+import {
+  sankey,
+  sankeyLinkHorizontal,
+  SankeyNodeMinimal,
+  SankeyLinkMinimal,
+} from "d3-sankey";
 import React, { useEffect, useRef } from "react";
 
 interface Node extends SankeyNodeMinimal<Node, Link> {
@@ -18,12 +23,12 @@ interface SankeyData {
 
 export default function SankeyDiagram({ data }: { data?: SankeyData }) {
   const ref = useRef<SVGSVGElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
+  const drawSankey = (width: number) => {
     const svg = d3.select(ref.current);
     svg.selectAll("*").remove();
 
-    const width = 400;
     const height = 300;
 
     const sankeyGen = sankey<Node, Link>()
@@ -50,7 +55,9 @@ export default function SankeyDiagram({ data }: { data?: SankeyData }) {
       links: links.map((d) => Object.assign({}, d)),
     });
 
-    svg.attr("width", width).attr("height", height);
+    svg
+      .attr("width", width)
+      .attr("height", height);
 
     svg
       .append("g")
@@ -73,7 +80,27 @@ export default function SankeyDiagram({ data }: { data?: SankeyData }) {
       .attr("stroke", "#555")
       .attr("stroke-width", (d) => Math.max(1, d.width ?? 1))
       .attr("opacity", 0.6);
+  };
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // 初始化绘制
+    drawSankey(container.clientWidth);
+
+    // 监听容器大小变化
+    const resizeObserver = new ResizeObserver(() => {
+      drawSankey(container.clientWidth);
+    });
+    resizeObserver.observe(container);
+
+    return () => resizeObserver.disconnect();
   }, [data]);
 
-  return <svg ref={ref}></svg>;
+  return (
+    <div ref={containerRef} style={{ width: "100%" }}>
+      <svg ref={ref}></svg>
+    </div>
+  );
 }

@@ -17,7 +17,8 @@ export default function Window({ id, title, onClose, children, totalWindows = 1 
   //     ? "100%"
   //     : "calc(50% - 0.5rem)";
   const width = "100%";
-  const height = totalWindows <= 2 ? "100vh" : "50vh";
+  const height = "auto";
+
 
   return (
     <div
