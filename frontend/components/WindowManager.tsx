@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Window from "./Window";
 import SankeyDiagram from "./SankeyDiagram";
 import ScatterPlot from "./ScatterPlot";
@@ -11,7 +11,6 @@ interface WindowData {
 
 export default function WindowManager() {
   const [windows, setWindows] = useState<WindowData[]>([]);
-
   const windowRefs = useRef<HTMLDivElement[]>([]);
   const scatterRefs = useRef<HTMLDivElement[]>([]);
 
@@ -29,15 +28,17 @@ export default function WindowManager() {
 
   const openWindow = () => {
     const id = Date.now().toString();
-    setWindows((prev) => [
-      ...prev,
-      { id, title: `Window ${prev.length + 1}` },
-    ]);
+    setWindows((prev) => [...prev, { id, title: `Window ${prev.length + 1}` }]);
   };
 
   const closeWindow = (id: string) => {
     setWindows((prev) => prev.filter((w) => w.id !== id));
   };
+
+  useEffect(() => {
+    windowRefs.current = windowRefs.current.slice(0, windows.length);
+    scatterRefs.current = scatterRefs.current.slice(0, windows.length);
+  }, [windows.length]);
 
   return (
     <div className="p-4">
@@ -52,8 +53,8 @@ export default function WindowManager() {
         style={{
           display: "grid",
           gridTemplateColumns:
-            windows.length === 1
-              ? "repeat(1, 1fr)"
+            windows.length <= 1
+              ? "repeat(1, 1fr)" 
               : "repeat(2, minmax(0, 1fr))",
           gap: "0.5rem",
         }}
@@ -88,6 +89,8 @@ export default function WindowManager() {
             label: `${idx}-${i}`,
           }));
 
+          const windowHeight = windows.length <= 2 ? "100vh" : "50vh";
+
           return (
             <div
               key={w.id}
@@ -101,8 +104,9 @@ export default function WindowManager() {
                 )
               }
               style={{
-                height: windows.length <= 2 ? "100vh" : "50vh",
+                height: windowHeight,
                 overflowY: "auto",
+                transition: "height 0.3s ease",
               }}
             >
               <Window
