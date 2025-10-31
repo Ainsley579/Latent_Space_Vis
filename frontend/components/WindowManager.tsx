@@ -7,90 +7,31 @@ import ScatterPlot from "./ScatterPlot";
 interface WindowData {
   id: string;
   title: string;
-  content: React.ReactNode;
 }
 
 export default function WindowManager() {
   const [windows, setWindows] = useState<WindowData[]>([]);
-  const windowRefs = useRef<HTMLDivElement[]>([]);
 
-  const syncScroll = (index: number, scrollTop: number) => {
+  const windowRefs = useRef<HTMLDivElement[]>([]);
+  const scatterRefs = useRef<HTMLDivElement[]>([]);
+
+  const syncVerticalScroll = (index: number, scrollTop: number) => {
     windowRefs.current.forEach((ref, i) => {
-      if (i !== index && ref) {
-        ref.scrollTop = scrollTop;
-      }
+      if (i !== index && ref) ref.scrollTop = scrollTop;
+    });
+  };
+
+  const syncScatterScroll = (index: number, scrollLeft: number) => {
+    scatterRefs.current.forEach((ref, i) => {
+      if (i !== index && ref) ref.scrollLeft = scrollLeft;
     });
   };
 
   const openWindow = () => {
     const id = Date.now().toString();
-    const windowIndex = windows.length + 1;
-
-    // 根据窗口序号生成不同的假数据
-    const sankeyData =
-      windowIndex % 2 === 1
-        ? {
-            id: windowIndex,
-            nodes: [
-              { name: "A" },
-              { name: "B" },
-              { name: "C" },
-            ],
-            links: [
-              { source: 0, target: 1, value: 8 + windowIndex },
-              { source: 1, target: 2, value: 4 + windowIndex },
-            ],
-          }
-        : {
-            id: windowIndex,
-            nodes: [
-              { name: "X" },
-              { name: "Y" },
-              { name: "Z" },
-              { name: "W" },
-            ],
-            links: [
-              { source: 0, target: 2, value: 5 + windowIndex },
-              { source: 1, target: 2, value: 3 + windowIndex },
-              { source: 1, target: 3, value: 6 + windowIndex },
-            ],
-          };
-
-    const scatterData =
-      windowIndex % 2 === 1
-        ? Array.from({ length: 15 }, (_, i) => ({
-            x: Math.random() * 100,
-            y: Math.random() * 100,
-            label: `A${windowIndex}-${i}`,
-          }))
-        : Array.from({ length: 15 }, (_, i) => ({
-            x: Math.random() * 50 + 50,
-            y: Math.random() * 50,
-            label: `B${windowIndex}-${i}`,
-          }));
-
-    const content = (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
-        <ScatterPlot data={scatterData} />
-        <SankeyDiagram data={sankeyData} />
-      </div>
-    );
-
     setWindows((prev) => [
       ...prev,
-      {
-        id,
-        title: `Window ${prev.length + 1}`,
-        content,
-      },
+      { id, title: `Window ${prev.length + 1}` },
     ]);
   };
 
@@ -112,35 +53,78 @@ export default function WindowManager() {
           display: "grid",
           gridTemplateColumns:
             windows.length === 1
-              ? "repeat(1, 1fr)" // ✅ 一个窗口时占满整行
-              : "repeat(2, minmax(0, 1fr))", // ✅ 两个以上时两列
+              ? "repeat(1, 1fr)"
+              : "repeat(2, minmax(0, 1fr))",
           gap: "0.5rem",
         }}
       >
-        {windows.map((w, idx) => (
-          <div
-            key={w.id}
-            ref={(el) => {
-              if (el) windowRefs.current[idx] = el;
-            }}
-            onScroll={(e) =>
-              syncScroll(idx, (e.target as HTMLDivElement).scrollTop)
-            }
-            style={{
-              height: windows.length <= 2 ? "100vh" : "50vh",
-              overflowY: "auto",
-            }}
-          >
-            <Window
-              id={w.id}
-              title={w.title}
-              onClose={closeWindow}
-              totalWindows={windows.length}
+        {windows.map((w, idx) => {
+          const sankeyData =
+            idx % 2 === 0
+              ? {
+                  nodes: [{ name: "A" }, { name: "B" }, { name: "C" }],
+                  links: [
+                    { source: 0, target: 1, value: 10 + idx },
+                    { source: 1, target: 2, value: 5 + idx },
+                  ],
+                }
+              : {
+                  nodes: [
+                    { name: "X" },
+                    { name: "Y" },
+                    { name: "Z" },
+                    { name: "W" },
+                  ],
+                  links: [
+                    { source: 0, target: 2, value: 8 + idx },
+                    { source: 1, target: 2, value: 6 + idx },
+                    { source: 1, target: 3, value: 4 + idx },
+                  ],
+                };
+
+          const scatterData = Array.from({ length: 15 }, (_, i) => ({
+            x: Math.random() * 100,
+            y: Math.random() * 100,
+            label: `${idx}-${i}`,
+          }));
+
+          return (
+            <div
+              key={w.id}
+              ref={(el) => {
+                if (el) windowRefs.current[idx] = el;
+              }}
+              onScroll={(e) =>
+                syncVerticalScroll(
+                  idx,
+                  (e.target as HTMLDivElement).scrollTop
+                )
+              }
+              style={{
+                height: windows.length <= 2 ? "100vh" : "50vh",
+                overflowY: "auto",
+              }}
             >
-              {w.content}
-            </Window>
-          </div>
-        ))}
+              <Window
+                id={w.id}
+                title={w.title}
+                onClose={closeWindow}
+                totalWindows={windows.length}
+              >
+                <ScatterPlot
+                  ref={(el) => {
+                    if (el) scatterRefs.current[idx] = el;
+                  }}
+                  onScroll={(scrollLeft) =>
+                    syncScatterScroll(idx, scrollLeft)
+                  }
+                  data={scatterData}
+                />
+                <SankeyDiagram data={sankeyData} />
+              </Window>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
