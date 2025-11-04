@@ -135,7 +135,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
 
     const sankeyGen = sankey<Node, Link>()
       .nodeWidth(5)
-      .nodePadding(5)
+      .nodePadding(15)
       .extent([
         [1, 1],
         [width - 1, height - 5],
