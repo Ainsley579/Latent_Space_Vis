@@ -2369,6 +2369,17 @@ Component Details:"""
                 layer_node_mapping[layer_name][comp_idx] = node_id
                 node_id += 1
         
+        # Save transition of each instance.
+        all_labels = {}
+        for layer_name in layer_names:
+            all_labels[layer_name] = self.gmm_results[layer_name]['labels']
+        
+        sample_df = pd.DataFrame(all_labels)
+        sample_df.index.name = "sample_id"
+        sample_path = self.output_dir / "sample_component_paths.csv"
+        sample_df.to_csv(sample_path)
+        print(f"Sample-level component paths saved: {sample_path}")
+        
         # Calculate transitions between consecutive layers
         for i in range(len(layer_names) - 1):
             current_layer = layer_names[i]
@@ -2595,20 +2606,22 @@ Component Details:"""
         plt.savefig(self.output_dir / 'fuzzy_clustering_analysis.png', dpi=300, bbox_inches='tight')
         plt.close()
     
-    def run_complete_analysis(self, use_pre_saved_embeddings=False, zca_threshold=1e-5):
+    def run_complete_analysis(self, use_pre_saved_embeddings=True, zca_threshold=1e-5):
         """Run the complete GMM analysis pipeline with ZCA whitening"""
         print("Starting complete GNN GMM analysis with ZCA whitening...")
         start_time = time.time()
         
-        if use_pre_saved_embeddings:
-            # Step 1: Load pre-saved embeddings
-            self.load_pre_saved_embeddings()
-        else:
-            # Step 1: Load model and data
-            self.load_model_and_data()
+        # if use_pre_saved_embeddings:
+        #     # Step 1: Load pre-saved embeddings
+        #     self.load_pre_saved_embeddings()
+        # else:
+        #     # Step 1: Load model and data
+        #     self.load_model_and_data()
             
-            # Step 2: Extract layer embeddings
-            self.extract_layer_embeddings()
+        #     # Step 2: Extract layer embeddings
+        #     self.extract_layer_embeddings()
+        
+        self.load_pre_saved_embeddings()
         
         # Step 3: Find optimal components using final layer with ZCA whitening
         final_layer = list(self.layer_embeddings.keys())[-1]

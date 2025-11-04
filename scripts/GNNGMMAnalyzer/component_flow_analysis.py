@@ -271,6 +271,7 @@ class ComponentFlowAnalyzer:
         print("  Creating transition matrices...")
         
         transition_data = []
+        instance_transition_data = []
         
         for i in range(len(self.component_counts) - 1):
             current_n_components = self.component_counts[i]
@@ -304,12 +305,27 @@ class ComponentFlowAnalyzer:
                         'count': transition_matrix[prev_cluster, next_cluster],
                         'probability': transition_matrix_norm[prev_cluster, next_cluster]
                     })
-        
+                    
+            for idx in range(len(current_labels)):
+                instance_transition_data.append({
+                    'layer': layer_name,
+                    'from_components': current_n_components,
+                    'to_components': next_n_components,
+                    'instance_index': idx,
+                    'from_cluster': int(current_labels[idx]),
+                    'to_cluster': int(next_labels[idx])
+                })
+            
         # Save transition data
         df_transitions = pd.DataFrame(transition_data)
         transitions_csv_path = self.output_dir / 'transitions_{}.csv'.format(layer_name)
         df_transitions.to_csv(transitions_csv_path, index=False)
         print("    Transition matrices saved to: {}".format(transitions_csv_path))
+        
+        df_instance = pd.DataFrame(instance_transition_data)
+        instance_csv_path = self.output_dir / f"instance_transitions_{layer_name}.csv"
+        df_instance.to_csv(instance_csv_path, index=False)
+        print(f"    Instance-level transitions saved to: {instance_csv_path}")
     
     def run_analysis_for_all_layers(self):
         """Run component flow analysis for all layers"""
