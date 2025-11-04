@@ -24,6 +24,7 @@ interface SankeyData {
 export default function SankeyDiagram() {
   const ref = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<SankeyData | null>(null);
 
 
@@ -67,8 +68,8 @@ export default function SankeyDiagram() {
     const height = 600;
 
     const sankeyGen = sankey<Node, Link>()
-      .nodeWidth(15)
-      .nodePadding(10)
+      .nodeWidth(5)
+      .nodePadding(5)
       .extent([
         [1, 1],
         [width - 1, height - 5],
@@ -81,27 +82,95 @@ export default function SankeyDiagram() {
 
     svg.attr("width", width).attr("height", height);
 
+    const layersMap = new Map<number, {x0: number, x1: number}>();
+    layoutNodes.forEach(d => {
+      if (d.x0 == null || d.x1 == null) return;
+      const layerWidth = sankeyGen.nodeWidth() + sankeyGen.nodePadding();
+      const layerIndex = Math.round((d.x0) / layerWidth);
+      if (!layersMap.has(layerIndex)) {
+        layersMap.set(layerIndex, {x0: d.x0, x1: d.x1});
+      } else {
+        const ext = layersMap.get(layerIndex)!;
+        ext.x0 = Math.min(ext.x0, d.x0);
+        ext.x1 = Math.max(ext.x1, d.x1);
+      }
+    });
+
+    const layerColors = d3.schemeCategory10;
+    const layerGroups = Array.from(layersMap.entries()).sort((a,b) => a[0] - b[0]);
+
+    const defs = svg.append("defs");
+    layerGroups.forEach(([layerIndex, extent]) => {
+      const colorStart = layerColors[layerIndex % layerColors.length];
+      const colorEnd = layerColors[(layerIndex + 1) % layerColors.length];
+      defs.append("linearGradient")
+        .attr("id", `gradient-layer-${layerIndex}`)
+        .attr("gradientUnits", "userSpaceOnUse")
+        .attr("x1", extent.x0)
+        .attr("x2", extent.x1)
+        .attr("y1", 0)
+        .attr("y2", 0)
+        .selectAll("stop")
+        .data([
+          {offset: "0%", color: colorStart},
+          {offset: "100%", color: colorEnd}
+        ])
+        .join("stop")
+        .attr("offset", d => d.offset)
+        .attr("stop-color", d => d.color);
+    });
+
+    // 3. 修改节点绘制：移除填充矩形，改为绘制细黑线
     svg
       .append("g")
-      .selectAll("rect")
+      .selectAll("line")
       .data(layoutNodes)
-      .join("rect")
-      .attr("x", (d) => d.x0 ?? 0)
-      .attr("y", (d) => d.y0 ?? 0)
-      .attr("height", (d) => (d.y1 ?? 0) - (d.y0 ?? 0))
-      .attr("width", (d) => (d.x1 ?? 0) - (d.x0 ?? 0))
-      .attr("fill", (_, i) => d3.schemeCategory10[i % 10]);
+      .join("line")
+      .attr("x1", (d) => d.x0 + sankeyGen.nodeWidth()/2 ?? 0)
+      .attr("x2", (d) => d.x0 + sankeyGen.nodeWidth()/2 ?? 0)
+      .attr("y1", (d) => d.y0 ?? 0)
+      .attr("y2", (d) => d.y1 ?? 0)
+      .attr("stroke", "black")
+      .attr("stroke-width", sankeyGen.nodeWidth());
 
-    svg
+    // 2. 修改 link 绘制部分为彩色宽带流样式，使用渐变色，添加鼠标悬停 tooltip
+    const tooltip = d3.select(tooltipRef.current);
+    const linkGroup = svg
       .append("g")
       .attr("fill", "none")
+      .attr("class", "links");
+
+    linkGroup
       .selectAll("path")
       .data(layoutLinks)
       .join("path")
       .attr("d", sankeyLinkHorizontal())
-      .attr("stroke", "#555")
+      .attr("stroke", (d) => {
+        // 计算源节点层和目标节点层
+        const layerWidth = sankeyGen.nodeWidth() + sankeyGen.nodePadding();
+        const sourceLayer = Math.round((d.source.x0 ?? 0) / layerWidth);
+        // 使用对应层的渐变
+        return `url(#gradient-layer-${sourceLayer})`;
+      })
       .attr("stroke-width", (d) => Math.max(1, d.width ?? 1))
-      .attr("opacity", 0.6);
+      .attr("opacity", 0.4)
+      .on("mouseover", (event, d) => {
+        tooltip.style("opacity", 1)
+          .html(
+            `<strong>Source:</strong> ${d.source.name}<br/>
+             <strong>Target:</strong> ${d.target.name}<br/>
+             <strong>Value:</strong> ${d.value}`
+          )
+          .style("left", (event.pageX) + "px")
+          .style("top", (event.pageY - 400) + "px");
+      })
+      .on("mousemove", (event) => {
+        tooltip.style("left", (event.pageX) + "px")
+          .style("top", (event.pageY- 400) + "px");
+      })
+      .on("mouseout", () => {
+        tooltip.style("opacity", 0);
+      });
 
     svg
       .append("g")
@@ -133,8 +202,24 @@ export default function SankeyDiagram() {
   }, [data]);
 
   return (
-    <div ref={containerRef} style={{ width: "100%", height: "600px" }}>
+    <div ref={containerRef} style={{ width: "100%", height: "600px", position: "relative" }}>
       <svg ref={ref}></svg>
+      {/* 添加 tooltip div 结构 */}
+      <div
+        ref={tooltipRef}
+        style={{
+          position: "absolute",
+          pointerEvents: "none",
+          backgroundColor: "rgba(0,0,0,0.7)",
+          color: "#fff",
+          padding: "6px 8px",
+          borderRadius: "4px",
+          fontSize: "12px",
+          opacity: 0,
+          transition: "opacity 0.2s ease",
+          zIndex: 10,
+        }}
+      ></div>
     </div>
   );
 }
