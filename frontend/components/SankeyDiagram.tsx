@@ -27,13 +27,13 @@ export default function SankeyDiagram() {
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<SankeyData | null>(null);
 
-
   useEffect(() => {
-    d3.csv("/data/sample_component_paths.csv").then(rows => {
+    d3.csv("/data/sample_component_paths.csv").then((rows) => {
       const layerNames = Object.keys(rows[0]).filter(k => k !== "sample_id");
       const links: Link[] = [];
       const nodeNames = new Set<string>();
 
+      // Build links and nodes from sample_component_paths.csv
       for (let i = 0; i < rows.length; i++) {
         for (let j = 0; j < layerNames.length - 1; j++) {
           const fromLayer = layerNames[j];
@@ -113,22 +113,20 @@ export default function SankeyDiagram() {
       nodesByLayer.set(layerName, nodesInLayer);
     });
 
-    // Removed gradient creation code
-
-    // 3. 修改节点绘制：移除填充矩形，改为绘制细黑线
+    // Draw node lines as thin black vertical lines
     svg
       .append("g")
       .selectAll("line")
       .data(layoutNodes)
       .join("line")
-      .attr("x1", (d) => d.x0 + sankeyGen.nodeWidth()/2 ?? 0)
-      .attr("x2", (d) => d.x0 + sankeyGen.nodeWidth()/2 ?? 0)
+      .attr("x1", (d) => (d.x0 ?? 0) + sankeyGen.nodeWidth()/2)
+      .attr("x2", (d) => (d.x0 ?? 0) + sankeyGen.nodeWidth()/2)
       .attr("y1", (d) => d.y0 ?? 0)
       .attr("y2", (d) => d.y1 ?? 0)
       .attr("stroke", "black")
       .attr("stroke-width", sankeyGen.nodeWidth());
 
-    // 2. 修改 link 绘制部分为彩色宽带流样式，使用单色，添加鼠标悬停 tooltip
+    // Draw aggregated links as colored wide paths with tooltip
     const tooltip = d3.select(tooltipRef.current);
     const linkGroup = svg
       .append("g")
@@ -165,6 +163,7 @@ export default function SankeyDiagram() {
         tooltip.style("opacity", 0);
       });
 
+    // Draw node labels
     svg
       .append("g")
       .selectAll("text")
@@ -178,6 +177,222 @@ export default function SankeyDiagram() {
       .filter((d) => (d.x0 ?? 0) < width / 2)
       .attr("x", (d) => (d.x1 ?? 0) + 6)
       .attr("text-anchor", "start");
+
+    // ----------- New: Draw sample-level points and trajectories -----------
+
+    d3.csv("/data/sample_component_paths.csv").then(samplePaths => {
+      // samplePaths: array of objects with sample_id and layer components
+
+      // Build map: sample_id -> array of node names in layer order
+      // layerNames is derived from data.nodes, but to be safe, get from samplePaths keys excluding sample_id
+      const pathLayerNames = Object.keys(samplePaths[0]).filter(k => k !== "sample_id");
+
+      // For each sample, build array of node names in order
+      const samplePathsMap = new Map<string, string[]>();
+      samplePaths.forEach(row => {
+        const sample_id = row["sample_id"];
+        const nodesInPath = pathLayerNames.map(layer => `${layer}_${row[layer]}`);
+        samplePathsMap.set(sample_id, nodesInPath);
+      });
+
+      // For each node, collect samples assigned to it
+      // Map nodeName -> array of sample_ids
+      const nodeSamplesMap = new Map<string, string[]>();
+      samplePathsMap.forEach((nodeNames, sample_id) => {
+        nodeNames.forEach(nodeName => {
+          if (!nodeSamplesMap.has(nodeName)) {
+            nodeSamplesMap.set(nodeName, []);
+          }
+          nodeSamplesMap.get(nodeName)!.push(sample_id);
+        });
+      });
+
+      // Build map of nodeName -> incoming links (source node names)
+      const nodeIncomingMap = new Map<string, string[]>();
+      layoutLinks.forEach(link => {
+        const targetNode = (link.target as Node).name;
+        const sourceNode = (link.source as Node).name;
+        if (!nodeIncomingMap.has(targetNode)) {
+          nodeIncomingMap.set(targetNode, []);
+        }
+        nodeIncomingMap.get(targetNode)!.push(sourceNode);
+      });
+
+      // Build map of nodeName -> outgoing links (target node names)
+      const nodeOutgoingMap = new Map<string, string[]>();
+      layoutLinks.forEach(link => {
+        const sourceNode = (link.source as Node).name;
+        const targetNode = (link.target as Node).name;
+        if (!nodeOutgoingMap.has(sourceNode)) {
+          nodeOutgoingMap.set(sourceNode, []);
+        }
+        nodeOutgoingMap.get(sourceNode)!.push(targetNode);
+      });
+
+      // For each node, assign y positions for sample points inside node vertical range [y0, y1]
+      // But first sort samples by upstream average y positions if upstream info exists,
+      // otherwise fallback to sorting by sample_id numerically
+
+      // Map sample_id -> Map nodeName -> y position (for previous layer)
+      // We will assign sampleNodeYMap progressively from first layer to last layer
+      const sampleNodeYMap = new Map<string, Map<string, number>>();
+
+      // Build map nodeName -> node layout object for quick lookup
+      const nodeLayoutMap = new Map<string, Node>();
+      layoutNodes.forEach(n => nodeLayoutMap.set(n.name, n));
+
+      // Helper to get downstream sample y positions for a sample at a node
+      function getDownstreamY(sample_id: string, nodeName: string): number[] {
+        const outgoingNodes = nodeOutgoingMap.get(nodeName);
+        if (!outgoingNodes) return [];
+        const ys: number[] = [];
+        outgoingNodes.forEach(outNodeName => {
+          const y = sampleNodeYMap.get(sample_id)?.get(outNodeName);
+          if (y !== undefined) ys.push(y);
+        });
+        return ys;
+      }
+
+      // Process layers in reverse order (output-oriented, downstream-based)
+      for (let layerIndex = pathLayerNames.length - 1; layerIndex >= 0; layerIndex--) {
+        const layerName = pathLayerNames[layerIndex];
+        // Get nodes in this layer
+        const nodesInLayer = layoutNodes.filter(n => getLayerName(n.name) === layerName);
+
+        nodesInLayer.forEach(node => {
+          const samples = nodeSamplesMap.get(node.name) || [];
+          if (samples.length === 0) return;
+
+          // For each sample, compute average downstream y position if any
+          // Map sample_id -> avg downstream y
+          const sampleDownstreamYMap = new Map<string, number | null>();
+          samples.forEach(sample_id => {
+            const downstreamYs = getDownstreamY(sample_id, node.name);
+            if (downstreamYs.length > 0) {
+              const avgY = d3.mean(downstreamYs) ?? null;
+              sampleDownstreamYMap.set(sample_id, avgY);
+            } else {
+              sampleDownstreamYMap.set(sample_id, null);
+            }
+          });
+
+          // Sort samples: those with downstream info by avg downstream y ascending,
+          // those without downstream info by numeric sample_id ascending
+          samples.sort((a, b) => {
+            const aDown = sampleDownstreamYMap.get(a);
+            const bDown = sampleDownstreamYMap.get(b);
+            if (aDown !== null && bDown !== null) {
+              return (aDown ?? 0) - (bDown ?? 0);
+            } else if (aDown !== null) {
+              return -1;
+            } else if (bDown !== null) {
+              return 1;
+            } else {
+              // fallback to numeric sample_id sort
+              const numA = Number(a), numB = Number(b);
+              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+              return a < b ? -1 : a > b ? 1 : 0;
+            }
+          });
+
+          // Assign y positions evenly spaced vertically within node height
+          const count = samples.length;
+          const y0 = node.y0 ?? 0;
+          const y1 = node.y1 ?? 0;
+          const height = y1 - y0;
+          samples.forEach((sample_id, i) => {
+            const y = count === 1 ? y0 + height / 2 : y0 + (i + 0.5) * (height / count);
+            if (!sampleNodeYMap.has(sample_id)) {
+              sampleNodeYMap.set(sample_id, new Map());
+            }
+            sampleNodeYMap.get(sample_id)!.set(node.name, y);
+          });
+        });
+      }
+
+      // Prepare group for sample trajectories (per-link lines)
+      const samplesGroup = svg.append("g").attr("class", "sample-trajectories");
+
+      // Build a map from link key to sample IDs that traverse that link
+      // link key format: sourceNodeName->targetNodeName (matches layoutLinks key)
+      const linkSamplesMap = new Map<string, string[]>();
+
+      samplePathsMap.forEach((nodeNames, sample_id) => {
+        for (let i = 0; i < nodeNames.length - 1; i++) {
+          const sourceNodeName = nodeNames[i];
+          const targetNodeName = nodeNames[i + 1];
+          const linkKey = `${sourceNodeName}->${targetNodeName}`;
+          if (!linkSamplesMap.has(linkKey)) {
+            linkSamplesMap.set(linkKey, []);
+          }
+          linkSamplesMap.get(linkKey)!.push(sample_id);
+        }
+      });
+
+      // For each link, draw lines connecting sample positions in source and target nodes
+      layoutLinks.forEach(link => {
+        const sourceNode = link.source as Node;
+        const targetNode = link.target as Node;
+        const linkKey = link.key ?? `${sourceNode.name}->${targetNode.name}`;
+        const samplesOnLink = linkSamplesMap.get(linkKey) || [];
+        if (samplesOnLink.length === 0) return;
+
+        // Sort samples by source node y position ascending
+        samplesOnLink.sort((a, b) => {
+          const yA = sampleNodeYMap.get(a)?.get(sourceNode.name) ?? 0;
+          const yB = sampleNodeYMap.get(b)?.get(sourceNode.name) ?? 0;
+          return yA - yB;
+        });
+
+        const sourceLayer = getLayerName(sourceNode.name);
+        const strokeColor = layerColorMap.get(sourceLayer) ?? "#999";
+
+        samplesOnLink.forEach(sample_id => {
+          const ySource = sampleNodeYMap.get(sample_id)?.get(sourceNode.name);
+          const yTarget = sampleNodeYMap.get(sample_id)?.get(targetNode.name);
+          if (ySource === undefined || yTarget === undefined) return;
+
+          const xSource = (sourceNode.x0 ?? 0) + sankeyGen.nodeWidth()/2;
+          const xTarget = (targetNode.x0 ?? 0) + sankeyGen.nodeWidth()/2;
+
+          // Compose CSS class: link key plus sample IDs
+          // E.g., class="link-A_B sample-3"
+          // To keep class names simple, replace '->' with '-' and remove underscores
+          const safeLinkClass = `link-${linkKey.replace(/->/g, "-").replace(/_/g, "_")}`;
+          const sampleClass = `sample-${sample_id}`;
+
+          samplesGroup.append("line")
+            .attr("x1", xSource)
+            .attr("y1", ySource)
+            .attr("x2", xTarget)
+            .attr("y2", yTarget)
+            .attr("stroke", strokeColor)
+            .attr("stroke-width", 0.5)
+            .attr("opacity", 0.3)
+            .attr("class", `${safeLinkClass} ${sampleClass}`);
+        });
+      });
+
+      // Draw sample points as small circles
+      const samplePointsGroup = svg.append("g").attr("class", "sample-points");
+
+      sampleNodeYMap.forEach((nodeYMap, sample_id) => {
+        nodeYMap.forEach((y, nodeName) => {
+          const node = nodeLayoutMap.get(nodeName);
+          if (!node) return;
+          const x = (node.x0 ?? 0) + sankeyGen.nodeWidth()/2;
+          const layerName = getLayerName(node.name);
+          const color = layerColorMap.get(layerName) ?? "#999";
+
+          // samplePointsGroup.append("circle")
+          //   .attr("cx", x)
+          //   .attr("cy", y)
+          //   .attr("r", 2.5)
+          //   .attr("fill", color)
+          //   .attr("stroke", "none");
+        });
+      });
+    });
   };
 
   // 当数据加载后绘图
