@@ -28,7 +28,6 @@ interface SankeyDiagramProps {
 export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagramProps) {
   const ref = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<SankeyData | null>(null);
 
   useEffect(() => {
@@ -194,8 +193,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       .attr("stroke-width", sankeyGen.nodeWidth())
       .on("click", (event, d) => highlightSamplesForNode(d.name));
 
-    // Draw aggregated links as colored wide paths with tooltip
-    const tooltip = d3.select(tooltipRef.current);
+    // Draw aggregated links as colored wide paths
     const linkGroup = svg
       .append("g")
       .attr("fill", "none")
@@ -212,24 +210,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
         return layerColorMap.get(sourceLayer) ?? "#000";
       })
       .attr("stroke-width", (d) => Math.max(1, d.width ?? 1))
-      .attr("opacity", 0.4)
-      .on("mouseover", (event, d) => {
-        tooltip.style("opacity", 1)
-          .html(
-            `<strong>Source:</strong> ${d.source.name}<br/>
-             <strong>Target:</strong> ${d.target.name}<br/>
-             <strong>Value:</strong> ${d.value}`
-          )
-          .style("left", (event.pageX) + "px")
-          .style("top", (event.pageY - 400) + "px");
-      })
-      .on("mousemove", (event) => {
-        tooltip.style("left", (event.pageX) + "px")
-          .style("top", (event.pageY- 400) + "px");
-      })
-      .on("mouseout", () => {
-        tooltip.style("opacity", 0);
-      });
+      .attr("opacity", 0.4);
 
     // Draw node labels
     svg
@@ -491,21 +472,6 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
   return (
     <div ref={containerRef} style={{ width: "100%", height: "600px", position: "relative" }}>
       <svg ref={ref}></svg>
-      <div
-        ref={tooltipRef}
-        style={{
-          position: "absolute",
-          pointerEvents: "none",
-          backgroundColor: "rgba(0,0,0,0.7)",
-          color: "#fff",
-          padding: "6px 8px",
-          borderRadius: "4px",
-          fontSize: "12px",
-          opacity: 0,
-          transition: "opacity 0.2s ease",
-          zIndex: 10,
-        }}
-      ></div>
     </div>
   );
 }
