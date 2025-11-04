@@ -82,43 +82,38 @@ export default function SankeyDiagram() {
 
     svg.attr("width", width).attr("height", height);
 
-    const layersMap = new Map<number, {x0: number, x1: number}>();
-    layoutNodes.forEach(d => {
-      if (d.x0 == null || d.x1 == null) return;
-      const layerWidth = sankeyGen.nodeWidth() + sankeyGen.nodePadding();
-      const layerIndex = Math.round((d.x0) / layerWidth);
-      if (!layersMap.has(layerIndex)) {
-        layersMap.set(layerIndex, {x0: d.x0, x1: d.x1});
-      } else {
-        const ext = layersMap.get(layerIndex)!;
-        ext.x0 = Math.min(ext.x0, d.x0);
-        ext.x1 = Math.max(ext.x1, d.x1);
-      }
+    // helper to extract layer name from node name
+    const getLayerName = (fullName: string) => {
+      const idx = fullName.lastIndexOf("_");
+      return idx === -1 ? fullName : fullName.slice(0, idx);
+    };
+
+    // Derive layer names from node names
+    const layerNameSet = new Set<string>();
+    layoutNodes.forEach(n => {
+      const layerName = getLayerName(n.name);
+      layerNameSet.add(layerName);
+    });
+    const layerNames = Array.from(layerNameSet).sort();
+
+    // Assign each layer a distinct hue around the color wheel using HSL
+    const layerColorMap = new Map<string, string>();
+    layerNames.forEach((layerName, i) => {
+      layerColorMap.set(
+        layerName,
+        d3.schemePastel1[i % d3.schemePastel1.length] // ✅ 不加括号，直接取数组元素
+      );
     });
 
-    const layerColors = d3.schemeCategory10;
-    const layerGroups = Array.from(layersMap.entries()).sort((a,b) => a[0] - b[0]);
-
-    const defs = svg.append("defs");
-    layerGroups.forEach(([layerIndex, extent]) => {
-      const colorStart = layerColors[layerIndex % layerColors.length];
-      const colorEnd = layerColors[(layerIndex + 1) % layerColors.length];
-      defs.append("linearGradient")
-        .attr("id", `gradient-layer-${layerIndex}`)
-        .attr("gradientUnits", "userSpaceOnUse")
-        .attr("x1", extent.x0)
-        .attr("x2", extent.x1)
-        .attr("y1", 0)
-        .attr("y2", 0)
-        .selectAll("stop")
-        .data([
-          {offset: "0%", color: colorStart},
-          {offset: "100%", color: colorEnd}
-        ])
-        .join("stop")
-        .attr("offset", d => d.offset)
-        .attr("stop-color", d => d.color);
+    // Sort nodes within each layer by y0 (top to bottom)
+    const nodesByLayer = new Map<string, Node[]>();
+    layerNames.forEach(layerName => {
+      const nodesInLayer = layoutNodes.filter(n => getLayerName(n.name) === layerName);
+      nodesInLayer.sort((a, b) => (a.y0 ?? 0) - (b.y0 ?? 0));
+      nodesByLayer.set(layerName, nodesInLayer);
     });
+
+    // Removed gradient creation code
 
     // 3. 修改节点绘制：移除填充矩形，改为绘制细黑线
     svg
@@ -133,7 +128,7 @@ export default function SankeyDiagram() {
       .attr("stroke", "black")
       .attr("stroke-width", sankeyGen.nodeWidth());
 
-    // 2. 修改 link 绘制部分为彩色宽带流样式，使用渐变色，添加鼠标悬停 tooltip
+    // 2. 修改 link 绘制部分为彩色宽带流样式，使用单色，添加鼠标悬停 tooltip
     const tooltip = d3.select(tooltipRef.current);
     const linkGroup = svg
       .append("g")
@@ -146,11 +141,9 @@ export default function SankeyDiagram() {
       .join("path")
       .attr("d", sankeyLinkHorizontal())
       .attr("stroke", (d) => {
-        // 计算源节点层和目标节点层
-        const layerWidth = sankeyGen.nodeWidth() + sankeyGen.nodePadding();
-        const sourceLayer = Math.round((d.source.x0 ?? 0) / layerWidth);
-        // 使用对应层的渐变
-        return `url(#gradient-layer-${sourceLayer})`;
+        const sourceNode = d.source as Node;
+        const sourceLayer = getLayerName(sourceNode.name);
+        return layerColorMap.get(sourceLayer) ?? "#000";
       })
       .attr("stroke-width", (d) => Math.max(1, d.width ?? 1))
       .attr("opacity", 0.4)
