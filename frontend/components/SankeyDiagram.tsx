@@ -62,6 +62,69 @@ export default function SankeyDiagram() {
   }, []);
 
   const drawSankey = (width: number, data: SankeyData) => {
+    // highlight samples for a given node
+    // Global nodeSamplesMap for sharing across highlightSamplesForNode and CSV parsing
+    let nodeSamplesMap = new Map<string, string[]>();
+    let currentHighlightedNode: string | null = null;
+
+      function highlightSamplesForNode(nodeName: string) {
+        const samples = nodeSamplesMap.get(nodeName) || [];
+        // Debug: Log which node was clicked and how many samples are associated
+        console.log("Node clicked:", nodeName, "Samples found:", samples.length);
+        const svgSel = d3.select(svg.node());
+
+        // If toggling off (clicking same node again)
+        if (currentHighlightedNode === nodeName) {
+          // Debug: Log toggling off node
+          console.log("Toggling off node:", nodeName);
+          // Restore all main sankey paths to normal color/opacity
+          svgSel.selectAll(".links path")
+            .transition().duration(300)
+            .attr("stroke", function(d: any) {
+              // Restore color by layer
+              const sourceNode = d.source;
+              const sourceLayer = typeof sourceNode === "object" && sourceNode.name
+                ? getLayerName(sourceNode.name)
+                : "";
+              return layerColorMap.get(sourceLayer) ?? "#000";
+            })
+            .attr("opacity", 0.4);
+          svgSel.selectAll(".sample-trajectories line")
+            .transition().duration(300)
+            .attr("opacity", 0);
+          svgSel.selectAll(".sample-points circle")
+            .transition().duration(300)
+            .attr("opacity", 0);
+          currentHighlightedNode = null;
+          return;
+        }
+
+        currentHighlightedNode = nodeName;
+
+        // Dim all main sankey paths
+        svgSel.selectAll(".links path")
+          .transition().duration(200)
+          .attr("stroke", "#ccc")
+          .attr("opacity", 0.2);
+
+        // Hide all sample lines and points
+        svgSel.selectAll(".sample-trajectories line")
+          .transition().duration(200)
+          .attr("opacity", 0);
+        svgSel.selectAll(".sample-points circle")
+          .transition().duration(200)
+          .attr("opacity", 0);
+
+        // Debug: Log number of samples being highlighted
+        console.log("Highlighting", samples.length, "samples for node", nodeName);
+        // Show only the samples associated with this node
+        samples.forEach(sample_id => {
+          svgSel.selectAll(`.sample-${sample_id}`)
+            .transition().duration(300)
+            .attr("opacity", 0.8);
+        });
+      }
+
     const svg = d3.select(ref.current);
     svg.selectAll("*").remove();
 
@@ -124,7 +187,8 @@ export default function SankeyDiagram() {
       .attr("y1", (d) => d.y0 ?? 0)
       .attr("y2", (d) => d.y1 ?? 0)
       .attr("stroke", "black")
-      .attr("stroke-width", sankeyGen.nodeWidth());
+      .attr("stroke-width", sankeyGen.nodeWidth())
+      .on("click", (event, d) => highlightSamplesForNode(d.name));
 
     // Draw aggregated links as colored wide paths with tooltip
     const tooltip = d3.select(tooltipRef.current);
@@ -197,7 +261,7 @@ export default function SankeyDiagram() {
 
       // For each node, collect samples assigned to it
       // Map nodeName -> array of sample_ids
-      const nodeSamplesMap = new Map<string, string[]>();
+      nodeSamplesMap = new Map<string, string[]>();
       samplePathsMap.forEach((nodeNames, sample_id) => {
         nodeNames.forEach(nodeName => {
           if (!nodeSamplesMap.has(nodeName)) {
@@ -329,7 +393,12 @@ export default function SankeyDiagram() {
         }
       });
 
-      // For each link, draw lines connecting sample positions in source and target nodes
+      // Batch build all sample line data for D3 join
+      const lineData: {
+        x1: number, y1: number, x2: number, y2: number,
+        stroke: string, className: string
+      }[] = [];
+
       layoutLinks.forEach(link => {
         const sourceNode = link.source as Node;
         const targetNode = link.target as Node;
@@ -360,18 +429,25 @@ export default function SankeyDiagram() {
           // To keep class names simple, replace '->' with '-' and remove underscores
           const safeLinkClass = `link-${linkKey.replace(/->/g, "-").replace(/_/g, "_")}`;
           const sampleClass = `sample-${sample_id}`;
-
-          samplesGroup.append("line")
-            .attr("x1", xSource)
-            .attr("y1", ySource)
-            .attr("x2", xTarget)
-            .attr("y2", yTarget)
-            .attr("stroke", strokeColor)
-            .attr("stroke-width", 0.5)
-            .attr("opacity", 0.3)
-            .attr("class", `${safeLinkClass} ${sampleClass}`);
+          lineData.push({
+            x1: xSource, y1: ySource, x2: xTarget, y2: yTarget,
+            stroke: strokeColor,
+            className: `${safeLinkClass} ${sampleClass}`
+          });
         });
       });
+
+      samplesGroup.selectAll("line")
+        .data(lineData)
+        .join("line")
+        .attr("x1", d => d.x1)
+        .attr("y1", d => d.y1)
+        .attr("x2", d => d.x2)
+        .attr("y2", d => d.y2)
+        .attr("stroke", d => d.stroke)
+        .attr("stroke-width", 0.5)
+        .attr("opacity", 0)
+        .attr("class", d => d.className);
 
       // Draw sample points as small circles
       const samplePointsGroup = svg.append("g").attr("class", "sample-points");
@@ -395,7 +471,6 @@ export default function SankeyDiagram() {
     });
   };
 
-  // 当数据加载后绘图
   useEffect(() => {
     if (!data) return;
     const container = containerRef.current;
@@ -412,7 +487,6 @@ export default function SankeyDiagram() {
   return (
     <div ref={containerRef} style={{ width: "100%", height: "600px", position: "relative" }}>
       <svg ref={ref}></svg>
-      {/* 添加 tooltip div 结构 */}
       <div
         ref={tooltipRef}
         style={{
