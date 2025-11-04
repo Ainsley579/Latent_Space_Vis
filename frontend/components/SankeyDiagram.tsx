@@ -20,15 +20,19 @@ interface SankeyData {
   nodes: Node[];
   links: Link[];
 }
+interface SankeyDiagramProps {
+  clusterFile: string;
+  sampleFile: string;
+}
 
-export default function SankeyDiagram() {
+export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagramProps) {
   const ref = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<SankeyData | null>(null);
 
   useEffect(() => {
-    d3.csv("/data/sample_component_paths.csv").then((rows) => {
+    d3.csv(sampleFile).then((rows) => {
       const layerNames = Object.keys(rows[0]).filter(k => k !== "sample_id");
       const links: Link[] = [];
       const nodeNames = new Set<string>();
@@ -244,7 +248,7 @@ export default function SankeyDiagram() {
 
     // ----------- New: Draw sample-level points and trajectories -----------
 
-    d3.csv("/data/sample_component_paths.csv").then(samplePaths => {
+    d3.csv(sampleFile).then(samplePaths => {
       // samplePaths: array of objects with sample_id and layer components
 
       // Build map: sample_id -> array of node names in layer order

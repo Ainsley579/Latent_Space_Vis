@@ -60,29 +60,6 @@ export default function WindowManager() {
         }}
       >
         {windows.map((w, idx) => {
-          const sankeyData =
-            idx % 2 === 0
-              ? {
-                  nodes: [{ name: "A" }, { name: "B" }, { name: "C" }],
-                  links: [
-                    { source: 0, target: 1, value: 10 + idx },
-                    { source: 1, target: 2, value: 5 + idx },
-                  ],
-                }
-              : {
-                  nodes: [
-                    { name: "X" },
-                    { name: "Y" },
-                    { name: "Z" },
-                    { name: "W" },
-                  ],
-                  links: [
-                    { source: 0, target: 2, value: 8 + idx },
-                    { source: 1, target: 2, value: 6 + idx },
-                    { source: 1, target: 3, value: 4 + idx },
-                  ],
-                };
-
           const scatterData = Array.from({ length: 15 }, (_, i) => ({
             x: Math.random() * 100,
             y: Math.random() * 100,
@@ -124,7 +101,10 @@ export default function WindowManager() {
                   }
                   data={scatterData}
                 />
-                <SankeyDiagram data={sankeyData} />
+                <SankeyDiagram
+                  clusterFile={idx % 2 === 0 ? "/data/cluster_transition_matrices_1.csv" : "/data/cluster_transition_matrices_2.csv"}
+                  sampleFile={idx % 2 === 0 ? "/data/sample_component_paths_1.csv" : "/data/sample_component_paths_2.csv"}
+                />
               </Window>
             </div>
           );

@@ -9,9 +9,11 @@ interface WindowProps {
   onClose: (id: string) => void;
   children: React.ReactNode;
   totalWindows?: number;
+  clusterFile?: string;
+  sampleFile?: string;
 }
 
-export default function Window({ id, title, onClose, children, totalWindows = 1 }: WindowProps) {
+export default function Window({ id, title, onClose, children, totalWindows = 1, clusterFile, sampleFile }: WindowProps) {
   // const width =
   //   totalWindows <= 1
   //     ? "100%"
@@ -34,7 +36,11 @@ export default function Window({ id, title, onClose, children, totalWindows = 1 
           ✕
         </button>
       </div>
-      <div>{children}</div>
+      <div>
+        {React.isValidElement(children)
+          ? React.cloneElement(children, { clusterFile, sampleFile })
+          : children}
+      </div>
     </div>
   );
 }
