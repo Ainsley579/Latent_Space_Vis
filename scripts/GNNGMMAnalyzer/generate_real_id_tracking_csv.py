@@ -42,11 +42,48 @@ class RealIDTracker:
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
+        # Load CAS to original index mapping
+        self.cas_to_original_mapping = self._load_cas_mapping()
+        
         # Load embeddings
         self.layer_embeddings = self._load_embeddings()
         
         # Component counts to test for component flow analysis
         self.component_counts = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    
+    def _load_cas_mapping(self):
+        """Load CAS to original index mapping"""
+        import json
+        
+        # Try to find the mapping file in the script directory
+        script_dir = Path(__file__).parent
+        mapping_paths = [
+            script_dir / "cas_to_original_mapping.json",
+            script_dir / "cas_index_mapping.json",
+        ]
+        
+        for mapping_path in mapping_paths:
+            if mapping_path.exists():
+                print(f"Loading CAS to original mapping from: {mapping_path}")
+                with open(mapping_path, 'r') as f:
+                    mapping = json.load(f)
+                
+                # Convert string keys to integers
+                mapping = {int(k): int(v) for k, v in mapping.items()}
+                
+                print(f"✓ Loaded CAS index mapping: {len(mapping)} entries")
+                print(f"  CAS index range: {min(mapping.keys())} - {max(mapping.keys())}")
+                print(f"  Original index range: {min(mapping.values())} - {max(mapping.values())}")
+                print("  Sample mappings:")
+                for i in range(min(5, len(mapping))):
+                    print(f"    CAS {i} -> Original {mapping[i]}")
+                
+                return mapping
+        
+        print("⚠ Warning: CAS to original mapping file not found")
+        print("  Will use CAS indices directly (not mapped to original dataset)")
+        print("  Expected files: cas_to_original_mapping.json or cas_index_mapping.json")
+        return None
         
     def _load_embeddings(self):
         """Load all layer embeddings"""
@@ -237,13 +274,19 @@ class RealIDTracker:
             
             # For each point, track its transition
             n_points = len(previous_labels)
-            for real_id in range(n_points):
+            for cas_id in range(n_points):
+                # Map CAS index to original dataset index if mapping is available
+                if self.cas_to_original_mapping is not None and cas_id in self.cas_to_original_mapping:
+                    original_id = self.cas_to_original_mapping[cas_id]
+                else:
+                    original_id = cas_id
+                
                 transition_data.append({
-                    'real_id': int(real_id),
+                    'real_id': int(original_id),
                     'from_layer': previous_layer,
                     'to_layer': current_layer,
-                    'from_cluster': int(previous_labels[real_id]),
-                    'to_cluster': int(current_labels[real_id])
+                    'from_cluster': int(previous_labels[cas_id]),
+                    'to_cluster': int(current_labels[cas_id])
                 })
         
         # Save to CSV in the layer transitions folder
@@ -308,14 +351,20 @@ class RealIDTracker:
             
             # For each point, track its transition
             n_points = len(current_labels)
-            for real_id in range(n_points):
+            for cas_id in range(n_points):
+                # Map CAS index to original dataset index if mapping is available
+                if self.cas_to_original_mapping is not None and cas_id in self.cas_to_original_mapping:
+                    original_id = self.cas_to_original_mapping[cas_id]
+                else:
+                    original_id = cas_id
+                
                 transition_data.append({
-                    'real_id': int(real_id),
+                    'real_id': int(original_id),
                     'layer': layer_name,
                     'from_components': current_n_components,
                     'to_components': next_n_components,
-                    'from_cluster': int(current_labels[real_id]),
-                    'to_cluster': int(next_labels[real_id])
+                    'from_cluster': int(current_labels[cas_id]),
+                    'to_cluster': int(next_labels[cas_id])
                 })
         
         # Save to CSV in the component transitions folder
