@@ -21,7 +21,6 @@ interface SankeyData {
   links: Link[];
 }
 interface SankeyDiagramProps {
-  clusterFile: string;
   sampleFile: string;
 }
 
