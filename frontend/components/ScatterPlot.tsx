@@ -86,8 +86,10 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             .range([height - 10, 10]); // invert y
 
           const color = d3.schemeCategory10[i % 10];
-          svg
-            .append("g")
+          // Create group for circles so we can attach events
+          const circleGroup = svg.append("g");
+
+          const circles = circleGroup
             .selectAll("circle")
             .data(localData)
             .join("circle")
@@ -95,15 +97,38 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             .attr("cy", (d) => yScale(d.y))
             .attr("r", 4)
             .attr("fill", (d) => {
-              // use color_value if exists, else fallback
               return d.color_value !== undefined && !isNaN(d.color_value)
                 ? d3.interpolateTurbo(d.color_value / 3)
                 : color;
             })
             .attr("opacity", 0.8)
-            .attr("class", (d) => d.real_id !== undefined
-              ? `scatter-point real-${d.real_id}`
-              : "scatter-point");
+            .attr("class", (d) =>
+              d.real_id !== undefined ? `scatter-point real-${d.real_id}` : "scatter-point"
+            );
+
+          // Add hover events to dim others and highlight same real_id across all plots
+          circles
+            .on("mouseover", function (event, d) {
+              const idClass = `real-${d.real_id}`;
+
+              d3.selectAll(".scatter-point")
+                .transition()
+                .duration(150)
+                .style("opacity", 0.1);
+
+              d3.selectAll(`.${idClass}`)
+                .transition()
+                .duration(150)
+                .style("opacity", 1)
+                .attr("r", 6);
+            })
+            .on("mouseout", function () {
+              d3.selectAll(".scatter-point")
+                .transition()
+                .duration(150)
+                .style("opacity", 0.8)
+                .attr("r", 4);
+            });
         }
       };
       run();
