@@ -102,8 +102,8 @@ export default function WindowManager() {
                   data={scatterData}
                 />
                 <SankeyDiagram
-                  clusterFile={idx % 2 === 0 ? "/data/cluster_transition_matrices_1.csv" : "/data/cluster_transition_matrices_2.csv"}
-                  sampleFile={idx % 2 === 0 ? "/data/sample_component_paths_1.csv" : "/data/sample_component_paths_2.csv"}
+                  clusterFile={idx % 2 === 0 ? "/data/real_id_component_transitions/real_id_component_transitions.csv" : "/data/cluster_transition_matrices_2.csv"}
+                  sampleFile={idx % 2 === 0 ? "/data/real_id_layer_transitions/real_id_layer_transitions.csv" : "/data/real_id_layer_transitions/real_id_layer_transitions.csv"}
                 />
               </Window>
             </div>

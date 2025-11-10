@@ -31,18 +31,18 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
   const [data, setData] = useState<SankeyData | null>(null);
 
   useEffect(() => {
-    d3.csv(sampleFile).then((rows) => {
-      const layerNames = Object.keys(rows[0]).filter(k => k !== "sample_id");
+    d3.csv(sampleFile).then((rows: any[]) => {
+      // rows: real_id,from_layer,to_layer,from_cluster,to_cluster
       const links: Link[] = [];
       const nodeNames = new Set<string>();
 
-      // Build links and nodes from sample_component_paths.csv
-      for (let i = 0; i < rows.length; i++) {
-        for (let j = 0; j < layerNames.length - 1; j++) {
-          const fromLayer = layerNames[j];
-          const toLayer = layerNames[j + 1];
-          const fromNode = `${fromLayer}_${rows[i][fromLayer]}`;
-          const toNode = `${toLayer}_${rows[i][toLayer]}`;
+      const groups = d3.group(rows, r => r.real_id);
+
+      groups.forEach(records => {
+        records.forEach((cur: any) => {
+          const fromNode = `${cur.from_layer}_${cur.from_cluster}`;
+          const toNode = `${cur.to_layer}_${cur.to_cluster}`;
+
           nodeNames.add(fromNode);
           nodeNames.add(toNode);
 
@@ -50,16 +50,15 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
           const existing = links.find((l: any) => l.key === key);
           if (existing) existing.value += 1;
           else links.push({ source: fromNode, target: toNode, value: 1, key });
-        }
-      }
+        });
+      });
 
-      const nodes = Array.from(nodeNames).map((name) => ({ name }));
+      const nodes = Array.from(nodeNames).map(name => ({ name }));
       const nameToIndex = new Map(nodes.map((n, i) => [n.name, i]));
       links.forEach((l: any) => {
         l.source = nameToIndex.get(l.source);
         l.target = nameToIndex.get(l.target);
       });
-
       setData({ nodes, links });
     });
   }, []);
@@ -229,30 +228,32 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
 
     // ----------- New: Draw sample-level points and trajectories -----------
 
-    d3.csv(sampleFile).then(samplePaths => {
-      // samplePaths: array of objects with sample_id and layer components
-
-      // Build map: sample_id -> array of node names in layer order
-      // layerNames is derived from data.nodes, but to be safe, get from samplePaths keys excluding sample_id
-      const pathLayerNames = Object.keys(samplePaths[0]).filter(k => k !== "sample_id");
-
-      // For each sample, build array of node names in order
+    d3.csv(sampleFile).then(rows => {
+      // Use new real_id, from_layer, to_layer, from_cluster, to_cluster fields
       const samplePathsMap = new Map<string, string[]>();
-      samplePaths.forEach(row => {
-        const sample_id = row["sample_id"];
-        const nodesInPath = pathLayerNames.map(layer => `${layer}_${row[layer]}`);
-        samplePathsMap.set(sample_id, nodesInPath);
+
+      rows = rows as any[];
+      rows.forEach((r: any) => {
+        const sid = r.real_id;
+        const fromNode = `${r.from_layer}_${r.from_cluster}`;
+        const toNode = `${r.to_layer}_${r.to_cluster}`;
+
+        if (!samplePathsMap.has(sid)) samplePathsMap.set(sid, []);
+        const path = samplePathsMap.get(sid)!;
+        // avoid duplicate consecutive nodes
+        if (path[path.length - 1] !== fromNode) path.push(fromNode);
+        path.push(toNode);
       });
 
       // For each node, collect samples assigned to it
-      // Map nodeName -> array of sample_ids
+      // Map nodeName -> array of real_ids
       nodeSamplesMap = new Map<string, string[]>();
-      samplePathsMap.forEach((nodeNames, sample_id) => {
+      samplePathsMap.forEach((nodeNames, real_id) => {
         nodeNames.forEach(nodeName => {
           if (!nodeSamplesMap.has(nodeName)) {
             nodeSamplesMap.set(nodeName, []);
           }
-          nodeSamplesMap.get(nodeName)!.push(sample_id);
+          nodeSamplesMap.get(nodeName)!.push(real_id);
         });
       });
 
@@ -282,7 +283,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       // But first sort samples by upstream average y positions if upstream info exists,
       // otherwise fallback to sorting by sample_id numerically
 
-      // Map sample_id -> Map nodeName -> y position (for previous layer)
+      // Map real_id -> Map nodeName -> y position (for previous layer)
       // We will assign sampleNodeYMap progressively from first layer to last layer
       const sampleNodeYMap = new Map<string, Map<string, number>>();
 
@@ -291,18 +292,31 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       layoutNodes.forEach(n => nodeLayoutMap.set(n.name, n));
 
       // Helper to get downstream sample y positions for a sample at a node
-      function getDownstreamY(sample_id: string, nodeName: string): number[] {
+      function getDownstreamY(real_id: string, nodeName: string): number[] {
         const outgoingNodes = nodeOutgoingMap.get(nodeName);
         if (!outgoingNodes) return [];
         const ys: number[] = [];
         outgoingNodes.forEach(outNodeName => {
-          const y = sampleNodeYMap.get(sample_id)?.get(outNodeName);
+          const y = sampleNodeYMap.get(real_id)?.get(outNodeName);
           if (y !== undefined) ys.push(y);
         });
         return ys;
       }
 
       // Process layers in reverse order (output-oriented, downstream-based)
+      // We need to reconstruct pathLayerNames from the samplePathsMap
+      // (since it's now an array of node names per real_id)
+      // We'll infer pathLayerNames as the sequence of unique layer names in the paths
+      let pathLayerNames: string[] = [];
+      if (samplePathsMap.size > 0) {
+        // Get the first path
+        const firstPath = Array.from(samplePathsMap.values())[0];
+        pathLayerNames = firstPath.map(nm => {
+          const idx = nm.lastIndexOf("_");
+          return idx === -1 ? nm : nm.slice(0, idx);
+        });
+      }
+
       for (let layerIndex = pathLayerNames.length - 1; layerIndex >= 0; layerIndex--) {
         const layerName = pathLayerNames[layerIndex];
         // Get nodes in this layer
@@ -313,20 +327,20 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
           if (samples.length === 0) return;
 
           // For each sample, compute average downstream y position if any
-          // Map sample_id -> avg downstream y
+          // Map real_id -> avg downstream y
           const sampleDownstreamYMap = new Map<string, number | null>();
-          samples.forEach(sample_id => {
-            const downstreamYs = getDownstreamY(sample_id, node.name);
+          samples.forEach(real_id => {
+            const downstreamYs = getDownstreamY(real_id, node.name);
             if (downstreamYs.length > 0) {
               const avgY = d3.mean(downstreamYs) ?? null;
-              sampleDownstreamYMap.set(sample_id, avgY);
+              sampleDownstreamYMap.set(real_id, avgY);
             } else {
-              sampleDownstreamYMap.set(sample_id, null);
+              sampleDownstreamYMap.set(real_id, null);
             }
           });
 
           // Sort samples: those with downstream info by avg downstream y ascending,
-          // those without downstream info by numeric sample_id ascending
+          // those without downstream info by numeric real_id ascending
           samples.sort((a, b) => {
             const aDown = sampleDownstreamYMap.get(a);
             const bDown = sampleDownstreamYMap.get(b);
@@ -337,7 +351,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
             } else if (bDown !== null) {
               return 1;
             } else {
-              // fallback to numeric sample_id sort
+              // fallback to numeric real_id sort
               const numA = Number(a), numB = Number(b);
               if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
               return a < b ? -1 : a > b ? 1 : 0;
@@ -349,12 +363,12 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
           const y0 = node.y0 ?? 0;
           const y1 = node.y1 ?? 0;
           const height = y1 - y0;
-          samples.forEach((sample_id, i) => {
+          samples.forEach((real_id, i) => {
             const y = count === 1 ? y0 + height / 2 : y0 + (i + 0.5) * (height / count);
-            if (!sampleNodeYMap.has(sample_id)) {
-              sampleNodeYMap.set(sample_id, new Map());
+            if (!sampleNodeYMap.has(real_id)) {
+              sampleNodeYMap.set(real_id, new Map());
             }
-            sampleNodeYMap.get(sample_id)!.set(node.name, y);
+            sampleNodeYMap.get(real_id)!.set(node.name, y);
           });
         });
       }
@@ -366,7 +380,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       // link key format: sourceNodeName->targetNodeName (matches layoutLinks key)
       const linkSamplesMap = new Map<string, string[]>();
 
-      samplePathsMap.forEach((nodeNames, sample_id) => {
+      samplePathsMap.forEach((nodeNames, real_id) => {
         for (let i = 0; i < nodeNames.length - 1; i++) {
           const sourceNodeName = nodeNames[i];
           const targetNodeName = nodeNames[i + 1];
@@ -374,7 +388,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
           if (!linkSamplesMap.has(linkKey)) {
             linkSamplesMap.set(linkKey, []);
           }
-          linkSamplesMap.get(linkKey)!.push(sample_id);
+          linkSamplesMap.get(linkKey)!.push(real_id);
         }
       });
 
@@ -401,25 +415,25 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
         const sourceLayer = getLayerName(sourceNode.name);
         const strokeColor = layerColorMap.get(sourceLayer) ?? "#999";
 
-        samplesOnLink.forEach(sample_id => {
-          const ySource = sampleNodeYMap.get(sample_id)?.get(sourceNode.name);
-          const yTarget = sampleNodeYMap.get(sample_id)?.get(targetNode.name);
-          if (ySource === undefined || yTarget === undefined) return;
+      samplesOnLink.forEach(real_id => {
+        const ySource = sampleNodeYMap.get(real_id)?.get(sourceNode.name);
+        const yTarget = sampleNodeYMap.get(real_id)?.get(targetNode.name);
+        if (ySource === undefined || yTarget === undefined) return;
 
-          const xSource = (sourceNode.x0 ?? 0) + sankeyGen.nodeWidth()/2;
-          const xTarget = (targetNode.x0 ?? 0) + sankeyGen.nodeWidth()/2;
+        const xSource = (sourceNode.x0 ?? 0) + sankeyGen.nodeWidth()/2;
+        const xTarget = (targetNode.x0 ?? 0) + sankeyGen.nodeWidth()/2;
 
-          // Compose CSS class: link key plus sample IDs
-          // E.g., class="link-A_B sample-3"
-          // To keep class names simple, replace '->' with '-' and remove underscores
-          const safeLinkClass = `link-${linkKey.replace(/->/g, "-").replace(/_/g, "_")}`;
-          const sampleClass = `sample-${sample_id}`;
-          lineData.push({
-            x1: xSource, y1: ySource, x2: xTarget, y2: yTarget,
-            stroke: strokeColor,
-            className: `${safeLinkClass} ${sampleClass}`
-          });
+        // Compose CSS class: link key plus sample IDs
+        // E.g., class="link-A_B sample-3"
+        // To keep class names simple, replace '->' with '-' and remove underscores
+        const safeLinkClass = `link-${linkKey.replace(/->/g, "-").replace(/_/g, "_")}`;
+        const sampleClass = `sample-${real_id}`;
+        lineData.push({
+          x1: xSource, y1: ySource, x2: xTarget, y2: yTarget,
+          stroke: strokeColor,
+          className: `${safeLinkClass} ${sampleClass}`
         });
+      });
       });
 
       samplesGroup.selectAll("line")
@@ -437,7 +451,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       // Draw sample points as small circles
       const samplePointsGroup = svg.append("g").attr("class", "sample-points");
 
-      sampleNodeYMap.forEach((nodeYMap, sample_id) => {
+      sampleNodeYMap.forEach((nodeYMap, real_id) => {
         nodeYMap.forEach((y, nodeName) => {
           const node = nodeLayoutMap.get(nodeName);
           if (!node) return;
