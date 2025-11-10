@@ -10,10 +10,11 @@ import React, {
 interface ScatterPlotProps {
   onScroll?: (scrollLeft: number) => void;
   clusterFilePath: string;
+  totalWindows?: number;
 }
 
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
-  ({ onScroll, clusterFilePath }, ref) => {
+  ({ onScroll, clusterFilePath, totalWindows }, ref) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
 
     useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
@@ -38,9 +39,19 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
         const height = 200;
         const containerWidth = container.clientWidth || 800;
-        const svgWidth = containerWidth / 4;
+
+        // adaptive width: first layer narrower (1/8), rest 1/4, but never smaller than containerWidth / layerFiles.length
+        const computeSvgWidth = () => {
+          // If only one window open, all scatter plots should be 1/8 width
+          // If more windows, all scatter plots use 1/4 width
+          const baseWidth = 200;
+          const minWidth = containerWidth / layerFiles.length;
+          return Math.max(baseWidth, minWidth);
+        };
 
         for (let i = 0; i < layerFiles.length; i++) {
+          const svgWidth = computeSvgWidth();
+
           const svg = d3
             .select(container)
             .append("svg")
