@@ -30,6 +30,38 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
   const [data, setData] = useState<SankeyData | null>(null);
 
   useEffect(() => {
+    const handleHighlight = (e: any) => {
+      const ids: string[] = e.detail;
+      const svgSel = d3.select(ref.current);
+
+      svgSel.selectAll(".links path").style("opacity", 0.1);
+      svgSel.selectAll(".sample-trajectories line").style("opacity", 0.1);
+
+      ids.forEach(id => {
+        svgSel.selectAll(`.sample-${id}`)
+          .style("opacity", 1)
+          .attr("stroke-width", 1.8);
+      });
+    };
+
+    const clearHighlight = () => {
+      const svgSel = d3.select(ref.current);
+      svgSel.selectAll(".links path").style("opacity", 0.4);
+      svgSel.selectAll(".sample-trajectories line")
+        .style("opacity", 0)
+        .attr("stroke-width", 0.5);
+    };
+
+    window.addEventListener("sankey-highlight-ids", handleHighlight);
+    window.addEventListener("sankey-highlight-clear", clearHighlight);
+
+    return () => {
+      window.removeEventListener("sankey-highlight-ids", handleHighlight);
+      window.removeEventListener("sankey-highlight-clear", clearHighlight);
+    };
+  }, []);
+
+  useEffect(() => {
     d3.csv(sampleFile).then((rows: any[]) => {
       // rows: real_id,from_layer,to_layer,from_cluster,to_cluster
       const links: Link[] = [];

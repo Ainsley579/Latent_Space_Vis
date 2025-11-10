@@ -1,5 +1,6 @@
 "use client";
 import * as d3 from "d3";
+import { brush } from "d3-brush";
 import React, {
   useEffect,
   useRef,
@@ -51,6 +52,8 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           const minWidth = containerWidth / layerFiles.length;
           return Math.max(targetWidth, minWidth);
         };
+
+        let selectedIDs = new Set<string>();
 
         for (let i = 0; i < layerFiles.length; i++) {
           const svgWidth = computeSvgWidth();
@@ -129,6 +132,54 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                 .style("opacity", 0.8)
                 .attr("r", 4);
             });
+
+          // --- LASSO / BRUSH SELECTION ---
+          const brushLayer = svg.append("g").attr("class", "brush");
+
+          const brushed = (event: any) => {
+            const selection = event.selection;
+            if (!selection) {
+              selectedIDs.clear();
+              d3.selectAll(".scatter-point")
+                .style("opacity", 0.8)
+                .attr("r", 4);
+              window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
+              return;
+            }
+
+            const [[x0, y0], [x1, y1]] = selection;
+            selectedIDs.clear();
+
+            circles.each(function(d: any) {
+              const cx = xScale(d.x);
+              const cy = yScale(d.y);
+              if (cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1) {
+                selectedIDs.add(d.real_id);
+              }
+            });
+
+            d3.selectAll(".scatter-point")
+              .style("opacity", 0.1)
+              .attr("r", 4);
+
+            selectedIDs.forEach(id => {
+              d3.selectAll(`.real-${id}`)
+                .style("opacity", 1)
+                .attr("r", 6);
+            });
+
+            window.dispatchEvent(
+              new CustomEvent("sankey-highlight-ids", {
+                detail: Array.from(selectedIDs),
+              })
+            );
+          };
+
+          brushLayer.call(
+            d3.brush()
+              .extent([[0, 0], [svgWidth, height]])
+              .on("brush end", brushed)
+          );
         }
       };
       run();
