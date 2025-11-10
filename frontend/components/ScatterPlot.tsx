@@ -16,11 +16,14 @@ interface ScatterPlotProps {
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
   ({ onScroll, clusterFilePath, totalWindows }, ref) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const hasRenderedRef = useRef(false);
 
     useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
     useEffect(() => {
       const run = async () => {
+        if (hasRenderedRef.current) return;
+        hasRenderedRef.current = true;
         const container = containerRef.current;
         if (!container) return;
         container.innerHTML = "";
@@ -40,13 +43,13 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         const height = 200;
         const containerWidth = container.clientWidth || 800;
 
-        // adaptive width: first layer narrower (1/8), rest 1/4, but never smaller than containerWidth / layerFiles.length
+        // adaptive width logic: explicit per instructions
         const computeSvgWidth = () => {
-          // If only one window open, all scatter plots should be 1/8 width
-          // If more windows, all scatter plots use 1/4 width
-          const baseWidth = 200;
+          // if only one window: each scatterplot = containerWidth / 8
+          // if two or more windows: each = containerWidth / 4
+          const targetWidth =200;
           const minWidth = containerWidth / layerFiles.length;
-          return Math.max(baseWidth, minWidth);
+          return Math.max(targetWidth, minWidth);
         };
 
         for (let i = 0; i < layerFiles.length; i++) {
