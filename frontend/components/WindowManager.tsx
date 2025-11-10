@@ -102,7 +102,7 @@ export default function WindowManager() {
                   clusterFilePath={"/data/scatter_plot_data_by_layer"}
                 />
                 <SankeyDiagram
-                  sampleFile={idx % 2 === 0 ? "/data/real_id_layer_transitions/real_id_layer_transitions.csv" : "/data/real_id_layer_transitions/real_id_layer_transitions.csv"}
+                  sampleFile={idx % 2 === 0 ? "/data/real_id_layer_transitions/real_id_layer_transitions1.csv" : "/data/real_id_layer_transitions/real_id_layer_transitions2.csv"}
                 />
               </Window>
             </div>
