@@ -50,6 +50,8 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       svgSel.selectAll(".sample-trajectories line")
         .style("opacity", 0)
         .attr("stroke-width", 0.5);
+
+      window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
     };
 
     window.addEventListener("sankey-highlight-ids", handleHighlight);
@@ -129,6 +131,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
             .transition().duration(300)
             .attr("opacity", 0);
           currentHighlightedNode = null;
+          window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
           return;
         }
 
@@ -221,7 +224,15 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       .attr("y2", (d) => d.y1 ?? 0)
       .attr("stroke", "black")
       .attr("stroke-width", sankeyGen.nodeWidth())
-      .on("click", (event, d) => highlightSamplesForNode(d.name));
+      .on("click", (event, d) => {
+        highlightSamplesForNode(d.name);
+
+        const samples = nodeSamplesMap.get(d.name) || [];
+
+        window.dispatchEvent(
+          new CustomEvent("scatter-highlight-ids", { detail: samples })
+        );
+      });
 
     // Draw aggregated links as colored wide paths
     const linkGroup = svg

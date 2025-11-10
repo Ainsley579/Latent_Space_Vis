@@ -18,6 +18,42 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
   ({ onScroll, clusterFilePath, totalWindows }, ref) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const hasRenderedRef = useRef(false);
+    // Move selectedIDs to top-level so it's accessible in clearScatter and run
+    let selectedIDs = new Set<string>();
+    useEffect(() => {
+      const handleScatterHighlight = (e: any) => {
+        const ids: string[] = e.detail;
+
+        d3.selectAll(".scatter-point")
+          .style("opacity", 0.1)
+          .attr("r", 4);
+
+        ids.forEach(id => {
+          d3.selectAll(`.real-${id}`)
+            .style("opacity", 1)
+            .attr("r", 6);
+        });
+      };
+
+      const clearScatter = () => {
+        selectedIDs.clear?.(); // if exists
+        d3.selectAll(".scatter-point")
+          .transition()
+          .duration(150)
+          .style("opacity", 0.8)
+          .attr("r", 4);
+        // also clear any active brushes
+        d3.selectAll(".brush").call(d3.brush().clear);
+      };
+
+      window.addEventListener("scatter-highlight-ids", handleScatterHighlight);
+      window.addEventListener("scatter-highlight-clear", clearScatter);
+
+      return () => {
+        window.removeEventListener("scatter-highlight-ids", handleScatterHighlight);
+        window.removeEventListener("scatter-highlight-clear", clearScatter);
+      };
+    }, []);
 
     useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
@@ -48,12 +84,12 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         const computeSvgWidth = () => {
           // if only one window: each scatterplot = containerWidth / 8
           // if two or more windows: each = containerWidth / 4
-          const targetWidth =200;
+          const targetWidth = 200;
           const minWidth = containerWidth / layerFiles.length;
           return Math.max(targetWidth, minWidth);
         };
 
-        let selectedIDs = new Set<string>();
+        // selectedIDs now defined at component top-level
 
         for (let i = 0; i < layerFiles.length; i++) {
           const svgWidth = computeSvgWidth();
@@ -108,7 +144,6 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             .attr("class", (d) =>
               d.real_id !== undefined ? `scatter-point real-${d.real_id}` : "scatter-point"
             );
-
           // Add hover events to dim others and highlight same real_id across all plots
           circles
             .on("mouseover", function (event, d) {
@@ -131,6 +166,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                 .duration(150)
                 .style("opacity", 0.8)
                 .attr("r", 4);
+              window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
             });
 
           // --- LASSO / BRUSH SELECTION ---
@@ -150,7 +186,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             const [[x0, y0], [x1, y1]] = selection;
             selectedIDs.clear();
 
-            circles.each(function(d: any) {
+            circles.each(function (d: any) {
               const cx = xScale(d.x);
               const cy = yScale(d.y);
               if (cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1) {
