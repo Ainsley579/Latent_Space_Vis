@@ -28,11 +28,12 @@ sys.path.append(script_dir)
 class ClusterTransitionMatrixGenerator:
     """Generate cluster transition matrices with real ID tracking"""
     
-    def __init__(self, embeddings_dir, output_dir, n_components=13, zca_threshold=1e-5):
+    def __init__(self, embeddings_dir, output_dir, n_components=13, zca_threshold=1e-5, version=1):
         self.embeddings_dir = Path(embeddings_dir)
         self.output_dir = Path(output_dir)
         self.n_components = n_components
         self.zca_threshold = zca_threshold
+        self.version = version  # 1 or 2
         
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -40,7 +41,7 @@ class ClusterTransitionMatrixGenerator:
         # Load CAS to original index mapping
         self.cas_to_original_mapping = self._load_cas_mapping()
         
-        # Layer names matching cluster_transition_matrices_1.csv (only first 5 layers)
+        # Layer files for all possible layers
         self.layer_files = {
             'emb': 'emb_unique_cas.pt',
             'output_block_0': 'output0_unique_cas.pt',
@@ -48,10 +49,19 @@ class ClusterTransitionMatrixGenerator:
             'output_block_2': 'output2_unique_cas.pt',
             'output_block_3': 'output3_unique_cas.pt',
             'output_block_4': 'output4_unique_cas.pt',
+            'u_mlp_input': 'u_mlp_input_cas.pt',
+            'u_mlp_l1': 'u_mlp_l1_cas.pt',
+            'u_mlp_l2': 'u_mlp_l2_cas.pt',
         }
         
-        # Only use these layers (matching cluster_transition_matrices_1.csv)
-        self.layer_names = ['emb', 'output_block_0', 'output_block_1', 'output_block_2', 'output_block_3', 'output_block_4']
+        # Set layer names based on version
+        if version == 1:
+            # cluster_transition_matrices_1.csv: 13 components, 5 layers
+            self.layer_names = ['emb', 'output_block_0', 'output_block_1', 'output_block_2', 'output_block_3', 'output_block_4']
+        else:
+            # cluster_transition_matrices_2.csv: 12 components, 9 layers
+            self.layer_names = ['emb', 'output_block_0', 'output_block_1', 'output_block_2', 'output_block_3', 
+                               'output_block_4', 'u_mlp_input', 'u_mlp_l1', 'u_mlp_l2']
         
     def _load_cas_mapping(self):
         """Load CAS to original index mapping"""
@@ -292,18 +302,18 @@ class ClusterTransitionMatrixGenerator:
                     'to_cluster': aligned_curr_cluster
                 })
         
-        # Save aggregate format (matching cluster_transition_matrices_1.csv)
+        # Save aggregate format (matching cluster_transition_matrices_1.csv or _2.csv)
         df_transitions = pd.DataFrame(transition_data)
-        output_path = self.output_dir / 'cluster_transition_matrices_with_real_id.csv'
+        output_path = self.output_dir / f'cluster_transition_matrices_{self.version}_with_real_id.csv'
         df_transitions.to_csv(output_path, index=False)
         print(f"\n✓ Saved aggregate transition matrix: {output_path}")
         print(f"  Total transitions: {len(df_transitions)}")
         print(f"  Components: 0-{self.n_components-1}")
-        print(f"  Format matches cluster_transition_matrices_1.csv")
+        print(f"  Format matches cluster_transition_matrices_{self.version}.csv")
         
         # Save individual point tracking
         df_individual = pd.DataFrame(individual_transition_data)
-        individual_path = self.output_dir / 'cluster_transition_matrices_individual_real_id.csv'
+        individual_path = self.output_dir / f'cluster_transition_matrices_{self.version}_individual_real_id.csv'
         df_individual.to_csv(individual_path, index=False)
         print(f"\n✓ Saved individual point tracking: {individual_path}")
         print(f"  Total point transitions: {len(df_individual)}")
@@ -315,11 +325,12 @@ class ClusterTransitionMatrixGenerator:
     def run(self):
         """Run the complete generation pipeline"""
         print("="*60)
-        print("Cluster Transition Matrix Generator with Real ID")
+        print(f"Cluster Transition Matrix Generator with Real ID (Version {self.version})")
         print("="*60)
         print(f"Embeddings directory: {self.embeddings_dir}")
         print(f"Output directory: {self.output_dir}")
         print(f"Number of components: {self.n_components}")
+        print(f"Layers: {len(self.layer_names)} layers")
         print(f"ZCA threshold: {self.zca_threshold}")
         print("="*60)
         
@@ -337,10 +348,10 @@ class ClusterTransitionMatrixGenerator:
         print("="*60)
         print(f"\nOutput directory: {self.output_dir}")
         print("\nGenerated files:")
-        print("  1. cluster_transition_matrices_with_real_id.csv")
-        print("     - Aggregate format (matches cluster_transition_matrices_1.csv)")
+        print(f"  1. cluster_transition_matrices_{self.version}_with_real_id.csv")
+        print(f"     - Aggregate format (matches cluster_transition_matrices_{self.version}.csv)")
         print("     - Columns: from_layer, to_layer, from_cluster, to_cluster, count, probability")
-        print("  2. cluster_transition_matrices_individual_real_id.csv")
+        print(f"  2. cluster_transition_matrices_{self.version}_individual_real_id.csv")
         print("     - Individual point tracking with real IDs")
         print("     - Columns: real_id, from_layer, to_layer, from_cluster, to_cluster")
 
@@ -357,10 +368,14 @@ def main():
     parser.add_argument('--output_dir', type=str, 
                        default='../../frontend/public/data',
                        help='Output directory for CSV files')
-    parser.add_argument('--n_components', type=int, default=13,
-                       help='Number of components (default: 13, matching cluster_transition_matrices_1.csv)')
+    parser.add_argument('--n_components', type=int, default=None,
+                       help='Number of components (default: auto-detect based on version)')
+    parser.add_argument('--version', type=int, choices=[1, 2], default=1,
+                       help='Version to generate: 1 (13 components, 5 layers) or 2 (12 components, 9 layers)')
     parser.add_argument('--zca_threshold', type=float, default=1e-5,
                        help='Threshold for ZCA whitening')
+    parser.add_argument('--both', action='store_true',
+                       help='Generate both versions (1 and 2)')
     
     args = parser.parse_args()
     
@@ -371,15 +386,53 @@ def main():
     else:
         output_dir = Path(args.output_dir)
     
-    # Create generator and run
-    generator = ClusterTransitionMatrixGenerator(
-        embeddings_dir=args.embeddings_dir,
-        output_dir=output_dir,
-        n_components=args.n_components,
-        zca_threshold=args.zca_threshold
-    )
+    # Set default components based on version if not specified
+    if args.n_components is None:
+        args.n_components = 13 if args.version == 1 else 12
     
-    generator.run()
+    if args.both:
+        # Generate both versions
+        print("Generating both versions (1 and 2)...\n")
+        
+        # Version 1: 13 components, 5 layers
+        print("="*60)
+        print("GENERATING VERSION 1")
+        print("="*60)
+        generator1 = ClusterTransitionMatrixGenerator(
+            embeddings_dir=args.embeddings_dir,
+            output_dir=output_dir,
+            n_components=13,
+            zca_threshold=args.zca_threshold,
+            version=1
+        )
+        generator1.run()
+        
+        # Version 2: 12 components, 9 layers
+        print("\n" + "="*60)
+        print("GENERATING VERSION 2")
+        print("="*60)
+        generator2 = ClusterTransitionMatrixGenerator(
+            embeddings_dir=args.embeddings_dir,
+            output_dir=output_dir,
+            n_components=12,
+            zca_threshold=args.zca_threshold,
+            version=2
+        )
+        generator2.run()
+        
+        print("\n" + "="*60)
+        print("✅ Both versions generated successfully!")
+        print("="*60)
+    else:
+        # Generate single version
+        generator = ClusterTransitionMatrixGenerator(
+            embeddings_dir=args.embeddings_dir,
+            output_dir=output_dir,
+            n_components=args.n_components,
+            zca_threshold=args.zca_threshold,
+            version=args.version
+        )
+        generator.run()
 
 
 if __name__ == "__main__":
