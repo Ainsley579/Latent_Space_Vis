@@ -78,21 +78,22 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         ];
 
         const height = 200;
-        const containerWidth = container.clientWidth || 800;
+        // const containerWidth = container.clientWidth || 800;
 
         // adaptive width logic: explicit per instructions
         const computeSvgWidth = () => {
           // if only one window: each scatterplot = containerWidth / 8
           // if two or more windows: each = containerWidth / 4
           const targetWidth = 200;
-          const minWidth = containerWidth / layerFiles.length;
-          return Math.max(targetWidth, minWidth);
+          // const minWidth = containerWidth / layerFiles.length;
+          // return Math.max(targetWidth, minWidth);
         };
 
         // selectedIDs now defined at component top-level
 
         for (let i = 0; i < layerFiles.length; i++) {
-          const svgWidth = computeSvgWidth();
+          // const svgWidth = computeSvgWidth();
+          const svgWidth = 350;
 
           const svg = d3
             .select(container)
