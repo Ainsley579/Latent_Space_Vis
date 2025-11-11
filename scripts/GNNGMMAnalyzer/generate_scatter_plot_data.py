@@ -75,11 +75,12 @@ def adaptive_zca_whitening(X, threshold=1e-5, epsilon=1e-5):
 class ScatterPlotDataGenerator:
     """Generate scatter plot data for frontend visualization"""
     
-    def __init__(self, embeddings_dir, output_dir, zca_threshold=1e-5, random_state=42):
+    def __init__(self, embeddings_dir, output_dir, zca_threshold=1e-5, random_state=42, version=2):
         self.embeddings_dir = Path(embeddings_dir)
         self.output_dir = Path(output_dir)
         self.zca_threshold = zca_threshold
         self.random_state = random_state
+        self.version = version  # 1 for unique embeddings, 2 for CAS embeddings
         
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -175,24 +176,41 @@ class ScatterPlotDataGenerator:
         embeddings = {}
         
         for layer_name, filename in self.layer_files.items():
-            # Try CAS file first, then unique file
-            filepath = self.embeddings_dir / filename
-            
-            if not filepath.exists():
-                # Try unique file as fallback
+            # Version 1 uses unique embeddings, Version 2 uses CAS embeddings
+            if self.version == 1:
+                # Try unique file first for Version 1
                 if layer_name in self.layer_files_unique:
                     alt_filename = self.layer_files_unique[layer_name]
                     alt_filepath = self.embeddings_dir / alt_filename
                     if alt_filepath.exists():
                         filepath = alt_filepath
                         filename = alt_filename
-                        print(f"  Using {filename} instead of {self.layer_files[layer_name]}")
+                        print(f"  Using {filename} (Version 1 - unique embeddings)")
                     else:
                         print(f"  Warning: {filename} not found, skipping {layer_name}")
                         continue
                 else:
                     print(f"  Warning: {filename} not found, skipping {layer_name}")
                     continue
+            else:
+                # Version 2: Try CAS file first, then unique file as fallback
+                filepath = self.embeddings_dir / filename
+                
+                if not filepath.exists():
+                    # Try unique file as fallback
+                    if layer_name in self.layer_files_unique:
+                        alt_filename = self.layer_files_unique[layer_name]
+                        alt_filepath = self.embeddings_dir / alt_filename
+                        if alt_filepath.exists():
+                            filepath = alt_filepath
+                            filename = alt_filename
+                            print(f"  Using {filename} instead of {self.layer_files[layer_name]}")
+                        else:
+                            print(f"  Warning: {filename} not found, skipping {layer_name}")
+                            continue
+                    else:
+                        print(f"  Warning: {filename} not found, skipping {layer_name}")
+                        continue
             
             try:
                 data = torch.load(filepath, map_location='cpu')
@@ -333,16 +351,16 @@ class ScatterPlotDataGenerator:
         # Create DataFrame
         df = pd.DataFrame(all_data)
         
-        # Save combined CSV
-        combined_path = self.output_dir / 'scatter_plot_data_all_layers.csv'
+        # Save combined CSV with version suffix
+        combined_path = self.output_dir / f'scatter_plot_data_all_layers_{self.version}.csv'
         df.to_csv(combined_path, index=False)
         print(f"✓ Saved combined CSV: {combined_path}")
         print(f"  Total points: {len(df)}")
         print(f"  Layers: {df['layer'].nunique()}")
         print(f"  Real ID range: {df['real_id'].min()} - {df['real_id'].max()}")
         
-        # Save individual CSV files per layer
-        layer_dir = self.output_dir / 'scatter_plot_data_by_layer'
+        # Save individual CSV files per layer with version suffix
+        layer_dir = self.output_dir / f'scatter_plot_data_by_layer_{self.version}'
         layer_dir.mkdir(parents=True, exist_ok=True)
         
         for layer_name in df['layer'].unique():
@@ -374,8 +392,8 @@ class ScatterPlotDataGenerator:
             'n_points_per_layer': {layer: int(pos.shape[0]) for layer, pos in positions.items()}
         }
         
-        # Save metadata as JSON
-        metadata_path = self.output_dir / 'scatter_plot_metadata.json'
+        # Save metadata as JSON with version suffix
+        metadata_path = self.output_dir / f'scatter_plot_metadata_{self.version}.json'
         with open(metadata_path, 'w') as f:
             json.dump(metadata, f, indent=2)
         
@@ -442,6 +460,8 @@ def main():
                        help='Threshold for ZCA whitening (not used in MDS, but kept for compatibility)')
     parser.add_argument('--random_state', type=int, default=42,
                        help='Random state for MDS (default: 42)')
+    parser.add_argument('--version', type=int, default=2, choices=[1, 2],
+                       help='Version: 1 for unique embeddings (374 samples), 2 for CAS embeddings (152 samples)')
     
     args = parser.parse_args()
     
@@ -457,7 +477,8 @@ def main():
         embeddings_dir=args.embeddings_dir,
         output_dir=output_dir,
         zca_threshold=args.zca_threshold,
-        random_state=args.random_state
+        random_state=args.random_state,
+        version=args.version
     )
     
     generator.run()

@@ -34,10 +34,11 @@ except ImportError:
 class RealIDTracker:
     """Track real IDs through layer and component transitions"""
     
-    def __init__(self, embeddings_dir, output_dir, zca_threshold=1e-5):
+    def __init__(self, embeddings_dir, output_dir, zca_threshold=1e-5, version=2):
         self.embeddings_dir = embeddings_dir
         self.output_dir = Path(output_dir)
         self.zca_threshold = zca_threshold
+        self.version = version  # 1 for unique embeddings, 2 for CAS embeddings
         
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -147,21 +148,41 @@ class RealIDTracker:
             unique_filepath = embeddings_path / unique_filename
             original_filepath = embeddings_path / original_filename
             
-            if unique_cas_filepath.exists():
-                filepath = unique_cas_filepath
-                filename = unique_cas_filename
-                print("  Loading {} -> {} (unique_cas)".format(filename, layer_name))
-            elif unique_filepath.exists():
-                filepath = unique_filepath
-                filename = unique_filename
-                print("  Loading {} -> {} (unique)".format(filename, layer_name))
-            elif original_filepath.exists():
-                filepath = original_filepath
-                filename = original_filename
-                print("  Loading {} -> {} (original)".format(filename, layer_name))
+            # Version 1 uses unique embeddings, Version 2 uses CAS embeddings
+            if self.version == 1:
+                # Version 1: Prioritize unique files
+                if unique_filepath.exists():
+                    filepath = unique_filepath
+                    filename = unique_filename
+                    print("  Loading {} -> {} (Version 1 - unique)".format(filename, layer_name))
+                elif unique_cas_filepath.exists():
+                    filepath = unique_cas_filepath
+                    filename = unique_cas_filename
+                    print("  Loading {} -> {} (Version 1 - unique_cas fallback)".format(filename, layer_name))
+                elif original_filepath.exists():
+                    filepath = original_filepath
+                    filename = original_filename
+                    print("  Loading {} -> {} (Version 1 - original fallback)".format(filename, layer_name))
+                else:
+                    print("  Warning: No files found for {} (Version 1)".format(layer_name))
+                    continue
             else:
-                print("  Warning: Neither {}, {}, nor {} found".format(unique_cas_filename, unique_filename, original_filename))
-                continue
+                # Version 2: Prioritize unique_cas files
+                if unique_cas_filepath.exists():
+                    filepath = unique_cas_filepath
+                    filename = unique_cas_filename
+                    print("  Loading {} -> {} (Version 2 - unique_cas)".format(filename, layer_name))
+                elif unique_filepath.exists():
+                    filepath = unique_filepath
+                    filename = unique_filename
+                    print("  Loading {} -> {} (Version 2 - unique fallback)".format(filename, layer_name))
+                elif original_filepath.exists():
+                    filepath = original_filepath
+                    filename = original_filename
+                    print("  Loading {} -> {} (Version 2 - original fallback)".format(filename, layer_name))
+                else:
+                    print("  Warning: No files found for {} (Version 2)".format(layer_name))
+                    continue
             
             try:
                 import torch
@@ -243,8 +264,8 @@ class RealIDTracker:
             print("Error: No embeddings loaded")
             return
         
-        # Create output folder for layer transitions
-        layer_transitions_dir = self.output_dir / 'real_id_layer_transitions'
+        # Create output folder for layer transitions with version suffix
+        layer_transitions_dir = self.output_dir / f'real_id_layer_transitions_{self.version}'
         layer_transitions_dir.mkdir(parents=True, exist_ok=True)
         
         # Determine optimal components if not provided
@@ -347,8 +368,8 @@ class RealIDTracker:
             print("Error: No embeddings loaded")
             return
         
-        # Create output folder for component transitions
-        component_transitions_dir = self.output_dir / 'real_id_component_transitions'
+        # Create output folder for component transitions with version suffix
+        component_transitions_dir = self.output_dir / f'real_id_component_transitions_{self.version}'
         component_transitions_dir.mkdir(parents=True, exist_ok=True)
         
         # Use first layer if not specified
@@ -455,6 +476,8 @@ def main():
                        help='Layer name for component transition analysis (default: first layer)')
     parser.add_argument('--zca_threshold', type=float, default=1e-5,
                        help='Threshold for ZCA whitening')
+    parser.add_argument('--version', type=int, default=2, choices=[1, 2],
+                       help='Version: 1 for unique embeddings (374 samples), 2 for CAS embeddings (152 samples)')
     
     args = parser.parse_args()
     
@@ -480,7 +503,8 @@ def main():
     tracker = RealIDTracker(
         embeddings_dir=args.embeddings_dir,
         output_dir=output_dir,
-        zca_threshold=args.zca_threshold
+        zca_threshold=args.zca_threshold,
+        version=args.version
     )
     
     tracker.run_all_tracking(
