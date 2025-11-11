@@ -42,8 +42,9 @@ class RealIDTracker:
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Load CAS to original index mapping
+        # Load mappings - support both unique and CAS embeddings
         self.cas_to_original_mapping = self._load_cas_mapping()
+        self.unique_to_original_mapping = self._load_unique_mapping()
         
         # Load embeddings
         self.layer_embeddings = self._load_embeddings()
@@ -83,6 +84,35 @@ class RealIDTracker:
         print("⚠ Warning: CAS to original mapping file not found")
         print("  Will use CAS indices directly (not mapped to original dataset)")
         print("  Expected files: cas_to_original_mapping.json or cas_index_mapping.json")
+        return None
+    
+    def _load_unique_mapping(self):
+        """Load unique to original index mapping"""
+        import json
+        
+        # Try to find the mapping file in the script directory
+        script_dir = Path(__file__).parent
+        mapping_paths = [
+            script_dir / "unique_to_original_mapping.json",
+            script_dir / "index_mapping.json",
+        ]
+        
+        for mapping_path in mapping_paths:
+            if mapping_path.exists():
+                print(f"Loading unique to original mapping from: {mapping_path}")
+                with open(mapping_path, 'r') as f:
+                    mapping = json.load(f)
+                
+                # Convert string keys to integers
+                mapping = {int(k): int(v) for k, v in mapping.items()}
+                
+                print(f"✓ Loaded unique index mapping: {len(mapping)} entries")
+                print(f"  Unique index range: {min(mapping.keys())} - {max(mapping.keys())}")
+                print(f"  Original index range: {min(mapping.values())} - {max(mapping.values())}")
+                
+                return mapping
+        
+        print("⚠ Warning: Unique to original mapping file not found")
         return None
         
     def _load_embeddings(self):
@@ -274,19 +304,22 @@ class RealIDTracker:
             
             # For each point, track its transition
             n_points = len(previous_labels)
-            for cas_id in range(n_points):
-                # Map CAS index to original dataset index if mapping is available
-                if self.cas_to_original_mapping is not None and cas_id in self.cas_to_original_mapping:
-                    original_id = self.cas_to_original_mapping[cas_id]
-                else:
-                    original_id = cas_id
+            for embedding_idx in range(n_points):
+                # Map embedding index to original dataset index
+                # Try unique mapping first (for unique embeddings), then CAS mapping
+                original_id = embedding_idx  # Default fallback
+                
+                if self.unique_to_original_mapping is not None and embedding_idx in self.unique_to_original_mapping:
+                    original_id = self.unique_to_original_mapping[embedding_idx]
+                elif self.cas_to_original_mapping is not None and embedding_idx in self.cas_to_original_mapping:
+                    original_id = self.cas_to_original_mapping[embedding_idx]
                 
                 transition_data.append({
                     'real_id': int(original_id),
                     'from_layer': previous_layer,
                     'to_layer': current_layer,
-                    'from_cluster': int(previous_labels[cas_id]),
-                    'to_cluster': int(current_labels[cas_id])
+                    'from_cluster': int(previous_labels[embedding_idx]),
+                    'to_cluster': int(current_labels[embedding_idx])
                 })
         
         # Save to CSV in the layer transitions folder
@@ -351,20 +384,23 @@ class RealIDTracker:
             
             # For each point, track its transition
             n_points = len(current_labels)
-            for cas_id in range(n_points):
-                # Map CAS index to original dataset index if mapping is available
-                if self.cas_to_original_mapping is not None and cas_id in self.cas_to_original_mapping:
-                    original_id = self.cas_to_original_mapping[cas_id]
-                else:
-                    original_id = cas_id
+            for embedding_idx in range(n_points):
+                # Map embedding index to original dataset index
+                # Try unique mapping first (for unique embeddings), then CAS mapping
+                original_id = embedding_idx  # Default fallback
+                
+                if self.unique_to_original_mapping is not None and embedding_idx in self.unique_to_original_mapping:
+                    original_id = self.unique_to_original_mapping[embedding_idx]
+                elif self.cas_to_original_mapping is not None and embedding_idx in self.cas_to_original_mapping:
+                    original_id = self.cas_to_original_mapping[embedding_idx]
                 
                 transition_data.append({
                     'real_id': int(original_id),
                     'layer': layer_name,
                     'from_components': current_n_components,
                     'to_components': next_n_components,
-                    'from_cluster': int(current_labels[cas_id]),
-                    'to_cluster': int(next_labels[cas_id])
+                    'from_cluster': int(current_labels[embedding_idx]),
+                    'to_cluster': int(next_labels[embedding_idx])
                 })
         
         # Save to CSV in the component transitions folder

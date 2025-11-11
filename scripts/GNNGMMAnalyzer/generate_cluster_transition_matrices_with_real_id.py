@@ -41,8 +41,12 @@ class ClusterTransitionMatrixGenerator:
         # Load CAS to original index mapping
         self.cas_to_original_mapping = self._load_cas_mapping()
         
-        # Layer files for all possible layers
-        self.layer_files = {
+        # Load unique to original index mapping (for version 1)
+        self.unique_to_original_mapping = self._load_unique_mapping()
+        
+        # Layer files - try unique_cas first, then unique, then original
+        # Version 1 uses unique embeddings (378 samples), Version 2 uses CAS embeddings (152 samples)
+        self.layer_files_cas = {
             'emb': 'emb_unique_cas.pt',
             'output_block_0': 'output0_unique_cas.pt',
             'output_block_1': 'output1_unique_cas.pt',
@@ -54,14 +58,30 @@ class ClusterTransitionMatrixGenerator:
             'u_mlp_l2': 'u_mlp_l2_cas.pt',
         }
         
+        self.layer_files_unique = {
+            'emb': 'emb_unique.pt',
+            'output_block_0': 'output0_unique.pt',
+            'output_block_1': 'output1_unique.pt',
+            'output_block_2': 'output2_unique.pt',
+            'output_block_3': 'output3_unique.pt',
+            'output_block_4': 'output4_unique.pt',
+            'u_mlp_input': 'u_mlp_input.pt',
+            'u_mlp_l1': 'u_mlp_l1.pt',
+            'u_mlp_l2': 'u_mlp_l2.pt',
+        }
+        
         # Set layer names based on version
         if version == 1:
             # cluster_transition_matrices_1.csv: 13 components, 5 layers
+            # Uses unique embeddings (378 samples), not CAS (152)
             self.layer_names = ['emb', 'output_block_0', 'output_block_1', 'output_block_2', 'output_block_3', 'output_block_4']
+            self.use_unique_embeddings = True  # Version 1 uses unique embeddings
         else:
             # cluster_transition_matrices_2.csv: 12 components, 9 layers
+            # Uses CAS embeddings (152 samples)
             self.layer_names = ['emb', 'output_block_0', 'output_block_1', 'output_block_2', 'output_block_3', 
                                'output_block_4', 'u_mlp_input', 'u_mlp_l1', 'u_mlp_l2']
+            self.use_unique_embeddings = False  # Version 2 uses CAS embeddings
         
     def _load_cas_mapping(self):
         """Load CAS to original index mapping"""
@@ -88,6 +108,69 @@ class ClusterTransitionMatrixGenerator:
         print("⚠ Warning: CAS to original mapping file not found")
         return None
     
+    def _load_unique_mapping(self):
+        """Load unique to original index mapping"""
+        script_dir = Path(__file__).parent
+        mapping_paths = [
+            script_dir / "unique_to_original_mapping.json",
+            script_dir / "index_mapping.json",  # Fallback: might be for unique embeddings
+        ]
+        
+        for mapping_path in mapping_paths:
+            if mapping_path.exists():
+                print(f"Loading unique to original mapping from: {mapping_path}")
+                with open(mapping_path, 'r') as f:
+                    mapping = json.load(f)
+                
+                mapping = {int(k): int(v) for k, v in mapping.items()}
+                
+                # Check if this looks like a unique mapping (should have ~374-378 entries)
+                # Must have at least 300 entries (unique embeddings) AND key range should be 0-373/377
+                key_range = (min(mapping.keys()), max(mapping.keys()))
+                if len(mapping) >= 300 and key_range[1] >= 300:  # Unique mapping should have 300+ entries and keys
+                    print(f"✓ Loaded unique index mapping: {len(mapping)} entries")
+                    print(f"  Unique index range: {min(mapping.keys())} - {max(mapping.keys())}")
+                    print(f"  Original index range: {min(mapping.values())} - {max(mapping.values())}")
+                    return mapping
+                else:
+                    print(f"  File has {len(mapping)} entries (key range 0-{key_range[1]}), might be CAS mapping, skipping...")
+        
+        print("⚠ Warning: Unique to original mapping file not found")
+        print("  Will create mapping on-the-fly from model_setup if available")
+        return None
+    
+    def _get_unique_to_original_id(self, unique_idx):
+        """Get original dataset index for unique embedding index"""
+        # Try to create mapping on-the-fly if model_setup is available
+        if not hasattr(self, '_unique_mapping_cache'):
+            self._unique_mapping_cache = {}
+            try:
+                import sys
+                from pathlib import Path
+                # Add parent directory to path
+                parent_dir = Path(__file__).parent.parent
+                if str(parent_dir) not in sys.path:
+                    sys.path.insert(0, str(parent_dir))
+                
+                from model_setup import dimenet10conf
+                model, data, smiles = dimenet10conf()
+                unique_molecules = smiles.drop_duplicates(subset=['rxn_id']).reset_index(drop=True)
+                for idx, (_, row) in enumerate(unique_molecules.iterrows()):
+                    rxn_id = row['rxn_id']
+                    first_idx = smiles[smiles['rxn_id'] == rxn_id].index[0]
+                    self._unique_mapping_cache[idx] = int(first_idx)
+                print(f"  ✓ Created unique mapping on-the-fly: {len(self._unique_mapping_cache)} entries")
+                print(f"    Original index range: {min(self._unique_mapping_cache.values())} - {max(self._unique_mapping_cache.values())}")
+            except Exception as e:
+                print(f"  ⚠ Could not create unique mapping on-the-fly: {e}")
+                print(f"  ⚠ Using embedding index as real_id (will not map to original dataset)")
+        
+        if unique_idx in self._unique_mapping_cache:
+            return self._unique_mapping_cache[unique_idx]
+        else:
+            # Fallback: use index as-is (but this won't match original dataset)
+            return unique_idx
+    
     def adaptive_zca_whitening(self, X, threshold=1e-5, epsilon=1e-5):
         """Apply ZCA whitening"""
         sigma = np.cov(X, rowvar=False)
@@ -108,11 +191,27 @@ class ClusterTransitionMatrixGenerator:
     def load_embeddings(self):
         """Load embeddings for the specified layers"""
         print("\nLoading embeddings...")
+        if self.use_unique_embeddings:
+            print("  Using unique embeddings (for version 1, ~378 samples)")
+            layer_files = self.layer_files_unique
+        else:
+            print("  Using CAS embeddings (for version 2, 152 samples)")
+            layer_files = self.layer_files_cas
+        
         embeddings = {}
         
         for layer_name in self.layer_names:
-            filename = self.layer_files[layer_name]
+            # Try the appropriate file type first
+            filename = layer_files[layer_name]
             filepath = self.embeddings_dir / filename
+            
+            # If not found, try the other type as fallback
+            if not filepath.exists() and self.use_unique_embeddings:
+                # Try CAS as fallback
+                filename = self.layer_files_cas[layer_name]
+                filepath = self.embeddings_dir / filename
+                if filepath.exists():
+                    print(f"  ⚠ Using CAS file for {layer_name} (unique not found)")
             
             if not filepath.exists():
                 print(f"  ✗ {filename} not found, skipping {layer_name}")
@@ -283,22 +382,33 @@ class ClusterTransitionMatrixGenerator:
             
             # Export individual point tracking with real IDs
             n_points = len(previous_labels)
-            for cas_id in range(n_points):
-                # Map CAS index to original dataset index
-                if self.cas_to_original_mapping is not None and cas_id in self.cas_to_original_mapping:
-                    original_id = self.cas_to_original_mapping[cas_id]
+            for embedding_idx in range(n_points):
+                # Map embedding index to original dataset index
+                if self.use_unique_embeddings:
+                    # Version 1: unique embeddings (378 samples)
+                    # Map unique embedding index to original dataset index
+                    if self.unique_to_original_mapping is not None and embedding_idx in self.unique_to_original_mapping:
+                        real_id = self.unique_to_original_mapping[embedding_idx]
+                    else:
+                        # Fallback: try to create mapping on-the-fly
+                        real_id = self._get_unique_to_original_id(embedding_idx)
                 else:
-                    original_id = cas_id
+                    # Version 2: CAS embeddings (152 samples)
+                    # Map CAS index to original dataset index
+                    if self.cas_to_original_mapping is not None and embedding_idx in self.cas_to_original_mapping:
+                        real_id = self.cas_to_original_mapping[embedding_idx]
+                    else:
+                        real_id = embedding_idx
                 
                 # Apply permutation to current cluster label
-                original_curr_cluster = int(current_labels[cas_id])
+                original_curr_cluster = int(current_labels[embedding_idx])
                 aligned_curr_cluster = int(np.where(optimal_permutation == original_curr_cluster)[0][0])
                 
                 individual_transition_data.append({
-                    'real_id': int(original_id),
+                    'real_id': int(real_id),
                     'from_layer': previous_layer,
                     'to_layer': current_layer,
-                    'from_cluster': int(previous_labels[cas_id]),
+                    'from_cluster': int(previous_labels[embedding_idx]),
                     'to_cluster': aligned_curr_cluster
                 })
         
@@ -320,7 +430,48 @@ class ClusterTransitionMatrixGenerator:
         print(f"  Unique real IDs: {df_individual['real_id'].nunique()}")
         print(f"  Real ID range: {df_individual['real_id'].min()} - {df_individual['real_id'].max()}")
         
-        return df_transitions, df_individual
+        # Generate sample_component_paths file with real IDs (matching sample_component_paths_1.csv or _2.csv format)
+        print("\nGenerating sample_component_paths file with real IDs...")
+        sample_paths_data = []
+        
+        n_points = len(gmm_results[self.layer_names[0]]['labels'])
+        
+        for embedding_idx in range(n_points):
+            # Map embedding index to original dataset index for both versions
+            if self.use_unique_embeddings:
+                # Version 1: unique embeddings (378 samples)
+                # Map unique embedding index to original dataset index
+                if self.unique_to_original_mapping is not None and embedding_idx in self.unique_to_original_mapping:
+                    sample_id = self.unique_to_original_mapping[embedding_idx]
+                else:
+                    # Fallback: try to create mapping on-the-fly
+                    sample_id = self._get_unique_to_original_id(embedding_idx)
+            else:
+                # Version 2: CAS embeddings (152 samples)
+                # Map CAS index to original dataset index
+                if self.cas_to_original_mapping is not None and embedding_idx in self.cas_to_original_mapping:
+                    sample_id = self.cas_to_original_mapping[embedding_idx]
+                else:
+                    sample_id = embedding_idx
+            
+            # Get cluster assignments for this point across all layers
+            row_data = {'sample_id': int(sample_id)}
+            for layer_name in self.layer_names:
+                if layer_name in gmm_results:
+                    # Get the cluster assignment for this point
+                    cluster = int(gmm_results[layer_name]['labels'][embedding_idx])
+                    row_data[layer_name] = cluster
+            sample_paths_data.append(row_data)
+        
+        df_sample_paths = pd.DataFrame(sample_paths_data)
+        sample_paths_path = self.output_dir / f'sample_component_paths_{self.version}_with_real_id.csv'
+        df_sample_paths.to_csv(sample_paths_path, index=False)
+        print(f"✓ Saved sample component paths: {sample_paths_path}")
+        print(f"  Total samples: {len(df_sample_paths)}")
+        print(f"  Real ID range: {df_sample_paths['sample_id'].min()} - {df_sample_paths['sample_id'].max()}")
+        print(f"  Layers: {[col for col in df_sample_paths.columns if col != 'sample_id']}")
+        
+        return df_transitions, df_individual, df_sample_paths
     
     def run(self):
         """Run the complete generation pipeline"""
@@ -341,7 +492,7 @@ class ClusterTransitionMatrixGenerator:
             return
         
         # Generate transition matrices
-        df_aggregate, df_individual = self.generate_transition_matrices(embeddings)
+        df_aggregate, df_individual, df_sample_paths = self.generate_transition_matrices(embeddings)
         
         print("\n" + "="*60)
         print("✅ Generation Complete")
@@ -354,6 +505,9 @@ class ClusterTransitionMatrixGenerator:
         print(f"  2. cluster_transition_matrices_{self.version}_individual_real_id.csv")
         print("     - Individual point tracking with real IDs")
         print("     - Columns: real_id, from_layer, to_layer, from_cluster, to_cluster")
+        print(f"  3. sample_component_paths_{self.version}_with_real_id.csv")
+        print("     - Sample component paths with real IDs (matches sample_component_paths format)")
+        print("     - Columns: sample_id (real_id), layer columns with cluster assignments")
 
 
 def main():
