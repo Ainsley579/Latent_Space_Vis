@@ -99,10 +99,10 @@ export default function WindowManager() {
                   onScroll={(scrollLeft) =>
                     syncScatterScroll(idx, scrollLeft)
                   }
-                  clusterFilePath={"/data/scatter_plot_data_by_layer"}
+                  clusterFilePath={idx % 2 === 0 ? "/data/scatter_plot_data_by_layer_1" : "/data/scatter_plot_data_by_layer_2"}
                 />
                 <SankeyDiagram
-                  sampleFile={idx % 2 === 0 ? "/data/real_id_layer_transitions/real_id_layer_transitions1.csv" : "/data/real_id_layer_transitions/real_id_layer_transitions1.csv"}
+                  sampleFile={idx % 2 === 0 ? "/data/real_id_layer_transitions_1/real_id_layer_transitions.csv" : "/data/real_id_layer_transitions_2/real_id_layer_transitions.csv"}
                 />
               </Window>
             </div>
