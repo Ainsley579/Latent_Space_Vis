@@ -30,28 +30,42 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
   const [data, setData] = useState<SankeyData | null>(null);
 
   useEffect(() => {
-    const handleHighlight = (e: any) => {
-      const ids: string[] = e.detail;
-      const svgSel = d3.select(ref.current);
+    // helper to escape CSS class selectors for arbitrary ids
+    const escapeForSelector = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
 
-      svgSel.selectAll(".links path").style("opacity", 0.1);
-      svgSel.selectAll(".sample-trajectories line").style("opacity", 0.1);
+    const applyHighlightToThisSankey = (ids: string[]) => {
+      const svgSel = d3.select(ref.current);
+      // dim main links and sample-trajectories
+      svgSel.selectAll(".links path").attr("opacity", 0.1);
+      svgSel.selectAll(".sample-trajectories line").attr("opacity", 0.05);
 
       ids.forEach(id => {
-        svgSel.selectAll(`.sample-${id}`)
-          .style("opacity", 1)
+        const safeId = escapeForSelector(String(id));
+        svgSel.selectAll(`.sample-${safeId}`)
+          .attr("opacity", 1)
           .attr("stroke-width", 1.8);
       });
     };
 
     const clearHighlight = () => {
       const svgSel = d3.select(ref.current);
-      svgSel.selectAll(".links path").style("opacity", 0.4);
+      svgSel.selectAll(".links path").attr("opacity", 0.4);
       svgSel.selectAll(".sample-trajectories line")
-        .style("opacity", 0)
+        .attr("opacity", 0)
         .attr("stroke-width", 0.5);
 
+      // clear scatter plots globally as well
       window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
+      // window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
+      // keep global state in sync
+      (window as any).__GLOBAL_SANKY_HIGHLIGHT_IDS = [];
+    };
+
+    const handleHighlight = (e: any) => {
+      const ids: string[] = e?.detail || [];
+      // store globally so newly mounted sankeys can pick it up
+      (window as any).__GLOBAL_SANKY_HIGHLIGHT_IDS = ids;
+      applyHighlightToThisSankey(ids);
     };
 
     window.addEventListener("sankey-highlight-ids", handleHighlight);
@@ -102,64 +116,27 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
     let nodeSamplesMap = new Map<string, string[]>();
     let currentHighlightedNode: string | null = null;
 
-      function highlightSamplesForNode(nodeName: string) {
-        const samples = nodeSamplesMap.get(nodeName) || [];
-        // Debug: Log which node was clicked and how many samples are associated
-        console.log("Node clicked:", nodeName, "Samples found:", samples.length);
-        const svgSel = d3.select(svg.node());
+    function highlightSamplesForNode(nodeName: string) {
+      const samples = nodeSamplesMap.get(nodeName) || [];
+      const svgSel = d3.select(svg.node());
+      svgSel.selectAll(".links path")
+        .transition().duration(200)
+        .attr("stroke", "#ccc")
+        .attr("opacity", 0.2);
 
-        // If toggling off (clicking same node again)
-        if (currentHighlightedNode === nodeName) {
-          // Debug: Log toggling off node
-          console.log("Toggling off node:", nodeName);
-          // Restore all main sankey paths to normal color/opacity
-          svgSel.selectAll(".links path")
-            .transition().duration(300)
-            .attr("stroke", function(d: any) {
-              // Restore color by layer
-              const sourceNode = d.source;
-              const sourceLayer = typeof sourceNode === "object" && sourceNode.name
-                ? getLayerName(sourceNode.name)
-                : "";
-              return layerColorMap.get(sourceLayer) ?? "#000";
-            })
-            .attr("opacity", 0.4);
-          svgSel.selectAll(".sample-trajectories line")
-            .transition().duration(300)
-            .attr("opacity", 0);
-          svgSel.selectAll(".sample-points circle")
-            .transition().duration(300)
-            .attr("opacity", 0);
-          currentHighlightedNode = null;
-          window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
-          return;
-        }
+      svgSel.selectAll(".sample-trajectories line")
+        .transition().duration(200)
+        .attr("opacity", 0);
+      svgSel.selectAll(".sample-points circle")
+        .transition().duration(200)
+        .attr("opacity", 0);
 
-        currentHighlightedNode = nodeName;
-
-        // Dim all main sankey paths
-        svgSel.selectAll(".links path")
-          .transition().duration(200)
-          .attr("stroke", "#ccc")
-          .attr("opacity", 0.2);
-
-        // Hide all sample lines and points
-        svgSel.selectAll(".sample-trajectories line")
-          .transition().duration(200)
-          .attr("opacity", 0);
-        svgSel.selectAll(".sample-points circle")
-          .transition().duration(200)
-          .attr("opacity", 0);
-
-        // Debug: Log number of samples being highlighted
-        console.log("Highlighting", samples.length, "samples for node", nodeName);
-        // Show only the samples associated with this node
-        samples.forEach(sample_id => {
-          svgSel.selectAll(`.sample-${sample_id}`)
-            .transition().duration(300)
-            .attr("opacity", 0.8);
-        });
-      }
+      samples.forEach(sample_id => {
+        svgSel.selectAll(`.sample-${sample_id}`)
+          .transition().duration(300)
+          .attr("opacity", 0.8);
+      });
+    }
 
     const svg = d3.select(ref.current);
     svg.selectAll("*").remove();
@@ -218,21 +195,62 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       .selectAll("line")
       .data(layoutNodes)
       .join("line")
-      .attr("x1", (d) => (d.x0 ?? 0) + sankeyGen.nodeWidth()/2)
-      .attr("x2", (d) => (d.x0 ?? 0) + sankeyGen.nodeWidth()/2)
+      .attr("x1", (d) => (d.x0 ?? 0) + sankeyGen.nodeWidth() / 2)
+      .attr("x2", (d) => (d.x0 ?? 0) + sankeyGen.nodeWidth() / 2)
       .attr("y1", (d) => d.y0 ?? 0)
       .attr("y2", (d) => d.y1 ?? 0)
       .attr("stroke", "black")
       .attr("stroke-width", sankeyGen.nodeWidth())
       .on("click", (event, d) => {
-        highlightSamplesForNode(d.name);
-
         const samples = nodeSamplesMap.get(d.name) || [];
 
+        // ✅ 如果点击的是当前已经高亮的节点，则清除所有高亮
+        if (currentHighlightedNode === d.name) {
+          // 本窗口恢复默认样式
+          const svgSel = d3.select(svg.node());
+          svgSel.selectAll(".links path")
+            .transition().duration(300)
+            .attr("stroke", (d: any) => {
+              const sourceNode = d.source;
+              const sourceLayer = typeof sourceNode === "object" && sourceNode.name
+                ? getLayerName(sourceNode.name)
+                : "";
+              return layerColorMap.get(sourceLayer) ?? "#000";
+            })
+            .attr("opacity", 0.4);
+
+          svgSel.selectAll(".sample-trajectories line")
+            .transition().duration(300)
+            .attr("opacity", 0);
+
+          svgSel.selectAll(".sample-points circle")
+            .transition().duration(300)
+            .attr("opacity", 0);
+
+          currentHighlightedNode = null;
+
+          // 🔹 广播给所有 Sankey & Scatter 清除高亮
+          window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
+          window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
+          return;
+        }
+
+        // ✅ 否则是新节点 → 更新高亮状态
+        currentHighlightedNode = d.name;
+        highlightSamplesForNode(d.name);
+
+        // 🔹 广播到 scatterplot
         window.dispatchEvent(
           new CustomEvent("scatter-highlight-ids", { detail: samples })
         );
+
+        // 🔹 广播到其他 sankey 窗口
+        window.dispatchEvent(
+          new CustomEvent("sankey-highlight-ids", { detail: samples })
+        );
       });
+
+
 
     // Draw aggregated links as colored wide paths
     const linkGroup = svg
@@ -457,25 +475,25 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
         const sourceLayer = getLayerName(sourceNode.name);
         const strokeColor = layerColorMap.get(sourceLayer) ?? "#999";
 
-      samplesOnLink.forEach(real_id => {
-        const ySource = sampleNodeYMap.get(real_id)?.get(sourceNode.name);
-        const yTarget = sampleNodeYMap.get(real_id)?.get(targetNode.name);
-        if (ySource === undefined || yTarget === undefined) return;
+        samplesOnLink.forEach(real_id => {
+          const ySource = sampleNodeYMap.get(real_id)?.get(sourceNode.name);
+          const yTarget = sampleNodeYMap.get(real_id)?.get(targetNode.name);
+          if (ySource === undefined || yTarget === undefined) return;
 
-        const xSource = (sourceNode.x0 ?? 0) + sankeyGen.nodeWidth()/2;
-        const xTarget = (targetNode.x0 ?? 0) + sankeyGen.nodeWidth()/2;
+          const xSource = (sourceNode.x0 ?? 0) + sankeyGen.nodeWidth() / 2;
+          const xTarget = (targetNode.x0 ?? 0) + sankeyGen.nodeWidth() / 2;
 
-        // Compose CSS class: link key plus sample IDs
-        // E.g., class="link-A_B sample-3"
-        // To keep class names simple, replace '->' with '-' and remove underscores
-        const safeLinkClass = `link-${linkKey.replace(/->/g, "-").replace(/_/g, "_")}`;
-        const sampleClass = `sample-${real_id}`;
-        lineData.push({
-          x1: xSource, y1: ySource, x2: xTarget, y2: yTarget,
-          stroke: strokeColor,
-          className: `${safeLinkClass} ${sampleClass}`
+          // Compose CSS class: link key plus sample IDs
+          // E.g., class="link-A_B sample-3"
+          // To keep class names simple, replace '->' with '-' and remove underscores
+          const safeLinkClass = `link-${linkKey.replace(/->/g, "-").replace(/_/g, "_")}`;
+          const sampleClass = `sample-${real_id}`;
+          lineData.push({
+            x1: xSource, y1: ySource, x2: xTarget, y2: yTarget,
+            stroke: strokeColor,
+            className: `${safeLinkClass} ${sampleClass}`
+          });
         });
-      });
       });
 
       samplesGroup.selectAll("line")
@@ -497,7 +515,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
         nodeYMap.forEach((y, nodeName) => {
           const node = nodeLayoutMap.get(nodeName);
           if (!node) return;
-          const x = (node.x0 ?? 0) + sankeyGen.nodeWidth()/2;
+          const x = (node.x0 ?? 0) + sankeyGen.nodeWidth() / 2;
           const layerName = getLayerName(node.name);
           const color = layerColorMap.get(layerName) ?? "#999";
 
@@ -510,6 +528,21 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
         });
       });
     });
+
+    // If there is an active global highlight (from other windows), apply it now so
+    // newly created sankey instances reflect the selection.
+    const globalIds: string[] = (window as any).__GLOBAL_SANKY_HIGHLIGHT_IDS || [];
+    if (globalIds.length > 0) {
+      // use the same helper as the event handler: escape selectors
+      const escapeForSelector = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+      // dim base elements
+      svg.selectAll(".links path").attr("opacity", 0.1);
+      svg.selectAll(".sample-trajectories line").attr("opacity", 0.05);
+      globalIds.forEach(id => {
+        const safeId = escapeForSelector(String(id));
+        svg.selectAll(`.sample-${safeId}`).attr("opacity", 1).attr("stroke-width", 1.8);
+      });
+    }
   };
 
   useEffect(() => {
