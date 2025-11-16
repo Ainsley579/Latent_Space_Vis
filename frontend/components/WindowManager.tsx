@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Window from "./Window";
 import SankeyDiagram from "./SankeyDiagram";
 import ScatterPlot from "./ScatterPlot";
+import ControlPanel from "./ControlPanel";
 
 interface WindowData {
   id: string;
@@ -92,6 +93,11 @@ export default function WindowManager() {
                 onClose={closeWindow}
                 totalWindows={windows.length}
               >
+                <ControlPanel
+                  onChange={(params) => {
+                    console.log("User selected:", params);
+                  }}
+                />
                 <ScatterPlot
                   ref={(el) => {
                     if (el) scatterRefs.current[idx] = el;
