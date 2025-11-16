@@ -15,12 +15,6 @@ export default function WindowManager() {
   const windowRefs = useRef<HTMLDivElement[]>([]);
   const scatterRefs = useRef<HTMLDivElement[]>([]);
 
-  const syncVerticalScroll = (index: number, scrollTop: number) => {
-    windowRefs.current.forEach((ref, i) => {
-      if (i !== index && ref) ref.scrollTop = scrollTop;
-    });
-  };
-
   const syncScatterScroll = (index: number, scrollLeft: number) => {
     scatterRefs.current.forEach((ref, i) => {
       if (i !== index && ref) ref.scrollLeft = scrollLeft;
@@ -42,78 +36,75 @@ export default function WindowManager() {
   }, [windows.length]);
 
   return (
-    <div className="p-4">
-      <button
-        className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
-        onClick={openWindow}
-      >
-        + New Window
-      </button>
+    <div style={{ display: "flex", width: "100%" }}>
+      <div style={{ width: "80%", paddingRight: "0.5rem", boxSizing: "border-box" }}>
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
+          onClick={openWindow}
+        >
+          + New Window
+        </button>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            width: "100%",
+            boxSizing: "border-box"
+          }}
+        >
+          {windows.map((w, idx) => {
+            const scatterData = Array.from({ length: 15 }, (_, i) => ({
+              x: Math.random() * 100,
+              y: Math.random() * 100,
+              label: `${idx}-${i}`,
+            }));
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            windows.length <= 1
-              ? "repeat(1, 1fr)" 
-              : "repeat(2, minmax(0, 1fr))",
-          gap: "0.5rem",
-        }}
-      >
-        {windows.map((w, idx) => {
-          const scatterData = Array.from({ length: 15 }, (_, i) => ({
-            x: Math.random() * 100,
-            y: Math.random() * 100,
-            label: `${idx}-${i}`,
-          }));
-
-          const windowHeight = windows.length <= 2 ? "100vh" : "50vh";
-
-          return (
-            <div
-              key={w.id}
-              ref={(el) => {
-                if (el) windowRefs.current[idx] = el;
-              }}
-              onScroll={(e) =>
-                syncVerticalScroll(
-                  idx,
-                  (e.target as HTMLDivElement).scrollTop
-                )
-              }
-              style={{
-                height: windowHeight,
-                overflowY: "auto",
-                transition: "height 0.3s ease",
-              }}
-            >
-              <Window
-                id={w.id}
-                title={w.title}
-                onClose={closeWindow}
-                totalWindows={windows.length}
-              >
-                <ControlPanel
-                  onChange={(params) => {
-                    console.log("User selected:", params);
-                  }}
-                />
-                <ScatterPlot
+            return (
+              <div style={{ width:"100%", maxWidth:"100%", boxSizing:"border-box" }} key={w.id}>
+                <div
                   ref={(el) => {
-                    if (el) scatterRefs.current[idx] = el;
+                    if (el) windowRefs.current[idx] = el;
                   }}
-                  onScroll={(scrollLeft) =>
-                    syncScatterScroll(idx, scrollLeft)
-                  }
-                  clusterFilePath={idx % 2 === 0 ? "/data/scatter_plot_data_by_layer_1" : "/data/scatter_plot_data_by_layer_2"}
-                />
-                <SankeyDiagram
-                  sampleFile={idx % 2 === 0 ? "/data/real_id_layer_transitions_1/real_id_layer_transitions.csv" : "/data/real_id_layer_transitions_2/real_id_layer_transitions.csv"}
-                />
-              </Window>
-            </div>
-          );
-        })}
+                  style={{
+                    width: "100%",
+                    maxWidth: "100%",
+                    boxSizing: "border-box",
+                    overflow: "hidden"
+                  }}
+                >
+                  <Window
+                    id={w.id}
+                    title={w.title}
+                    onClose={closeWindow}
+                    totalWindows={windows.length}
+                  >
+                    <ControlPanel
+                      onChange={(params) => {
+                        console.log("User selected:", params);
+                      }}
+                    />
+                    <ScatterPlot
+                      ref={(el) => {
+                        if (el) scatterRefs.current[idx] = el;
+                      }}
+                      onScroll={(scrollLeft) =>
+                        syncScatterScroll(idx, scrollLeft)
+                      }
+                      clusterFilePath={idx % 2 === 0 ? "/data/scatter_plot_data_by_layer_1" : "/data/scatter_plot_data_by_layer_2"}
+                    />
+                    <SankeyDiagram
+                      sampleFile={idx % 2 === 0 ? "/data/real_id_layer_transitions_1/real_id_layer_transitions.csv" : "/data/real_id_layer_transitions_2/real_id_layer_transitions.csv"}
+                    />
+                  </Window>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ width: "20%", minWidth: "20%", maxWidth: "20%", height: "100vh", overflowY: "auto", background: "#f7f7f7", padding: "1rem", boxSizing: "border-box" }}>
+        {/* Right side panel placeholder */}
+        <h3 style={{ fontWeight: "bold", marginBottom: "1rem" }}>Right Panel</h3>
       </div>
     </div>
   );

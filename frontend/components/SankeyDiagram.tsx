@@ -142,13 +142,15 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
     svg.selectAll("*").remove();
 
     const height = 600;
+    // Always fit SVG inside window with a min width, no overflow
+    const fittedWidth = Math.max(width, 200);
 
     const sankeyGen = sankey<Node, Link>()
       .nodeWidth(5)
       .nodePadding(15)
       .extent([
         [1, 1],
-        [width - 1, height - 5],
+        [width - 20, height - 5], // compress to fit inside available width
       ]);
 
     const { nodes: layoutNodes, links: layoutLinks } = sankeyGen({
@@ -156,7 +158,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       links: data.links.map((d) => Object.assign({}, d)),
     });
 
-    svg.attr("width", width).attr("height", height);
+    svg.attr("width", fittedWidth).attr("height", height);
 
     // helper to extract layer name from node name
     const getLayerName = (fullName: string) => {
@@ -559,8 +561,8 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
   }, [data]);
 
   return (
-    <div ref={containerRef} style={{ width: "100%", height: "600px", position: "relative" }}>
-      <svg ref={ref}></svg>
+    <div ref={containerRef} style={{ width: "100%", height: "600px", position: "relative", overflowX: "hidden" }}>
+      <svg ref={ref}  style={{ width: "100%"}}></svg>
     </div>
   );
 }
