@@ -147,7 +147,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
 
     const sankeyGen = sankey<Node, Link>()
       .nodeWidth(5)
-      .nodePadding(15)
+      .nodePadding(7)
       .extent([
         [1, 1],
         [width - 20, height - 5], // compress to fit inside available width
@@ -179,7 +179,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
     layerNames.forEach((layerName, i) => {
       layerColorMap.set(
         layerName,
-        d3.schemePastel1[i % d3.schemePastel1.length] // ✅ 不加括号，直接取数组元素
+        d3.schemeTableau10[i % d3.schemeTableau10.length] // ✅ 不加括号，直接取数组元素
       );
     });
 
@@ -191,74 +191,11 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       nodesByLayer.set(layerName, nodesInLayer);
     });
 
-    // Draw node lines as thin black vertical lines
-    svg
-      .append("g")
-      .selectAll("line")
-      .data(layoutNodes)
-      .join("line")
-      .attr("x1", (d) => (d.x0 ?? 0) + sankeyGen.nodeWidth() / 2)
-      .attr("x2", (d) => (d.x0 ?? 0) + sankeyGen.nodeWidth() / 2)
-      .attr("y1", (d) => d.y0 ?? 0)
-      .attr("y2", (d) => d.y1 ?? 0)
-      .attr("stroke", "black")
-      .attr("stroke-width", sankeyGen.nodeWidth())
-      .on("click", (event, d) => {
-        const samples = nodeSamplesMap.get(d.name) || [];
-
-        // ✅ 如果点击的是当前已经高亮的节点，则清除所有高亮
-        if (currentHighlightedNode === d.name) {
-          // 本窗口恢复默认样式
-          const svgSel = d3.select(svg.node());
-          svgSel.selectAll(".links path")
-            .transition().duration(300)
-            .attr("stroke", (d: any) => {
-              const sourceNode = d.source;
-              const sourceLayer = typeof sourceNode === "object" && sourceNode.name
-                ? getLayerName(sourceNode.name)
-                : "";
-              return layerColorMap.get(sourceLayer) ?? "#000";
-            })
-            .attr("opacity", 0.4);
-
-          svgSel.selectAll(".sample-trajectories line")
-            .transition().duration(300)
-            .attr("opacity", 0);
-
-          svgSel.selectAll(".sample-points circle")
-            .transition().duration(300)
-            .attr("opacity", 0);
-
-          currentHighlightedNode = null;
-
-          // 🔹 广播给所有 Sankey & Scatter 清除高亮
-          window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
-          window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
-          return;
-        }
-
-        // ✅ 否则是新节点 → 更新高亮状态
-        currentHighlightedNode = d.name;
-        highlightSamplesForNode(d.name);
-
-        // 🔹 广播到 scatterplot
-        window.dispatchEvent(
-          new CustomEvent("scatter-highlight-ids", { detail: samples })
-        );
-
-        // 🔹 广播到其他 sankey 窗口
-        window.dispatchEvent(
-          new CustomEvent("sankey-highlight-ids", { detail: samples })
-        );
-      });
-
-
-
     // Draw aggregated links as colored wide paths
     const linkGroup = svg
       .append("g")
       .attr("fill", "none")
-      .attr("class", "links");
+      .attr("class", "sankey-links");
 
     linkGroup
       .selectAll("path")
@@ -273,20 +210,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       .attr("stroke-width", (d) => Math.max(1, d.width ?? 1))
       .attr("opacity", 0.4);
 
-    // Draw node labels
-    svg
-      .append("g")
-      .selectAll("text")
-      .data(layoutNodes)
-      .join("text")
-      .attr("x", (d) => (d.x0 ?? 0) - 6)
-      .attr("y", (d) => ((d.y1 ?? 0) + (d.y0 ?? 0)) / 2)
-      .attr("dy", "0.35em")
-      .attr("text-anchor", "end")
-      .text((d) => d.name)
-      .filter((d) => (d.x0 ?? 0) < width / 2)
-      .attr("x", (d) => (d.x1 ?? 0) + 6)
-      .attr("text-anchor", "start");
+
 
     // ----------- New: Draw sample-level points and trajectories -----------
 
@@ -509,6 +433,97 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
         .attr("stroke-width", 0.5)
         .attr("opacity", 0)
         .attr("class", d => d.className);
+
+      // Draw node lines as thin vertical lines colored by layer (on top of links and sample trajectories)
+      const nodeLineGroup = svg.append("g").attr("class", "node-lines");
+      nodeLineGroup
+        .selectAll("line")
+        .data(layoutNodes)
+        .join("line")
+        .attr("x1", (d) => (d.x0 ?? 0) + sankeyGen.nodeWidth() / 2)
+        .attr("x2", (d) => (d.x0 ?? 0) + sankeyGen.nodeWidth() / 2)
+        .attr("y1", (d) => d.y0 ?? 0)
+        .attr("y2", (d) => d.y1 ?? 0)
+        .attr("stroke", (d: any) => {
+            const layerName = getLayerName(d.name);
+            return layerColorMap.get(layerName) ?? "#000";
+        })
+        .attr("stroke-width", sankeyGen.nodeWidth() + 1.5)
+        .style("cursor", "pointer")
+        .on("mouseover", function (event, d) {
+            d3.select(this)
+              .attr("stroke", "black")
+              .attr("stroke-width", sankeyGen.nodeWidth() + 3);
+        })
+        .on("mouseout", function (event, d) {
+            const layerName = getLayerName(d.name);
+            d3.select(this)
+              .attr("stroke", layerColorMap.get(layerName) ?? "#000")
+              .attr("stroke-width", sankeyGen.nodeWidth() + 1.5);
+        })
+        .on("click", (event, d) => {
+          const samples = nodeSamplesMap.get(d.name) || [];
+
+          // ✅ 如果点击的是当前已经高亮的节点，则清除所有高亮
+          if (currentHighlightedNode === d.name) {
+            // 本窗口恢复默认样式
+            const svgSel = d3.select(svg.node());
+            svgSel.selectAll(".sankey-links path")
+              .transition().duration(300)
+              .attr("stroke", (d: any) => {
+                const sourceNode = d.source;
+                const sourceLayer = typeof sourceNode === "object" && sourceNode.name
+                  ? getLayerName(sourceNode.name)
+                  : "";
+                return layerColorMap.get(sourceLayer) ?? "#000";
+              })
+              .attr("opacity", 0.4);
+
+            svgSel.selectAll(".sample-trajectories line")
+              .transition().duration(300)
+              .attr("opacity", 0);
+
+            svgSel.selectAll(".sample-points circle")
+              .transition().duration(300)
+              .attr("opacity", 0);
+
+            currentHighlightedNode = null;
+
+            // 🔹 广播给所有 Sankey & Scatter 清除高亮
+            window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
+            window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
+            return;
+          }
+
+          // ✅ 否则是新节点 → 更新高亮状态
+          currentHighlightedNode = d.name;
+          highlightSamplesForNode(d.name);
+
+          // 🔹 广播到 scatterplot
+          window.dispatchEvent(
+            new CustomEvent("scatter-highlight-ids", { detail: samples })
+          );
+
+          // 🔹 广播到其他 sankey 窗口
+          window.dispatchEvent(
+            new CustomEvent("sankey-highlight-ids", { detail: samples })
+          );
+        });
+
+      // Draw node labels
+      svg
+        .append("g")
+        .selectAll("text")
+        .data(layoutNodes)
+        .join("text")
+        .attr("x", (d) => (d.x0 ?? 0) - 6)
+        .attr("y", (d) => ((d.y1 ?? 0) + (d.y0 ?? 0)) / 2)
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .text((d) => d.name)
+        .filter((d) => (d.x0 ?? 0) < width / 2)
+        .attr("x", (d) => (d.x1 ?? 0) + 6)
+        .attr("text-anchor", "start");
 
       // Draw sample points as small circles
       const samplePointsGroup = svg.append("g").attr("class", "sample-points");
