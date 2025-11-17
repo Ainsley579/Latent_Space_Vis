@@ -38,6 +38,9 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       // dim main links and sample-trajectories
       svgSel.selectAll(".links path").attr("opacity", 0.1);
       svgSel.selectAll(".sample-trajectories line").attr("opacity", 0.05);
+      // dim all sankey links globally on scatter highlight
+      svgSel.selectAll(".sankey-links path")
+        .attr("opacity", 0.1);
 
       ids.forEach(id => {
         const safeId = escapeForSelector(String(id));
