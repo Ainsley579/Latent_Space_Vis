@@ -24,10 +24,15 @@ def generate():
     output_base = "../../frontend/public/data"
     window_output_dir = os.path.join(output_base, str(window_id))
     os.makedirs(window_output_dir, exist_ok=True)
+    layer_unique = ""
+    if data_size==374:
+        layer_unique = "_unique"
+    elif data_size==3487:
+        layer_unique = "_all"
     cmd = [
         "python",
         "../scripts/GNNGMMAnalyzer/generate_real_id_tracking_csv.py",
-        "--embeddings_dir", f"../scripts/dimenet{model}_embeddings",
+        "--embeddings_dir", f"../scripts/dimenet{model}_embeddings"+layer_unique,
         "--output_dir", window_output_dir,
     ]
 
