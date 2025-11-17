@@ -95,6 +95,7 @@ export default function Window({ id, title, onClose, children, totalWindows = 1,
                 Model
               </label>
               <select
+                id={`model-select-${id}`}
                 onChange={(e) => {
                   window.dispatchEvent(
                     new CustomEvent("window-model-change", {
@@ -116,7 +117,16 @@ export default function Window({ id, title, onClose, children, totalWindows = 1,
             <button
               className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
               onClick={() => {
-                window.dispatchEvent(new CustomEvent("window-generate", { detail: id }));
+                window.dispatchEvent(
+                  new CustomEvent("window-generate", {
+                    detail: {
+                      id,
+                      dataSize,
+                      featureCount,
+                      model: (document.querySelector(`#model-select-${id}`) as HTMLSelectElement)?.value || "noaug"
+                    }
+                  })
+                );
               }}
             >
               Generate

@@ -111,7 +111,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       });
       setData({ nodes, links });
     });
-  }, []);
+  }, [sampleFile]);
 
   const drawSankey = (width: number, data: SankeyData) => {
     let linkSamplesMap = new Map<string, string[]>();

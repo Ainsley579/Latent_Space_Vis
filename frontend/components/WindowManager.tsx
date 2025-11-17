@@ -8,12 +8,48 @@ import ControlPanel from "./ControlPanel";
 interface WindowData {
   id: string;
   title: string;
+  sankeyCsv?: string;
+  scatterCsv?: string;
 }
 
 export default function WindowManager() {
   const [windows, setWindows] = useState<WindowData[]>([]);
   const windowRefs = useRef<HTMLDivElement[]>([]);
   const scatterRefs = useRef<HTMLDivElement[]>([]);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      const payload = e.detail;
+      fetch("http://127.0.0.1:5001/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          windowId: payload.id,
+          dataSize: payload.dataSize,
+          featureCount: payload.featureCount,
+          model: payload.model
+        })
+      })
+        .then(res => res.json())
+        .then(json => {
+          console.log("Generate done:", json);
+          setWindows(prev =>
+            prev.map(w =>
+              w.id === json.windowId
+                ? {
+                    ...w,
+                    sankeyCsv: `/data/${json.windowId}/real_id_layer_transitions/real_id_layer_transitions.csv`,
+                    scatterCsv: `/data/${json.windowId}/scatter/scatter.csv`
+                  }
+                : w
+            )
+          );
+        })
+        .catch(err => console.error("Generate error:", err));
+    };
+    window.addEventListener("window-generate", handler);
+    return () => window.removeEventListener("window-generate", handler);
+  }, []);
 
   const syncScatterScroll = (index: number, scrollLeft: number) => {
     scatterRefs.current.forEach((ref, i) => {
@@ -92,9 +128,13 @@ export default function WindowManager() {
                       }
                       clusterFilePath={idx % 2 === 0 ? "/data/scatter_plot_data_by_layer_1" : "/data/scatter_plot_data_by_layer_2"}
                     />
-                    <SankeyDiagram
-                      sampleFile={idx % 2 === 0 ? "/data/real_id_layer_transitions_1/real_id_layer_transitions.csv" : "/data/real_id_layer_transitions_2/real_id_layer_transitions.csv"}
-                    />
+                    {w.sankeyCsv ? (
+                      <SankeyDiagram sampleFile={w.sankeyCsv} />
+                    ) : (
+                      <div style={{ opacity: 0.5, padding: "1rem", fontSize: "0.9rem" }}>
+                        Waiting for backend to generate Sankey…
+                      </div>
+                    )}
                   </Window>
                 </div>
               </div>
