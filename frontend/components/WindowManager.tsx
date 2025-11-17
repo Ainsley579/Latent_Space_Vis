@@ -20,6 +20,14 @@ export default function WindowManager() {
   useEffect(() => {
     const handler = (e: any) => {
       const payload = e.detail;
+      // Set sankeyCsv and scatterCsv to undefined before sending request
+      setWindows(prev =>
+        prev.map(w =>
+          w.id === payload.id
+            ? { ...w, sankeyCsv: undefined, scatterCsv: undefined }
+            : w
+        )
+      );
       fetch("http://127.0.0.1:5001/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

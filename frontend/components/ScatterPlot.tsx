@@ -17,7 +17,6 @@ interface ScatterPlotProps {
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
   ({ onScroll, clusterFilePath, totalWindows }, ref) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const hasRenderedRef = useRef(false);
     // Move selectedIDs to top-level so it's accessible in clearScatter and run
     let selectedIDs = new Set<string>();
     useEffect(() => {
@@ -44,6 +43,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           .attr("r", 4);
         // also clear any active brushes
         d3.selectAll(".brush").call(d3.brush().clear);
+        window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
       };
 
       window.addEventListener("scatter-highlight-ids", handleScatterHighlight);
@@ -59,8 +59,6 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
     useEffect(() => {
       const run = async () => {
-        if (hasRenderedRef.current) return;
-        hasRenderedRef.current = true;
         const container = containerRef.current;
         if (!container) return;
         container.innerHTML = "";

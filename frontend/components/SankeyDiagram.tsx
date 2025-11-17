@@ -52,15 +52,28 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
 
     const clearHighlight = () => {
       const svgSel = d3.select(ref.current);
-      svgSel.selectAll(".links path").attr("opacity", 0.4);
+
+      // Restore base sankey link opacity
+      svgSel.selectAll(".sankey-links path")
+        .attr("opacity", 0.4);
+
+      // Restore aggregated layer links
+      svgSel.selectAll(".links path")
+        .attr("opacity", 0.4);
+
+      // Hide all sample trajectories
       svgSel.selectAll(".sample-trajectories line")
         .attr("opacity", 0)
         .attr("stroke-width", 0.5);
 
-      // clear scatter plots globally as well
-      window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
-      // window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
-      // keep global state in sync
+      // Hide sample points
+      svgSel.selectAll(".sample-points circle")
+        .attr("opacity", 0);
+
+      // DO NOT force scatter to clear itself here — scatter handles its own clearing
+      // Removed: window.dispatchEvent("scatter-highlight-clear")
+
+      // reset global highlight state
       (window as any).__GLOBAL_SANKY_HIGHLIGHT_IDS = [];
     };
 
