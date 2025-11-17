@@ -223,19 +223,67 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
     }, [clusterFilePath]);
 
     return (
-      <div
-        ref={containerRef}
-        onScroll={(e) =>
-          onScroll?.((e.target as HTMLDivElement).scrollLeft)
-        }
-        style={{
+      <div>
+        <div style={{
           display: "flex",
           flexDirection: "row",
-          overflowX: "auto",
-          width: "100%",
-          paddingBottom: "0.5rem",
-        }}
-      ></div>
+          gap: "1rem",
+          alignItems: "center",
+          padding: "0.5rem 0",
+          borderBottom: "1px solid #ddd",
+          marginBottom: "0.5rem"
+        }}>
+          <div>
+            <label style={{ fontSize: "0.8rem", marginRight: "0.5rem" }}>Dimensionality Reduction</label>
+            <select
+              style={{ padding: "2px 6px", fontSize: "0.8rem" }}
+              onChange={(e) => {
+                window.dispatchEvent(
+                  new CustomEvent("scatter-method-change", {
+                    detail: e.target.value
+                  })
+                );
+              }}
+            >
+              <option value="umap">UMAP</option>
+              <option value="tsne">t-SNE</option>
+              <option value="pca">PCA</option>
+              <option value="lle">LLE</option>
+              <option value="isomap">Isomap</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ fontSize: "0.8rem", marginRight: "0.5rem" }}>Color Legend</label>
+            <select
+              style={{ padding: "2px 6px", fontSize: "0.8rem" }}
+              onChange={(e) => {
+                window.dispatchEvent(
+                  new CustomEvent("scatter-color-legend-change", {
+                    detail: e.target.value
+                  })
+                );
+              }}
+            >
+              <option value="cluster">Cluster</option>
+              <option value="density">Density</option>
+            </select>
+          </div>
+        </div>
+        <div
+          ref={containerRef}
+          onScroll={(e) =>
+            onScroll?.((e.target as HTMLDivElement).scrollLeft)
+          }
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            overflowX: "auto",
+            width: "100%",
+            paddingBottom: "0.5rem",
+          }}
+        ></div>
+      </div>
     );
   }
 );

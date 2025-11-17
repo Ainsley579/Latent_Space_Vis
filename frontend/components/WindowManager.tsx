@@ -78,11 +78,11 @@ export default function WindowManager() {
                     onClose={closeWindow}
                     totalWindows={windows.length}
                   >
-                    <ControlPanel
+                    {/* <ControlPanel
                       onChange={(params) => {
                         console.log("User selected:", params);
                       }}
-                    />
+                    /> */}
                     <ScatterPlot
                       ref={(el) => {
                         if (el) scatterRefs.current[idx] = el;
@@ -102,7 +102,7 @@ export default function WindowManager() {
           })}
         </div>
       </div>
-      <div style={{ width: "20%", minWidth: "20%", maxWidth: "20%", height: "100vh", overflowY: "auto", background: "#f7f7f7", padding: "1rem", boxSizing: "border-box" }}>
+      <div style={{ width: "20%", minWidth: "20%", maxWidth: "20%", height: "200vh", overflowY: "auto", background: "#f7f7f7", padding: "1rem", boxSizing: "border-box" }}>
         {/* Right side panel placeholder */}
         <h3 style={{ fontWeight: "bold", marginBottom: "1rem" }}>Right Panel</h3>
       </div>

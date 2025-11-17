@@ -60,46 +60,6 @@ export default function ControlPanel({ onChange }) {
           />
         </Box>
       </Box>
-
-      <Box sx={{ minWidth: 180, mr: 2 }}>
-        <Typography variant="body2">Dimensionality Reduction</Typography>
-        <Box sx={{ width: 140 }}>
-          <Select
-            value={method}
-            onChange={(e) => {
-              setMethod(e.target.value);
-              fireChange(dataSize, featureSize, e.target.value, colorLegend);
-            }}
-            fullWidth
-            size="small"
-          >
-            <MenuItem value="umap">UMAP</MenuItem>
-            <MenuItem value="tsne">t-SNE</MenuItem>
-            <MenuItem value="pca">PCA</MenuItem>
-            <MenuItem value="lle">LLE</MenuItem>
-            <MenuItem value="isomap">Isomap</MenuItem>
-          </Select>
-        </Box>
-      </Box>
-
-      {/* New Color Legend control */}
-      <Box sx={{ minWidth: 150, mr: 2 }}>
-        <Typography variant="body2">Color Legend</Typography>
-        <Box sx={{ width: 140 }}>
-          <Select
-            value={colorLegend}
-            onChange={(e) => {
-              setColorLegend(e.target.value);
-              fireChange(dataSize, featureSize, method, e.target.value);
-            }}
-            fullWidth
-            size="small"
-          >
-            <MenuItem value="cluster">Cluster</MenuItem>
-            <MenuItem value="density">Density</MenuItem>
-          </Select>
-        </Box>
-      </Box>
     </Box>
   );
 }
