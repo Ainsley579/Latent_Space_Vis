@@ -15,8 +15,8 @@ interface WindowProps {
 
 export default function Window({ id, title, onClose, children, totalWindows = 1, clusterFile, sampleFile }: WindowProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const [dataSize, setDataSize] = useState(5000);
-  const [featureCount, setFeatureCount] = useState(100);
+  const [dataSize, setDataSize] = useState(374);
+  const [featureCount, setFeatureCount] = useState(128);
   // const width =
   //   totalWindows <= 1
   //     ? "100%"
@@ -52,44 +52,65 @@ export default function Window({ id, title, onClose, children, totalWindows = 1,
               <label className="text-xs opacity-70">
                 Data Size: <span className="font-semibold">{dataSize}</span>
               </label>
-              <input
-                type="range"
-                min="0"
-                max="10000"
+              <select
                 value={dataSize}
-                className="w-32"
                 onChange={(e) => {
                   const value = Number(e.target.value);
                   setDataSize(value);
                   window.dispatchEvent(
-                    new CustomEvent("window-data-size-change", {
-                      detail: value
-                    })
+                    new CustomEvent("window-data-size-change", { detail: value })
                   );
                 }}
-              />
+                className="border rounded px-2 py-1 text-sm"
+              >
+                <option value={374}>374</option>
+                <option value={152}>152</option>
+                <option value={3487}>3487</option>
+              </select>
             </div>
 
             <div className="flex flex-col">
               <label className="text-xs opacity-70">
                 Feature Count: <span className="font-semibold">{featureCount}</span>
               </label>
-              <input
-                type="range"
-                min="0"
-                max="500"
+              <select
                 value={featureCount}
-                className="w-32"
                 onChange={(e) => {
                   const value = Number(e.target.value);
                   setFeatureCount(value);
                   window.dispatchEvent(
-                    new CustomEvent("window-feature-count-change", {
-                      detail: value
+                    new CustomEvent("window-feature-count-change", { detail: value })
+                  );
+                }}
+                className="border rounded px-2 py-1 text-sm"
+              >
+                <option value={128}>128</option>
+                <option value={256}>256</option>
+                <option value={512}>512</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-xs opacity-70">
+                Model
+              </label>
+              <select
+                onChange={(e) => {
+                  window.dispatchEvent(
+                    new CustomEvent("window-model-change", {
+                      detail: e.target.value
                     })
                   );
                 }}
-              />
+                className="border rounded px-2 py-1 text-sm"
+                defaultValue="noaug"
+              >
+                <option value="noaug">noaug</option>
+                <option value="10conf">10conf</option>
+                <option value="5conf">5conf</option>
+                <option value="20conf">20conf</option>
+                <option value="100conf">100conf</option>
+              </select>
             </div>
 
             <button
