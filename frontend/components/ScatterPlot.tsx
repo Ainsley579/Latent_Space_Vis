@@ -66,15 +66,15 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         container.innerHTML = "";
 
         const layerFiles = [
-          "scatter_plot_data_emb.csv",
-          "scatter_plot_data_output_block_0.csv",
-          "scatter_plot_data_output_block_1.csv",
-          "scatter_plot_data_output_block_2.csv",
-          "scatter_plot_data_output_block_3.csv",
-          "scatter_plot_data_output_block_4.csv",
-          "scatter_plot_data_u_mlp_input.csv",
-          "scatter_plot_data_u_mlp_l1.csv",
-          "scatter_plot_data_u_mlp_l2.csv",
+          "emb.csv",
+          "output_block_0.csv",
+          "output_block_1.csv",
+          "output_block_2.csv",
+          "output_block_3.csv",
+          "output_block_4.csv",
+          "u_mlp_input.csv",
+          "u_mlp_l1.csv",
+          "u_mlp_l2.csv",
         ];
 
         const height = 200;
@@ -106,7 +106,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             .style("borderRadius", "8px")
             .style("background", "#fafafa");
 
-          const filePath = `${clusterFilePath}/${layerFiles[i]}`;
+          const filePath = `${clusterFilePath}/scatter_plot_data_${layerFiles[i].replace(".csv","")}.csv`;
           const localData = await d3.csv(filePath, d => ({
             x: +d.x,
             y: +d.y,

@@ -33,11 +33,19 @@ def generate():
 
     try:
         subprocess.run(cmd, check=True)
+        # Run the scatter plot data script
+        scatter_cmd = [
+            "python",
+            "../scripts/GNNGMMAnalyzer/generate_scatter_plot_data.py",
+            "--embeddings_dir", f"../scripts/dimenet{model}_embeddings",
+            "--output_dir", os.path.join(window_output_dir, "scatter_plot_data_by_layer")
+        ]
+        subprocess.run(scatter_cmd, check=True)
         return jsonify({
             "status": "ok",
             "windowId": window_id,
-            "layer_csv": f"/data/{window_id}/real_id_layer_transitions.csv",
-            "scatter_csv": f"/data/{window_id}/scatter.csv"
+            "layer_csv": f"/data/{window_id}/real_id_layer_transitions/real_id_layer_transitions.csv",
+            "scatter_csv": f"/data/{window_id}/scatter_plot_data_by_layer"
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500

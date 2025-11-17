@@ -39,7 +39,7 @@ export default function WindowManager() {
                 ? {
                     ...w,
                     sankeyCsv: `/data/${json.windowId}/real_id_layer_transitions/real_id_layer_transitions.csv`,
-                    scatterCsv: `/data/${json.windowId}/scatter/scatter.csv`
+                    scatterCsv: `/data/${json.windowId}/scatter_plot_data_by_layer/scatter_plot_data_by_layer`
                   }
                 : w
             )
@@ -119,15 +119,19 @@ export default function WindowManager() {
                         console.log("User selected:", params);
                       }}
                     /> */}
-                    <ScatterPlot
-                      ref={(el) => {
-                        if (el) scatterRefs.current[idx] = el;
-                      }}
-                      onScroll={(scrollLeft) =>
-                        syncScatterScroll(idx, scrollLeft)
-                      }
-                      clusterFilePath={idx % 2 === 0 ? "/data/scatter_plot_data_by_layer_1" : "/data/scatter_plot_data_by_layer_2"}
-                    />
+                    {w.scatterCsv ? (
+                      <ScatterPlot
+                        ref={(el) => {
+                          if (el) scatterRefs.current[idx] = el;
+                        }}
+                        onScroll={(scrollLeft) => syncScatterScroll(idx, scrollLeft)}
+                        clusterFilePath={w.scatterCsv}
+                      />
+                    ) : (
+                      <div style={{ opacity: 0.5, padding: "1rem", fontSize: "0.9rem" }}>
+                        Waiting for backend to generate Scatter Plot…
+                      </div>
+                    )}
                     {w.sankeyCsv ? (
                       <SankeyDiagram sampleFile={w.sankeyCsv} />
                     ) : (
