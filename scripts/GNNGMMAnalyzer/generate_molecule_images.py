@@ -217,7 +217,7 @@ def generate_images_for_molecules(molecules, output_dir, image_size=(400, 400),
 
 
 def process_all_csv_files(data_dir, output_dir, image_size=(400, 400), 
-                          primary_molecule='startingmat', include_all=True):
+                          primary_molecule='product', include_all=True):
     """Process all CSV files and generate molecule images"""
     
     data_dir = Path(data_dir)
@@ -305,8 +305,8 @@ def main():
                        help='Output directory for images (default: frontend/public/data/molecule_images)')
     parser.add_argument('--image_size', type=int, nargs=2, default=[400, 400],
                        help='Image size in pixels (default: 400 400)')
-    parser.add_argument('--primary_molecule', type=str, default='startingmat',
-                       help='Primary molecule type to generate (default: startingmat)')
+    parser.add_argument('--primary_molecule', type=str, default='product',
+                       help='Primary molecule type to generate (default: product, options: product, startingmat, ligand, solvent)')
     parser.add_argument('--include_all', action='store_true', default=True,
                        help='Generate images for all molecule types (default: True)')
     parser.add_argument('--primary_only', action='store_true',
