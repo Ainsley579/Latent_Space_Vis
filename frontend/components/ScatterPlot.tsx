@@ -16,9 +16,22 @@ interface ScatterPlotProps {
 
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
   ({ onScroll, clusterFilePath, totalWindows }, ref) => {
+    const tooltip = d3.select("body")
+      .append("div")
+      .attr("class", "scatter-tooltip")
+      .style("position", "absolute")
+      .style("padding", "4px")
+      .style("background", "white")
+      .style("border", "1px solid #ccc")
+      .style("borderRadius", "4px")
+      .style("pointerEvents", "none")
+      .style("opacity", 0);
+
     const containerRef = useRef<HTMLDivElement | null>(null);
     // Move selectedIDs to top-level so it's accessible in clearScatter and run
     let selectedIDs = new Set<string>();
+    const [lassoEnabled, setLassoEnabled] = React.useState(false);
+
     useEffect(() => {
       const handleScatterHighlight = (e: any) => {
         const ids: string[] = e.detail;
@@ -41,8 +54,16 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           .duration(150)
           .style("opacity", 0.8)
           .attr("r", 4);
-        // also clear any active brushes
-        d3.selectAll(".brush").call(d3.brush().clear);
+        // safely clear active brushes only when lasso is enabled
+        if (lassoEnabled) {
+          d3.selectAll(".brush").each(function () {
+            const brushG = d3.select(this);
+            const state = (brushG.node() as any).__brush;
+            if (state) {
+              brushG.call(d3.brush().move, null);
+            }
+          });
+        }
         window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
       };
 
@@ -146,6 +167,8 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           // Add hover events to dim others and highlight same real_id across all plots
           circles
             .on("mouseover", function (event, d) {
+              if (lassoEnabled) return;
+
               const idClass = `real-${d.real_id}`;
 
               d3.selectAll(".scatter-point")
@@ -158,13 +181,34 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                 .duration(150)
                 .style("opacity", 1)
                 .attr("r", 6);
+
+              tooltip
+                .html(`<img src="/data/molecule_images/${d.real_id}_ligand.png" style="width:200px;height:auto;" />`)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY + 10) + "px")
+                .transition()
+                .duration(150)
+                .style("opacity", 1);
+
+              window.dispatchEvent(
+                new CustomEvent("sankey-highlight-ids", {
+                  detail: [d.real_id],
+                })
+              );
             })
             .on("mouseout", function () {
+              if (lassoEnabled) return;
+
               d3.selectAll(".scatter-point")
                 .transition()
                 .duration(150)
                 .style("opacity", 0.8)
                 .attr("r", 4);
+              tooltip
+                .transition()
+                .duration(150)
+                .style("opacity", 0);
+              window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
               window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
             });
 
@@ -210,15 +254,19 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             );
           };
 
-          brushLayer.call(
-            d3.brush()
-              .extent([[0, 0], [svgWidth, height]])
-              .on("brush end", brushed)
-          );
+          if (lassoEnabled) {
+            brushLayer.call(
+              d3.brush()
+                .extent([[0, 0], [svgWidth, height]])
+                .on("brush end", brushed)
+            );
+          } else {
+            brushLayer.selectAll("*").remove();
+          }
         }
       };
       run();
-    }, [clusterFilePath]);
+    }, [clusterFilePath, lassoEnabled]);
 
     return (
       <div>
@@ -267,6 +315,19 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
               <option value="density">Density</option>
             </select>
           </div>
+          <button
+            onClick={() => setLassoEnabled(!lassoEnabled)}
+            style={{
+              padding: "4px 8px",
+              fontSize: "0.8rem",
+              background: lassoEnabled ? "#c62828" : "#2e7d32",
+              color: "white",
+              borderRadius: "4px",
+              marginLeft: "1rem",
+            }}
+          >
+            {lassoEnabled ? "Disable Lasso" : "Enable Lasso"}
+          </button>
         </div>
         <div
           ref={containerRef}

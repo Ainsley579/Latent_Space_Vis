@@ -352,7 +352,8 @@ class ScatterPlotDataGenerator:
         df = pd.DataFrame(all_data)
         
         # Save combined CSV with version suffix
-        combined_path = self.output_dir / f'scatter_plot_data_all_layers_{self.version}.csv'
+        # combined_path = self.output_dir / f'scatter_plot_data_all_layers_{self.version}.csv'
+        combined_path = self.output_dir / f'scatter_plot_data_all_layers.csv'
         df.to_csv(combined_path, index=False)
         print(f"✓ Saved combined CSV: {combined_path}")
         print(f"  Total points: {len(df)}")
@@ -360,7 +361,8 @@ class ScatterPlotDataGenerator:
         print(f"  Real ID range: {df['real_id'].min()} - {df['real_id'].max()}")
         
         # Save individual CSV files per layer with version suffix
-        layer_dir = self.output_dir / f'scatter_plot_data_by_layer_{self.version}'
+        # layer_dir = self.output_dir / f'scatter_plot_data_by_layer_{self.version}'
+        layer_dir = self.output_dir / f'scatter_plot_data_by_layer'
         layer_dir.mkdir(parents=True, exist_ok=True)
         
         for layer_name in df['layer'].unique():
@@ -393,7 +395,8 @@ class ScatterPlotDataGenerator:
         }
         
         # Save metadata as JSON with version suffix
-        metadata_path = self.output_dir / f'scatter_plot_metadata_{self.version}.json'
+        # metadata_path = self.output_dir / f'scatter_plot_metadata_{self.version}.json'
+        metadata_path = self.output_dir / f'scatter_plot_metadata.json'
         with open(metadata_path, 'w') as f:
             json.dump(metadata, f, indent=2)
         
