@@ -608,86 +608,113 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
         .on("mouseout", function() {
             tooltip.style("opacity", 0);
         });
+      // ----------- Multi‑color stacked node rectangles (train/test/experimental/missing) -----------
+      const nodeGroup = svg.append("g").attr("class", "node-stacks");
 
-      // Draw node lines as thin vertical lines colored by layer (on top of links and sample trajectories)
-      const nodeLineGroup = svg.append("g").attr("class", "node-lines");
-      nodeLineGroup
-        .selectAll("line")
+      nodeGroup
+        .selectAll("g.node")
         .data(layoutNodes)
-        .join("line")
-        .attr("x1", (d) => (d.x0 ?? 0) + sankeyGen.nodeWidth() / 2)
-        .attr("x2", (d) => (d.x0 ?? 0) + sankeyGen.nodeWidth() / 2)
-        .attr("y1", (d) => d.y0 ?? 0)
-        .attr("y2", (d) => d.y1 ?? 0)
-        .attr("stroke", (d: any) => {
-            const layerName = getLayerName(d.name);
-            return layerColorMap.get(layerName) ?? "#000";
-        })
-        .attr("stroke-width", sankeyGen.nodeWidth() + 1.5)
-        .style("cursor", "pointer")
-        .on("mouseover", function (event, d) {
-            d3.select(this)
-              .attr("stroke", "black")
-              .attr("stroke-width", sankeyGen.nodeWidth() + 3);
-        })
-        .on("mouseout", function (event, d) {
-            const layerName = getLayerName(d.name);
-            d3.select(this)
-              .attr("stroke", layerColorMap.get(layerName) ?? "#000")
-              .attr("stroke-width", sankeyGen.nodeWidth() + 1.5);
-        })
-        .on("click", (event, d) => {
-          const samples = nodeSamplesMap.get(d.name) || [];
+        .join("g")
+        .attr("class", "node")
+        .each(function (nodeData) {
 
-          // ✅ 如果点击的是当前已经高亮的节点，则清除所有高亮
-          if (currentHighlightedNode === d.name) {
-            // 本窗口恢复默认样式
-            const svgSel = d3.select(svg.node());
-            svgSel.selectAll(".sankey-links path")
-              .attr("stroke", (d: any) => d.stroke)   // restore original red/green/yellow split color
-              .attr("opacity", 0.4);
+          const g = d3.select(this);
 
-            svgSel.selectAll(".sample-trajectories line")
-              // .transition().duration(300)
-              .attr("opacity", 0);
+          // Collect split counts for this node from samples
+          const sampleIds = nodeSamplesMap.get(nodeData.name) || [];
 
-            svgSel.selectAll(".sample-points circle")
-              // .transition().duration(300)
-              .attr("opacity", 0);
+          const counts = { train: 0, test: 0, experimental: 0, missing: 0 };
+          sampleIds.forEach(id => {
+            const label = splitLabelMap.get(String(id)) || "missing";
+            if (counts[label] !== undefined) counts[label] += 1;
+            else counts["missing"] += 1;
+          });
 
-            currentHighlightedNode = null;
+          const total = counts.train + counts.test + counts.experimental + counts.missing;
+          const nodeHeight = (nodeData.y1 ?? 0) - (nodeData.y0 ?? 0);
+          const nodeX = (nodeData.x0 ?? 0);
+          const nodeWidth = sankeyGen.nodeWidth();
 
-            // 🔹 广播给所有 Sankey & Scatter 清除高亮
-            window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
-            window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
+          if (total === 0) {
+            // fallback single gray block when no samples
+            g.append("rect")
+              .attr("x", nodeX)
+              .attr("y", nodeData.y0)
+              .attr("width", nodeWidth)
+              .attr("height", nodeHeight)
+              .attr("fill", "#ccc");
             return;
           }
 
-          // ✅ 否则是新节点 → 更新高亮状态
-          currentHighlightedNode = d.name;
+          const splits = ["train", "test", "experimental", "missing"];
+          const colors = {
+            train: "#1f77b4",
+            test: "#ff7f0e",
+            experimental: "#2ca02c",
+            missing: "#999999",
+          };
 
-          // Dim all links except those connected to this cluster
-          const svgSel = d3.select(svg.node());
-          svgSel.selectAll(".sankey-links path")
-            // .filter((ld: any) => {
-            //   const full = ld.__fullLink;
-            //   if (!full) return true; 
-            //   return full.source.name !== d.name && full.target.name !== d.name;
-            // })
-            // .transition().duration(300)
-            .attr("opacity", 0.1);
+          let accY = nodeData.y0 ?? 0;
+          splits.forEach(sp => {
+            const c = counts[sp];
+            if (c <= 0) return;
 
-          highlightSamplesForNode(d.name);
+            const h = (c / total) * nodeHeight;
 
-          // 🔹 广播到 scatterplot
-          window.dispatchEvent(
-            new CustomEvent("scatter-highlight-ids", { detail: samples })
-          );
+            g.append("rect")
+              .attr("x", nodeX)
+              .attr("y", accY)
+              .attr("width", nodeWidth)
+              .attr("height", h)
+              .attr("fill", colors[sp]);
 
-          // 🔹 广播到其他 sankey 窗口
-          window.dispatchEvent(
-            new CustomEvent("sankey-highlight-ids", { detail: samples })
-          );
+            accY += h;
+          });
+
+          // pointer / click behaviors preserved
+          g.style("cursor", "pointer")
+            .on("mouseover", function () {
+              d3.select(this).selectAll("rect")
+                .attr("stroke", "black")
+                .attr("stroke-width", 2);
+            })
+            .on("mouseout", function () {
+              d3.select(this).selectAll("rect")
+                .attr("stroke", "none");
+            })
+            .on("click", (event, d) => {
+
+              const samples = nodeSamplesMap.get(d.name) || [];
+
+              if (currentHighlightedNode === d.name) {
+                const svgSel = d3.select(svg.node());
+                svgSel.selectAll(".sankey-links path")
+                  .attr("stroke", (d: any) => d.stroke)
+                  .attr("opacity", 0.4);
+                svgSel.selectAll(".sample-trajectories line").attr("opacity", 0);
+                svgSel.selectAll(".sample-points circle").attr("opacity", 0);
+
+                currentHighlightedNode = null;
+
+                window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
+                window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
+                return;
+              }
+
+              currentHighlightedNode = d.name;
+
+              const svgSel = d3.select(svg.node());
+              svgSel.selectAll(".sankey-links path").attr("opacity", 0.1);
+
+              highlightSamplesForNode(d.name);
+
+              window.dispatchEvent(
+                new CustomEvent("scatter-highlight-ids", { detail: samples })
+              );
+              window.dispatchEvent(
+                new CustomEvent("sankey-highlight-ids", { detail: samples })
+              );
+            });
         });
 
       // Draw node labels
