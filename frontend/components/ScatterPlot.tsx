@@ -50,8 +50,8 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
       const clearScatter = () => {
         selectedIDs.clear?.(); // if exists
         d3.selectAll(".scatter-point")
-          .transition()
-          .duration(150)
+          // .transition()
+          // .duration(150)
           .style("opacity", 0.8)
           .attr("r", 4);
         // safely clear active brushes only when lasso is enabled
@@ -172,13 +172,13 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
               const idClass = `real-${d.real_id}`;
 
               d3.selectAll(".scatter-point")
-                .transition()
-                .duration(150)
+                // .transition()
+                // .duration(150)
                 .style("opacity", 0.1);
 
               d3.selectAll(`.${idClass}`)
-                .transition()
-                .duration(150)
+                // .transition()
+                // .duration(150)
                 .style("opacity", 1)
                 .attr("r", 6);
 
@@ -186,8 +186,8 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                 .html(`<img src="/data/molecule_images/${d.real_id}_ligand.png" style="width:200px;height:auto;" />`)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY + 10) + "px")
-                .transition()
-                .duration(150)
+                // .transition()
+                // .duration(150)
                 .style("opacity", 1);
 
               window.dispatchEvent(
@@ -200,13 +200,13 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
               if (lassoEnabled) return;
 
               d3.selectAll(".scatter-point")
-                .transition()
-                .duration(150)
+                // .transition()
+                // .duration(150)
                 .style("opacity", 0.8)
                 .attr("r", 4);
               tooltip
-                .transition()
-                .duration(150)
+                // .transition()
+                // .duration(150)
                 .style("opacity", 0);
               window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
               window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));

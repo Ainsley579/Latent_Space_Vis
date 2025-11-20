@@ -601,12 +601,12 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
               .html(`<img src="/data/molecule_images/${id}_ligand.png" style="width:200px;height:auto;" />`)
               .style("left", (event.pageX + 12) + "px")
               .style("top", (event.pageY + 12) + "px")
-              .transition()
-              .duration(120)
+              // .transition()
+              // .duration(120)
               .style("opacity", 1);
         })
         .on("mouseout", function() {
-            tooltip.transition().duration(120).style("opacity", 0);
+            tooltip.style("opacity", 0);
         });
 
       // Draw node lines as thin vertical lines colored by layer (on top of links and sample trajectories)
