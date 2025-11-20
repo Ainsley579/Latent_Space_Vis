@@ -189,7 +189,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
     const fittedWidth = Math.max(width, 200);
 
     const sankeyGen = sankey<Node, Link>()
-      .nodeWidth(5)
+      .nodeWidth(10)
       .nodePadding(7)
       .extent([
         [1, 1],
