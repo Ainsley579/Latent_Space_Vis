@@ -34,16 +34,18 @@ except ImportError:
 class RealIDTracker:
     """Track real IDs through layer and component transitions"""
     
-    def __init__(self, embeddings_dir, output_dir, zca_threshold=1e-5):
+    def __init__(self, embeddings_dir, output_dir, zca_threshold=1e-5, version=2):
         self.embeddings_dir = embeddings_dir
         self.output_dir = Path(output_dir)
         self.zca_threshold = zca_threshold
+        self.version = version  # 1 for unique embeddings, 2 for CAS embeddings
         
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Load CAS to original index mapping
+        # Load mappings - support both unique and CAS embeddings
         self.cas_to_original_mapping = self._load_cas_mapping()
+        self.unique_to_original_mapping = self._load_unique_mapping()
         
         # Load embeddings
         self.layer_embeddings = self._load_embeddings()
@@ -84,6 +86,35 @@ class RealIDTracker:
         print("  Will use CAS indices directly (not mapped to original dataset)")
         print("  Expected files: cas_to_original_mapping.json or cas_index_mapping.json")
         return None
+    
+    def _load_unique_mapping(self):
+        """Load unique to original index mapping"""
+        import json
+        
+        # Try to find the mapping file in the script directory
+        script_dir = Path(__file__).parent
+        mapping_paths = [
+            script_dir / "unique_to_original_mapping.json",
+            script_dir / "index_mapping.json",
+        ]
+        
+        for mapping_path in mapping_paths:
+            if mapping_path.exists():
+                print(f"Loading unique to original mapping from: {mapping_path}")
+                with open(mapping_path, 'r') as f:
+                    mapping = json.load(f)
+                
+                # Convert string keys to integers
+                mapping = {int(k): int(v) for k, v in mapping.items()}
+                
+                print(f"✓ Loaded unique index mapping: {len(mapping)} entries")
+                print(f"  Unique index range: {min(mapping.keys())} - {max(mapping.keys())}")
+                print(f"  Original index range: {min(mapping.values())} - {max(mapping.values())}")
+                
+                return mapping
+        
+        print("⚠ Warning: Unique to original mapping file not found")
+        return None
         
     def _load_embeddings(self):
         """Load all layer embeddings"""
@@ -117,21 +148,41 @@ class RealIDTracker:
             unique_filepath = embeddings_path / unique_filename
             original_filepath = embeddings_path / original_filename
             
-            if unique_cas_filepath.exists():
-                filepath = unique_cas_filepath
-                filename = unique_cas_filename
-                print("  Loading {} -> {} (unique_cas)".format(filename, layer_name))
-            elif unique_filepath.exists():
-                filepath = unique_filepath
-                filename = unique_filename
-                print("  Loading {} -> {} (unique)".format(filename, layer_name))
-            elif original_filepath.exists():
-                filepath = original_filepath
-                filename = original_filename
-                print("  Loading {} -> {} (original)".format(filename, layer_name))
+            # Version 1 uses unique embeddings, Version 2 uses CAS embeddings
+            if self.version == 1:
+                # Version 1: Prioritize unique files
+                if unique_filepath.exists():
+                    filepath = unique_filepath
+                    filename = unique_filename
+                    print("  Loading {} -> {} (Version 1 - unique)".format(filename, layer_name))
+                elif unique_cas_filepath.exists():
+                    filepath = unique_cas_filepath
+                    filename = unique_cas_filename
+                    print("  Loading {} -> {} (Version 1 - unique_cas fallback)".format(filename, layer_name))
+                elif original_filepath.exists():
+                    filepath = original_filepath
+                    filename = original_filename
+                    print("  Loading {} -> {} (Version 1 - original fallback)".format(filename, layer_name))
+                else:
+                    print("  Warning: No files found for {} (Version 1)".format(layer_name))
+                    continue
             else:
-                print("  Warning: Neither {}, {}, nor {} found".format(unique_cas_filename, unique_filename, original_filename))
-                continue
+                # Version 2: Prioritize unique_cas files
+                if unique_cas_filepath.exists():
+                    filepath = unique_cas_filepath
+                    filename = unique_cas_filename
+                    print("  Loading {} -> {} (Version 2 - unique_cas)".format(filename, layer_name))
+                elif unique_filepath.exists():
+                    filepath = unique_filepath
+                    filename = unique_filename
+                    print("  Loading {} -> {} (Version 2 - unique fallback)".format(filename, layer_name))
+                elif original_filepath.exists():
+                    filepath = original_filepath
+                    filename = original_filename
+                    print("  Loading {} -> {} (Version 2 - original fallback)".format(filename, layer_name))
+                else:
+                    print("  Warning: No files found for {} (Version 2)".format(layer_name))
+                    continue
             
             try:
                 import torch
@@ -213,8 +264,8 @@ class RealIDTracker:
             print("Error: No embeddings loaded")
             return
         
-        # Create output folder for layer transitions
-        layer_transitions_dir = self.output_dir / 'real_id_layer_transitions'
+        # Create output folder for layer transitions with version suffix
+        layer_transitions_dir = self.output_dir / f'real_id_layer_transitions_{self.version}'
         layer_transitions_dir.mkdir(parents=True, exist_ok=True)
         
         # Determine optimal components if not provided
@@ -274,19 +325,22 @@ class RealIDTracker:
             
             # For each point, track its transition
             n_points = len(previous_labels)
-            for cas_id in range(n_points):
-                # Map CAS index to original dataset index if mapping is available
-                if self.cas_to_original_mapping is not None and cas_id in self.cas_to_original_mapping:
-                    original_id = self.cas_to_original_mapping[cas_id]
-                else:
-                    original_id = cas_id
+            for embedding_idx in range(n_points):
+                # Map embedding index to original dataset index
+                # Try unique mapping first (for unique embeddings), then CAS mapping
+                original_id = embedding_idx  # Default fallback
+                
+                if self.unique_to_original_mapping is not None and embedding_idx in self.unique_to_original_mapping:
+                    original_id = self.unique_to_original_mapping[embedding_idx]
+                elif self.cas_to_original_mapping is not None and embedding_idx in self.cas_to_original_mapping:
+                    original_id = self.cas_to_original_mapping[embedding_idx]
                 
                 transition_data.append({
                     'real_id': int(original_id),
                     'from_layer': previous_layer,
                     'to_layer': current_layer,
-                    'from_cluster': int(previous_labels[cas_id]),
-                    'to_cluster': int(current_labels[cas_id])
+                    'from_cluster': int(previous_labels[embedding_idx]),
+                    'to_cluster': int(current_labels[embedding_idx])
                 })
         
         # Save to CSV in the layer transitions folder
@@ -314,8 +368,8 @@ class RealIDTracker:
             print("Error: No embeddings loaded")
             return
         
-        # Create output folder for component transitions
-        component_transitions_dir = self.output_dir / 'real_id_component_transitions'
+        # Create output folder for component transitions with version suffix
+        component_transitions_dir = self.output_dir / f'real_id_component_transitions_{self.version}'
         component_transitions_dir.mkdir(parents=True, exist_ok=True)
         
         # Use first layer if not specified
@@ -351,20 +405,23 @@ class RealIDTracker:
             
             # For each point, track its transition
             n_points = len(current_labels)
-            for cas_id in range(n_points):
-                # Map CAS index to original dataset index if mapping is available
-                if self.cas_to_original_mapping is not None and cas_id in self.cas_to_original_mapping:
-                    original_id = self.cas_to_original_mapping[cas_id]
-                else:
-                    original_id = cas_id
+            for embedding_idx in range(n_points):
+                # Map embedding index to original dataset index
+                # Try unique mapping first (for unique embeddings), then CAS mapping
+                original_id = embedding_idx  # Default fallback
+                
+                if self.unique_to_original_mapping is not None and embedding_idx in self.unique_to_original_mapping:
+                    original_id = self.unique_to_original_mapping[embedding_idx]
+                elif self.cas_to_original_mapping is not None and embedding_idx in self.cas_to_original_mapping:
+                    original_id = self.cas_to_original_mapping[embedding_idx]
                 
                 transition_data.append({
                     'real_id': int(original_id),
                     'layer': layer_name,
                     'from_components': current_n_components,
                     'to_components': next_n_components,
-                    'from_cluster': int(current_labels[cas_id]),
-                    'to_cluster': int(next_labels[cas_id])
+                    'from_cluster': int(current_labels[embedding_idx]),
+                    'to_cluster': int(next_labels[embedding_idx])
                 })
         
         # Save to CSV in the component transitions folder
@@ -419,6 +476,8 @@ def main():
                        help='Layer name for component transition analysis (default: first layer)')
     parser.add_argument('--zca_threshold', type=float, default=1e-5,
                        help='Threshold for ZCA whitening')
+    parser.add_argument('--version', type=int, default=2, choices=[1, 2],
+                       help='Version: 1 for unique embeddings (374 samples), 2 for CAS embeddings (152 samples)')
     
     args = parser.parse_args()
     
@@ -444,7 +503,8 @@ def main():
     tracker = RealIDTracker(
         embeddings_dir=args.embeddings_dir,
         output_dir=output_dir,
-        zca_threshold=args.zca_threshold
+        zca_threshold=args.zca_threshold,
+        version=args.version
     )
     
     tracker.run_all_tracking(

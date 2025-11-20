@@ -75,19 +75,22 @@ def adaptive_zca_whitening(X, threshold=1e-5, epsilon=1e-5):
 class ScatterPlotDataGenerator:
     """Generate scatter plot data for frontend visualization"""
     
-    def __init__(self, embeddings_dir, output_dir, zca_threshold=1e-5, random_state=42):
+    def __init__(self, embeddings_dir, output_dir, zca_threshold=1e-5, random_state=42, version=2):
         self.embeddings_dir = Path(embeddings_dir)
         self.output_dir = Path(output_dir)
         self.zca_threshold = zca_threshold
         self.random_state = random_state
+        self.version = version  # 1 for unique embeddings, 2 for CAS embeddings
         
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Load CAS to original index mapping
+        # Load mappings - support both unique and CAS embeddings
         self.cas_to_original_mapping = self._load_cas_mapping()
+        self.unique_to_original_mapping = self._load_unique_mapping()
         
-        # Layer names matching the notebook
+        # Layer files - prioritize unique_cas, then unique, then original
+        # This allows the script to work with both Version 1 (unique) and Version 2 (CAS) embeddings
         self.layer_files = {
             'emb': 'emb_unique_cas.pt',
             'output_block_0': 'output0_unique_cas.pt',
@@ -98,6 +101,19 @@ class ScatterPlotDataGenerator:
             'u_mlp_input': 'u_mlp_input_cas.pt',
             'u_mlp_l1': 'u_mlp_l1_cas.pt',
             'u_mlp_l2': 'u_mlp_l2_cas.pt',
+        }
+        
+        # Alternative layer files (unique embeddings for Version 1)
+        self.layer_files_unique = {
+            'emb': 'emb_unique.pt',
+            'output_block_0': 'output0_unique.pt',
+            'output_block_1': 'output1_unique.pt',
+            'output_block_2': 'output2_unique.pt',
+            'output_block_3': 'output3_unique.pt',
+            'output_block_4': 'output4_unique.pt',
+            'u_mlp_input': 'u_mlp_input.pt',
+            'u_mlp_l1': 'u_mlp_l1.pt',
+            'u_mlp_l2': 'u_mlp_l2.pt',
         }
         
     def _load_cas_mapping(self):
@@ -128,17 +144,73 @@ class ScatterPlotDataGenerator:
         print("  Will use CAS indices directly (not mapped to original dataset)")
         return None
     
+    def _load_unique_mapping(self):
+        """Load unique to original index mapping"""
+        script_dir = Path(__file__).parent
+        mapping_paths = [
+            script_dir / "unique_to_original_mapping.json",
+            script_dir / "index_mapping.json",
+        ]
+        
+        for mapping_path in mapping_paths:
+            if mapping_path.exists():
+                print(f"Loading unique to original mapping from: {mapping_path}")
+                with open(mapping_path, 'r') as f:
+                    mapping = json.load(f)
+                
+                # Convert string keys to integers
+                mapping = {int(k): int(v) for k, v in mapping.items()}
+                
+                print(f"✓ Loaded unique index mapping: {len(mapping)} entries")
+                print(f"  Unique index range: {min(mapping.keys())} - {max(mapping.keys())}")
+                print(f"  Original index range: {min(mapping.values())} - {max(mapping.values())}")
+                
+                return mapping
+        
+        print("⚠ Warning: Unique to original mapping file not found")
+        return None
+    
     def load_embeddings(self):
         """Load all layer embeddings"""
         print("\nLoading embeddings...")
         embeddings = {}
         
         for layer_name, filename in self.layer_files.items():
-            filepath = self.embeddings_dir / filename
-            
-            if not filepath.exists():
-                print(f"  Warning: {filename} not found, skipping {layer_name}")
-                continue
+            # Version 1 uses unique embeddings, Version 2 uses CAS embeddings
+            if self.version == 1:
+                # Try unique file first for Version 1
+                if layer_name in self.layer_files_unique:
+                    alt_filename = self.layer_files_unique[layer_name]
+                    alt_filepath = self.embeddings_dir / alt_filename
+                    if alt_filepath.exists():
+                        filepath = alt_filepath
+                        filename = alt_filename
+                        print(f"  Using {filename} (Version 1 - unique embeddings)")
+                    else:
+                        print(f"  Warning: {filename} not found, skipping {layer_name}")
+                        continue
+                else:
+                    print(f"  Warning: {filename} not found, skipping {layer_name}")
+                    continue
+            else:
+                # Version 2: Try CAS file first, then unique file as fallback
+                filepath = self.embeddings_dir / filename
+                
+                if not filepath.exists():
+                    # Try unique file as fallback
+                    if layer_name in self.layer_files_unique:
+                        alt_filename = self.layer_files_unique[layer_name]
+                        alt_filepath = self.embeddings_dir / alt_filename
+                        if alt_filepath.exists():
+                            filepath = alt_filepath
+                            filename = alt_filename
+                            print(f"  Using {filename} instead of {self.layer_files[layer_name]}")
+                        else:
+                            print(f"  Warning: {filename} not found, skipping {layer_name}")
+                            continue
+                    else:
+                        print(f"  Warning: {filename} not found, skipping {layer_name}")
+                        continue
             
             try:
                 data = torch.load(filepath, map_location='cpu')
@@ -238,35 +310,57 @@ class ScatterPlotDataGenerator:
             else:
                 color_values = np.zeros(n_points)
             
+            # Determine which mapping to use based on which file was actually loaded
+            # Check if we loaded a CAS file or unique file for this layer
+            loaded_file = None
+            if layer_name in self.layer_files:
+                cas_file = self.embeddings_dir / self.layer_files[layer_name]
+                if cas_file.exists():
+                    loaded_file = str(cas_file)
+            if loaded_file is None and layer_name in self.layer_files_unique:
+                unique_file = self.embeddings_dir / self.layer_files_unique[layer_name]
+                if unique_file.exists():
+                    loaded_file = str(unique_file)
+            
+            use_cas_mapping = loaded_file is not None and '_cas.pt' in loaded_file
+            
             # Create data for this layer
-            for cas_id in range(n_points):
-                # Map CAS index to original dataset index
-                if self.cas_to_original_mapping is not None and cas_id in self.cas_to_original_mapping:
-                    original_id = self.cas_to_original_mapping[cas_id]
-                else:
-                    original_id = cas_id
+            for embedding_idx in range(n_points):
+                # Map embedding index to original dataset index
+                original_id = embedding_idx  # Default fallback
+                
+                if use_cas_mapping and self.cas_to_original_mapping is not None:
+                    if embedding_idx in self.cas_to_original_mapping:
+                        original_id = self.cas_to_original_mapping[embedding_idx]
+                elif self.unique_to_original_mapping is not None:
+                    if embedding_idx in self.unique_to_original_mapping:
+                        original_id = self.unique_to_original_mapping[embedding_idx]
+                elif self.cas_to_original_mapping is not None:
+                    # Fallback to CAS mapping if available
+                    if embedding_idx in self.cas_to_original_mapping:
+                        original_id = self.cas_to_original_mapping[embedding_idx]
                 
                 all_data.append({
                     'real_id': int(original_id),
-                    'x': float(pos[cas_id, 0]),
-                    'y': float(pos[cas_id, 1]),
-                    'color_value': float(color_values[cas_id]),
+                    'x': float(pos[embedding_idx, 0]),
+                    'y': float(pos[embedding_idx, 1]),
+                    'color_value': float(color_values[embedding_idx]),
                     'layer': layer_name
                 })
         
         # Create DataFrame
         df = pd.DataFrame(all_data)
         
-        # Save combined CSV
-        combined_path = self.output_dir / 'scatter_plot_data_all_layers.csv'
+        # Save combined CSV with version suffix
+        combined_path = self.output_dir / f'scatter_plot_data_all_layers_{self.version}.csv'
         df.to_csv(combined_path, index=False)
         print(f"✓ Saved combined CSV: {combined_path}")
         print(f"  Total points: {len(df)}")
         print(f"  Layers: {df['layer'].nunique()}")
         print(f"  Real ID range: {df['real_id'].min()} - {df['real_id'].max()}")
         
-        # Save individual CSV files per layer
-        layer_dir = self.output_dir / 'scatter_plot_data_by_layer'
+        # Save individual CSV files per layer with version suffix
+        layer_dir = self.output_dir / f'scatter_plot_data_by_layer_{self.version}'
         layer_dir.mkdir(parents=True, exist_ok=True)
         
         for layer_name in df['layer'].unique():
@@ -298,8 +392,8 @@ class ScatterPlotDataGenerator:
             'n_points_per_layer': {layer: int(pos.shape[0]) for layer, pos in positions.items()}
         }
         
-        # Save metadata as JSON
-        metadata_path = self.output_dir / 'scatter_plot_metadata.json'
+        # Save metadata as JSON with version suffix
+        metadata_path = self.output_dir / f'scatter_plot_metadata_{self.version}.json'
         with open(metadata_path, 'w') as f:
             json.dump(metadata, f, indent=2)
         
@@ -366,6 +460,8 @@ def main():
                        help='Threshold for ZCA whitening (not used in MDS, but kept for compatibility)')
     parser.add_argument('--random_state', type=int, default=42,
                        help='Random state for MDS (default: 42)')
+    parser.add_argument('--version', type=int, default=2, choices=[1, 2],
+                       help='Version: 1 for unique embeddings (374 samples), 2 for CAS embeddings (152 samples)')
     
     args = parser.parse_args()
     
@@ -381,7 +477,8 @@ def main():
         embeddings_dir=args.embeddings_dir,
         output_dir=output_dir,
         zca_threshold=args.zca_threshold,
-        random_state=args.random_state
+        random_state=args.random_state,
+        version=args.version
     )
     
     generator.run()
