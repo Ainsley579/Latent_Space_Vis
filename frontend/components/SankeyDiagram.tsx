@@ -234,117 +234,132 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       nodesByLayer.set(layerName, nodesInLayer);
     });
 
-    // Draw aggregated links as colored wide paths
+    // Draw aggregated links as colored wide paths, vertically separated by split
     const linkGroup = svg
       .append("g")
       .attr("fill", "none")
       .attr("class", "sankey-links");
 
-    // Track the currently highlighted link for click/hover logic
-    let currentHighlightedLink: any = null;
+    // ----------- Split-Link Generation using link.y0/y1 and link.width -----------
+    const splits = ["train", "test", "experimental", "missing"] as const;
+    const splitColors: Record<(typeof splits)[number], string> = {
+      train: "#1f77b4",
+      test: "#ff7f0e",
+      experimental: "#2ca02c",
+      missing: "#999999",
+    };
 
-    linkGroup
-      .selectAll("path")
-      .data(layoutLinks)
-      .join("path")
-      .attr("d", sankeyLinkHorizontal())
-      .attr("stroke", (d) => {
-        const sourceNode = d.source as Node;
-        const sourceLayer = getLayerName(sourceNode.name);
-        return layerColorMap.get(sourceLayer) ?? "#000";
-      })
-      .attr("stroke-width", (d) => Math.max(1, d.width ?? 1))
-      .attr("opacity", 0.4)
-      // .style("cursor", "pointer")
-      // .on("mouseover", function (event, d) {
-      //     if (currentHighlightedLink !== d) d3.select(this).attr("opacity", 0.1);
-      //     d3.select(this).attr("opacity", 0.4);
-      // })
-      // .on("mouseout", function (event, d) {
-      //     if (currentHighlightedLink !== d) d3.select(this).attr("opacity", 0.4);
-      // })
-      // .on("click", function (event, d) {
-      //     const svgSel = d3.select(svg.node());
+    // Build linkSamplesMap from sampleFile once, then compute per-link split counts
+    linkSamplesMap.clear();
+    layoutLinks.forEach((link: any) => {
+      const srcName = (link.source as Node).name;
+      const tgtName = (link.target as Node).name;
+      const key = `${srcName}->${tgtName}`;
+      linkSamplesMap.set(key, []);
+    });
 
-      //     // If clicking the same link again → clear highlight
-      //     if (currentHighlightedLink === d) {
-      //         currentHighlightedLink = null;
-      //         svgSel.selectAll(".sankey-links path")
-      //           .transition().duration(200)
-      //           .attr("opacity", 0.4)
-      //           .attr("stroke-width", (ld: any) => Math.max(1, ld.width ?? 1));
+    d3.csv(sampleFile).then((rows: any[]) => {
+      rows.forEach((r: any) => {
+        const sid = String(r.real_id);
+        const srcName = `${r.from_layer}_${r.from_cluster}`;
+        const tgtName = `${r.to_layer}_${r.to_cluster}`;
+        const key = `${srcName}->${tgtName}`;
+        if (linkSamplesMap.has(key)) {
+          linkSamplesMap.get(key)!.push(sid);
+        }
+      });
 
-      //         // Clear sample trajectories
-      //         svgSel.selectAll(".sample-trajectories line")
-      //           .transition().duration(200)
-      //           .attr("opacity", 0);
+      const separatedLinks: {
+        sx: number;
+        sy0: number;
+        sy1: number;
+        tx: number;
+        ty0: number;
+        ty1: number;
+        width: number;
+        stroke: string;
+      }[] = [];
 
-      //         // Clear sample points
-      //         svgSel.selectAll(".sample-points circle")
-      //           .transition().duration(200)
-      //           .attr("opacity", 0);
+      layoutLinks.forEach((link: any) => {
+        const srcNode = link.source as Node;
+        const tgtNode = link.target as Node;
+        const key = `${srcNode.name}->${tgtNode.name}`;
+        const sampleIds = linkSamplesMap.get(key) || [];
 
-      //         // Broadcast global clear
-      //         window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
-      //         window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
-      //         return;
-      //     }
+        // count train / test / experimental / missing for this link
+        const counts: Record<(typeof splits)[number], number> = {
+          train: 0,
+          test: 0,
+          experimental: 0,
+          missing: 0,
+        };
+        sampleIds.forEach((id) => {
+          const label = (splitLabelMap.get(String(id)) as (typeof splits)[number]) || "missing";
+          if (counts[label] !== undefined) counts[label] += 1;
+          else counts.missing += 1;
+        });
 
-      //     // Highlight new link
-      //     currentHighlightedLink = d;
+        const totalCount =
+          counts.train + counts.test + counts.experimental + counts.missing;
+        if (totalCount === 0) return;
 
-      //     // Dim all links except the clicked one
-      //     svgSel.selectAll(".sankey-links path")
-      //       .filter((ld: any) => ld !== d)
-      //       .transition().duration(200)
-      //       .attr("opacity", 0.1);
+        const linkCenterY0 = Number(link.y0);
+        const linkCenterY1 = Number(link.y1);
+        const linkWidth = Number(link.width ?? totalCount);
 
-      //     // Highlight this link
-      //     d3.select(this)
-      //       .transition().duration(200)
-      //       .attr("opacity", 1)
-      //       .attr("stroke-width", Math.max(2, (d.width ?? 1) + 2));
+        if (!isFinite(linkCenterY0) || !isFinite(linkCenterY1) || !isFinite(linkWidth)) {
+          return;
+        }
 
-      //     // Highlight only sample trajectories and points traversing this link
-      //     const linkKey = `${d.source.name}->${d.target.name}`;
-      //     const samples = linkSamplesMap.get(linkKey) || [];
-      //     const safeLinkClass = `link-${linkKey.replace(/->/g, "-").replace(/_/g, "_")}`;
+        const sx = Number(srcNode.x1);
+        const tx = Number(tgtNode.x0);
 
-      //     // Dim ALL sample trajectories
-      //     svgSel.selectAll(".sample-trajectories line")
-      //       .transition().duration(200)
-      //       .attr("opacity", 0);
+        const baseOffset = -linkWidth / 2;
+        let acc = 0;
 
-      //     // Highlight ONLY trajectories belonging to this link
-      //     svgSel.selectAll(".sample-trajectories line")
-      //       .filter(function() {
-      //         return d3.select(this).attr("data-linkkey") === safeLinkClass;
-      //       })
-      //       .transition().duration(200)
-      //       .attr("opacity", 0.9)
-      //       .attr("stroke-width", 1.5);
+        splits.forEach((sp) => {
+          const cnt = counts[sp];
+          if (cnt <= 0) return;
 
-      //     // Dim all sample points
-      //     svgSel.selectAll(".sample-points circle")
-      //       .transition().duration(200)
-      //       .attr("opacity", 0);
+          const segWidth = (linkWidth * cnt) / totalCount;
+          const centerOffset = baseOffset + acc + segWidth / 2;
 
-      //     // Highlight only points belonging to this link
-      //     (samples || []).forEach(id => {
-      //       const safeId = String(id).replace(/[^a-zA-Z0-9_-]/g, "\\$&");
-      //       svgSel.selectAll(`.sample-${safeId}`)
-      //         .transition().duration(200)
-      //         .attr("opacity", 1);
-      //     });
+          const sy = linkCenterY0 + centerOffset;
+          const ty = linkCenterY1 + centerOffset;
 
-      //     // Broadcast the sample IDs on this link
-      //     window.dispatchEvent(
-      //       new CustomEvent("scatter-highlight-ids", { detail: samples })
-      //     );
-      //     window.dispatchEvent(
-      //       new CustomEvent("sankey-highlight-ids", { detail: samples })
-      //     );
-      // });
+          separatedLinks.push({
+            sx,
+            sy0: sy,
+            sy1: sy,
+            tx,
+            ty0: ty,
+            ty1: ty,
+            width: segWidth,
+            stroke: splitColors[sp],
+          });
+
+          acc += segWidth;
+        });
+      });
+
+      // Draw the split links as cubic Bézier curves per segment
+      linkGroup
+        .selectAll("path")
+        .data(separatedLinks)
+        .join("path")
+        .attr("d", (d) => {
+          const sx = d.sx;
+          const sy = d.sy0;
+          const tx = d.tx;
+          const ty = d.ty0;
+          const mx = (sx + tx) / 2;
+          return `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`;
+        })
+        .attr("stroke", (d) => d.stroke)
+        .attr("stroke-width", (d) => d.width)
+        .attr("fill", "none")
+        .attr("opacity", 0.4);
+    });
 
 
 
@@ -629,14 +644,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
             // 本窗口恢复默认样式
             const svgSel = d3.select(svg.node());
             svgSel.selectAll(".sankey-links path")
-              // .transition().duration(300)
-              .attr("stroke", (d: any) => {
-                const sourceNode = d.source;
-                const sourceLayer = typeof sourceNode === "object" && sourceNode.name
-                  ? getLayerName(sourceNode.name)
-                  : "";
-                return layerColorMap.get(sourceLayer) ?? "#000";
-              })
+              .attr("stroke", (d: any) => d.stroke)   // restore original red/green/yellow split color
               .attr("opacity", 0.4);
 
             svgSel.selectAll(".sample-trajectories line")
@@ -661,7 +669,11 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
           // Dim all links except those connected to this cluster
           const svgSel = d3.select(svg.node());
           svgSel.selectAll(".sankey-links path")
-            .filter((ld: any) => (ld.source.name !== d.name && ld.target.name !== d.name))
+            // .filter((ld: any) => {
+            //   const full = ld.__fullLink;
+            //   if (!full) return true; 
+            //   return full.source.name !== d.name && full.target.name !== d.name;
+            // })
             // .transition().duration(300)
             .attr("opacity", 0.1);
 
