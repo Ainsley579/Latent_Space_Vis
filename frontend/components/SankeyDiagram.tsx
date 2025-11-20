@@ -28,6 +28,8 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
   const ref = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<SankeyData | null>(null);
+  // Store mapping from real_id to split label ("train", "test", "experimental", etc)
+  const [splitLabelMap, setSplitLabelMap] = useState<Map<string, string>>(new Map());
 
   // Tooltip for Sankey sample hover
   const tooltip = d3.select("body")
@@ -138,6 +140,17 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       setData({ nodes, links });
     });
   }, [sampleFile]);
+
+  useEffect(() => {
+    d3.csv("/data/cluster_transition_matrices_1_individual_real_id.csv")
+      .then((rows2: any[]) => {
+        const map = new Map<string, string>();
+        rows2.forEach(r => {
+          map.set(String(r.real_id), r.split_label || "missing");
+        });
+        setSplitLabelMap(map);
+      });
+  }, []);
 
   const drawSankey = (width: number, data: SankeyData) => {
     let linkSamplesMap = new Map<string, string[]>();
@@ -521,9 +534,6 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
           return yA - yB;
         });
 
-        const sourceLayer = getLayerName(sourceNode.name);
-        const strokeColor = layerColorMap.get(sourceLayer) ?? "#999";
-
         samplesOnLink.forEach(real_id => {
           const ySource = sampleNodeYMap.get(real_id)?.get(sourceNode.name);
           const yTarget = sampleNodeYMap.get(real_id)?.get(targetNode.name);
@@ -532,11 +542,20 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
           const xSource = (sourceNode.x0 ?? 0) + sankeyGen.nodeWidth() / 2;
           const xTarget = (targetNode.x0 ?? 0) + sankeyGen.nodeWidth() / 2;
 
+
+          console.log(typeof([...splitLabelMap.keys()][0]))
           // Compose CSS class: link key plus sample IDs
           // E.g., class="link-A_B sample-3"
           // To keep class names simple, replace '->' with '-' and remove underscores
           const safeLinkClass = `link-${linkKey.replace(/->/g, "-").replace(/_/g, "_")}`;
           const sampleClass = `sample-${real_id}`;
+          // Determine stroke color by splitLabelMap
+          const rawLabel = splitLabelMap.get(real_id) || "missing";
+          let c = "#999999";
+          if (rawLabel === "train") c = "#1f77b4";
+          else if (rawLabel === "test") c = "#ff7f0e";
+          else if (rawLabel === "experimental") c = "#2ca02c";
+          let strokeColor = c;
           lineData.push({
             x1: xSource, y1: ySource, x2: xTarget, y2: yTarget,
             stroke: strokeColor,
