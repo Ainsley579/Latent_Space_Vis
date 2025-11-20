@@ -29,6 +29,19 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<SankeyData | null>(null);
 
+  // Tooltip for Sankey sample hover
+  const tooltip = d3.select("body")
+    .append("div")
+    .attr("class", "sankey-tooltip")
+    .style("position", "absolute")
+    .style("padding", "4px")
+    .style("background", "white")
+    .style("border", "1px solid #ccc")
+    .style("borderRadius", "4px")
+    .style("pointerEvents", "none")
+    .style("zIndex", 9999)
+    .style("opacity", 0);
+
   useEffect(() => {
     // helper to escape CSS class selectors for arbitrary ids
     const escapeForSelector = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
@@ -543,9 +556,23 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
         .attr("stroke-width", 0.5)
         .attr("opacity", 0)
         .attr("class", d => d.className)
-        .attr("data-linkkey", d => {
-          // the first class in className is always the link class
-          return d.className.split(" ")[0];
+        .attr("data-linkkey", d => d.className.split(" ")[0])
+        .on("mouseover", function(event, d) {
+            const classes = d.className.split(" ");
+            const sampleClass = classes.find(c => c.startsWith("sample-"));
+            if (!sampleClass) return;
+            const id = sampleClass.replace("sample-", "");
+
+            tooltip
+              .html(`<img src="/data/molecule_images/${id}_ligand.png" style="width:200px;height:auto;" />`)
+              .style("left", (event.pageX + 12) + "px")
+              .style("top", (event.pageY + 12) + "px")
+              .transition()
+              .duration(120)
+              .style("opacity", 1);
+        })
+        .on("mouseout", function() {
+            tooltip.transition().duration(120).style("opacity", 0);
         });
 
       // Draw node lines as thin vertical lines colored by layer (on top of links and sample trajectories)
