@@ -147,9 +147,10 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         // Remove accidental duplicates (your backend sometimes outputs duplicates)
         const layerFiles = Array.from(new Set(rawLayers));
         window.dispatchEvent(
-          new CustomEvent("scatter-layer-count", {
+          new CustomEvent("scatter-layer-info", {
             detail: {
               windowId: clusterFilePath,
+              names: layerFiles,
               count: layerFiles.length
             }
           })

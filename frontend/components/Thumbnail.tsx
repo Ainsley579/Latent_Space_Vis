@@ -6,17 +6,12 @@ import React, { useEffect, useRef, useState } from "react";
 interface ThumbnailProps {
   windowId: string;
   scatterRef: HTMLDivElement | null;
-  layerCount: number;
+  layerNames: string[];
   zoomFactor: number;
 }
 
-export default function Thumbnail({ windowId, scatterRef, layerCount, zoomFactor }: ThumbnailProps) {
+export default function Thumbnail({ windowId, scatterRef, layerNames, zoomFactor }: ThumbnailProps) {
   const thumbRef = useRef<HTMLDivElement | null>(null);
-  const [layers, setLayers] = useState<number>(layerCount);
-
-  useEffect(() => {
-    setLayers(layerCount);
-  }, [layerCount]);
 
   useEffect(() => {
     const thumb = thumbRef.current;
@@ -102,16 +97,24 @@ export default function Thumbnail({ windowId, scatterRef, layerCount, zoomFactor
         background: "#f8f8f8"
       }}
     >
-      {Array.from({ length: layers }).map((_, i) => (
+      {layerNames.map((name, i) => (
         <div
           key={i}
           style={{
             flex: 1,
             height: "100%",
             borderRight: "1px solid #ddd",
-            boxSizing: "border-box"
+            boxSizing: "border-box",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "10px",
+            color: "#555",
+            pointerEvents: "none"
           }}
-        ></div>
+        >
+          {name}
+        </div>
       ))}
     </div>
   );

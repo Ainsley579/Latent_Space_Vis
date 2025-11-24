@@ -16,20 +16,20 @@ interface WindowData {
 export default function WindowManager() {
   const [windows, setWindows] = useState<WindowData[]>([]);
   const [zoomFactor, setZoomFactor] = useState(1.0);
-  const [layerCounts, setLayerCounts] = useState<Record<string, number>>({});
+const [layerCounts, setLayerCounts] = useState<Record<string, { names: string[]; count: number }>>({});
   const windowRefs = useRef<HTMLDivElement[]>([]);
   const scatterRefs = useRef<HTMLDivElement[]>([]);
   const sankeyRefs = useRef<HTMLDivElement[]>([]);
   useEffect(() => {
     const handler = (e: any) => {
-      const { windowId, count } = e.detail;
+      const { windowId, names, count } = e.detail;
       setLayerCounts(prev => ({
         ...prev,
-        [windowId]: count
+        [windowId]: { names, count }
       }));
     };
-    window.addEventListener("scatter-layer-count", handler);
-    return () => window.removeEventListener("scatter-layer-count", handler);
+    window.addEventListener("scatter-layer-info", handler);
+    return () => window.removeEventListener("scatter-layer-info", handler);
   }, []);
 
   useEffect(() => {
@@ -218,7 +218,7 @@ export default function WindowManager() {
                     <Thumbnail
                       windowId={w.id}
                       scatterRef={scatterRefs.current[idx]}
-                      layerCount={layerCounts[w.scatterCsv || ""] || 1}
+                      layerNames={layerCounts[w.scatterCsv || ""]?.names || []}
                       zoomFactor={zoomFactor}
                     />
                   </Window>
