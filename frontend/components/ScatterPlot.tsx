@@ -95,7 +95,37 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
     useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
+    // NEW: zoom handler — rescale wrapper widths without redrawing circles
     useEffect(() => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      // select all wrappers
+      d3.select(container)
+        .selectAll("div.scatter-wrapper")
+        .style("width", (d: any, i: number, nodes: any[]) => {
+          const node = nodes[i] as HTMLDivElement;
+          const baseWidth = (node as any).__baseWidth || node.clientWidth / zoomFactor;
+          return baseWidth * zoomFactor + "px";
+        });
+
+      // scale SVGs too
+      d3.select(container)
+        .selectAll("svg.scatter-svg")
+        .attr("width", function (this: SVGSVGElement) {
+          const svg = d3.select(this);
+          const base = (svg as any).node().__baseWidth || +svg.attr("width") / zoomFactor;
+          return base * zoomFactor;
+        });
+    }, [zoomFactor]);
+
+    // Prevent StrictMode double-run
+    const hasDrawnRef = React.useRef(false);
+
+    useEffect(() => {
+      if (hasDrawnRef.current) return;
+      hasDrawnRef.current = true;
+
       const run = async () => {
         const container = containerRef.current;
         if (!container) return;
@@ -148,6 +178,8 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           const wrapper = d3
             .select(container)
             .append("div")
+            .classed("scatter-wrapper", true)
+            .each(function() { (this as any).__baseWidth = svgWidth; })
             .style("width", (svgWidth * zoomFactor) + "px")
             .style("display", "flex")
             .style("flex-direction", "column")
@@ -162,7 +194,9 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
           const svg = wrapper
             .append("svg")
+            .classed("scatter-svg", true)
             .attr("height", height)
+            .each(function() { (this as any).__baseWidth = svgWidth; })
             .attr("width", svgWidth * zoomFactor)
             // .style("border", "1px solid #ccc")
             // .style("border-radius", "8px")
@@ -309,8 +343,8 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         }
       };
 
-      run(); // always redraw on zoom
-    }, [clusterFilePath, zoomFactor]);
+      run();
+    }, [clusterFilePath]);
  
     return (
       <div>
