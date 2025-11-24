@@ -236,6 +236,23 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
     });
     const layerNames2 = Array.from(layerNameSet).sort();
 
+    // ---- External bottom labels aligned to scatterplot columns ----
+    const externalLabelDiv = containerRef.current?.querySelector("#sankey-layer-labels");
+    if (externalLabelDiv) {
+      externalLabelDiv.innerHTML = "";
+
+      const layerCount = layerNames2.length;
+      const colWidth = width / layerCount;
+
+      layerNames2.forEach((layerName, i) => {
+        const div = document.createElement("div");
+        div.style.flex = "0 0 " + colWidth + "px";
+        div.style.textAlign = "center";
+        div.textContent = layerName;
+        externalLabelDiv.appendChild(div);
+      });
+    }
+
     // Assign each layer a distinct hue around the color wheel using HSL
     const layerColorMap = new Map<string, string>();
     layerNames2.forEach((layerName, i) => {
@@ -751,19 +768,6 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
         // .attr("x", (d) => (d.x1 ?? 0) + 6)
         // .attr("text-anchor", "start");
 
-      // Add bottom label for each layer
-      const bottomLabelGroup = svg.append("g");
-      layerNames2.forEach(layerName => {
-        const sampleNode = layoutNodes.find(n => getLayerName(n.name) === layerName);
-        if (!sampleNode) return;
-        const x = (sampleNode.x0 ?? 0) + sankeyGen.nodeWidth() / 2;
-        bottomLabelGroup.append("text")
-          .attr("x", x)
-          .attr("y", height - 4)
-          .attr("text-anchor", "middle")
-          .attr("font-size", "12px")
-          .text(layerName);
-      });
 
       // Draw sample points as small circles
       const samplePointsGroup = svg.append("g").attr("class", "sample-points");
@@ -817,7 +821,19 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
 
   return (
     <div ref={containerRef} style={{ width: "100%", height: "600px", position: "relative", overflowX: "hidden" }}>
-      <svg ref={ref}  style={{ width: "100%"}}></svg>
+      <svg ref={ref} style={{ width: "100%" }}></svg>
+
+      <div
+        id="sankey-layer-labels"
+        style={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          textAlign: "center",
+          marginTop: "4px",
+          fontSize: "12px"
+        }}
+      ></div>
     </div>
   );
 }

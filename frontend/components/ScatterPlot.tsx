@@ -114,27 +114,35 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         // selectedIDs now defined at component top-level
 
         for (let i = 0; i < layerFiles.length; i++) {
-          // Set svgWidth to container.clientWidth divided by number of layers
-          const svgWidth = container.clientWidth / layerFiles.length;
+          // subtract total margin (5px per gap)
+          const totalMargin = (layerFiles.length - 1) * 5;
+          const availableWidth = container.clientWidth - totalMargin;
+          const svgWidth = availableWidth / layerFiles.length;
 
-          const svg = d3
+          const wrapper = d3
             .select(container)
+            .append("div")
+            .style("width", svgWidth + "px")
+            .style("display", "flex")
+            .style("flex-direction", "column")
+            .style("align-items", "center")
+            .style("margin-right", "5px");
+
+          wrapper
+            .append("div")
+            .style("font-size", "12px")
+            .style("margin-bottom", "4px")
+            .text(layerFiles[i].replace(".csv", ""));
+
+          const svg = wrapper
             .append("svg")
             .attr("height", height)
             .attr("width", svgWidth)
-            .style("flex", "0 0 auto")
-            .style("marginRight", "1rem")
-            .style("border", "1px solid #ccc")
-            .style("borderRadius", "8px")
+            // .style("border", "1px solid #ccc")
+            // .style("border-radius", "8px")
             .style("background", "#fafafa");
 
-          // Insert layer label at top
-          svg.append("text")
-            .attr("x", svgWidth / 2)
-            .attr("y", 16)
-            .attr("text-anchor", "middle")
-            .attr("font-size", "12px")
-            .text(layerFiles[i].replace(".csv",""));
+
 
           const filePath = `${clusterFilePath}/scatter_plot_data_${layerFiles[i].replace(".csv","")}.csv`;
           const localData = await d3.csv(filePath, d => ({
@@ -348,8 +356,8 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           style={{
             display: "flex",
             flexDirection: "row",
-            overflowX: "auto",
             width: "100%",
+            overflow: "hidden",
             paddingBottom: "0.5rem",
           }}
         ></div>
