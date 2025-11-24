@@ -16,6 +16,7 @@ interface ScatterPlotProps {
 
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
   ({ onScroll, clusterFilePath, totalWindows }, ref) => {
+    const renderedRef = React.useRef(false);
     const tooltip = d3.select("body")
       .append("div")
       .attr("class", "scatter-tooltip")
@@ -79,10 +80,12 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
     useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
     useEffect(() => {
+      if (renderedRef.current) return;
+      renderedRef.current = true;
       const run = async () => {
         const container = containerRef.current;
         if (!container) return;
-        container.innerHTML = "";
+        d3.select(container).selectAll("*").remove();
 
         const layerFiles = [
           "emb.csv",
@@ -274,7 +277,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         }
       };
       run();
-    }, [clusterFilePath, lassoEnabled]);
+    }, [clusterFilePath]);
 
     return (
       <div>

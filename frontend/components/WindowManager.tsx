@@ -80,8 +80,8 @@ export default function WindowManager() {
   }, [windows.length]);
 
   return (
-    <div style={{ display: "flex", width: "100%" }}>
-      <div style={{ width: "80%", paddingRight: "0.5rem", boxSizing: "border-box" }}>
+    <div style={{ width: "100%" }}>
+      <div style={{ width: "100%", boxSizing: "border-box" }}>
         <button
           className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
           onClick={openWindow}
@@ -153,10 +153,6 @@ export default function WindowManager() {
             );
           })}
         </div>
-      </div>
-      <div style={{ width: "20%", minWidth: "20%", maxWidth: "20%", height: "200vh", overflowY: "auto", background: "#f7f7f7", padding: "1rem", boxSizing: "border-box" }}>
-        {/* Right side panel placeholder */}
-        <h3 style={{ fontWeight: "bold", marginBottom: "1rem" }}>Right Panel</h3>
       </div>
     </div>
   );
