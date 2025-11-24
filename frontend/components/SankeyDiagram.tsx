@@ -22,9 +22,10 @@ interface SankeyData {
 }
 interface SankeyDiagramProps {
   sampleFile: string;
+  zoomFactor?: number;
 }
 
-export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagramProps) {
+export default function SankeyDiagram({ sampleFile, zoomFactor = 1 }: SankeyDiagramProps) {
   const ref = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<SankeyData | null>(null);
@@ -821,7 +822,14 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
 
   return (
     <div ref={containerRef} style={{ width: "100%", height: "600px", position: "relative", overflowX: "hidden" }}>
-      <svg ref={ref} style={{ width: "100%" }}></svg>
+      <svg
+        ref={ref}
+        style={{
+          width: "100%",
+          transform: `scaleX(${zoomFactor})`,
+          transformOrigin: "left top"
+        }}
+      ></svg>
 
       <div
         id="sankey-layer-labels"

@@ -4,6 +4,7 @@ import Window from "./Window";
 import SankeyDiagram from "./SankeyDiagram";
 import ScatterPlot from "./ScatterPlot";
 import ControlPanel from "./ControlPanel";
+import Thumbnail from "./Thumbnail";
 
 interface WindowData {
   id: string;
@@ -14,8 +15,21 @@ interface WindowData {
 
 export default function WindowManager() {
   const [windows, setWindows] = useState<WindowData[]>([]);
+  const [zoomFactor, setZoomFactor] = useState(1.0);
+  const [layerCounts, setLayerCounts] = useState<Record<string, number>>({});
   const windowRefs = useRef<HTMLDivElement[]>([]);
   const scatterRefs = useRef<HTMLDivElement[]>([]);
+  useEffect(() => {
+    const handler = (e: any) => {
+      const { windowId, count } = e.detail;
+      setLayerCounts(prev => ({
+        ...prev,
+        [windowId]: count
+      }));
+    };
+    window.addEventListener("scatter-layer-count", handler);
+    return () => window.removeEventListener("scatter-layer-count", handler);
+  }, []);
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -79,8 +93,33 @@ export default function WindowManager() {
     scatterRefs.current = scatterRefs.current.slice(0, windows.length);
   }, [windows.length]);
 
+  // Add global zoom with shift+wheel
+  useEffect(() => {
+    const handler = (e: WheelEvent) => {
+      if (!e.shiftKey) return;
+      e.preventDefault();
+
+      // macOS touchpad: Shift + wheel ⇒ horizontal scroll (deltaX)
+      const dx = e.deltaX;
+
+      // dx < 0 → zoom in, dx > 0 → zoom out
+      const delta = dx < 0 ? 0.1 : -0.1;
+
+      setZoomFactor(prev =>
+        Math.max(1, Math.min(5, prev + delta))
+      );
+    };
+
+    window.addEventListener("wheel", handler, { passive: false });
+    return () => window.removeEventListener("wheel", handler);
+  }, []);
+
+  // (Thumbnail logic moved to Thumbnail component)
+
   return (
-    <div style={{ width: "100%" }}>
+    <div
+      style={{ width: "100%" }}
+    >
       <div style={{ width: "100%", boxSizing: "border-box" }}>
         <button
           className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
@@ -121,6 +160,7 @@ export default function WindowManager() {
                     title={w.title}
                     onClose={closeWindow}
                     totalWindows={windows.length}
+                    zoomFactor={zoomFactor}
                   >
                     {/* <ControlPanel
                       onChange={(params) => {
@@ -134,6 +174,7 @@ export default function WindowManager() {
                         }}
                         onScroll={(scrollLeft) => syncScatterScroll(idx, scrollLeft)}
                         clusterFilePath={w.scatterCsv}
+                        zoomFactor={zoomFactor}
                       />
                     ) : (
                       <div style={{ opacity: 0.5, padding: "1rem", fontSize: "0.9rem" }}>
@@ -141,12 +182,18 @@ export default function WindowManager() {
                       </div>
                     )}
                     {w.sankeyCsv ? (
-                      <SankeyDiagram sampleFile={w.sankeyCsv} />
+                      <SankeyDiagram sampleFile={w.sankeyCsv} zoomFactor={zoomFactor} />
                     ) : (
                       <div style={{ opacity: 0.5, padding: "1rem", fontSize: "0.9rem" }}>
                         Waiting for backend to generate Sankey…
                       </div>
                     )}
+                    <Thumbnail
+                      windowId={w.id}
+                      scatterRef={scatterRefs.current[idx]}
+                      layerCount={layerCounts[w.scatterCsv || ""] || 1}
+                      zoomFactor={zoomFactor}
+                    />
                   </Window>
                 </div>
               </div>

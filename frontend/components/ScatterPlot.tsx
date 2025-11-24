@@ -12,10 +12,11 @@ interface ScatterPlotProps {
   onScroll?: (scrollLeft: number) => void;
   clusterFilePath: string;
   totalWindows?: number;
+  zoomFactor?: number;
 }
 
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
-  ({ onScroll, clusterFilePath, totalWindows }, ref) => {
+  ({ onScroll, clusterFilePath, totalWindows, zoomFactor = 1 }, ref) => {
     const renderedRef = React.useRef(false);
     const tooltip = d3.select("body")
       .append("div")
@@ -98,6 +99,14 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           "u_mlp_l1.csv",
           "u_mlp_l2.csv",
         ];
+        window.dispatchEvent(
+          new CustomEvent("scatter-layer-count", {
+            detail: {
+              windowId: clusterFilePath,
+              count: layerFiles.length
+            }
+          })
+        );
 
         const height = 200;
         // const containerWidth = container.clientWidth || 800;
@@ -359,6 +368,8 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             width: "100%",
             overflow: "hidden",
             paddingBottom: "0.5rem",
+            transform: `scaleX(${zoomFactor})`,
+            transformOrigin: "left top"
           }}
         ></div>
       </div>
