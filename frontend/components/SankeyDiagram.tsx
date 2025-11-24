@@ -184,16 +184,35 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
     const svg = d3.select(ref.current);
     svg.selectAll("*").remove();
 
-    const height = 600;
+    const height = 400;
     // Always fit SVG inside window with a min width, no overflow
     const fittedWidth = Math.max(width, 200);
+
+    // --- Margin calculation before sankeyGen creation ---
+    // Derive layerNames for margin estimation
+    let layerNames: string[] | undefined;
+    if (data && data.nodes && data.nodes.length > 0) {
+      const getLayerName = (fullName: string) => {
+        const idx = fullName.lastIndexOf("_");
+        return idx === -1 ? fullName : fullName.slice(0, idx);
+      };
+      const layerNameSet = new Set<string>();
+      data.nodes.forEach(n => {
+        if (n && n.name) {
+          layerNameSet.add(getLayerName(n.name));
+        }
+      });
+      layerNames = Array.from(layerNameSet).sort();
+    }
+    const estimatedLayers = layerNames?.length || 8;
+    const margin = width / estimatedLayers / 2;
 
     const sankeyGen = sankey<Node, Link>()
       .nodeWidth(10)
       .nodePadding(7)
       .extent([
-        [1, 1],
-        [width - 20, height - 5], // compress to fit inside available width
+        [margin, 1],
+        [width - margin, height - 5],
       ]);
 
     const { nodes: layoutNodes, links: layoutLinks } = sankeyGen({
@@ -215,11 +234,11 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       const layerName = getLayerName(n.name);
       layerNameSet.add(layerName);
     });
-    const layerNames = Array.from(layerNameSet).sort();
+    const layerNames2 = Array.from(layerNameSet).sort();
 
     // Assign each layer a distinct hue around the color wheel using HSL
     const layerColorMap = new Map<string, string>();
-    layerNames.forEach((layerName, i) => {
+    layerNames2.forEach((layerName, i) => {
       layerColorMap.set(
         layerName,
         d3.schemeTableau10[i % d3.schemeTableau10.length] // ✅ 不加括号，直接取数组元素
@@ -228,7 +247,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
 
     // Sort nodes within each layer by y0 (top to bottom)
     const nodesByLayer = new Map<string, Node[]>();
-    layerNames.forEach(layerName => {
+    layerNames2.forEach(layerName => {
       const nodesInLayer = layoutNodes.filter(n => getLayerName(n.name) === layerName);
       nodesInLayer.sort((a, b) => (a.y0 ?? 0) - (b.y0 ?? 0));
       nodesByLayer.set(layerName, nodesInLayer);
@@ -725,12 +744,26 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
         .join("text")
         .attr("x", (d) => (d.x0 ?? 0) - 6)
         .attr("y", (d) => ((d.y1 ?? 0) + (d.y0 ?? 0)) / 2)
-        .attr("dy", "0.35em")
+        .attr("dy", "0.35em");
         // .attr("text-anchor", "end")
         // .text((d) => d.name)
         // .filter((d) => (d.x0 ?? 0) < width / 2)
         // .attr("x", (d) => (d.x1 ?? 0) + 6)
         // .attr("text-anchor", "start");
+
+      // Add bottom label for each layer
+      const bottomLabelGroup = svg.append("g");
+      layerNames2.forEach(layerName => {
+        const sampleNode = layoutNodes.find(n => getLayerName(n.name) === layerName);
+        if (!sampleNode) return;
+        const x = (sampleNode.x0 ?? 0) + sankeyGen.nodeWidth() / 2;
+        bottomLabelGroup.append("text")
+          .attr("x", x)
+          .attr("y", height - 4)
+          .attr("text-anchor", "middle")
+          .attr("font-size", "12px")
+          .text(layerName);
+      });
 
       // Draw sample points as small circles
       const samplePointsGroup = svg.append("g").attr("class", "sample-points");

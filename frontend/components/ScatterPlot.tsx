@@ -111,8 +111,8 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         // selectedIDs now defined at component top-level
 
         for (let i = 0; i < layerFiles.length; i++) {
-          // const svgWidth = computeSvgWidth();
-          const svgWidth = 350;
+          // Set svgWidth to container.clientWidth divided by number of layers
+          const svgWidth = container.clientWidth / layerFiles.length;
 
           const svg = d3
             .select(container)
@@ -124,6 +124,14 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             .style("border", "1px solid #ccc")
             .style("borderRadius", "8px")
             .style("background", "#fafafa");
+
+          // Insert layer label at top
+          svg.append("text")
+            .attr("x", svgWidth / 2)
+            .attr("y", 16)
+            .attr("text-anchor", "middle")
+            .attr("font-size", "12px")
+            .text(layerFiles[i].replace(".csv",""));
 
           const filePath = `${clusterFilePath}/scatter_plot_data_${layerFiles[i].replace(".csv","")}.csv`;
           const localData = await d3.csv(filePath, d => ({
