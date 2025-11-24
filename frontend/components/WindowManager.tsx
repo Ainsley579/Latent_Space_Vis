@@ -78,6 +78,9 @@ export default function WindowManager() {
     scatterRefs.current.forEach((ref, i) => {
       if (i !== index && ref) ref.scrollLeft = scrollLeft;
     });
+    sankeyRefs.current.forEach((ref) => {
+      if (ref) ref.scrollLeft = scrollLeft;
+    });
   };
 
   const openWindow = () => {
@@ -97,6 +100,9 @@ export default function WindowManager() {
 
   const syncSankeyScroll = (left: number) => {
     sankeyRefs.current.forEach((ref) => {
+      if (ref) ref.scrollLeft = left;
+    });
+    scatterRefs.current.forEach((ref) => {
       if (ref) ref.scrollLeft = left;
     });
   };
@@ -197,13 +203,13 @@ export default function WindowManager() {
                       </div>
                     )}
                     {w.sankeyCsv ? (
-                      <div
+                      <SankeyDiagram
                         ref={(el) => {
                           if (el) sankeyRefs.current[idx] = el;
                         }}
-                      >
-                        <SankeyDiagram sampleFile={w.sankeyCsv} zoomFactor={zoomFactor} />
-                      </div>
+                        sampleFile={w.sankeyCsv}
+                        zoomFactor={zoomFactor}
+                      />
                     ) : (
                       <div style={{ opacity: 0.5, padding: "1rem", fontSize: "0.9rem" }}>
                         Waiting for backend to generate Sankey…

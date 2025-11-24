@@ -409,9 +409,18 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         </div>
         <div
           ref={containerRef}
-          onScroll={(e) =>
-            onScroll?.((e.target as HTMLDivElement).scrollLeft)
-          }
+          onScroll={(e) => {
+            const left = (e.target as HTMLDivElement).scrollLeft;
+            onScroll?.(left);
+          }}
+          onWheel={(e) => {
+            const container = e.currentTarget as HTMLDivElement;
+            container.scrollLeft += e.deltaY;
+            // Notify WindowManager for global synchronization
+            window.dispatchEvent(
+              new CustomEvent("sankey-scroll", { detail: container.scrollLeft })
+            );
+          }}
           style={{
             display: "flex",
             flexDirection: "row",

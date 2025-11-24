@@ -6,7 +6,7 @@ import {
   SankeyNodeMinimal,
   SankeyLinkMinimal,
 } from "d3-sankey";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useImperativeHandle } from "react";
 
 interface Node extends SankeyNodeMinimal<Node, Link> {
   name: string;
@@ -25,19 +25,33 @@ interface SankeyDiagramProps {
   zoomFactor?: number;
 }
 
-export default function SankeyDiagram({ sampleFile, zoomFactor = 1 }: SankeyDiagramProps) {
-  const ref = useRef<SVGSVGElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [data, setData] = useState<SankeyData | null>(null);
-  // Store mapping from real_id to split label ("train", "test", "experimental", etc)
-  const [splitLabelMap, setSplitLabelMap] = useState<Map<string, string>>(new Map());
+const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
+  ({ sampleFile, zoomFactor = 1 }, ref) => {
+    const svgRef = useRef<SVGSVGElement | null>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const [data, setData] = useState<SankeyData | null>(null);
+    // Store mapping from real_id to split label ("train", "test", "experimental", etc)
+    const [splitLabelMap, setSplitLabelMap] = useState<Map<string, string>>(new Map());
+    useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
   // Tooltip for Sankey sample hover
-  let tooltip = d3.select("body").select("#global-tooltip");
-  if (tooltip.empty()) {
-    tooltip = d3.select("body")
-      .append("div")
-      .attr("id", "global-tooltip")
+    let tooltip = d3.select("body").select("#global-tooltip");
+    if (tooltip.empty()) {
+      tooltip = d3.select("body")
+        .append("div")
+        .attr("id", "global-tooltip")
+        .style("position", "absolute")
+        .style("padding", "4px")
+        .style("background", "white")
+        .style("border", "1px solid #ccc")
+        .style("borderRadius", "4px")
+        .style("pointerEvents", "none")
+        .style("zIndex", "9999")
+        .style("opacity", 0);
+    }
+
+    // Always reset style every mount (keeps tooltip consistent)
+    tooltip
       .style("position", "absolute")
       .style("padding", "4px")
       .style("background", "white")
@@ -45,27 +59,15 @@ export default function SankeyDiagram({ sampleFile, zoomFactor = 1 }: SankeyDiag
       .style("borderRadius", "4px")
       .style("pointerEvents", "none")
       .style("zIndex", "9999")
-      .style("opacity", 0);
-  }
+      .style("opacity", 0)
+      .html("");
 
-  // Always reset style every mount (keeps tooltip consistent)
-  tooltip
-    .style("position", "absolute")
-    .style("padding", "4px")
-    .style("background", "white")
-    .style("border", "1px solid #ccc")
-    .style("borderRadius", "4px")
-    .style("pointerEvents", "none")
-    .style("zIndex", "9999")
-    .style("opacity", 0)
-    .html("");
-
-  useEffect(() => {
+    useEffect(() => {
     // helper to escape CSS class selectors for arbitrary ids
     const escapeForSelector = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
 
     const applyHighlightToThisSankey = (ids: string[]) => {
-      const svgSel = d3.select(ref.current);
+      const svgSel = d3.select(svgRef.current);
       // dim main links and sample-trajectories
       svgSel.selectAll(".links path").attr("opacity", 0.1);
       svgSel.selectAll(".sample-trajectories line").attr("opacity", 0.05);
@@ -82,7 +84,7 @@ export default function SankeyDiagram({ sampleFile, zoomFactor = 1 }: SankeyDiag
     };
 
     const clearHighlight = () => {
-      const svgSel = d3.select(ref.current);
+      const svgSel = d3.select(svgRef.current);
 
       // Restore base sankey link opacity
       svgSel.selectAll(".sankey-links path")
@@ -124,8 +126,8 @@ export default function SankeyDiagram({ sampleFile, zoomFactor = 1 }: SankeyDiag
     };
   }, []);
 
-  useEffect(() => {
-    d3.csv(sampleFile).then((rows: any[]) => {
+    useEffect(() => {
+      d3.csv(sampleFile).then((rows: any[]) => {
       // rows: real_id,from_layer,to_layer,from_cluster,to_cluster
       const links: Link[] = [];
       const nodeNames = new Set<string>();
@@ -153,22 +155,22 @@ export default function SankeyDiagram({ sampleFile, zoomFactor = 1 }: SankeyDiag
         l.source = nameToIndex.get(l.source);
         l.target = nameToIndex.get(l.target);
       });
-      setData({ nodes, links });
-    });
-  }, [sampleFile]);
-
-  useEffect(() => {
-    d3.csv("/data/cluster_transition_matrices_1_individual_real_id.csv")
-      .then((rows2: any[]) => {
-        const map = new Map<string, string>();
-        rows2.forEach(r => {
-          map.set(String(r.real_id), r.split_label || "missing");
-        });
-        setSplitLabelMap(map);
+        setData({ nodes, links });
       });
-  }, []);
+    }, [sampleFile]);
 
-  const drawSankey = (width: number, data: SankeyData) => {
+    useEffect(() => {
+      d3.csv("/data/cluster_transition_matrices_1_individual_real_id.csv")
+        .then((rows2: any[]) => {
+          const map = new Map<string, string>();
+          rows2.forEach(r => {
+            map.set(String(r.real_id), r.split_label || "missing");
+          });
+          setSplitLabelMap(map);
+        });
+    }, []);
+
+    const drawSankey = (width: number, data: SankeyData) => {
     let linkSamplesMap = new Map<string, string[]>();
     // highlight samples for a given node
     // Global nodeSamplesMap for sharing across highlightSamplesForNode and CSV parsing
@@ -197,7 +199,7 @@ export default function SankeyDiagram({ sampleFile, zoomFactor = 1 }: SankeyDiag
       });
     }
 
-    const svg = d3.select(ref.current);
+      const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
     const height = 400;
@@ -822,56 +824,58 @@ export default function SankeyDiagram({ sampleFile, zoomFactor = 1 }: SankeyDiag
     }
   };
 
-  useEffect(() => {
-    if (!data) return;
-    const container = containerRef.current;
-    if (!container) return;
+    useEffect(() => {
+      if (!data) return;
+      const container = containerRef.current;
+      if (!container) return;
 
-    const draw = () => {
-      const zoomedWidth = container.clientWidth * zoomFactor;
-      drawSankey(zoomedWidth, data);
-    };
-    draw();
+      const draw = () => {
+        const zoomedWidth = container.clientWidth * zoomFactor;
+        drawSankey(zoomedWidth, data);
+      };
+      draw();
 
-    const resizeObserver = new ResizeObserver(draw);
-    resizeObserver.observe(container);
-    return () => resizeObserver.disconnect();
-  }, [data, zoomFactor]);
+      const resizeObserver = new ResizeObserver(draw);
+      resizeObserver.observe(container);
+      return () => resizeObserver.disconnect();
+    }, [data, zoomFactor]);
 
-  return (
-    <div
-      ref={containerRef}
-      style={{ width: "100%", height: "430px", position: "relative", overflowX: "scroll" }}
-      onScroll={(e) => {
-        const left = (e.target as HTMLDivElement).scrollLeft;
-        window.dispatchEvent(new CustomEvent("sankey-scroll", { detail: left }));
-      }}
-      onWheel={(e) => {
-        // Horizontal wheel sync with ScatterPlot
-        const container = e.currentTarget as HTMLDivElement;
-        container.scrollLeft += e.deltaY; 
-        window.dispatchEvent(new CustomEvent("sankey-scroll", { detail: container.scrollLeft }));
-      }}
-    >
-      <svg
-        ref={ref}
-        style={{
-          width: `${zoomFactor * 100}%`,
-          minWidth: `${zoomFactor * 100}%`
-        }}
-      ></svg>
-
+    return (
       <div
-        id="sankey-layer-labels"
-        style={{
-          width: "100%",
-          display: "flex",
-          justifyContent: "space-between",
-          textAlign: "center",
-          marginTop: "4px",
-          fontSize: "12px"
+        ref={containerRef}
+        style={{ width: "100%", height: "430px", position: "relative", overflowX: "scroll" }}
+        onScroll={(e) => {
+          const left = (e.target as HTMLDivElement).scrollLeft;
+          window.dispatchEvent(new CustomEvent("sankey-scroll", { detail: left }));
         }}
-      ></div>
-    </div>
-  );
-}
+        onWheel={(e) => {
+          // Horizontal wheel sync with ScatterPlot
+          const container = e.currentTarget as HTMLDivElement;
+          container.scrollLeft += e.deltaY; 
+          window.dispatchEvent(new CustomEvent("sankey-scroll", { detail: container.scrollLeft }));
+        }}
+      >
+        <svg
+          ref={svgRef}
+          style={{
+            width: `${zoomFactor * 100}%`,
+            minWidth: `${zoomFactor * 100}%`
+          }}
+        ></svg>
+
+        <div
+          id="sankey-layer-labels"
+          style={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "space-between",
+            textAlign: "center",
+            marginTop: "4px",
+            fontSize: "12px"
+          }}
+        ></div>
+      </div>
+    );
+  }
+);
+export default SankeyDiagram;
