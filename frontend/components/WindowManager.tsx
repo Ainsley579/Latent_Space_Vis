@@ -19,6 +19,7 @@ export default function WindowManager() {
   const [layerCounts, setLayerCounts] = useState<Record<string, number>>({});
   const windowRefs = useRef<HTMLDivElement[]>([]);
   const scatterRefs = useRef<HTMLDivElement[]>([]);
+  const sankeyRefs = useRef<HTMLDivElement[]>([]);
   useEffect(() => {
     const handler = (e: any) => {
       const { windowId, count } = e.detail;
@@ -91,7 +92,21 @@ export default function WindowManager() {
   useEffect(() => {
     windowRefs.current = windowRefs.current.slice(0, windows.length);
     scatterRefs.current = scatterRefs.current.slice(0, windows.length);
+    sankeyRefs.current = sankeyRefs.current.slice(0, windows.length);
   }, [windows.length]);
+
+  const syncSankeyScroll = (left: number) => {
+    sankeyRefs.current.forEach((ref) => {
+      if (ref) ref.scrollLeft = left;
+    });
+  };
+  useEffect(() => {
+    const handler = (e: any) => {
+      syncSankeyScroll(e.detail);
+    };
+    window.addEventListener("sankey-scroll", handler);
+    return () => window.removeEventListener("sankey-scroll", handler);
+  }, []);
 
   // Add global zoom with shift+wheel
   useEffect(() => {
@@ -182,7 +197,13 @@ export default function WindowManager() {
                       </div>
                     )}
                     {w.sankeyCsv ? (
-                      <SankeyDiagram sampleFile={w.sankeyCsv} zoomFactor={zoomFactor} />
+                      <div
+                        ref={(el) => {
+                          if (el) sankeyRefs.current[idx] = el;
+                        }}
+                      >
+                        <SankeyDiagram sampleFile={w.sankeyCsv} zoomFactor={zoomFactor} />
+                      </div>
                     ) : (
                       <div style={{ opacity: 0.5, padding: "1rem", fontSize: "0.9rem" }}>
                         Waiting for backend to generate Sankey…

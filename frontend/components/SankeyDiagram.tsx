@@ -33,17 +33,32 @@ export default function SankeyDiagram({ sampleFile, zoomFactor = 1 }: SankeyDiag
   const [splitLabelMap, setSplitLabelMap] = useState<Map<string, string>>(new Map());
 
   // Tooltip for Sankey sample hover
-  const tooltip = d3.select("body")
-    .append("div")
-    .attr("class", "sankey-tooltip")
+  let tooltip = d3.select("body").select("#global-tooltip");
+  if (tooltip.empty()) {
+    tooltip = d3.select("body")
+      .append("div")
+      .attr("id", "global-tooltip")
+      .style("position", "absolute")
+      .style("padding", "4px")
+      .style("background", "white")
+      .style("border", "1px solid #ccc")
+      .style("borderRadius", "4px")
+      .style("pointerEvents", "none")
+      .style("zIndex", "9999")
+      .style("opacity", 0);
+  }
+
+  // Always reset style every mount (keeps tooltip consistent)
+  tooltip
     .style("position", "absolute")
     .style("padding", "4px")
     .style("background", "white")
     .style("border", "1px solid #ccc")
     .style("borderRadius", "4px")
     .style("pointerEvents", "none")
-    .style("zIndex", 9999)
-    .style("opacity", 0);
+    .style("zIndex", "9999")
+    .style("opacity", 0)
+    .html("");
 
   useEffect(() => {
     // helper to escape CSS class selectors for arbitrary ids
@@ -221,7 +236,7 @@ export default function SankeyDiagram({ sampleFile, zoomFactor = 1 }: SankeyDiag
       links: data.links.map((d) => Object.assign({}, d)),
     });
 
-    svg.attr("width", fittedWidth).attr("height", height);
+    svg.attr("width", width).attr("height", height);
 
     // helper to extract layer name from node name
     const getLayerName = (fullName: string) => {
@@ -812,22 +827,37 @@ export default function SankeyDiagram({ sampleFile, zoomFactor = 1 }: SankeyDiag
     const container = containerRef.current;
     if (!container) return;
 
-    const draw = () => drawSankey(container.clientWidth, data);
+    const draw = () => {
+      const zoomedWidth = container.clientWidth * zoomFactor;
+      drawSankey(zoomedWidth, data);
+    };
     draw();
 
     const resizeObserver = new ResizeObserver(draw);
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
-  }, [data]);
+  }, [data, zoomFactor]);
 
   return (
-    <div ref={containerRef} style={{ width: "100%", height: "600px", position: "relative", overflowX: "hidden" }}>
+    <div
+      ref={containerRef}
+      style={{ width: "100%", height: "430px", position: "relative", overflowX: "scroll" }}
+      onScroll={(e) => {
+        const left = (e.target as HTMLDivElement).scrollLeft;
+        window.dispatchEvent(new CustomEvent("sankey-scroll", { detail: left }));
+      }}
+      onWheel={(e) => {
+        // Horizontal wheel sync with ScatterPlot
+        const container = e.currentTarget as HTMLDivElement;
+        container.scrollLeft += e.deltaY; 
+        window.dispatchEvent(new CustomEvent("sankey-scroll", { detail: container.scrollLeft }));
+      }}
+    >
       <svg
         ref={ref}
         style={{
-          width: "100%",
-          transform: `scaleX(${zoomFactor})`,
-          transformOrigin: "left top"
+          width: `${zoomFactor * 100}%`,
+          minWidth: `${zoomFactor * 100}%`
         }}
       ></svg>
 

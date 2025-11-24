@@ -17,17 +17,32 @@ interface ScatterPlotProps {
 
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
   ({ onScroll, clusterFilePath, totalWindows, zoomFactor = 1 }, ref) => {
-    const renderedRef = React.useRef(false);
-    const tooltip = d3.select("body")
-      .append("div")
-      .attr("class", "scatter-tooltip")
+    let tooltip = d3.select("body").select("#global-tooltip");
+    if (tooltip.empty()) {
+      tooltip = d3.select("body")
+        .append("div")
+        .attr("id", "global-tooltip")
+        .style("position", "absolute")
+        .style("padding", "4px")
+        .style("background", "white")
+        .style("border", "1px solid #ccc")
+        .style("borderRadius", "4px")
+        .style("pointerEvents", "none")
+        .style("zIndex", "9999")
+        .style("opacity", 0);
+    }
+
+    // Always reset style every mount (keeps tooltip consistent)
+    tooltip
       .style("position", "absolute")
       .style("padding", "4px")
       .style("background", "white")
       .style("border", "1px solid #ccc")
       .style("borderRadius", "4px")
       .style("pointerEvents", "none")
-      .style("opacity", 0);
+      .style("zIndex", "9999")
+      .style("opacity", 0)
+      .html("");
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     // Move selectedIDs to top-level so it's accessible in clearScatter and run
@@ -81,14 +96,14 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
     useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
     useEffect(() => {
-      if (renderedRef.current) return;
-      renderedRef.current = true;
       const run = async () => {
         const container = containerRef.current;
         if (!container) return;
         d3.select(container).selectAll("*").remove();
 
-        const layerFiles = [
+        // (KEEP all existing drawing code exactly the same)
+        // From "let rawLayers = [...]" down to the end of the for-loop block.
+        let rawLayers = [
           "emb.csv",
           "output_block_0.csv",
           "output_block_1.csv",
@@ -99,6 +114,8 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           "u_mlp_l1.csv",
           "u_mlp_l2.csv",
         ];
+        // Remove accidental duplicates (your backend sometimes outputs duplicates)
+        const layerFiles = Array.from(new Set(rawLayers));
         window.dispatchEvent(
           new CustomEvent("scatter-layer-count", {
             detail: {
@@ -131,7 +148,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           const wrapper = d3
             .select(container)
             .append("div")
-            .style("width", svgWidth + "px")
+            .style("width", (svgWidth * zoomFactor) + "px")
             .style("display", "flex")
             .style("flex-direction", "column")
             .style("align-items", "center")
@@ -146,12 +163,10 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           const svg = wrapper
             .append("svg")
             .attr("height", height)
-            .attr("width", svgWidth)
+            .attr("width", svgWidth * zoomFactor)
             // .style("border", "1px solid #ccc")
             // .style("border-radius", "8px")
             .style("background", "#fafafa");
-
-
 
           const filePath = `${clusterFilePath}/scatter_plot_data_${layerFiles[i].replace(".csv","")}.csv`;
           const localData = await d3.csv(filePath, d => ({
@@ -293,9 +308,10 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           }
         }
       };
-      run();
-    }, [clusterFilePath]);
 
+      run(); // always redraw on zoom
+    }, [clusterFilePath, zoomFactor]);
+ 
     return (
       <div>
         <div style={{
@@ -366,10 +382,9 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             display: "flex",
             flexDirection: "row",
             width: "100%",
-            overflow: "hidden",
-            paddingBottom: "0.5rem",
-            transform: `scaleX(${zoomFactor})`,
-            transformOrigin: "left top"
+            overflowX: "scroll",
+            overflowY: "hidden",
+            paddingBottom: "0.5rem"
           }}
         ></div>
       </div>
