@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<meta charset="utf-8"/>
+<body>
+<div id="scatter-container" style="width:100%; height:600px; overflow-x:auto;"></div>
+
+<script>
+  window.__SCATTER_DATA__ = {};   // Python 会替换这里
+</script>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<!-- 引入 scatter_core.js -->
+<script src="scatter_core.js"></script>
+
+<script>
+  renderScatter(
+    document.getElementById('scatter-container'),
+    window.__SCATTER_DATA__
+  );
+</script>
+</body>

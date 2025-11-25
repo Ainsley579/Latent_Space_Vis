@@ -382,7 +382,7 @@ function renderSankey(container, nodesRaw, linksRaw, sampleRows, splitMapRaw) {
         .style("opacity", 1);
 
       tooltip
-        .html(`<img src="/data/molecule_images/${d.sid}_ligand.png" width="180"/>`)
+        .html(`<img src="files/molecule_images/${d.sid}_ligand.png" width="180"/>`)
         .style("left", (ev.pageX + 12) + "px")
         .style("top", (ev.pageY + 12) + "px");
 
