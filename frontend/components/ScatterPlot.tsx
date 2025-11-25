@@ -12,20 +12,37 @@ interface ScatterPlotProps {
   onScroll?: (scrollLeft: number) => void;
   clusterFilePath: string;
   totalWindows?: number;
+  zoomFactor?: number;
 }
 
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
-  ({ onScroll, clusterFilePath, totalWindows }, ref) => {
-    const tooltip = d3.select("body")
-      .append("div")
-      .attr("class", "scatter-tooltip")
+  ({ onScroll, clusterFilePath, totalWindows, zoomFactor = 1 }, ref) => {
+    let tooltip = d3.select("body").select("#global-tooltip");
+    if (tooltip.empty()) {
+      tooltip = d3.select("body")
+        .append("div")
+        .attr("id", "global-tooltip")
+        .style("position", "absolute")
+        .style("padding", "4px")
+        .style("background", "white")
+        .style("border", "1px solid #ccc")
+        .style("borderRadius", "4px")
+        .style("pointerEvents", "none")
+        .style("zIndex", "9999")
+        .style("opacity", 0);
+    }
+
+    // Always reset style every mount (keeps tooltip consistent)
+    tooltip
       .style("position", "absolute")
       .style("padding", "4px")
       .style("background", "white")
       .style("border", "1px solid #ccc")
       .style("borderRadius", "4px")
       .style("pointerEvents", "none")
-      .style("opacity", 0);
+      .style("zIndex", "9999")
+      .style("opacity", 0)
+      .html("");
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     // Move selectedIDs to top-level so it's accessible in clearScatter and run
@@ -78,13 +95,45 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
     useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
+    // NEW: zoom handler — rescale wrapper widths without redrawing circles
     useEffect(() => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      // select all wrappers
+      d3.select(container)
+        .selectAll("div.scatter-wrapper")
+        .style("width", (d: any, i: number, nodes: any[]) => {
+          const node = nodes[i] as HTMLDivElement;
+          const baseWidth = (node as any).__baseWidth || node.clientWidth / zoomFactor;
+          return baseWidth * zoomFactor + "px";
+        });
+
+      // scale SVGs too
+      d3.select(container)
+        .selectAll("svg.scatter-svg")
+        .attr("width", function (this: SVGSVGElement) {
+          const svg = d3.select(this);
+          const base = (svg as any).node().__baseWidth || +svg.attr("width") / zoomFactor;
+          return base * zoomFactor;
+        });
+    }, [zoomFactor]);
+
+    // Prevent StrictMode double-run
+    const hasDrawnRef = React.useRef(false);
+
+    useEffect(() => {
+      if (hasDrawnRef.current) return;
+      hasDrawnRef.current = true;
+
       const run = async () => {
         const container = containerRef.current;
         if (!container) return;
-        container.innerHTML = "";
+        d3.select(container).selectAll("*").remove();
 
-        const layerFiles = [
+        // (KEEP all existing drawing code exactly the same)
+        // From "let rawLayers = [...]" down to the end of the for-loop block.
+        let rawLayers = [
           "emb.csv",
           "output_block_0.csv",
           "output_block_1.csv",
@@ -95,6 +144,17 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           "u_mlp_l1.csv",
           "u_mlp_l2.csv",
         ];
+        // Remove accidental duplicates (your backend sometimes outputs duplicates)
+        const layerFiles = Array.from(new Set(rawLayers));
+        window.dispatchEvent(
+          new CustomEvent("scatter-layer-info", {
+            detail: {
+              windowId: clusterFilePath,
+              names: layerFiles,
+              count: layerFiles.length
+            }
+          })
+        );
 
         const height = 200;
         // const containerWidth = container.clientWidth || 800;
@@ -111,18 +171,36 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         // selectedIDs now defined at component top-level
 
         for (let i = 0; i < layerFiles.length; i++) {
-          // const svgWidth = computeSvgWidth();
-          const svgWidth = 350;
+          // subtract total margin (5px per gap)
+          const totalMargin = (layerFiles.length - 1) * 5;
+          const availableWidth = container.clientWidth - totalMargin;
+          const svgWidth = availableWidth / layerFiles.length;
 
-          const svg = d3
+          const wrapper = d3
             .select(container)
+            .append("div")
+            .classed("scatter-wrapper", true)
+            .each(function() { (this as any).__baseWidth = svgWidth; })
+            .style("width", (svgWidth * zoomFactor) + "px")
+            .style("display", "flex")
+            .style("flex-direction", "column")
+            .style("align-items", "center")
+            .style("margin-right", "5px");
+
+          wrapper
+            .append("div")
+            .style("font-size", "12px")
+            .style("margin-bottom", "4px")
+            .text(layerFiles[i].replace(".csv", ""));
+
+          const svg = wrapper
             .append("svg")
+            .classed("scatter-svg", true)
             .attr("height", height)
-            .attr("width", svgWidth)
-            .style("flex", "0 0 auto")
-            .style("marginRight", "1rem")
-            .style("border", "1px solid #ccc")
-            .style("borderRadius", "8px")
+            .each(function() { (this as any).__baseWidth = svgWidth; })
+            .attr("width", svgWidth * zoomFactor)
+            // .style("border", "1px solid #ccc")
+            // .style("border-radius", "8px")
             .style("background", "#fafafa");
 
           const filePath = `${clusterFilePath}/scatter_plot_data_${layerFiles[i].replace(".csv","")}.csv`;
@@ -265,9 +343,10 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
           }
         }
       };
-      run();
-    }, [clusterFilePath, lassoEnabled]);
 
+      run();
+    }, [clusterFilePath]);
+ 
     return (
       <div>
         <div style={{
@@ -331,15 +410,25 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         </div>
         <div
           ref={containerRef}
-          onScroll={(e) =>
-            onScroll?.((e.target as HTMLDivElement).scrollLeft)
-          }
+          onScroll={(e) => {
+            const left = (e.target as HTMLDivElement).scrollLeft;
+            onScroll?.(left);
+          }}
+          onWheel={(e) => {
+            const container = e.currentTarget as HTMLDivElement;
+            container.scrollLeft += e.deltaY;
+            // Notify WindowManager for global synchronization
+            window.dispatchEvent(
+              new CustomEvent("sankey-scroll", { detail: container.scrollLeft })
+            );
+          }}
           style={{
             display: "flex",
             flexDirection: "row",
-            overflowX: "auto",
             width: "100%",
-            paddingBottom: "0.5rem",
+            overflowX: "scroll",
+            overflowY: "hidden",
+            paddingBottom: "0.5rem"
           }}
         ></div>
       </div>

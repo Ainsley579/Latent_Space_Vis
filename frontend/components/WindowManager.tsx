@@ -4,6 +4,7 @@ import Window from "./Window";
 import SankeyDiagram from "./SankeyDiagram";
 import ScatterPlot from "./ScatterPlot";
 import ControlPanel from "./ControlPanel";
+import Thumbnail from "./Thumbnail";
 
 interface WindowData {
   id: string;
@@ -14,8 +15,22 @@ interface WindowData {
 
 export default function WindowManager() {
   const [windows, setWindows] = useState<WindowData[]>([]);
+  const [zoomFactor, setZoomFactor] = useState(1.0);
+const [layerCounts, setLayerCounts] = useState<Record<string, { names: string[]; count: number }>>({});
   const windowRefs = useRef<HTMLDivElement[]>([]);
   const scatterRefs = useRef<HTMLDivElement[]>([]);
+  const sankeyRefs = useRef<HTMLDivElement[]>([]);
+  useEffect(() => {
+    const handler = (e: any) => {
+      const { windowId, names, count } = e.detail;
+      setLayerCounts(prev => ({
+        ...prev,
+        [windowId]: { names, count }
+      }));
+    };
+    window.addEventListener("scatter-layer-info", handler);
+    return () => window.removeEventListener("scatter-layer-info", handler);
+  }, []);
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -63,6 +78,9 @@ export default function WindowManager() {
     scatterRefs.current.forEach((ref, i) => {
       if (i !== index && ref) ref.scrollLeft = scrollLeft;
     });
+    sankeyRefs.current.forEach((ref) => {
+      if (ref) ref.scrollLeft = scrollLeft;
+    });
   };
 
   const openWindow = () => {
@@ -77,11 +95,53 @@ export default function WindowManager() {
   useEffect(() => {
     windowRefs.current = windowRefs.current.slice(0, windows.length);
     scatterRefs.current = scatterRefs.current.slice(0, windows.length);
+    sankeyRefs.current = sankeyRefs.current.slice(0, windows.length);
   }, [windows.length]);
 
+  const syncSankeyScroll = (left: number) => {
+    sankeyRefs.current.forEach((ref) => {
+      if (ref) ref.scrollLeft = left;
+    });
+    scatterRefs.current.forEach((ref) => {
+      if (ref) ref.scrollLeft = left;
+    });
+  };
+  useEffect(() => {
+    const handler = (e: any) => {
+      syncSankeyScroll(e.detail);
+    };
+    window.addEventListener("sankey-scroll", handler);
+    return () => window.removeEventListener("sankey-scroll", handler);
+  }, []);
+
+  // Add global zoom with shift+wheel
+  useEffect(() => {
+    const handler = (e: WheelEvent) => {
+      if (!e.shiftKey) return;
+      e.preventDefault();
+
+      // macOS touchpad: Shift + wheel ⇒ horizontal scroll (deltaX)
+      const dx = e.deltaX;
+
+      // dx < 0 → zoom in, dx > 0 → zoom out
+      const delta = dx < 0 ? 0.1 : -0.1;
+
+      setZoomFactor(prev =>
+        Math.max(1, Math.min(5, prev + delta))
+      );
+    };
+
+    window.addEventListener("wheel", handler, { passive: false });
+    return () => window.removeEventListener("wheel", handler);
+  }, []);
+
+  // (Thumbnail logic moved to Thumbnail component)
+
   return (
-    <div style={{ display: "flex", width: "100%" }}>
-      <div style={{ width: "80%", paddingRight: "0.5rem", boxSizing: "border-box" }}>
+    <div
+      style={{ width: "100%" }}
+    >
+      <div style={{ width: "100%", boxSizing: "border-box" }}>
         <button
           className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
           onClick={openWindow}
@@ -121,6 +181,7 @@ export default function WindowManager() {
                     title={w.title}
                     onClose={closeWindow}
                     totalWindows={windows.length}
+                    zoomFactor={zoomFactor}
                   >
                     {/* <ControlPanel
                       onChange={(params) => {
@@ -134,6 +195,7 @@ export default function WindowManager() {
                         }}
                         onScroll={(scrollLeft) => syncScatterScroll(idx, scrollLeft)}
                         clusterFilePath={w.scatterCsv}
+                        zoomFactor={zoomFactor}
                       />
                     ) : (
                       <div style={{ opacity: 0.5, padding: "1rem", fontSize: "0.9rem" }}>
@@ -141,22 +203,30 @@ export default function WindowManager() {
                       </div>
                     )}
                     {w.sankeyCsv ? (
-                      <SankeyDiagram sampleFile={w.sankeyCsv} />
+                      <SankeyDiagram
+                        ref={(el) => {
+                          if (el) sankeyRefs.current[idx] = el;
+                        }}
+                        sampleFile={w.sankeyCsv}
+                        zoomFactor={zoomFactor}
+                      />
                     ) : (
                       <div style={{ opacity: 0.5, padding: "1rem", fontSize: "0.9rem" }}>
                         Waiting for backend to generate Sankey…
                       </div>
                     )}
+                    <Thumbnail
+                      windowId={w.id}
+                      scatterRef={scatterRefs.current[idx]}
+                      layerNames={layerCounts[w.scatterCsv || ""]?.names || []}
+                      zoomFactor={zoomFactor}
+                    />
                   </Window>
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
-      <div style={{ width: "20%", minWidth: "20%", maxWidth: "20%", height: "200vh", overflowY: "auto", background: "#f7f7f7", padding: "1rem", boxSizing: "border-box" }}>
-        {/* Right side panel placeholder */}
-        <h3 style={{ fontWeight: "bold", marginBottom: "1rem" }}>Right Panel</h3>
       </div>
     </div>
   );

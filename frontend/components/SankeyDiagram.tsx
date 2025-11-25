@@ -6,7 +6,7 @@ import {
   SankeyNodeMinimal,
   SankeyLinkMinimal,
 } from "d3-sankey";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useImperativeHandle } from "react";
 
 interface Node extends SankeyNodeMinimal<Node, Link> {
   name: string;
@@ -22,34 +22,52 @@ interface SankeyData {
 }
 interface SankeyDiagramProps {
   sampleFile: string;
+  zoomFactor?: number;
 }
 
-export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagramProps) {
-  const ref = useRef<SVGSVGElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [data, setData] = useState<SankeyData | null>(null);
-  // Store mapping from real_id to split label ("train", "test", "experimental", etc)
-  const [splitLabelMap, setSplitLabelMap] = useState<Map<string, string>>(new Map());
+const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
+  ({ sampleFile, zoomFactor = 1 }, ref) => {
+    const svgRef = useRef<SVGSVGElement | null>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const [data, setData] = useState<SankeyData | null>(null);
+    // Store mapping from real_id to split label ("train", "test", "experimental", etc)
+    const [splitLabelMap, setSplitLabelMap] = useState<Map<string, string>>(new Map());
+    useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
   // Tooltip for Sankey sample hover
-  const tooltip = d3.select("body")
-    .append("div")
-    .attr("class", "sankey-tooltip")
-    .style("position", "absolute")
-    .style("padding", "4px")
-    .style("background", "white")
-    .style("border", "1px solid #ccc")
-    .style("borderRadius", "4px")
-    .style("pointerEvents", "none")
-    .style("zIndex", 9999)
-    .style("opacity", 0);
+    let tooltip = d3.select("body").select("#global-tooltip");
+    if (tooltip.empty()) {
+      tooltip = d3.select("body")
+        .append("div")
+        .attr("id", "global-tooltip")
+        .style("position", "absolute")
+        .style("padding", "4px")
+        .style("background", "white")
+        .style("border", "1px solid #ccc")
+        .style("borderRadius", "4px")
+        .style("pointerEvents", "none")
+        .style("zIndex", "9999")
+        .style("opacity", 0);
+    }
 
-  useEffect(() => {
+    // Always reset style every mount (keeps tooltip consistent)
+    tooltip
+      .style("position", "absolute")
+      .style("padding", "4px")
+      .style("background", "white")
+      .style("border", "1px solid #ccc")
+      .style("borderRadius", "4px")
+      .style("pointerEvents", "none")
+      .style("zIndex", "9999")
+      .style("opacity", 0)
+      .html("");
+
+    useEffect(() => {
     // helper to escape CSS class selectors for arbitrary ids
     const escapeForSelector = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
 
     const applyHighlightToThisSankey = (ids: string[]) => {
-      const svgSel = d3.select(ref.current);
+      const svgSel = d3.select(svgRef.current);
       // dim main links and sample-trajectories
       svgSel.selectAll(".links path").attr("opacity", 0.1);
       svgSel.selectAll(".sample-trajectories line").attr("opacity", 0.05);
@@ -66,7 +84,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
     };
 
     const clearHighlight = () => {
-      const svgSel = d3.select(ref.current);
+      const svgSel = d3.select(svgRef.current);
 
       // Restore base sankey link opacity
       svgSel.selectAll(".sankey-links path")
@@ -108,8 +126,8 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
     };
   }, []);
 
-  useEffect(() => {
-    d3.csv(sampleFile).then((rows: any[]) => {
+    useEffect(() => {
+      d3.csv(sampleFile).then((rows: any[]) => {
       // rows: real_id,from_layer,to_layer,from_cluster,to_cluster
       const links: Link[] = [];
       const nodeNames = new Set<string>();
@@ -137,22 +155,22 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
         l.source = nameToIndex.get(l.source);
         l.target = nameToIndex.get(l.target);
       });
-      setData({ nodes, links });
-    });
-  }, [sampleFile]);
-
-  useEffect(() => {
-    d3.csv("/data/cluster_transition_matrices_1_individual_real_id.csv")
-      .then((rows2: any[]) => {
-        const map = new Map<string, string>();
-        rows2.forEach(r => {
-          map.set(String(r.real_id), r.split_label || "missing");
-        });
-        setSplitLabelMap(map);
+        setData({ nodes, links });
       });
-  }, []);
+    }, [sampleFile]);
 
-  const drawSankey = (width: number, data: SankeyData) => {
+    useEffect(() => {
+      d3.csv("/data/cluster_transition_matrices_1_individual_real_id.csv")
+        .then((rows2: any[]) => {
+          const map = new Map<string, string>();
+          rows2.forEach(r => {
+            map.set(String(r.real_id), r.split_label || "missing");
+          });
+          setSplitLabelMap(map);
+        });
+    }, []);
+
+    const drawSankey = (width: number, data: SankeyData) => {
     let linkSamplesMap = new Map<string, string[]>();
     // highlight samples for a given node
     // Global nodeSamplesMap for sharing across highlightSamplesForNode and CSV parsing
@@ -181,19 +199,38 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       });
     }
 
-    const svg = d3.select(ref.current);
+      const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const height = 600;
+    const height = 400;
     // Always fit SVG inside window with a min width, no overflow
     const fittedWidth = Math.max(width, 200);
+
+    // --- Margin calculation before sankeyGen creation ---
+    // Derive layerNames for margin estimation
+    let layerNames: string[] | undefined;
+    if (data && data.nodes && data.nodes.length > 0) {
+      const getLayerName = (fullName: string) => {
+        const idx = fullName.lastIndexOf("_");
+        return idx === -1 ? fullName : fullName.slice(0, idx);
+      };
+      const layerNameSet = new Set<string>();
+      data.nodes.forEach(n => {
+        if (n && n.name) {
+          layerNameSet.add(getLayerName(n.name));
+        }
+      });
+      layerNames = Array.from(layerNameSet).sort();
+    }
+    const estimatedLayers = layerNames?.length || 8;
+    const margin = width / estimatedLayers / 2;
 
     const sankeyGen = sankey<Node, Link>()
       .nodeWidth(10)
       .nodePadding(7)
       .extent([
-        [1, 1],
-        [width - 20, height - 5], // compress to fit inside available width
+        [margin, 1],
+        [width - margin, height - 5],
       ]);
 
     const { nodes: layoutNodes, links: layoutLinks } = sankeyGen({
@@ -201,7 +238,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       links: data.links.map((d) => Object.assign({}, d)),
     });
 
-    svg.attr("width", fittedWidth).attr("height", height);
+    svg.attr("width", width).attr("height", height);
 
     // helper to extract layer name from node name
     const getLayerName = (fullName: string) => {
@@ -215,11 +252,28 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
       const layerName = getLayerName(n.name);
       layerNameSet.add(layerName);
     });
-    const layerNames = Array.from(layerNameSet).sort();
+    const layerNames2 = Array.from(layerNameSet).sort();
+
+    // ---- External bottom labels aligned to scatterplot columns ----
+    const externalLabelDiv = containerRef.current?.querySelector("#sankey-layer-labels");
+    if (externalLabelDiv) {
+      externalLabelDiv.innerHTML = "";
+
+      const layerCount = layerNames2.length;
+      const colWidth = width / layerCount;
+
+      layerNames2.forEach((layerName, i) => {
+        const div = document.createElement("div");
+        div.style.flex = "0 0 " + colWidth + "px";
+        div.style.textAlign = "center";
+        div.textContent = layerName;
+        externalLabelDiv.appendChild(div);
+      });
+    }
 
     // Assign each layer a distinct hue around the color wheel using HSL
     const layerColorMap = new Map<string, string>();
-    layerNames.forEach((layerName, i) => {
+    layerNames2.forEach((layerName, i) => {
       layerColorMap.set(
         layerName,
         d3.schemeTableau10[i % d3.schemeTableau10.length] // ✅ 不加括号，直接取数组元素
@@ -228,7 +282,7 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
 
     // Sort nodes within each layer by y0 (top to bottom)
     const nodesByLayer = new Map<string, Node[]>();
-    layerNames.forEach(layerName => {
+    layerNames2.forEach(layerName => {
       const nodesInLayer = layoutNodes.filter(n => getLayerName(n.name) === layerName);
       nodesInLayer.sort((a, b) => (a.y0 ?? 0) - (b.y0 ?? 0));
       nodesByLayer.set(layerName, nodesInLayer);
@@ -725,12 +779,13 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
         .join("text")
         .attr("x", (d) => (d.x0 ?? 0) - 6)
         .attr("y", (d) => ((d.y1 ?? 0) + (d.y0 ?? 0)) / 2)
-        .attr("dy", "0.35em")
+        .attr("dy", "0.35em");
         // .attr("text-anchor", "end")
         // .text((d) => d.name)
         // .filter((d) => (d.x0 ?? 0) < width / 2)
         // .attr("x", (d) => (d.x1 ?? 0) + 6)
         // .attr("text-anchor", "start");
+
 
       // Draw sample points as small circles
       const samplePointsGroup = svg.append("g").attr("class", "sample-points");
@@ -769,22 +824,58 @@ export default function SankeyDiagram({ clusterFile, sampleFile }: SankeyDiagram
     }
   };
 
-  useEffect(() => {
-    if (!data) return;
-    const container = containerRef.current;
-    if (!container) return;
+    useEffect(() => {
+      if (!data) return;
+      const container = containerRef.current;
+      if (!container) return;
 
-    const draw = () => drawSankey(container.clientWidth, data);
-    draw();
+      const draw = () => {
+        const zoomedWidth = container.clientWidth * zoomFactor;
+        drawSankey(zoomedWidth, data);
+      };
+      draw();
 
-    const resizeObserver = new ResizeObserver(draw);
-    resizeObserver.observe(container);
-    return () => resizeObserver.disconnect();
-  }, [data]);
+      const resizeObserver = new ResizeObserver(draw);
+      resizeObserver.observe(container);
+      return () => resizeObserver.disconnect();
+    }, [data, zoomFactor]);
 
-  return (
-    <div ref={containerRef} style={{ width: "100%", height: "600px", position: "relative", overflowX: "hidden" }}>
-      <svg ref={ref}  style={{ width: "100%"}}></svg>
-    </div>
-  );
-}
+    return (
+      <div
+        ref={containerRef}
+        style={{ width: "100%", height: "430px", position: "relative", overflowX: "scroll" }}
+        onScroll={(e) => {
+          const left = (e.target as HTMLDivElement).scrollLeft;
+          window.dispatchEvent(new CustomEvent("sankey-scroll", { detail: left }));
+        }}
+        onWheel={(e) => {
+          // Horizontal wheel sync with ScatterPlot
+          const container = e.currentTarget as HTMLDivElement;
+          container.scrollLeft += e.deltaY; 
+          window.dispatchEvent(new CustomEvent("sankey-scroll", { detail: container.scrollLeft }));
+        }}
+      >
+        <svg
+          ref={svgRef}
+          style={{
+            width: `${zoomFactor * 100}%`,
+            minWidth: `${zoomFactor * 100}%`
+          }}
+        ></svg>
+
+        <div
+          id="sankey-layer-labels"
+          style={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "space-between",
+            textAlign: "center",
+            marginTop: "4px",
+            fontSize: "12px"
+          }}
+        ></div>
+      </div>
+    );
+  }
+);
+export default SankeyDiagram;
