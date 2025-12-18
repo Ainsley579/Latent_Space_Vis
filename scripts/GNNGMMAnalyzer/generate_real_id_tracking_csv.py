@@ -30,6 +30,17 @@ except ImportError:
     GNNGMMAnalyzer = None
     ComponentFlowAnalyzer = None
 
+# Import core functions
+try:
+    from embedding_pipeline_core import (
+        adaptive_zca_whitening,
+        fit_gmm
+    )
+    USE_CORE_FUNCTIONS = True
+except ImportError:
+    USE_CORE_FUNCTIONS = False
+    print("Warning: Could not import core functions, using local implementations")
+
 
 class RealIDTracker:
     """Track real IDs through layer and component transitions"""
@@ -203,51 +214,68 @@ class RealIDTracker:
     
     def adaptive_zca_whitening(self, X, threshold=1e-5, epsilon=1e-5):
         """Apply ZCA whitening"""
-        sigma = np.cov(X, rowvar=False)
-        U, S, V = np.linalg.svd(sigma)
-        
-        k = 0
-        for v in S:
-            if v > threshold:
-                k += 1
-        
-        top_U = U[:, :k]
-        top_S = S[:k]
-        red_zca = np.dot(np.diag(1.0 / np.sqrt(top_S + epsilon)), top_U.T)
-        X_whitened = X @ red_zca.T
-        
-        return X_whitened, red_zca
+        if USE_CORE_FUNCTIONS:
+            from embedding_pipeline_core import adaptive_zca_whitening as core_zca
+            return core_zca(X, threshold, epsilon)
+        else:
+            # Local implementation for backward compatibility
+            sigma = np.cov(X, rowvar=False)
+            U, S, V = np.linalg.svd(sigma)
+            
+            k = 0
+            for v in S:
+                if v > threshold:
+                    k += 1
+            
+            top_U = U[:, :k]
+            top_S = S[:k]
+            red_zca = np.dot(np.diag(1.0 / np.sqrt(top_S + epsilon)), top_U.T)
+            X_whitened = X @ red_zca.T
+            
+            return X_whitened, red_zca
     
     def fit_gmm_with_components(self, embeddings, n_components):
         """Fit GMM with specified number of components"""
-        # Standardize embeddings
-        scaler = StandardScaler()
-        embeddings_scaled = scaler.fit_transform(embeddings)
-        
-        # Apply ZCA whitening
-        embeddings_processed, zca_transform = self.adaptive_zca_whitening(embeddings_scaled, threshold=self.zca_threshold)
-        
-        # Fit GMM
-        gmm = GaussianMixture(
-            n_components=n_components,
-            covariance_type='full',
-            random_state=42,
-            max_iter=200
-        )
-        gmm.fit(embeddings_processed)
-        
-        # Get cluster assignments
-        labels = gmm.predict(embeddings_processed)
-        probabilities = gmm.predict_proba(embeddings_processed)
-        
-        return {
-            'gmm': gmm,
-            'labels': labels,
-            'probabilities': probabilities,
-            'means': gmm.means_,
-            'covariances': gmm.covariances_,
-            'weights': gmm.weights_
-        }
+        if USE_CORE_FUNCTIONS:
+            from embedding_pipeline_core import fit_gmm as core_fit_gmm
+            result = core_fit_gmm(
+                embeddings,
+                n_components=n_components,
+                zca_threshold=self.zca_threshold,
+                random_state=42,
+                max_iter=200
+            )
+            return result
+        else:
+            # Local implementation for backward compatibility
+            # Standardize embeddings
+            scaler = StandardScaler()
+            embeddings_scaled = scaler.fit_transform(embeddings)
+            
+            # Apply ZCA whitening
+            embeddings_processed, zca_transform = self.adaptive_zca_whitening(embeddings_scaled, threshold=self.zca_threshold)
+            
+            # Fit GMM
+            gmm = GaussianMixture(
+                n_components=n_components,
+                covariance_type='full',
+                random_state=42,
+                max_iter=200
+            )
+            gmm.fit(embeddings_processed)
+            
+            # Get cluster assignments
+            labels = gmm.predict(embeddings_processed)
+            probabilities = gmm.predict_proba(embeddings_processed)
+            
+            return {
+                'gmm': gmm,
+                'labels': labels,
+                'probabilities': probabilities,
+                'means': gmm.means_,
+                'covariances': gmm.covariances_,
+                'weights': gmm.weights_
+            }
     
     def generate_layer_transition_tracking(self, n_components=None):
         """

@@ -25,6 +25,17 @@ import json
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(script_dir)
 
+# Import core functions
+try:
+    from embedding_pipeline_core import (
+        adaptive_zca_whitening,
+        compute_mds_positions
+    )
+    USE_CORE_FUNCTIONS = True
+except ImportError:
+    USE_CORE_FUNCTIONS = False
+    print("Warning: Could not import core functions, using local implementations")
+
 
 def get_euclidean_distances(X):
     """
@@ -56,20 +67,26 @@ def adaptive_zca_whitening(X, threshold=1e-5, epsilon=1e-5):
     Returns:
         Whitened matrix
     """
-    sigma = np.cov(X, rowvar=False)
-    U, S, V = np.linalg.svd(sigma)
-    
-    k = 0
-    for v in S:
-        if v > threshold:
-            k += 1
-    
-    top_U = U[:, :k]
-    top_S = S[:k]
-    red_zca = np.dot(np.diag(1.0 / np.sqrt(top_S + epsilon)), top_U.T)
-    X_whitened = X @ red_zca.T
-    
-    return X_whitened
+    if USE_CORE_FUNCTIONS:
+        from embedding_pipeline_core import adaptive_zca_whitening as core_zca
+        X_whitened, _ = core_zca(X, threshold, epsilon)
+        return X_whitened
+    else:
+        # Local implementation for backward compatibility
+        sigma = np.cov(X, rowvar=False)
+        U, S, V = np.linalg.svd(sigma)
+        
+        k = 0
+        for v in S:
+            if v > threshold:
+                k += 1
+        
+        top_U = U[:, :k]
+        top_S = S[:k]
+        red_zca = np.dot(np.diag(1.0 / np.sqrt(top_S + epsilon)), top_U.T)
+        X_whitened = X @ red_zca.T
+        
+        return X_whitened
 
 
 class ScatterPlotDataGenerator:
@@ -265,28 +282,37 @@ class ScatterPlotDataGenerator:
         Uses consistent random_state for reproducibility.
         """
         print(f"\nComputing MDS positions (n_components={n_components})...")
-        positions = {}
         
-        reducer = MDS(
-            n_components=n_components,
-            dissimilarity='precomputed',
-            random_state=self.random_state,
-            n_init=1  # Use single initialization for consistency
-        )
-        
-        for layer_name, embedding in embeddings.items():
-            print(f"  Computing MDS for {layer_name}...")
+        if USE_CORE_FUNCTIONS:
+            from embedding_pipeline_core import compute_mds_positions as core_mds
+            positions = core_mds(embeddings, n_components, self.random_state)
+            for layer_name, pos in positions.items():
+                print(f"  ✓ {layer_name}: MDS shape {pos.shape}")
+            return positions
+        else:
+            # Local implementation for backward compatibility
+            positions = {}
             
-            # Compute pairwise distances
-            distances = get_euclidean_distances(embedding)
+            reducer = MDS(
+                n_components=n_components,
+                dissimilarity='precomputed',
+                random_state=self.random_state,
+                n_init=1  # Use single initialization for consistency
+            )
             
-            # Fit MDS
-            pos = reducer.fit_transform(distances)
-            positions[layer_name] = pos
+            for layer_name, embedding in embeddings.items():
+                print(f"  Computing MDS for {layer_name}...")
+                
+                # Compute pairwise distances
+                distances = get_euclidean_distances(embedding)
+                
+                # Fit MDS
+                pos = reducer.fit_transform(distances)
+                positions[layer_name] = pos
+                
+                print(f"    ✓ {layer_name}: MDS shape {pos.shape}")
             
-            print(f"    ✓ {layer_name}: MDS shape {pos.shape}")
-        
-        return positions
+            return positions
     
     def generate_scatter_plot_csvs(self, embeddings, positions, predictions=None):
         """
