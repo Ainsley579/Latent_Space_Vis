@@ -25,10 +25,12 @@ interface ScatterPlotProps {
 
   totalWindows?: number;
   zoomFactor?: number;
+
+  hideControls?: boolean;   // ✅ 新增
 }
 
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
-  ({ onScroll, data = [], totalWindows, zoomFactor = 1 }, ref) => {
+  ({ onScroll, data = [], totalWindows, zoomFactor = 1, hideControls = false }, ref) => {
     let tooltip = d3.select("body").select("#global-tooltip");
     if (tooltip.empty()) {
       tooltip = d3.select("body")
@@ -61,16 +63,26 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
     let selectedIDs = new Set<string>();
     const [lassoEnabled, setLassoEnabled] = React.useState(false);
 
-    useEffect(() => {
-      const handleScatterHighlight = (e: any) => {
-        const ids: string[] = e.detail;
+    // Step 1 helper: select points only inside current container
+    const selectLocalPoints = () =>
+      d3.select(containerRef.current).selectAll<SVGCircleElement, any>(".scatter-point");
 
-        d3.selectAll(".scatter-point")
+    useEffect(() => {
+      // Passive, stateless highlight from Sankey or other sources
+      const handleScatterHighlight = (e: any) => {
+        const ids = e?.detail?.ids ?? e?.detail;
+        const source = e?.detail?.source;
+
+        if (!Array.isArray(ids)) return;
+        if (source === "scatter") return;
+
+        selectLocalPoints()
           .style("opacity", 0.1)
           .attr("r", 4);
 
-        ids.forEach(id => {
-          d3.selectAll(`.real-${id}`)
+        ids.forEach((id: string) => {
+          selectLocalPoints()
+            .filter(`.real-${id}`)
             .style("opacity", 1)
             .attr("r", 6);
         });
@@ -78,20 +90,20 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
       const clearScatter = () => {
         selectedIDs.clear?.(); // if exists
-        d3.selectAll(".scatter-point")
-          // .transition()
-          // .duration(150)
+        selectLocalPoints()
           .style("opacity", 0.8)
           .attr("r", 4);
         // safely clear active brushes only when lasso is enabled
         if (lassoEnabled) {
-          d3.selectAll(".brush").each(function () {
-            const brushG = d3.select(this);
-            const state = (brushG.node() as any).__brush;
-            if (state) {
-              brushG.call(d3.brush().move, null);
-            }
-          });
+          d3.select(containerRef.current)
+            .selectAll(".brush")
+            .each(function () {
+              const brushG = d3.select(this);
+              const state = (brushG.node() as any).__brush;
+              if (state) {
+                brushG.call(d3.brush().move, null);
+              }
+            });
         }
         window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
       };
@@ -103,7 +115,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         window.removeEventListener("scatter-highlight-ids", handleScatterHighlight);
         window.removeEventListener("scatter-highlight-clear", clearScatter);
       };
-    }, []);
+    }, [lassoEnabled]);
 
     useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
@@ -135,14 +147,13 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
     const hasDrawnRef = React.useRef(false);
 
     useEffect(() => {
-      if (hasDrawnRef.current) return;
-      hasDrawnRef.current = true;
+      const container = containerRef.current;
+      if (!container) return;
+
+      d3.select(container).selectAll("*").remove();
+      hasDrawnRef.current = false;   // 允许重画
 
       const run = async () => {
-        const container = containerRef.current;
-        if (!container) return;
-        d3.select(container).selectAll("*").remove();
-
         // Use layerFiles from data, not hardcoded
         const layerFiles = Array.from(
           new Set(data.map(d => `${d.layer}.csv`))
@@ -198,7 +209,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             .map(d => ({
               x: d.x,
               y: d.y,
-              real_id: d.real_id,
+              real_id: d.id,
               color_value: d.color_value,
             }));
 
@@ -231,44 +242,39 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             })
             .attr("opacity", 0.8)
             .attr("class", (d) =>
-              d.real_id !== undefined ? `scatter-point real-${d.real_id}` : "scatter-point"
+              d.id !== undefined ? `scatter-point real-${d.id}` : "scatter-point"
             );
           // Add hover events to dim others and highlight same real_id across all plots
           circles
             .on("mouseover", function (event, d) {
               if (lassoEnabled) return;
 
-              const idClass = `real-${d.real_id}`;
+              const idClass = `real-${d.id}`;
 
-              d3.selectAll(".scatter-point")
-                .style("opacity", 0.1);
+              selectLocalPoints().style("opacity", 0.1);
 
-              d3.selectAll(`.${idClass}`)
+              selectLocalPoints()
+                .filter(`.${idClass}`)
                 .style("opacity", 1)
                 .attr("r", 6);
 
-              tooltip
-                .html(`<img src="/data/molecule_images/${d.real_id}_ligand.png" style="width:200px;height:auto;" />`)
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY + 10) + "px")
-                .style("opacity", 1);
-
-              window.dispatchEvent(
-                new CustomEvent("sankey-highlight-ids", {
-                  detail: [d.real_id],
-                })
-              );
+              if (!hideControls) {
+                tooltip
+                  .html(`<img src="/data/molecule_images/${d.id}_ligand.png" style="width:200px;height:auto;" />`)
+                  .style("left", (event.pageX + 10) + "px")
+                  .style("top", (event.pageY + 10) + "px")
+                  .style("opacity", 1);
+              }
             })
             .on("mouseout", function () {
               if (lassoEnabled) return;
 
-              d3.selectAll(".scatter-point")
+              selectLocalPoints()
                 .style("opacity", 0.8)
                 .attr("r", 4);
-              tooltip
-                .style("opacity", 0);
-              window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
-              window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
+              if (!hideControls) {
+                tooltip.style("opacity", 0);
+              }
             });
 
           // --- LASSO / BRUSH SELECTION ---
@@ -278,7 +284,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             const selection = event.selection;
             if (!selection) {
               selectedIDs.clear();
-              d3.selectAll(".scatter-point")
+              selectLocalPoints()
                 .style("opacity", 0.8)
                 .attr("r", 4);
               window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
@@ -292,23 +298,24 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
               const cx = xScale(d.x);
               const cy = yScale(d.y);
               if (cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1) {
-                selectedIDs.add(d.real_id);
+                selectedIDs.add(d.id);
               }
             });
 
-            d3.selectAll(".scatter-point")
+            selectLocalPoints()
               .style("opacity", 0.1)
               .attr("r", 4);
 
             selectedIDs.forEach(id => {
-              d3.selectAll(`.real-${id}`)
+              selectLocalPoints()
+                .filter(`.real-${id}`)
                 .style("opacity", 1)
                 .attr("r", 6);
             });
 
             window.dispatchEvent(
               new CustomEvent("sankey-highlight-ids", {
-                detail: Array.from(selectedIDs),
+                detail: { ids: Array.from(selectedIDs), source: "scatter" },
               })
             );
           };
@@ -326,69 +333,75 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
       };
 
       run();
-    }, [data, zoomFactor]);
+    }, [data, zoomFactor, lassoEnabled]);
  
     return (
       <div>
-        <div style={{
-          display: "flex",
-          flexDirection: "row",
-          gap: "1rem",
-          alignItems: "center",
-          padding: "0.5rem 0",
-          borderBottom: "1px solid #ddd",
-          marginBottom: "0.5rem"
-        }}>
-          <div>
-            <label style={{ fontSize: "0.8rem", marginRight: "0.5rem" }}>Dimensionality Reduction</label>
-            <select
-              style={{ padding: "2px 6px", fontSize: "0.8rem" }}
-              onChange={(e) => {
-                window.dispatchEvent(
-                  new CustomEvent("scatter-method-change", {
-                    detail: e.target.value
-                  })
-                );
-              }}
-            >
-              <option value="umap">UMAP</option>
-              <option value="tsne">t-SNE</option>
-              <option value="pca">PCA</option>
-              <option value="lle">LLE</option>
-              <option value="isomap">Isomap</option>
-            </select>
-          </div>
+        {!hideControls && (
+          <>
+            <div style={{
+              display: "flex",
+              flexDirection: "row",
+              gap: "1rem",
+              alignItems: "center",
+              padding: "0.5rem 0",
+              borderBottom: "1px solid #ddd",
+              marginBottom: "0.5rem"
+            }}>
+              <div>
+                <label style={{ fontSize: "0.8rem", marginRight: "0.5rem" }}>Dimensionality Reduction</label>
+                <select
+                  style={{ padding: "2px 6px", fontSize: "0.8rem" }}
+                  onChange={(e) => {
+                    window.dispatchEvent(
+                      new CustomEvent("scatter-method-change", {
+                        detail: e.target.value
+                      })
+                    );
+                  }}
+                >
+                  <option value="umap">UMAP</option>
+                  <option value="tsne">t-SNE</option>
+                  <option value="pca">PCA</option>
+                  <option value="lle">LLE</option>
+                  <option value="isomap">Isomap</option>
+                </select>
+              </div>
 
-          <div>
-            <label style={{ fontSize: "0.8rem", marginRight: "0.5rem" }}>Color Legend</label>
-            <select
-              style={{ padding: "2px 6px", fontSize: "0.8rem" }}
-              onChange={(e) => {
-                window.dispatchEvent(
-                  new CustomEvent("scatter-color-legend-change", {
-                    detail: e.target.value
-                  })
-                );
+              <div>
+                <label style={{ fontSize: "0.8rem", marginRight: "0.5rem" }}>Color Legend</label>
+                <select
+                  style={{ padding: "2px 6px", fontSize: "0.8rem" }}
+                  onChange={(e) => {
+                    window.dispatchEvent(
+                      new CustomEvent("scatter-color-legend-change", {
+                        detail: e.target.value
+                      })
+                    );
+                  }}
+                >
+                  <option value="cluster">Cluster</option>
+                  <option value="density">Density</option>
+                </select>
+              </div>
+            </div>
+          </>
+        )}
+
+            <button
+              onClick={() => setLassoEnabled(!lassoEnabled)}
+              style={{
+                padding: "4px 8px",
+                fontSize: "0.8rem",
+                background: lassoEnabled ? "#c62828" : "#2e7d32",
+                color: "white",
+                borderRadius: "4px",
+                marginLeft: "1rem",
               }}
             >
-              <option value="cluster">Cluster</option>
-              <option value="density">Density</option>
-            </select>
-          </div>
-          <button
-            onClick={() => setLassoEnabled(!lassoEnabled)}
-            style={{
-              padding: "4px 8px",
-              fontSize: "0.8rem",
-              background: lassoEnabled ? "#c62828" : "#2e7d32",
-              color: "white",
-              borderRadius: "4px",
-              marginLeft: "1rem",
-            }}
-          >
-            {lassoEnabled ? "Disable Lasso" : "Enable Lasso"}
-          </button>
-        </div>
+              {lassoEnabled ? "Disable Lasso" : "Enable Lasso"}
+            </button>
+
         <div
           ref={containerRef}
           onScroll={(e) => {

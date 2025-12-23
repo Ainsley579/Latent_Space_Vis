@@ -11,9 +11,19 @@ interface WindowProps {
   totalWindows?: number;
   clusterFile?: string;
   sampleFile?: string;
+  hideControls?: boolean;
 }
 
-export default function Window({ id, title, onClose, children, totalWindows = 1, clusterFile, sampleFile }: WindowProps) {
+export default function Window({
+  id,
+  title,
+  onClose,
+  children,
+  totalWindows = 1,
+  clusterFile,
+  sampleFile,
+  hideControls = false,
+}: WindowProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [dataSize, setDataSize] = useState(374);
   const [featureCount, setFeatureCount] = useState(128);
@@ -47,7 +57,8 @@ export default function Window({ id, title, onClose, children, totalWindows = 1,
             >
               {collapsed ? "▶ " : "▼ "} {title}
             </h3>
-
+            {!hideControls && (
+            <div className="flex flex-row items-center gap-6">
             <div className="flex flex-col">
               <label className="text-xs opacity-70">
                 Data Size: <span className="font-semibold">{dataSize}</span>
@@ -140,6 +151,8 @@ export default function Window({ id, title, onClose, children, totalWindows = 1,
             >
               Save
             </button>
+            </div>
+            )}
           </div>
 
           {/* Right side actions */}

@@ -217,6 +217,7 @@ const [layerCounts, setLayerCounts] = useState<Record<string, { names: string[];
                     onClose={closeWindow}
                     totalWindows={windows.length}
                     zoomFactor={zoomFactor}
+                    hideControls={idx === 0} 
                   >
                     {/* <ControlPanel
                       onChange={(params) => {
@@ -231,6 +232,7 @@ const [layerCounts, setLayerCounts] = useState<Record<string, { names: string[];
                         onScroll={(scrollLeft) => syncScatterScroll(idx, scrollLeft)}
                         data={w.scatterData}          // ✅ 直接喂 JSON
                         zoomFactor={zoomFactor}
+                        hideControls={idx === 0}   // ✅ 第一个窗口隐藏控制条
                       />
                     ) : w.scatterCsv ? (
                       <ScatterPlot
@@ -240,6 +242,7 @@ const [layerCounts, setLayerCounts] = useState<Record<string, { names: string[];
                         onScroll={(scrollLeft) => syncScatterScroll(idx, scrollLeft)}
                         clusterFilePath={w.scatterCsv}
                         zoomFactor={zoomFactor}
+                        hideControls={idx === 0}   // ✅ 第一个窗口隐藏控制条
                       />
                     ) : (
                       <div style={{ opacity: 0.5, padding: "1rem", fontSize: "0.9rem" }}>
@@ -251,8 +254,9 @@ const [layerCounts, setLayerCounts] = useState<Record<string, { names: string[];
                         ref={(el) => {
                           if (el) sankeyRefs.current[idx] = el;
                         }}
-                        data={w.sankeyData}           // ✅ 直接喂 JSON
+                        data={w.sankeyData}         
                         zoomFactor={zoomFactor}
+                        hideTooltip={idx === 0}
                       />
                     ) : w.sankeyCsv ? (
                       <SankeyDiagram
@@ -261,6 +265,7 @@ const [layerCounts, setLayerCounts] = useState<Record<string, { names: string[];
                         }}
                         sampleFile={w.sankeyCsv}
                         zoomFactor={zoomFactor}
+                        hideTooltip={idx === 0}
                       />
                     ) : (
                       <div style={{ opacity: 0.5, padding: "1rem", fontSize: "0.9rem" }}>

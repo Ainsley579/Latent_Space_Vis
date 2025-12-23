@@ -28,12 +28,13 @@ interface SankeyDiagramProps {
     from_cluster: number;
     to_cluster: number;
     split_label?: "train" | "test" | "experimental" | "missing";
+    hideTooltip?: boolean;
   }[];
   zoomFactor?: number;
 }
 
 const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
-  ({ data, zoomFactor = 1 }, ref) => {
+  ({ data, zoomFactor = 1, hideTooltip = false }, ref) => {
     const svgRef = useRef<SVGSVGElement | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
     // No local data state, everything from props.data
@@ -116,10 +117,23 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
     };
 
     const handleHighlight = (e: any) => {
-      const ids: string[] = e?.detail || [];
+      let ids: string[] = [];
+
+      // Support both CustomEvent(detail = { ids, source }) and legacy detail = ids
+      if (Array.isArray(e?.detail)) {
+        ids = e.detail;
+      } else if (Array.isArray(e?.detail?.ids)) {
+        ids = e.detail.ids;
+      }
+
       // store globally so newly mounted sankeys can pick it up
       (window as any).__GLOBAL_SANKY_HIGHLIGHT_IDS = ids;
-      applyHighlightToThisSankey(ids);
+
+      if (ids.length > 0) {
+        applyHighlightToThisSankey(ids);
+      } else {
+        clearHighlight();
+      }
     };
 
     window.addEventListener("sankey-highlight-ids", handleHighlight);
@@ -568,11 +582,13 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
             const sampleClass = classes.find(c => c.startsWith("sample-"));
             if (!sampleClass) return;
             const id = sampleClass.replace("sample-", "");
+            if (!hideTooltip) {
             tooltip
               .html(`<img src="/data/molecule_images/${id}_ligand.png" style="width:200px;height:auto;" />`)
               .style("left", (event.pageX + 12) + "px")
               .style("top", (event.pageY + 12) + "px")
               .style("opacity", 1);
+            }
         })
         .on("mouseout", function() {
             tooltip.style("opacity", 0);
