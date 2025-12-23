@@ -24,6 +24,18 @@ import json
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(script_dir)
 
+# Import core functions
+try:
+    from embedding_pipeline_core import (
+        adaptive_zca_whitening,
+        fit_gmm,
+        find_optimal_cluster_alignment
+    )
+    USE_CORE_FUNCTIONS = True
+except ImportError:
+    USE_CORE_FUNCTIONS = False
+    print("Warning: Could not import core functions, using local implementations")
+
 
 class ClusterTransitionMatrixGenerator:
     """Generate cluster transition matrices with real ID tracking"""
@@ -173,20 +185,25 @@ class ClusterTransitionMatrixGenerator:
     
     def adaptive_zca_whitening(self, X, threshold=1e-5, epsilon=1e-5):
         """Apply ZCA whitening"""
-        sigma = np.cov(X, rowvar=False)
-        U, S, V = np.linalg.svd(sigma)
-        
-        k = 0
-        for v in S:
-            if v > threshold:
-                k += 1
-        
-        top_U = U[:, :k]
-        top_S = S[:k]
-        red_zca = np.dot(np.diag(1.0 / np.sqrt(top_S + epsilon)), top_U.T)
-        X_whitened = X @ red_zca.T
-        
-        return X_whitened, red_zca
+        if USE_CORE_FUNCTIONS:
+            from embedding_pipeline_core import adaptive_zca_whitening as core_zca
+            return core_zca(X, threshold, epsilon)
+        else:
+            # Local implementation for backward compatibility
+            sigma = np.cov(X, rowvar=False)
+            U, S, V = np.linalg.svd(sigma)
+            
+            k = 0
+            for v in S:
+                if v > threshold:
+                    k += 1
+            
+            top_U = U[:, :k]
+            top_S = S[:k]
+            red_zca = np.dot(np.diag(1.0 / np.sqrt(top_S + epsilon)), top_U.T)
+            X_whitened = X @ red_zca.T
+            
+            return X_whitened, red_zca
     
     def load_embeddings(self):
         """Load embeddings for the specified layers"""
@@ -239,69 +256,89 @@ class ClusterTransitionMatrixGenerator:
     
     def fit_gmm_with_components(self, embeddings, n_components):
         """Fit GMM with specified number of components"""
-        # Standardize embeddings
-        scaler = StandardScaler()
-        embeddings_scaled = scaler.fit_transform(embeddings)
-        
-        # Apply ZCA whitening
-        embeddings_processed, zca_transform = self.adaptive_zca_whitening(
-            embeddings_scaled, threshold=self.zca_threshold
-        )
-        
-        # Fit GMM
-        gmm = GaussianMixture(
-            n_components=n_components,
-            covariance_type='full',
-            random_state=42,
-            max_iter=200
-        )
-        gmm.fit(embeddings_processed)
-        
-        # Get cluster assignments
-        labels = gmm.predict(embeddings_processed)
-        probabilities = gmm.predict_proba(embeddings_processed)
-        
-        return {
-            'gmm': gmm,
-            'labels': labels,
-            'probabilities': probabilities,
-            'means': gmm.means_,
-            'covariances': gmm.covariances_,
-            'weights': gmm.weights_,
-            'embeddings_processed': embeddings_processed  # Store processed embeddings for alignment
-        }
+        if USE_CORE_FUNCTIONS:
+            from embedding_pipeline_core import fit_gmm as core_fit_gmm
+            result = core_fit_gmm(
+                embeddings,
+                n_components=n_components,
+                zca_threshold=self.zca_threshold,
+                random_state=42,
+                max_iter=200
+            )
+            return result
+        else:
+            # Local implementation for backward compatibility
+            # Standardize embeddings
+            scaler = StandardScaler()
+            embeddings_scaled = scaler.fit_transform(embeddings)
+            
+            # Apply ZCA whitening
+            embeddings_processed, zca_transform = self.adaptive_zca_whitening(
+                embeddings_scaled, threshold=self.zca_threshold
+            )
+            
+            # Fit GMM
+            gmm = GaussianMixture(
+                n_components=n_components,
+                covariance_type='full',
+                random_state=42,
+                max_iter=200
+            )
+            gmm.fit(embeddings_processed)
+            
+            # Get cluster assignments
+            labels = gmm.predict(embeddings_processed)
+            probabilities = gmm.predict_proba(embeddings_processed)
+            
+            return {
+                'gmm': gmm,
+                'labels': labels,
+                'probabilities': probabilities,
+                'means': gmm.means_,
+                'covariances': gmm.covariances_,
+                'weights': gmm.weights_,
+                'embeddings_processed': embeddings_processed  # Store processed embeddings for alignment
+            }
     
     def _find_optimal_alignment_from_transition(self, transition_matrix_norm, n_components):
         """
         Find optimal cluster alignment from transition matrix.
         Uses Hungarian algorithm to find best matching based on transition probabilities.
         """
-        from scipy.optimize import linear_sum_assignment
-        
-        # Use negative probabilities as costs (we want to maximize probabilities)
-        cost_matrix = -transition_matrix_norm
-        
-        # Find optimal assignment using Hungarian algorithm
-        row_indices, col_indices = linear_sum_assignment(cost_matrix)
-        
-        # Create permutation array
-        permutation = np.zeros(n_components, dtype=int)
-        permutation[row_indices] = col_indices
-        
-        # Fill any missing assignments
-        used = set(col_indices)
-        unused = [i for i in range(n_components) if i not in used]
-        unused_idx = 0
-        for i in range(n_components):
-            if i not in row_indices:
-                if unused_idx < len(unused):
-                    permutation[i] = unused[unused_idx]
-                    unused_idx += 1
-                else:
-                    # Fallback: use identity
-                    permutation[i] = i
-        
-        return permutation
+        if USE_CORE_FUNCTIONS:
+            from embedding_pipeline_core import find_optimal_cluster_alignment
+            # Compute transition matrix from normalized version
+            row_sums = transition_matrix_norm.sum(axis=1, keepdims=True)
+            transition_matrix = transition_matrix_norm * row_sums
+            return find_optimal_cluster_alignment(transition_matrix, n_components)
+        else:
+            # Local implementation for backward compatibility
+            from scipy.optimize import linear_sum_assignment
+            
+            # Use negative probabilities as costs (we want to maximize probabilities)
+            cost_matrix = -transition_matrix_norm
+            
+            # Find optimal assignment using Hungarian algorithm
+            row_indices, col_indices = linear_sum_assignment(cost_matrix)
+            
+            # Create permutation array
+            permutation = np.zeros(n_components, dtype=int)
+            permutation[row_indices] = col_indices
+            
+            # Fill any missing assignments
+            used = set(col_indices)
+            unused = [i for i in range(n_components) if i not in used]
+            unused_idx = 0
+            for i in range(n_components):
+                if i not in row_indices:
+                    if unused_idx < len(unused):
+                        permutation[i] = unused[unused_idx]
+                        unused_idx += 1
+                    else:
+                        # Fallback: use identity
+                        permutation[i] = i
+            
+            return permutation
     
     def generate_transition_matrices(self, embeddings):
         """
