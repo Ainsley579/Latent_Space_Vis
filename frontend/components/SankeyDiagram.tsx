@@ -21,17 +21,22 @@ interface SankeyData {
   links: Link[];
 }
 interface SankeyDiagramProps {
-  sampleFile: string;
+  data: {
+    real_id: string | number;
+    from_layer: string;
+    to_layer: string;
+    from_cluster: number;
+    to_cluster: number;
+    split_label?: "train" | "test" | "experimental" | "missing";
+  }[];
   zoomFactor?: number;
 }
 
 const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
-  ({ sampleFile, zoomFactor = 1 }, ref) => {
+  ({ data, zoomFactor = 1 }, ref) => {
     const svgRef = useRef<SVGSVGElement | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const [data, setData] = useState<SankeyData | null>(null);
-    // Store mapping from real_id to split label ("train", "test", "experimental", etc)
-    const [splitLabelMap, setSplitLabelMap] = useState<Map<string, string>>(new Map());
+    // No local data state, everything from props.data
     useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
   // Tooltip for Sankey sample hover
@@ -126,194 +131,175 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
     };
   }, []);
 
-    useEffect(() => {
-      d3.csv(sampleFile).then((rows: any[]) => {
-      // rows: real_id,from_layer,to_layer,from_cluster,to_cluster
-      const links: Link[] = [];
+    // Helper: Build graph from rows
+    function buildGraphFromRows(
+      rows: SankeyDiagramProps["data"]
+    ): SankeyData {
       const nodeNames = new Set<string>();
+      const linkMap = new Map<string, number>();
 
-      const groups = d3.group(rows, r => r.real_id);
+      rows.forEach(r => {
+        const src = `${r.from_layer}_${r.from_cluster}`;
+        const tgt = `${r.to_layer}_${r.to_cluster}`;
+        nodeNames.add(src);
+        nodeNames.add(tgt);
 
-      groups.forEach(records => {
-        records.forEach((cur: any) => {
-          const fromNode = `${cur.from_layer}_${cur.from_cluster}`;
-          const toNode = `${cur.to_layer}_${cur.to_cluster}`;
-
-          nodeNames.add(fromNode);
-          nodeNames.add(toNode);
-
-          const key = `${fromNode}->${toNode}`;
-          const existing = links.find((l: any) => l.key === key);
-          if (existing) existing.value += 1;
-          else links.push({ source: fromNode, target: toNode, value: 1, key });
-        });
+        const key = `${src}->${tgt}`;
+        linkMap.set(key, (linkMap.get(key) ?? 0) + 1);
       });
 
-      const nodes = Array.from(nodeNames).map(name => ({ name }));
-      const nameToIndex = new Map(nodes.map((n, i) => [n.name, i]));
-      links.forEach((l: any) => {
-        l.source = nameToIndex.get(l.source);
-        l.target = nameToIndex.get(l.target);
+      const nodes: Node[] = Array.from(nodeNames).map(name => ({ name }));
+      const nodeIndex = new Map(nodes.map((n, i) => [n.name, i]));
+
+      const links: Link[] = Array.from(linkMap.entries()).map(([key, value]) => {
+        const [src, tgt] = key.split("->");
+        return {
+          source: nodeIndex.get(src)!,
+          target: nodeIndex.get(tgt)!,
+          value,
+          key,
+        } as any;
       });
-        setData({ nodes, links });
-      });
-    }, [sampleFile]);
 
-    useEffect(() => {
-      d3.csv("/data/cluster_transition_matrices_1_individual_real_id.csv")
-        .then((rows2: any[]) => {
-          const map = new Map<string, string>();
-          rows2.forEach(r => {
-            map.set(String(r.real_id), r.split_label || "missing");
-          });
-          setSplitLabelMap(map);
-        });
-    }, []);
-
-    const drawSankey = (width: number, data: SankeyData) => {
-    let linkSamplesMap = new Map<string, string[]>();
-    // highlight samples for a given node
-    // Global nodeSamplesMap for sharing across highlightSamplesForNode and CSV parsing
-    let nodeSamplesMap = new Map<string, string[]>();
-    let currentHighlightedNode: string | null = null;
-
-    function highlightSamplesForNode(nodeName: string) {
-      const samples = nodeSamplesMap.get(nodeName) || [];
-      const svgSel = d3.select(svg.node());
-      svgSel.selectAll(".links path")
-        // .transition().duration(200)
-        .attr("stroke", "#ccc")
-        .attr("opacity", 0.2);
-
-      svgSel.selectAll(".sample-trajectories line")
-        // .transition().duration(200)
-        .attr("opacity", 0);
-      svgSel.selectAll(".sample-points circle")
-        // .transition().duration(200)
-        .attr("opacity", 0);
-
-      samples.forEach(sample_id => {
-        svgSel.selectAll(`.sample-${sample_id}`)
-          // .transition().duration(300)
-          .attr("opacity", 0.8);
-      });
+      return { nodes, links };
     }
 
+    // Rewritten drawSankey to use only data from props
+    const drawSankey = (width: number, graph: SankeyData) => {
+      let linkSamplesMap = new Map<string, string[]>();
+      let nodeSamplesMap = new Map<string, string[]>();
+      let currentHighlightedNode: string | null = null;
+
+      // Build splitLabelMap from data
+      const splitLabelMap = new Map<string, string>();
+      data.forEach(r => {
+        splitLabelMap.set(String(r.real_id), r.split_label || "missing");
+      });
+
+      function highlightSamplesForNode(nodeName: string) {
+        const samples = nodeSamplesMap.get(nodeName) || [];
+        const svgSel = d3.select(svg.node());
+        svgSel.selectAll(".links path")
+          .attr("stroke", "#ccc")
+          .attr("opacity", 0.2);
+        svgSel.selectAll(".sample-trajectories line")
+          .attr("opacity", 0);
+        svgSel.selectAll(".sample-points circle")
+          .attr("opacity", 0);
+        samples.forEach(sample_id => {
+          svgSel.selectAll(`.sample-${sample_id}`)
+            .attr("opacity", 0.8);
+        });
+      }
+
       const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();
+      svg.selectAll("*").remove();
 
-    const height = 400;
-    // Always fit SVG inside window with a min width, no overflow
-    const fittedWidth = Math.max(width, 200);
+      const height = 400;
+      const fittedWidth = Math.max(width, 200);
 
-    // --- Margin calculation before sankeyGen creation ---
-    // Derive layerNames for margin estimation
-    let layerNames: string[] | undefined;
-    if (data && data.nodes && data.nodes.length > 0) {
+      // Margin calculation
+      let layerNames: string[] | undefined;
+      if (graph && graph.nodes && graph.nodes.length > 0) {
+        const getLayerName = (fullName: string) => {
+          const idx = fullName.lastIndexOf("_");
+          return idx === -1 ? fullName : fullName.slice(0, idx);
+        };
+        const layerNameSet = new Set<string>();
+        graph.nodes.forEach(n => {
+          if (n && n.name) {
+            layerNameSet.add(getLayerName(n.name));
+          }
+        });
+        layerNames = Array.from(layerNameSet).sort();
+      }
+      const estimatedLayers = layerNames?.length || 8;
+      const margin = width / estimatedLayers / 2;
+
+      const sankeyGen = sankey<Node, Link>()
+        .nodeWidth(10)
+        .nodePadding(7)
+        .extent([
+          [margin, 1],
+          [width - margin, height - 5],
+        ]);
+
+      const { nodes: layoutNodes, links: layoutLinks } = sankeyGen({
+        nodes: graph.nodes.map((d) => Object.assign({}, d)),
+        links: graph.links.map((d) => Object.assign({}, d)),
+      });
+
+      svg.attr("width", width).attr("height", height);
+
       const getLayerName = (fullName: string) => {
         const idx = fullName.lastIndexOf("_");
         return idx === -1 ? fullName : fullName.slice(0, idx);
       };
+
       const layerNameSet = new Set<string>();
-      data.nodes.forEach(n => {
-        if (n && n.name) {
-          layerNameSet.add(getLayerName(n.name));
-        }
+      layoutNodes.forEach(n => {
+        const layerName = getLayerName(n.name);
+        layerNameSet.add(layerName);
       });
-      layerNames = Array.from(layerNameSet).sort();
-    }
-    const estimatedLayers = layerNames?.length || 8;
-    const margin = width / estimatedLayers / 2;
+      const layerNames2 = Array.from(layerNameSet).sort();
 
-    const sankeyGen = sankey<Node, Link>()
-      .nodeWidth(10)
-      .nodePadding(7)
-      .extent([
-        [margin, 1],
-        [width - margin, height - 5],
-      ]);
+      // ---- External bottom labels aligned to scatterplot columns ----
+      const externalLabelDiv = containerRef.current?.querySelector("#sankey-layer-labels");
+      if (externalLabelDiv) {
+        externalLabelDiv.innerHTML = "";
+        const layerCount = layerNames2.length;
+        const colWidth = width / layerCount;
+        layerNames2.forEach((layerName, i) => {
+          const div = document.createElement("div");
+          div.style.flex = "0 0 " + colWidth + "px";
+          div.style.textAlign = "center";
+          div.textContent = layerName;
+          externalLabelDiv.appendChild(div);
+        });
+      }
 
-    const { nodes: layoutNodes, links: layoutLinks } = sankeyGen({
-      nodes: data.nodes.map((d) => Object.assign({}, d)),
-      links: data.links.map((d) => Object.assign({}, d)),
-    });
-
-    svg.attr("width", width).attr("height", height);
-
-    // helper to extract layer name from node name
-    const getLayerName = (fullName: string) => {
-      const idx = fullName.lastIndexOf("_");
-      return idx === -1 ? fullName : fullName.slice(0, idx);
-    };
-
-    // Derive layer names from node names
-    const layerNameSet = new Set<string>();
-    layoutNodes.forEach(n => {
-      const layerName = getLayerName(n.name);
-      layerNameSet.add(layerName);
-    });
-    const layerNames2 = Array.from(layerNameSet).sort();
-
-    // ---- External bottom labels aligned to scatterplot columns ----
-    const externalLabelDiv = containerRef.current?.querySelector("#sankey-layer-labels");
-    if (externalLabelDiv) {
-      externalLabelDiv.innerHTML = "";
-
-      const layerCount = layerNames2.length;
-      const colWidth = width / layerCount;
-
+      // Assign each layer a color
+      const layerColorMap = new Map<string, string>();
       layerNames2.forEach((layerName, i) => {
-        const div = document.createElement("div");
-        div.style.flex = "0 0 " + colWidth + "px";
-        div.style.textAlign = "center";
-        div.textContent = layerName;
-        externalLabelDiv.appendChild(div);
+        layerColorMap.set(
+          layerName,
+          d3.schemeTableau10[i % d3.schemeTableau10.length]
+        );
       });
-    }
 
-    // Assign each layer a distinct hue around the color wheel using HSL
-    const layerColorMap = new Map<string, string>();
-    layerNames2.forEach((layerName, i) => {
-      layerColorMap.set(
-        layerName,
-        d3.schemeTableau10[i % d3.schemeTableau10.length] // ✅ 不加括号，直接取数组元素
-      );
-    });
+      // Sort nodes within each layer by y0
+      const nodesByLayer = new Map<string, Node[]>();
+      layerNames2.forEach(layerName => {
+        const nodesInLayer = layoutNodes.filter(n => getLayerName(n.name) === layerName);
+        nodesInLayer.sort((a, b) => (a.y0 ?? 0) - (b.y0 ?? 0));
+        nodesByLayer.set(layerName, nodesInLayer);
+      });
 
-    // Sort nodes within each layer by y0 (top to bottom)
-    const nodesByLayer = new Map<string, Node[]>();
-    layerNames2.forEach(layerName => {
-      const nodesInLayer = layoutNodes.filter(n => getLayerName(n.name) === layerName);
-      nodesInLayer.sort((a, b) => (a.y0 ?? 0) - (b.y0 ?? 0));
-      nodesByLayer.set(layerName, nodesInLayer);
-    });
+      // Draw aggregated links as colored wide paths, vertically separated by split
+      const linkGroup = svg
+        .append("g")
+        .attr("fill", "none")
+        .attr("class", "sankey-links");
 
-    // Draw aggregated links as colored wide paths, vertically separated by split
-    const linkGroup = svg
-      .append("g")
-      .attr("fill", "none")
-      .attr("class", "sankey-links");
+      // ----------- Split-Link Generation using link.y0/y1 and link.width -----------
+      const splits = ["train", "test", "experimental", "missing"] as const;
+      const splitColors: Record<(typeof splits)[number], string> = {
+        train: "#1f77b4",
+        test: "#ff7f0e",
+        experimental: "#2ca02c",
+        missing: "#999999",
+      };
 
-    // ----------- Split-Link Generation using link.y0/y1 and link.width -----------
-    const splits = ["train", "test", "experimental", "missing"] as const;
-    const splitColors: Record<(typeof splits)[number], string> = {
-      train: "#1f77b4",
-      test: "#ff7f0e",
-      experimental: "#2ca02c",
-      missing: "#999999",
-    };
-
-    // Build linkSamplesMap from sampleFile once, then compute per-link split counts
-    linkSamplesMap.clear();
-    layoutLinks.forEach((link: any) => {
-      const srcName = (link.source as Node).name;
-      const tgtName = (link.target as Node).name;
-      const key = `${srcName}->${tgtName}`;
-      linkSamplesMap.set(key, []);
-    });
-
-    d3.csv(sampleFile).then((rows: any[]) => {
-      rows.forEach((r: any) => {
+      // Build linkSamplesMap from data
+      linkSamplesMap.clear();
+      layoutLinks.forEach((link: any) => {
+        const srcName = (link.source as Node).name;
+        const tgtName = (link.target as Node).name;
+        const key = `${srcName}->${tgtName}`;
+        linkSamplesMap.set(key, []);
+      });
+      // Fill linkSamplesMap from data
+      data.forEach(r => {
         const sid = String(r.real_id);
         const srcName = `${r.from_layer}_${r.from_cluster}`;
         const tgtName = `${r.to_layer}_${r.to_cluster}`;
@@ -339,7 +325,6 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
         const tgtNode = link.target as Node;
         const key = `${srcNode.name}->${tgtNode.name}`;
         const sampleIds = linkSamplesMap.get(key) || [];
-
         // count train / test / experimental / missing for this link
         const counts: Record<(typeof splits)[number], number> = {
           train: 0,
@@ -352,35 +337,26 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
           if (counts[label] !== undefined) counts[label] += 1;
           else counts.missing += 1;
         });
-
         const totalCount =
           counts.train + counts.test + counts.experimental + counts.missing;
         if (totalCount === 0) return;
-
         const linkCenterY0 = Number(link.y0);
         const linkCenterY1 = Number(link.y1);
         const linkWidth = Number(link.width ?? totalCount);
-
         if (!isFinite(linkCenterY0) || !isFinite(linkCenterY1) || !isFinite(linkWidth)) {
           return;
         }
-
         const sx = Number(srcNode.x1);
         const tx = Number(tgtNode.x0);
-
         const baseOffset = -linkWidth / 2;
         let acc = 0;
-
         splits.forEach((sp) => {
           const cnt = counts[sp];
           if (cnt <= 0) return;
-
           const segWidth = (linkWidth * cnt) / totalCount;
           const centerOffset = baseOffset + acc + segWidth / 2;
-
           const sy = linkCenterY0 + centerOffset;
           const ty = linkCenterY1 + centerOffset;
-
           separatedLinks.push({
             sx,
             sy0: sy,
@@ -391,7 +367,6 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
             width: segWidth,
             stroke: splitColors[sp],
           });
-
           acc += segWidth;
         });
       });
@@ -413,32 +388,20 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
         .attr("stroke-width", (d) => d.width)
         .attr("fill", "none")
         .attr("opacity", 0.4);
-    });
 
-
-
-    // ----------- New: Draw sample-level points and trajectories -----------
-
-    d3.csv(sampleFile).then(rows => {
-      linkSamplesMap.clear();
-      // Use new real_id, from_layer, to_layer, from_cluster, to_cluster fields
+      // ----------- New: Draw sample-level points and trajectories -----------
+      // Build samplePathsMap: real_id -> array of node names (path)
       const samplePathsMap = new Map<string, string[]>();
-
-      rows = rows as any[];
-      rows.forEach((r: any) => {
-        const sid = r.real_id;
+      data.forEach((r) => {
+        const sid = String(r.real_id);
         const fromNode = `${r.from_layer}_${r.from_cluster}`;
         const toNode = `${r.to_layer}_${r.to_cluster}`;
-
         if (!samplePathsMap.has(sid)) samplePathsMap.set(sid, []);
         const path = samplePathsMap.get(sid)!;
-        // avoid duplicate consecutive nodes
         if (path[path.length - 1] !== fromNode) path.push(fromNode);
         path.push(toNode);
       });
-
       // For each node, collect samples assigned to it
-      // Map nodeName -> array of real_ids
       nodeSamplesMap = new Map<string, string[]>();
       samplePathsMap.forEach((nodeNames, real_id) => {
         nodeNames.forEach(nodeName => {
@@ -448,7 +411,6 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
           nodeSamplesMap.get(nodeName)!.push(real_id);
         });
       });
-
       // Build map of nodeName -> incoming links (source node names)
       const nodeIncomingMap = new Map<string, string[]>();
       layoutLinks.forEach(link => {
@@ -459,7 +421,6 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
         }
         nodeIncomingMap.get(targetNode)!.push(sourceNode);
       });
-
       // Build map of nodeName -> outgoing links (target node names)
       const nodeOutgoingMap = new Map<string, string[]>();
       layoutLinks.forEach(link => {
@@ -470,20 +431,12 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
         }
         nodeOutgoingMap.get(sourceNode)!.push(targetNode);
       });
-
       // For each node, assign y positions for sample points inside node vertical range [y0, y1]
-      // But first sort samples by upstream average y positions if upstream info exists,
-      // otherwise fallback to sorting by sample_id numerically
-
-      // Map real_id -> Map nodeName -> y position (for previous layer)
-      // We will assign sampleNodeYMap progressively from first layer to last layer
+      // Map real_id -> Map nodeName -> y position
       const sampleNodeYMap = new Map<string, Map<string, number>>();
-
       // Build map nodeName -> node layout object for quick lookup
       const nodeLayoutMap = new Map<string, Node>();
       layoutNodes.forEach(n => nodeLayoutMap.set(n.name, n));
-
-      // Helper to get downstream sample y positions for a sample at a node
       function getDownstreamY(real_id: string, nodeName: string): number[] {
         const outgoingNodes = nodeOutgoingMap.get(nodeName);
         if (!outgoingNodes) return [];
@@ -494,32 +447,21 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
         });
         return ys;
       }
-
-      // Process layers in reverse order (output-oriented, downstream-based)
-      // We need to reconstruct pathLayerNames from the samplePathsMap
-      // (since it's now an array of node names per real_id)
-      // We'll infer pathLayerNames as the sequence of unique layer names in the paths
+      // Infer pathLayerNames as the sequence of unique layer names in the first path
       let pathLayerNames: string[] = [];
       if (samplePathsMap.size > 0) {
-        // Get the first path
         const firstPath = Array.from(samplePathsMap.values())[0];
         pathLayerNames = firstPath.map(nm => {
           const idx = nm.lastIndexOf("_");
           return idx === -1 ? nm : nm.slice(0, idx);
         });
       }
-
       for (let layerIndex = pathLayerNames.length - 1; layerIndex >= 0; layerIndex--) {
         const layerName = pathLayerNames[layerIndex];
-        // Get nodes in this layer
         const nodesInLayer = layoutNodes.filter(n => getLayerName(n.name) === layerName);
-
         nodesInLayer.forEach(node => {
           const samples = nodeSamplesMap.get(node.name) || [];
           if (samples.length === 0) return;
-
-          // For each sample, compute average downstream y position if any
-          // Map real_id -> avg downstream y
           const sampleDownstreamYMap = new Map<string, number | null>();
           samples.forEach(real_id => {
             const downstreamYs = getDownstreamY(real_id, node.name);
@@ -530,9 +472,6 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
               sampleDownstreamYMap.set(real_id, null);
             }
           });
-
-          // Sort samples: those with downstream info by avg downstream y ascending,
-          // those without downstream info by numeric real_id ascending
           samples.sort((a, b) => {
             const aDown = sampleDownstreamYMap.get(a);
             const bDown = sampleDownstreamYMap.get(b);
@@ -543,20 +482,17 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
             } else if (bDown !== null) {
               return 1;
             } else {
-              // fallback to numeric real_id sort
               const numA = Number(a), numB = Number(b);
               if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
               return a < b ? -1 : a > b ? 1 : 0;
             }
           });
-
-          // Assign y positions evenly spaced vertically within node height
           const count = samples.length;
           const y0 = node.y0 ?? 0;
           const y1 = node.y1 ?? 0;
-          const height = y1 - y0;
+          const nodeHeight = y1 - y0;
           samples.forEach((real_id, i) => {
-            const y = count === 1 ? y0 + height / 2 : y0 + (i + 0.5) * (height / count);
+            const y = count === 1 ? y0 + nodeHeight / 2 : y0 + (i + 0.5) * (nodeHeight / count);
             if (!sampleNodeYMap.has(real_id)) {
               sampleNodeYMap.set(real_id, new Map());
             }
@@ -564,13 +500,9 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
           });
         });
       }
-
       // Prepare group for sample trajectories (per-link lines)
       const samplesGroup = svg.append("g").attr("class", "sample-trajectories");
-
       // Build a map from link key to sample IDs that traverse that link
-      // link key format: sourceNodeName->targetNodeName (matches layoutLinks key)
-
       samplePathsMap.forEach((nodeNames, real_id) => {
         for (let i = 0; i < nodeNames.length - 1; i++) {
           const sourceNodeName = nodeNames[i];
@@ -582,43 +514,30 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
           linkSamplesMap.get(linkKey)!.push(real_id);
         }
       });
-
       // Batch build all sample line data for D3 join
       const lineData: {
         x1: number, y1: number, x2: number, y2: number,
         stroke: string, className: string
       }[] = [];
-
       layoutLinks.forEach(link => {
         const sourceNode = link.source as Node;
         const targetNode = link.target as Node;
         const linkKey = link.key ?? `${sourceNode.name}->${targetNode.name}`;
         const samplesOnLink = linkSamplesMap.get(linkKey) || [];
         if (samplesOnLink.length === 0) return;
-
-        // Sort samples by source node y position ascending
         samplesOnLink.sort((a, b) => {
           const yA = sampleNodeYMap.get(a)?.get(sourceNode.name) ?? 0;
           const yB = sampleNodeYMap.get(b)?.get(sourceNode.name) ?? 0;
           return yA - yB;
         });
-
         samplesOnLink.forEach(real_id => {
           const ySource = sampleNodeYMap.get(real_id)?.get(sourceNode.name);
           const yTarget = sampleNodeYMap.get(real_id)?.get(targetNode.name);
           if (ySource === undefined || yTarget === undefined) return;
-
           const xSource = (sourceNode.x0 ?? 0) + sankeyGen.nodeWidth() / 2;
           const xTarget = (targetNode.x0 ?? 0) + sankeyGen.nodeWidth() / 2;
-
-
-          console.log(typeof([...splitLabelMap.keys()][0]))
-          // Compose CSS class: link key plus sample IDs
-          // E.g., class="link-A_B sample-3"
-          // To keep class names simple, replace '->' with '-' and remove underscores
           const safeLinkClass = `link-${linkKey.replace(/->/g, "-").replace(/_/g, "_")}`;
           const sampleClass = `sample-${real_id}`;
-          // Determine stroke color by splitLabelMap
           const rawLabel = splitLabelMap.get(real_id) || "missing";
           let c = "#999999";
           if (rawLabel === "train") c = "#1f77b4";
@@ -632,7 +551,6 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
           });
         });
       });
-
       samplesGroup.selectAll("line")
         .data(lineData)
         .join("line")
@@ -650,13 +568,10 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
             const sampleClass = classes.find(c => c.startsWith("sample-"));
             if (!sampleClass) return;
             const id = sampleClass.replace("sample-", "");
-
             tooltip
               .html(`<img src="/data/molecule_images/${id}_ligand.png" style="width:200px;height:auto;" />`)
               .style("left", (event.pageX + 12) + "px")
               .style("top", (event.pageY + 12) + "px")
-              // .transition()
-              // .duration(120)
               .style("opacity", 1);
         })
         .on("mouseout", function() {
@@ -664,33 +579,26 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
         });
       // ----------- Multi‑color stacked node rectangles (train/test/experimental/missing) -----------
       const nodeGroup = svg.append("g").attr("class", "node-stacks");
-
       nodeGroup
         .selectAll("g.node")
         .data(layoutNodes)
         .join("g")
         .attr("class", "node")
         .each(function (nodeData) {
-
           const g = d3.select(this);
-
           // Collect split counts for this node from samples
           const sampleIds = nodeSamplesMap.get(nodeData.name) || [];
-
           const counts = { train: 0, test: 0, experimental: 0, missing: 0 };
           sampleIds.forEach(id => {
             const label = splitLabelMap.get(String(id)) || "missing";
             if (counts[label] !== undefined) counts[label] += 1;
             else counts["missing"] += 1;
           });
-
           const total = counts.train + counts.test + counts.experimental + counts.missing;
           const nodeHeight = (nodeData.y1 ?? 0) - (nodeData.y0 ?? 0);
           const nodeX = (nodeData.x0 ?? 0);
           const nodeWidth = sankeyGen.nodeWidth();
-
           if (total === 0) {
-            // fallback single gray block when no samples
             g.append("rect")
               .attr("x", nodeX)
               .attr("y", nodeData.y0)
@@ -699,7 +607,6 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
               .attr("fill", "#ccc");
             return;
           }
-
           const splits = ["train", "test", "experimental", "missing"];
           const colors = {
             train: "#1f77b4",
@@ -707,25 +614,19 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
             experimental: "#2ca02c",
             missing: "#999999",
           };
-
           let accY = nodeData.y0 ?? 0;
           splits.forEach(sp => {
             const c = counts[sp];
             if (c <= 0) return;
-
             const h = (c / total) * nodeHeight;
-
             g.append("rect")
               .attr("x", nodeX)
               .attr("y", accY)
               .attr("width", nodeWidth)
               .attr("height", h)
               .attr("fill", colors[sp]);
-
             accY += h;
           });
-
-          // pointer / click behaviors preserved
           g.style("cursor", "pointer")
             .on("mouseover", function () {
               d3.select(this).selectAll("rect")
@@ -737,9 +638,7 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
                 .attr("stroke", "none");
             })
             .on("click", (event, d) => {
-
               const samples = nodeSamplesMap.get(d.name) || [];
-
               if (currentHighlightedNode === d.name) {
                 const svgSel = d3.select(svg.node());
                 svgSel.selectAll(".sankey-links path")
@@ -747,21 +646,15 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
                   .attr("opacity", 0.4);
                 svgSel.selectAll(".sample-trajectories line").attr("opacity", 0);
                 svgSel.selectAll(".sample-points circle").attr("opacity", 0);
-
                 currentHighlightedNode = null;
-
                 window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
                 window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
                 return;
               }
-
               currentHighlightedNode = d.name;
-
               const svgSel = d3.select(svg.node());
               svgSel.selectAll(".sankey-links path").attr("opacity", 0.1);
-
               highlightSamplesForNode(d.name);
-
               window.dispatchEvent(
                 new CustomEvent("scatter-highlight-ids", { detail: samples })
               );
@@ -770,7 +663,6 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
               );
             });
         });
-
       // Draw node labels
       svg
         .append("g")
@@ -780,61 +672,48 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
         .attr("x", (d) => (d.x0 ?? 0) - 6)
         .attr("y", (d) => ((d.y1 ?? 0) + (d.y0 ?? 0)) / 2)
         .attr("dy", "0.35em");
-        // .attr("text-anchor", "end")
-        // .text((d) => d.name)
-        // .filter((d) => (d.x0 ?? 0) < width / 2)
-        // .attr("x", (d) => (d.x1 ?? 0) + 6)
-        // .attr("text-anchor", "start");
-
-
-      // Draw sample points as small circles
-      const samplePointsGroup = svg.append("g").attr("class", "sample-points");
-
-      sampleNodeYMap.forEach((nodeYMap, real_id) => {
-        nodeYMap.forEach((y, nodeName) => {
-          const node = nodeLayoutMap.get(nodeName);
-          if (!node) return;
-          const x = (node.x0 ?? 0) + sankeyGen.nodeWidth() / 2;
-          const layerName = getLayerName(node.name);
-          const color = layerColorMap.get(layerName) ?? "#999";
-
-          // samplePointsGroup.append("circle")
-          //   .attr("cx", x)
-          //   .attr("cy", y)
-          //   .attr("r", 2.5)
-          //   .attr("fill", color)
-          //   .attr("stroke", "none");
+      // Draw sample points as small circles (disabled)
+      // const samplePointsGroup = svg.append("g").attr("class", "sample-points");
+      // sampleNodeYMap.forEach((nodeYMap, real_id) => {
+      //   nodeYMap.forEach((y, nodeName) => {
+      //     const node = nodeLayoutMap.get(nodeName);
+      //     if (!node) return;
+      //     const x = (node.x0 ?? 0) + sankeyGen.nodeWidth() / 2;
+      //     const layerName = getLayerName(node.name);
+      //     const color = layerColorMap.get(layerName) ?? "#999";
+      //     // samplePointsGroup.append("circle")
+      //     //   .attr("cx", x)
+      //     //   .attr("cy", y)
+      //     //   .attr("r", 2.5)
+      //     //   .attr("fill", color)
+      //     //   .attr("stroke", "none");
+      //   });
+      // });
+      // If there is an active global highlight (from other windows), apply it now
+      const globalIds: string[] = (window as any).__GLOBAL_SANKY_HIGHLIGHT_IDS || [];
+      if (globalIds.length > 0) {
+        const escapeForSelector = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+        svg.selectAll(".links path").attr("opacity", 0.1);
+        svg.selectAll(".sample-trajectories line").attr("opacity", 0.05);
+        globalIds.forEach(id => {
+          const safeId = escapeForSelector(String(id));
+          svg.selectAll(`.sample-${safeId}`).attr("opacity", 1).attr("stroke-width", 1.8);
         });
-      });
-    });
-
-    // If there is an active global highlight (from other windows), apply it now so
-    // newly created sankey instances reflect the selection.
-    const globalIds: string[] = (window as any).__GLOBAL_SANKY_HIGHLIGHT_IDS || [];
-    if (globalIds.length > 0) {
-      // use the same helper as the event handler: escape selectors
-      const escapeForSelector = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
-      // dim base elements
-      svg.selectAll(".links path").attr("opacity", 0.1);
-      svg.selectAll(".sample-trajectories line").attr("opacity", 0.05);
-      globalIds.forEach(id => {
-        const safeId = escapeForSelector(String(id));
-        svg.selectAll(`.sample-${safeId}`).attr("opacity", 1).attr("stroke-width", 1.8);
-      });
-    }
-  };
+      }
+    };
 
     useEffect(() => {
-      if (!data) return;
+      if (!data || data.length === 0) return;
       const container = containerRef.current;
       if (!container) return;
 
+      const graph = buildGraphFromRows(data);
+
       const draw = () => {
         const zoomedWidth = container.clientWidth * zoomFactor;
-        drawSankey(zoomedWidth, data);
+        drawSankey(zoomedWidth, graph);
       };
       draw();
-
       const resizeObserver = new ResizeObserver(draw);
       resizeObserver.observe(container);
       return () => resizeObserver.disconnect();

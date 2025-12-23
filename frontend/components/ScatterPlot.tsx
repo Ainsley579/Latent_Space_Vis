@@ -10,13 +10,25 @@ import React, {
 
 interface ScatterPlotProps {
   onScroll?: (scrollLeft: number) => void;
-  clusterFilePath: string;
+
+  // ⬇️ 新：直接传入 anyembedding 的 scatter 数据
+  data?: {
+    x: number;
+    y: number;
+    real_id: string | number;
+    layer: string;
+    color_value?: number;
+  }[];
+
+  // 旧 CSV 路径（保留但不再使用）
+  clusterFilePath?: string;
+
   totalWindows?: number;
   zoomFactor?: number;
 }
 
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
-  ({ onScroll, clusterFilePath, totalWindows, zoomFactor = 1 }, ref) => {
+  ({ onScroll, data = [], totalWindows, zoomFactor = 1 }, ref) => {
     let tooltip = d3.select("body").select("#global-tooltip");
     if (tooltip.empty()) {
       tooltip = d3.select("body")
@@ -131,25 +143,14 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         if (!container) return;
         d3.select(container).selectAll("*").remove();
 
-        // (KEEP all existing drawing code exactly the same)
-        // From "let rawLayers = [...]" down to the end of the for-loop block.
-        let rawLayers = [
-          "emb.csv",
-          "output_block_0.csv",
-          "output_block_1.csv",
-          "output_block_2.csv",
-          "output_block_3.csv",
-          "output_block_4.csv",
-          "u_mlp_input.csv",
-          "u_mlp_l1.csv",
-          "u_mlp_l2.csv",
-        ];
-        // Remove accidental duplicates (your backend sometimes outputs duplicates)
-        const layerFiles = Array.from(new Set(rawLayers));
+        // Use layerFiles from data, not hardcoded
+        const layerFiles = Array.from(
+          new Set(data.map(d => `${d.layer}.csv`))
+        );
         window.dispatchEvent(
           new CustomEvent("scatter-layer-info", {
             detail: {
-              windowId: clusterFilePath,
+              windowId: undefined,
               names: layerFiles,
               count: layerFiles.length
             }
@@ -157,17 +158,6 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
         );
 
         const height = 200;
-        // const containerWidth = container.clientWidth || 800;
-
-        // adaptive width logic: explicit per instructions
-        const computeSvgWidth = () => {
-          // if only one window: each scatterplot = containerWidth / 8
-          // if two or more windows: each = containerWidth / 4
-          const targetWidth = 200;
-          // const minWidth = containerWidth / layerFiles.length;
-          // return Math.max(targetWidth, minWidth);
-        };
-
         // selectedIDs now defined at component top-level
 
         for (let i = 0; i < layerFiles.length; i++) {
@@ -199,17 +189,18 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             .attr("height", height)
             .each(function() { (this as any).__baseWidth = svgWidth; })
             .attr("width", svgWidth * zoomFactor)
-            // .style("border", "1px solid #ccc")
-            // .style("border-radius", "8px")
             .style("background", "#fafafa");
 
-          const filePath = `${clusterFilePath}/scatter_plot_data_${layerFiles[i].replace(".csv","")}.csv`;
-          const localData = await d3.csv(filePath, d => ({
-            x: +d.x,
-            y: +d.y,
-            real_id: d.real_id,
-            color_value: +d.color_value,
-          }));
+          // Instead of reading CSV, filter from data
+          const layerName = layerFiles[i].replace(".csv", "");
+          const localData = data
+            .filter(d => d.layer === layerName)
+            .map(d => ({
+              x: d.x,
+              y: d.y,
+              real_id: d.real_id,
+              color_value: d.color_value,
+            }));
 
           const xExtent = d3.extent(localData, d => d.x) as [number, number];
           const yExtent = d3.extent(localData, d => d.y) as [number, number];
@@ -250,13 +241,9 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
               const idClass = `real-${d.real_id}`;
 
               d3.selectAll(".scatter-point")
-                // .transition()
-                // .duration(150)
                 .style("opacity", 0.1);
 
               d3.selectAll(`.${idClass}`)
-                // .transition()
-                // .duration(150)
                 .style("opacity", 1)
                 .attr("r", 6);
 
@@ -264,8 +251,6 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                 .html(`<img src="/data/molecule_images/${d.real_id}_ligand.png" style="width:200px;height:auto;" />`)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY + 10) + "px")
-                // .transition()
-                // .duration(150)
                 .style("opacity", 1);
 
               window.dispatchEvent(
@@ -278,13 +263,9 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
               if (lassoEnabled) return;
 
               d3.selectAll(".scatter-point")
-                // .transition()
-                // .duration(150)
                 .style("opacity", 0.8)
                 .attr("r", 4);
               tooltip
-                // .transition()
-                // .duration(150)
                 .style("opacity", 0);
               window.dispatchEvent(new CustomEvent("sankey-highlight-clear"));
               window.dispatchEvent(new CustomEvent("scatter-highlight-clear"));
@@ -345,7 +326,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
       };
 
       run();
-    }, [clusterFilePath]);
+    }, [data, zoomFactor]);
  
     return (
       <div>

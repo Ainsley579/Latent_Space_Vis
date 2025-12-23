@@ -11,6 +11,8 @@ interface WindowData {
   title: string;
   sankeyCsv?: string;
   scatterCsv?: string;
+  scatterData?: any[];
+  sankeyData?: any[];
 }
 
 export default function WindowManager() {
@@ -85,7 +87,40 @@ const [layerCounts, setLayerCounts] = useState<Record<string, { names: string[];
 
   const openWindow = () => {
     const id = Date.now().toString();
-    setWindows((prev) => [...prev, { id, title: `Window ${prev.length + 1}` }]);
+
+    const isFirst = windows.length === 0;
+
+    setWindows((prev) => [
+      ...prev,
+      { id, title: `Window ${prev.length + 1}` }
+    ]);
+
+    if (isFirst) {
+      fetch("http://127.0.0.1:5001/anyembedding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          embeddings_dir: "./anyembeddings",
+          layer_files: ["output0.pt", "output1.pt"],
+          layer_names: [ "output_block_0", "output_block_1"]
+        })
+      })
+        .then(res => res.json())
+        .then(json => {
+          setWindows(prev =>
+            prev.map(w =>
+              w.id === id
+                ? {
+                    ...w,
+                    scatterData: json.scatter,
+                    sankeyData: json.sankey
+                  }
+                : w
+            )
+          );
+        })
+        .catch(err => console.error("anyembedding error:", err));
+    }
   };
 
   const closeWindow = (id: string) => {
@@ -188,7 +223,16 @@ const [layerCounts, setLayerCounts] = useState<Record<string, { names: string[];
                         console.log("User selected:", params);
                       }}
                     /> */}
-                    {w.scatterCsv ? (
+                    {w.scatterData ? (
+                      <ScatterPlot
+                        ref={(el) => {
+                          if (el) scatterRefs.current[idx] = el;
+                        }}
+                        onScroll={(scrollLeft) => syncScatterScroll(idx, scrollLeft)}
+                        data={w.scatterData}          // ✅ 直接喂 JSON
+                        zoomFactor={zoomFactor}
+                      />
+                    ) : w.scatterCsv ? (
                       <ScatterPlot
                         ref={(el) => {
                           if (el) scatterRefs.current[idx] = el;
@@ -202,7 +246,15 @@ const [layerCounts, setLayerCounts] = useState<Record<string, { names: string[];
                         Waiting for backend to generate Scatter Plot…
                       </div>
                     )}
-                    {w.sankeyCsv ? (
+                    {w.sankeyData ? (
+                      <SankeyDiagram
+                        ref={(el) => {
+                          if (el) sankeyRefs.current[idx] = el;
+                        }}
+                        data={w.sankeyData}           // ✅ 直接喂 JSON
+                        zoomFactor={zoomFactor}
+                      />
+                    ) : w.sankeyCsv ? (
                       <SankeyDiagram
                         ref={(el) => {
                           if (el) sankeyRefs.current[idx] = el;
