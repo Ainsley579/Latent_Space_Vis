@@ -210,6 +210,8 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
               real_id: d.id,
               color_value: d.color_value,
             }));
+          console.log("data",data);
+          console.log("localdata",localData);
 
           const xExtent = d3.extent(localData, d => d.x) as [number, number];
           const yExtent = d3.extent(localData, d => d.y) as [number, number];
@@ -240,15 +242,15 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             })
             .attr("opacity", 0.8)
             .attr("class", (d) =>
-              d.id !== undefined ? `scatter-point real-${d.id}` : "scatter-point"
+              d.real_id !== undefined ? `scatter-point real-${d.real_id}` : "scatter-point"
             );
           // Add hover events to dim others and highlight same real_id across all plots
           circles
             .on("mouseover", function (event, d) {
               if (lassoEnabled) return;
 
-              const idClass = `real-${d.id}`;
-
+              const idClass = `real-${d.real_id}`;
+              console.log("Hover ID:", d.real_id);
               selectLocalPoints().style("opacity", 0.1);
 
               selectLocalPoints()
@@ -258,7 +260,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
               if (!hideControls) {
                 tooltip
-                  .html(`<img src="/data/molecule_images/${d.id}_ligand.png" style="width:200px;height:auto;" />`)
+                  .html(`<img src="/data/molecule_images/${d.real_id}_ligand.png" style="width:200px;height:auto;" />`)
                   .style("left", (event.pageX + 10) + "px")
                   .style("top", (event.pageY + 10) + "px")
                   .style("opacity", 1);
@@ -296,7 +298,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
               const cx = xScale(d.x);
               const cy = yScale(d.y);
               if (cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1) {
-                selectedIDs.add(d.id);
+                selectedIDs.add(d.real_id);
               }
             });
 
