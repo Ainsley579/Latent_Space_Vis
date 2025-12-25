@@ -11,7 +11,6 @@ import React, {
 interface ScatterPlotProps {
   onScroll?: (scrollLeft: number) => void;
 
-  // ⬇️ 新：直接传入 anyembedding 的 scatter 数据
   data?: {
     x: number;
     y: number;
@@ -20,13 +19,12 @@ interface ScatterPlotProps {
     color_value?: number;
   }[];
 
-  // 旧 CSV 路径（保留但不再使用）
   clusterFilePath?: string;
 
   totalWindows?: number;
   zoomFactor?: number;
 
-  hideControls?: boolean;   // ✅ 新增
+  hideControls?: boolean; 
 }
 
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
@@ -151,7 +149,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
       if (!container) return;
 
       d3.select(container).selectAll("*").remove();
-      hasDrawnRef.current = false;   // 允许重画
+      hasDrawnRef.current = false;   
 
       const run = async () => {
         // Use layerFiles from data, not hardcoded
