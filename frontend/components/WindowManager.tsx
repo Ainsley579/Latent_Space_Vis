@@ -101,8 +101,9 @@ const [layerCounts, setLayerCounts] = useState<Record<string, { names: string[];
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           embeddings_dir: "./anyembeddings",
-          layer_files: ["output0.pt", "output1.pt"],
-          layer_names: [ "output_block_0", "output_block_1"]
+          layer_files: ["interaction0_2.pt"],
+          layer_names: ["interaction0_2"],
+          n_components: 4
         })
       })
         .then(res => res.json())
