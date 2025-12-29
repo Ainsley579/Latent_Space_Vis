@@ -10,9 +10,9 @@ export default defineConfig({
   build: {
     lib: {
       entry: "src/app.tsx",
-      name: "NotebookSankey",
+      name: "NotebookVis",
       formats: ["iife"],   // 关键：IIFE，才能内联执行
-      fileName: () => "notebook-sankey.js",
+      fileName: () => "notebook-vis.js",
     },
     rollupOptions: {
       external: [],       // 不 externalize react
