@@ -137,7 +137,6 @@ def anyembedding():
         sankey_df = pipeline.generate_sankey_data()
 
         n_layers = len(embeddings)
-        # 取任意一层的样本数（所有层应一致）
         first_layer = next(iter(embeddings.values()))
         n_samples = first_layer.shape[0]
 
