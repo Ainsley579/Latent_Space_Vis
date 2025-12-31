@@ -3,3 +3,16 @@
 /node_modules
 **/node_modules
 **/data
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints/
+
+# temp / runtime output
+tmp/
+frontend/public/data/tmp_notebook/
