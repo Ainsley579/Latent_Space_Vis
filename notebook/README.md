@@ -18,3 +18,8 @@ charts
 render_scatter(scatter_df, height=400)
 render_sankey(sankey_df, height=450)
 ```
+
+See example:
+```
+https://github.com/Ainsley579/Latent_Space_Vis/blob/shiyi/notebook/example.ipynb
+```
