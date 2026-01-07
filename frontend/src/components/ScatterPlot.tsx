@@ -30,7 +30,6 @@ interface ScatterPlotProps {
 
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
     ({ onScroll, data = [], totalWindows, zoomFactor = 1, hideControls = false }, ref) => {
-        alert("changed the code");
         let tooltip = d3.select("body").select("#global-tooltip");
         if (tooltip.empty()) {
             d3.select("body")
@@ -42,6 +41,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                 .style("border", "1px solid #ccc")
                 .style("borderRadius", "4px")
                 .style("pointerEvents", "none")
+                .style("fill", "black")
                 .style("zIndex", "9999")
                 .style("opacity", 0);
         }
@@ -51,6 +51,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             .style("position", "absolute")
             .style("padding", "4px")
             .style("background", "white")
+            .style("fill", "black")
             .style("border", "1px solid #ccc")
             .style("borderRadius", "4px")
             .style("pointerEvents", "none")
@@ -256,7 +257,6 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                         .on("mouseover", function(event, d) {
                             if (lassoEnabled) return;
 
-                            console.log('changed');
                             const idClass = `real-${d.real_id}`;
                             console.log("Hover ID:", d.real_id);
                             selectLocalPoints().style("opacity", 0.1);
@@ -268,7 +268,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
                             if (!hideControls) {
                                 tooltip
-                                    .html(`<p>${d.real_id}</p>`)
+                                    .html(`<p>TEST ${d.real_id}</p>`)
                                     .style("left", (event.pageX + 10) + "px")
                                     .style("top", (event.pageY + 10) + "px")
                                     .style("opacity", 1);
