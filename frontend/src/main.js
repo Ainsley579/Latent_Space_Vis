@@ -12,7 +12,9 @@ export function Scatterplot(id, data) {
     const root = createRoot(document.querySelector(id));
     const el = React.createElement(ScatterApp, {
         initialData: data.data,
-        images: data.images, dataUrl: ""
+        images: data.images,
+        layers: data.layers,
+        dataUrl: ""
     })
     root.render(el);
 }

@@ -1,4 +1,5 @@
 from notebookjs import execute_js
+from preprocessing import generate_scatter_plot_data
 import os
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -24,21 +25,23 @@ def showSankey(data, imgFn=lambda x: ""):
     )
 
 
-def showScatter(data, imgFn=lambda x: "test from python"):
+def showScatter(
+    embeddings, layer_order, id_mapping={}, imgFn=lambda x: "test from python"
+):
     with open(f"{this_dir}/bundle.js", "r") as f:
         code_bundle = f.read()
 
+    data = generate_scatter_plot_data(embeddings, layer_order, id_mapping)
     images = {}
-    for x in data:
-        dId = x["id"]
-        img = images.get(dId, None)
+    for i, x in enumerate(data):
+        img = images.get(i, None)
         if img is None:
-            images[dId] = imgFn(dId)
+            images[i] = imgFn(i)
 
     execute_js(
         library_list=code_bundle,
         main_function="latent_space.Scatterplot",
-        data_dict={"data": data, "images": images},
+        data_dict={"data": data, "layers": layer_order, "images": images},
         callbacks={},
         css_list=[],
     )

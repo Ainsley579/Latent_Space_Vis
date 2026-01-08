@@ -8,28 +8,31 @@ import React, {
     useImperativeHandle,
 } from "react";
 
+interface Position {
+    x: number,
+    y: number
+}
+
+interface DataPoint {
+    groupID: number,
+    id: number,
+    positions: Position[]
+}
+
 interface ScatterPlotProps {
     onScroll?: (scrollLeft: number) => void;
-
-    data?: {
-        x: number;
-        y: number;
-        real_id: string | number;
-        layer: string;
-        color_value?: number;
-        id?: string;
-    }[];
-
+    data?: DataPoint[];
     images?: Record<number, string>;
     clusterFilePath?: string;
-
+    layers?: string[];
     totalWindows?: number;
     zoomFactor?: number;
-
     hideControls?: boolean;
+    useGroupHover?: boolean;
 }
+
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
-    ({ onScroll, data = [], images = {}, totalWindows, zoomFactor = 1, hideControls = false }, ref) => {
+    ({ onScroll, data = [], images = {}, layers = [], totalWindows, zoomFactor = 1, hideControls = false, useGroupHover = false }, ref) => {
         let tooltip = d3.select("body").select("#global-tooltip");
         if (tooltip.empty()) {
             d3.select("body")
@@ -52,6 +55,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             .style("padding", "4px")
             .style("background", "white")
             .style("fill", "black")
+            .style("color", "black")
             .style("border", "1px solid #ccc")
             .style("borderRadius", "4px")
             .style("pointerEvents", "none")
@@ -161,15 +165,12 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
             const run = async () => {
                 // Use layerFiles from data, not hardcoded
-                const layerFiles = Array.from(
-                    new Set(data.map(d => `${d.layer}.csv`))
-                );
                 window.dispatchEvent(
                     new CustomEvent("scatter-layer-info", {
                         detail: {
                             windowId: undefined,
-                            names: layerFiles,
-                            count: layerFiles.length
+                            names: layers,
+                            count: layers.length
                         }
                     })
                 );
@@ -177,12 +178,12 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                 const height = 200;
                 // selectedIDs now defined at component top-level
 
-                for (let i = 0; i < layerFiles.length; i++) {
-                    // subtract total margin (5px per gap)
-                    const totalMargin = (layerFiles.length - 1) * 5;
-                    const availableWidth = container.clientWidth - totalMargin;
-                    const svgWidth = availableWidth / layerFiles.length;
+                const totalMargin = (layers.length - 1) * 5;
+                const availableWidth = container.clientWidth - totalMargin;
+                const svgWidth = availableWidth / layers.length;
 
+                for (let i = 0; i < layers.length; i++) {
+                    // subtract total margin (5px per gap)
                     const wrapper = d3
                         .select(container)
                         .append("div")
@@ -198,7 +199,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                         .append("div")
                         .style("font-size", "12px")
                         .style("margin-bottom", "4px")
-                        .text(layerFiles[i].replace(".csv", ""));
+                        .text(layers[i]);
 
                     const svg = wrapper
                         .append("svg")
@@ -208,19 +209,14 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                         .attr("width", svgWidth * zoomFactor)
                         .style("background", "#fafafa");
 
-                    // Instead of reading CSV, filter from data
-                    const layerName = layerFiles[i].replace(".csv", "");
+                    // the individual scatterplots can be their own components
                     const localData = data
-                        .filter(d => d.layer === layerName)
-                        .map(d => ({
-                            x: d.x,
-                            y: d.y,
-                            real_id: d.id,
-                            color_value: d.color_value,
+                        .map((d, j) => ({
+                            x: d.positions[i].x,
+                            y: d.positions[i].y,
+                            id: j,
+                            groupID: d.groupID
                         }));
-                    console.log("data", data);
-                    console.log("localdata", localData);
-
                     const xExtent = d3.extent(localData, d => d.x) as [number, number];
                     const yExtent = d3.extent(localData, d => d.y) as [number, number];
 
@@ -232,8 +228,6 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                         .domain(yExtent)
                         .range([height - 10, 10]); // invert y
 
-                    const color = d3.schemeCategory10[i % 10];
-                    // Create group for circles so we can attach events
                     const circleGroup = svg.append("g");
 
                     const circles = circleGroup
@@ -243,21 +237,17 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                         .attr("cx", (d) => xScale(d.x))
                         .attr("cy", (d) => yScale(d.y))
                         .attr("r", 4)
-                        .attr("fill", (d) => {
-                            return d.color_value !== undefined && !isNaN(d.color_value)
-                                ? d3.interpolateTurbo(d.color_value / 3)
-                                : color;
-                        })
+                        .attr("fill", (d) => d3.schemeCategory10[d.groupID % 10])
                         .attr("opacity", 0.8)
                         .attr("class", (d) =>
-                            d.real_id !== undefined ? `scatter-point real-${d.real_id}` : "scatter-point"
+                            `scatter-point real-${d.id} group-${d.groupID}`
                         );
-                    // Add hover events to dim others and highlight same real_id across all plots
+
                     circles
                         .on("mouseover", function(event, d) {
                             if (lassoEnabled) return;
-                            const idClass = `real-${d.real_id}`;
-                            console.log("Hover ID:", d.real_id);
+
+                            const idClass = (useGroupHover) ? `real-${d.id}` : `group-${d.groupID}`;
                             selectLocalPoints().style("opacity", 0.1);
 
                             selectLocalPoints()
@@ -267,7 +257,9 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
                             if (!hideControls) {
                                 tooltip
-                                    .html(`<img src="data:image/png;base64,${images[Number(d.real_id)]}" >`)
+                                    .html(`<div>
+                                          <p>Group: ${d.groupID}</p>
+                                          <img src="data:image/png;base64,${images[Number(d.id)]}"></div>`)
                                     .style("left", (event.pageX + 10) + "px")
                                     .style("top", (event.pageY + 10) + "px")
                                     .style("opacity", 1);
@@ -305,7 +297,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                             const cx = xScale(d.x);
                             const cy = yScale(d.y);
                             if (cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1) {
-                                selectedIDs.add(d.real_id);
+                                selectedIDs.add(d.id);
                             }
                         });
 
@@ -315,7 +307,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
                         selectedIDs.forEach(id => {
                             selectLocalPoints()
-                                .filter(`.real-${id}`)
+                                .filter(`.real - ${id} `)
                                 .style("opacity", 1)
                                 .attr("r", 6);
                         });
