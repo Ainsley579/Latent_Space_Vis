@@ -8,7 +8,7 @@ this_dir = os.path.dirname(os.path.realpath(__file__))
 #    css_style = f.read()
 
 
-def showSankey(data):
+def showSankey(data, imgFn=lambda x: ""):
     # TODO: do preprocessing here - the user gives you the torch embeddings, you
     # manipulate them to be ready for your vis
 
@@ -24,13 +24,21 @@ def showSankey(data):
     )
 
 
-def showScatter(data):
+def showScatter(data, imgFn=lambda x: "test from python"):
     with open(f"{this_dir}/bundle.js", "r") as f:
         code_bundle = f.read()
+
+    images = {}
+    for x in data:
+        dId = x["id"]
+        img = images.get(dId, None)
+        if img is None:
+            images[dId] = imgFn(dId)
+
     execute_js(
         library_list=code_bundle,
         main_function="latent_space.Scatterplot",
-        data_dict=data,
+        data_dict={"data": data, "images": images},
         callbacks={},
         css_list=[],
     )

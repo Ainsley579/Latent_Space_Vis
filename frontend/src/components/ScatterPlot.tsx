@@ -20,6 +20,7 @@ interface ScatterPlotProps {
         id?: string;
     }[];
 
+    images?: Record<number, string>;
     clusterFilePath?: string;
 
     totalWindows?: number;
@@ -27,9 +28,8 @@ interface ScatterPlotProps {
 
     hideControls?: boolean;
 }
-
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
-    ({ onScroll, data = [], totalWindows, zoomFactor = 1, hideControls = false }, ref) => {
+    ({ onScroll, data = [], images = {}, totalWindows, zoomFactor = 1, hideControls = false }, ref) => {
         let tooltip = d3.select("body").select("#global-tooltip");
         if (tooltip.empty()) {
             d3.select("body")
@@ -256,7 +256,6 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                     circles
                         .on("mouseover", function(event, d) {
                             if (lassoEnabled) return;
-
                             const idClass = `real-${d.real_id}`;
                             console.log("Hover ID:", d.real_id);
                             selectLocalPoints().style("opacity", 0.1);
@@ -268,7 +267,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
                             if (!hideControls) {
                                 tooltip
-                                    .html(`<p>TEST ${d.real_id}</p>`)
+                                    .html(`<img src="data:image/png;base64,${images[Number(d.real_id)]}" >`)
                                     .style("left", (event.pageX + 10) + "px")
                                     .style("top", (event.pageY + 10) + "px")
                                     .style("opacity", 1);

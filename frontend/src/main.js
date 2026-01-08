@@ -10,7 +10,10 @@ export function SankeyDiagram(id, data) {
 
 export function Scatterplot(id, data) {
     const root = createRoot(document.querySelector(id));
-    const el = React.createElement(ScatterApp, { initialData: data, dataUrl: "" })
+    const el = React.createElement(ScatterApp, {
+        initialData: data.data,
+        images: data.images, dataUrl: ""
+    })
     root.render(el);
 }
 

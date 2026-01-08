@@ -26,11 +26,11 @@ export function SankeyApp({ initialData, dataUrl }: AppProps) {
     );
 }
 
-export function ScatterApp({ initialData, dataUrl }: AppProps) {
+export function ScatterApp({ initialData, images, dataUrl }: AppProps) {
     return (
         <div style={{ padding: 8 }}>
             <h3>Scatter (Notebook)</h3>
-            <ScatterPlot data={initialData} zoomFactor={1} />
+            <ScatterPlot data={initialData} images={images} zoomFactor={1} />
         </div>
     );
 }
