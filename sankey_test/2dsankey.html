@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <title>D3 Sankey</title>
+
+  <!-- D3 v7 -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <!-- d3-sankey -->
+  <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont;
+      background: #fff;
+    }
+    #chart {
+        width: 1600px;
+        height: 800px;
+        margin: 5px auto;  
+        border: 1px solid #ddd; 
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+      border: 1px solid #ddd; 
+    }
+    .node rect {
+      stroke: #000;
+      stroke-width: 0.5px;
+    }
+    .node text {
+      font-size: 30px;
+      pointer-events: none;
+      fill: #111;
+    }
+    .link {
+      fill: none;
+      stroke-opacity: 0.4;
+    }
+  </style>
+</head>
+
+<body>
+    <div id="chart">
+        <svg></svg>
+    </div>
+
+<script>
+const container = document.getElementById("chart");
+const width  = 1800;
+const height = 900;
+const svg = d3.select("svg")
+  .attr("viewBox", [0, 0, width, height]);
+
+// 读取你的 JSON（和 html 放在同一目录）
+d3.json("sankey_data_epoch9.json").then(data => {
+
+  // 构造 Sankey
+  const sankey = d3.sankey()
+    .nodeId(d => d.id)
+    .nodeWidth(40)
+    .nodePadding(20)
+    .extent([[20, 20], [width - 20, height - 20]]);
+
+  // ⚠️ d3-sankey 会修改数据，先深拷贝
+  const graph = sankey({
+    nodes: data.nodes.map(d => ({ ...d })),
+    links: data.links.map(d => ({ ...d }))
+  });
+
+  // record original link endpoints (we will project nodes and links together)
+  graph.links.forEach(l => {
+    l._y0_orig = l.y0;
+    l._y1_orig = l.y1;
+  });
+
+  // --- DO NOT manually shift node rects vertically anymore. ---
+  // We'll keep sankey's computed node positions intact and apply a single
+  // projection group so nodes and links are projected together.
+
+  // final fit to chart vertical bounds (based on sankey output)
+  const yMin = d3.min(graph.nodes, d => d.y0);
+  const yMax = d3.max(graph.nodes, d => d.y1);
+
+  const pad = 20;
+  const yFit = d3.scaleLinear()
+    .domain([yMin, yMax])
+    .range([pad, height - pad]);
+
+  const yScaleFactor = (height - 2 * pad) / (yMax - yMin || 1);
+
+  // map nodes and links through yFit (no node repositioning beyond sankey)
+  graph.nodes.forEach(d => {
+    d.y0 = yFit(d.y0);
+    d.y1 = yFit(d.y1);
+  });
+
+  graph.links.forEach(l => {
+    if (l._y0_orig !== undefined) l.y0 = yFit(l._y0_orig);
+    if (l._y1_orig !== undefined) l.y1 = yFit(l._y1_orig);
+    l.width = (l.width || 1) * Math.max(1, yScaleFactor);
+  });
+
+  // Create a "camera" group that will receive pan/zoom transforms. Inside it we keep the
+  // projection group so nodes/links/labels project together. This lets the SVG act like
+  // an effectively infinite canvas that you can pan and zoom around.
+  const camera = svg.append('g').attr('class', 'camera');
+
+  // projection group (keeps your skew/scale projection)
+  const offsetY = 0.5 * height;
+  const proj = camera.append('g')
+    .attr('class', 'proj')
+    .attr('transform', `translate(0, ${offsetY}) skewY(-22.5) scale(0.5)`);
+
+  // Draw links inside projection group
+  const linkGroup = proj.append('g')
+    .attr('class', 'links');
+
+  linkGroup.selectAll('path')
+    .data(graph.links)
+    .join('path')
+      .attr('class', 'link')
+      .attr('d', d3.sankeyLinkHorizontal())
+      .attr('stroke', '#D9B88F')
+      .attr('stroke-width', d => Math.max(1, d.width))
+      .attr('fill', 'none');
+
+  // Draw nodes inside same projection group (so they project together with links)
+  const nodeG = proj.append('g').attr('class', 'nodes');
+
+  const node = nodeG.selectAll('g')
+    .data(graph.nodes)
+    .join('g')
+      .attr('class', 'node');
+
+  node.append('rect')
+    .attr('x', d => d.x0)
+    .attr('y', d => d.y0)
+    .attr('width', d => d.x1 - d.x0)
+    .attr('height', d => d.y1 - d.y0)
+    .attr('fill', '#D9B88F')
+    .attr('stroke', '#000')
+    .attr('stroke-width', 0.3);
+
+  // ---- layer labels at the bottom (no node labels) ----
+  const layers = Array.from(
+    d3.group(graph.nodes, d => d.x0).keys()
+  ).sort((a, b) => a - b);
+
+  const layerLabelY = height + 10; // position near bottom of svg BEFORE projection
+
+  // append layer labels inside the projection group so they are projected together with nodes/links
+  proj.append('g')
+    .attr('class', 'layer-labels')
+    .selectAll('text')
+    .data(layers)
+    .join('text')
+      .attr('x', d => d + (graph.nodes.find(n => n.x0 === d).x1 - graph.nodes.find(n => n.x0 === d).x0) / 2)
+      // keep same y but placed inside proj so it will be transformed along with nodes/links
+      .attr('y', layerLabelY)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 24)
+      .attr('fill', '#111')
+      .text((d, i) => `Layer ${i + 1}`);
+
+  // ----- make svg pannable/zoomable like an infinite canvas -----
+  // create a d3 zoom behavior and apply it to the svg element. The zoom will set a
+  // transform on the camera group (which contains proj). We allow a very large translateExtent
+  // so the user can pan far in any direction (practical "infinite" canvas).
+  const zoom = d3.zoom()
+    .scaleExtent([0.1, 5])
+    .translateExtent([[-1e6, -1e6], [1e6, 1e6]])
+    .on('zoom', (event) => {
+      camera.attr('transform', event.transform);
+    });
+
+  // apply the zoom to the svg and enable wheel + drag panning
+  svg.call(zoom)
+    // make sure double-click doesn't zoom unexpectedly
+    .on('dblclick.zoom', null);
+
+  // Optional: start with a sensible initial view (centered-ish)
+  const initialTransform = d3.zoomIdentity.translate(0, 0).scale(1);
+  svg.call(zoom.transform, initialTransform);
+
+});
+</script>
+</body>
+</html>
