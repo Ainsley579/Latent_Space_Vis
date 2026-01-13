@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="zh">
+
+<head>
+    <meta charset="utf-8">
+    <title>D3 Sankey</title>
+
+    <!-- D3 v7 -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- d3-sankey -->
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont;
+            background: #fff;
+        }
+
+        #chart {
+            width: 1600px;
+            height: 800px;
+            margin: 5px auto;
+            border: 1px solid #ddd;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #ddd;
+        }
+
+        .node rect {
+            stroke: #000;
+            stroke-width: 0.5px;
+        }
+
+        .node text {
+            font-size: 30px;
+            pointer-events: none;
+            fill: #111;
+        }
+
+        .link {
+            fill: none;
+            stroke-opacity: 0.4;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="chart">
+        <svg></svg>
+    </div>
+
+    <script>
+        const container = document.getElementById("chart");
+        const width = 1800;
+        const height = 400;
+
+        const DESIRED_NODE_WIDTH = 40; // fixed node width for both sankeys (px)
+        const DESIRED_LAYER_STEP = 400; // horizontal distance between successive layer starts (px)
+        const DESIRED_SKEW_ANGLE = 0; // degrees (unused in no-skew mode)
+        const DESIRED_SKEW_ANGLE_REVERSE = -22.5; // degrees (unused in no-skew mode)
+
+        let ALIGN_MAIN_KEY = 'layer1'; // string used to identify the main sankey's layer (can be substr or exact layer id)
+        let ALIGN_TARGET_KEY = 'E000';   // string used to identify the target layer in the second sankey
+
+        let SANKEY_CSV_PATH_EPOCH = "data/sankey_spatial_epoch_000.csv";
+        let SANKEY_CSV_PATH_LAYER = "data/sankey_temporal_layer1.csv";
+
+        const svg = d3.select("svg")
+            .attr("viewBox", [0, 0, width, height]);
+
+        // 读取你的 CSV（和 html 放在同一目录）
+        function drawSankey(sankey_csv_1, sankey_csv_2) {
+            // --- clear previous sankey content before redraw ---
+            svg.selectAll('*').remove();
+            d3.csv(sankey_csv_1).then(csvRows => {
+                // csvRows fields: source_node_id,target_node_id,source_label,target_label,value
+                // Build nodes (unique ids) and links compatible with d3-sankey (nodes have .id and .label)
+                const rows = csvRows.map(r => ({
+                    source: String(r.source_node_id),
+                    target: String(r.target_node_id),
+                    source_label: r.source_label,
+                    target_label: r.target_label,
+                    value: +(r.value || 0)
+                }));
+
+                // collect unique ids in numeric order
+                const idSet = new Set();
+                rows.forEach(r => { idSet.add(r.source); idSet.add(r.target); });
+                const ids = Array.from(idSet).sort((a, b) => (+a) - (+b));
+
+                // build label map preferring source_label then target_label
+                const labelMap = {};
+                rows.forEach(r => {
+                    if (r.source_label && !labelMap[r.source]) labelMap[r.source] = r.source_label;
+                    if (r.target_label && !labelMap[r.target]) labelMap[r.target] = r.target_label;
+                });
+
+                const data = {
+                    nodes: ids.map(id => ({ id: id, label: labelMap[id] || String(id) })),
+                    links: rows.map(r => ({ source: r.source, target: r.target, value: r.value }))
+                };
+
+                // 构造 Sankey
+                const sankey = d3.sankey()
+                    .nodeId(d => d.id)
+                    .nodeWidth(DESIRED_NODE_WIDTH)
+                    .nodePadding(20)
+                    .extent([[20, 20], [width - 20, height - 20]]);
+
+                // ⚠️ d3-sankey 会修改数据，先深拷贝
+                const graph = sankey({
+                    nodes: data.nodes.map(d => ({ ...d })),
+                    links: data.links.map(d => ({ ...d }))
+                });
+
+                // --- enforce fixed layer horizontal step and node width for graph ---
+                (function enforceFixedColumns(g, leftMargin = 20) {
+                    // compute distinct layer keys in the original sankey layout order
+                    const colXs = Array.from(d3.group(g.nodes, d => d.x0).keys()).sort((a, b) => a - b);
+                    const colIndex = new Map();
+                    colXs.forEach((x, i) => colIndex.set(x, i));
+
+                    g.nodes.forEach(n => {
+                        const k = colIndex.get(n.x0) || 0;
+                        n.x0 = leftMargin + k * DESIRED_LAYER_STEP;
+                        n.x1 = n.x0 + DESIRED_NODE_WIDTH;
+                    });
+                    // links reference node objects so their endpoints will reflect the new node.x0/x1
+                })(graph, 20);
+
+                // record original link endpoints (we will project nodes and links together)
+                graph.links.forEach(l => {
+                    l._y0_orig = l.y0;
+                    l._y1_orig = l.y1;
+                });
+
+                // --- DO NOT manually shift node rects vertically anymore. ---
+                // We'll keep sankey's computed node positions intact and apply a single
+                // projection group so nodes and links are projected together.
+
+                // final fit to chart vertical bounds (based on sankey output)
+                const yMin = d3.min(graph.nodes, d => d.y0);
+                const yMax = d3.max(graph.nodes, d => d.y1);
+
+                const pad = 20;
+                const yFit = d3.scaleLinear()
+                    .domain([yMin, yMax])
+                    .range([pad, height - pad]);
+
+                const yScaleFactor = (height - 2 * pad) / (yMax - yMin || 1);
+
+                // map nodes and links through yFit (no node repositioning beyond sankey)
+                graph.nodes.forEach(d => {
+                    d.y0 = yFit(d.y0);
+                    d.y1 = yFit(d.y1);
+                });
+
+                graph.links.forEach(l => {
+                    if (l._y0_orig !== undefined) l.y0 = yFit(l._y0_orig);
+                    if (l._y1_orig !== undefined) l.y1 = yFit(l._y1_orig);
+                    l.width = (l.width || 1) * Math.max(1, yScaleFactor);
+                });
+
+                // Create a "camera" group that will receive pan/zoom transforms. Inside it we keep the
+                // projection group so nodes/links/labels project together. This lets the SVG act like
+                // an effectively infinite canvas that you can pan and zoom around.
+                const camera = svg.append('g').attr('class', 'camera');
+
+                // projection group for top sankey (no skew/scale — stacked layout)
+                const offsetY = 0.5 * height; // vertical center for top sankey
+                let projTx = 0; // horizontal translation for top sankey (used for alignment)
+                const proj = camera.append('g')
+                    .attr('class', 'proj')
+                    .attr('transform', `translate(${projTx}, ${offsetY})`);
+
+                // Draw links inside projection group
+                const linkGroup = proj.append('g')
+                    .attr('class', 'links');
+
+                linkGroup.selectAll('path')
+                    .data(graph.links)
+                    .join('path')
+                    .attr('class', 'link')
+                    .attr('d', d3.sankeyLinkHorizontal())
+                    .attr('stroke', '#D9B88F')
+                    .attr('stroke-width', d => Math.max(1, d.width))
+                    .attr('fill', 'none');
+
+                // Draw nodes inside same projection group (so they project together with links)
+                const nodeG = proj.append('g').attr('class', 'nodes');
+
+                const node = nodeG.selectAll('g')
+                    .data(graph.nodes)
+                    .join('g')
+                    .attr('class', 'node');
+
+                node.append('rect')
+                    .attr('id', d => `node-main-${d.id}`)
+                    .attr('x', d => d.x0)
+                    .attr('y', d => d.y0)
+                    .attr('width', d => d.x1 - d.x0)
+                    .attr('height', d => d.y1 - d.y0)
+                    .attr('fill', '#D9B88F')
+                    .attr('opacity', 0.7)
+                    .attr('stroke', '#000')
+                    .attr('stroke-width', 0.3);
+
+                // append layer labels inside the projection group so they are projected together with nodes/links
+                // derive label text from the original input data (data) rather than the sankey-modified graph
+                const idToLabel = new Map(data.nodes.map(n => [n.id, n.label]));
+
+                const layers = Array.from(
+                    d3.group(graph.nodes, d => d.x0).keys()
+                ).sort((a, b) => a - b);
+
+                const layerLabelY = height + 10; // position near bottom of svg BEFORE projection
+
+                const layerNames = layers.map(x => {
+                    const gnode = graph.nodes.find(n => n.x0 === x);
+                    if (!gnode) return '';
+                    const origLabel = idToLabel.get(gnode.id);
+                    if (!origLabel) return '';
+                    return String(origLabel).split('_')[0];
+                });
+
+                proj.append('g')
+                    .attr('class', 'layer-labels')
+                    .selectAll('text')
+                    .data(layers)
+                    .join('text')
+                    .attr('x', d => d + (graph.nodes.find(n => n.x0 === d).x1 - graph.nodes.find(n => n.x0 === d).x0) / 2)
+                    // keep same y but placed inside proj so it will be transformed along with nodes/links
+                    .attr('y', layerLabelY)
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', 24)
+                    .attr('fill', '#111')
+                    .style('cursor', 'pointer')
+                    .on('click', (event, d) => {
+                        let idx = layers.indexOf(d);
+                        layerName = layerNames[idx];
+                        console.log('Clicked layer in sankey2:', layerName);
+                        SANKEY_CSV_PATH_LAYER = "data/sankey_temporal_"+layerName+".csv"
+                        ALIGN_MAIN_KEY = layerNames[idx];
+                        drawSankey(SANKEY_CSV_PATH_EPOCH,SANKEY_CSV_PATH_LAYER);
+                    })
+                    .text((d, i) => layerNames[i] || `Layer ${i + 1}`);
+
+                // ----- make svg pannable/zoomable like an infinite canvas -----
+                // create a d3 zoom behavior and apply it to the svg element. The zoom will set a
+                // transform on the camera group (which contains proj). We allow a very large translateExtent
+                // so the user can pan far in any direction (practical "infinite" canvas).
+                const zoom = d3.zoom()
+                    .scaleExtent([0.1, 5])
+                    .translateExtent([[-1e6, -1e6], [1e6, 1e6]])
+                    .on('zoom', (event) => {
+                        camera.attr('transform', event.transform);
+                    });
+
+                // apply the zoom to the svg and enable wheel + drag panning
+                svg.call(zoom)
+                    // make sure double-click doesn't zoom unexpectedly
+                    .on('dblclick.zoom', null);
+
+                // Optional: start with a sensible initial view (centered-ish)
+                const initialTransform = d3.zoomIdentity.translate(0, 0).scale(1);
+                svg.call(zoom.transform, initialTransform);
+
+                // --- (no skew) we keep top sankey proj translation as-is. projTx already initialized above. ---
+                // (If you want to pan the top sankey initially, change projTx here.)
+
+                // --- draw a second sankey from sankey_data_layer1.json and project it with NO skew/scale ---
+                const offsetX2 = width * 0.0; // we will stack vertically, so horizontal offset base is 0
+                const offsetY2 = 0.5 * height + 400; // vertical position for bottom sankey (adjust as needed)
+
+                // load second sankey data and draw into its own proj2 group (which is a child of camera)
+                d3.csv(sankey_csv_2).then(csvRows2 => {
+                    // csvRows2 fields expected: source_node_id,target_node_id,source_label,target_label,value
+                    const rows2 = csvRows2.map(r => ({
+                        source: String(r.source_node_id),
+                        target: String(r.target_node_id),
+                        source_label: r.source_label,
+                        target_label: r.target_label,
+                        value: +(r.value || 0)
+                    }));
+
+                    // collect unique ids in numeric order
+                    const idSet2 = new Set();
+                    rows2.forEach(r => { idSet2.add(r.source); idSet2.add(r.target); });
+                    const ids2 = Array.from(idSet2).sort((a, b) => (+a) - (+b));
+
+                    // build label map preferring source_label then target_label
+                    const labelMap2 = {};
+                    rows2.forEach(r => {
+                        if (r.source_label && !labelMap2[r.source]) labelMap2[r.source] = r.source_label;
+                        if (r.target_label && !labelMap2[r.target]) labelMap2[r.target] = r.target_label;
+                    });
+
+                    const layerData = {
+                        nodes: ids2.map(id => ({ id: id, label: labelMap2[id] || String(id) })),
+                        links: rows2.map(r => ({ source: r.source, target: r.target, value: r.value }))
+                    };
+                    const sankey2 = d3.sankey()
+                        .nodeId(d => d.id)
+                        .nodeWidth(DESIRED_NODE_WIDTH)
+                        .nodePadding(12)
+                        .extent([[20 + offsetX2, 20], [width * 0.95 + offsetX2, height - 20]]);
+
+                    const graph2 = sankey2({
+                        nodes: layerData.nodes.map(d => ({ ...d })),
+                        links: layerData.links.map(d => ({ ...d }))
+                    });
+
+                    // --- enforce fixed layer horizontal step and node width for graph2 ---
+                    (function enforceFixedColumns2(g2, leftMargin2 = 20 + offsetX2) {
+                        const colXs2 = Array.from(d3.group(g2.nodes, d => d.x0).keys()).sort((a, b) => a - b);
+                        const colIndex2 = new Map();
+                        colXs2.forEach((x, i) => colIndex2.set(x, i));
+
+                        g2.nodes.forEach(n => {
+                            const k = colIndex2.get(n.x0) || 0;
+                            n.x0 = leftMargin2 + k * DESIRED_LAYER_STEP;
+                            n.x1 = n.x0 + DESIRED_NODE_WIDTH;
+                        });
+                    })(graph2, 20 + offsetX2);
+
+                    // fit vertical to same y-range as main chart (keeps consistent vertical scale)
+                    const yMin2 = d3.min(graph2.nodes, d => d.y0);
+                    const yMax2 = d3.max(graph2.nodes, d => d.y1);
+                    const yFit2 = d3.scaleLinear().domain([yMin2, yMax2]).range([20, height - 20]);
+                    graph2.nodes.forEach(d => { d.y0 = yFit2(d.y0); d.y1 = yFit2(d.y1); });
+                    graph2.links.forEach(l => { if (l._y0_orig !== undefined) l.y0 = yFit2(l._y0_orig); if (l._y1_orig !== undefined) l.y1 = yFit2(l._y1_orig); l.width = (l.width || 1); });
+
+                    // proj2 for bottom sankey (stacked below top sankey, no skew/scale)
+                    let proj2Tx = 0; // will be set to align chosen columns
+                    const proj2 = camera.append('g')
+                        .attr('class', 'proj2')
+                        .attr('transform', `translate(${proj2Tx}, ${offsetY2})`);
+
+                    // draw links for sankey2
+                    proj2.append('g').attr('class', 'links2')
+                        .selectAll('path')
+                        .data(graph2.links)
+                        .join('path')
+                        .attr('class', 'link2')
+                        .attr('d', d3.sankeyLinkHorizontal())
+                        .attr('stroke', '#9FB3C8')
+                        .attr('stroke-width', d => Math.max(1, d.width))
+                        .attr('opacity', 0.4)
+                        .attr('fill', 'none');
+
+                    // draw nodes for sankey2
+                    const nodeG2 = proj2.append('g').attr('class', 'nodes2');
+                    const node2 = nodeG2.selectAll('g')
+                        .data(graph2.nodes)
+                        .join('g')
+                        .attr('class', 'node2');
+
+                    node2.append('rect')
+                        .attr('id', d => `node2-${d.id}`)
+                        .attr('x', d => d.x0)
+                        .attr('y', d => d.y0)
+                        .attr('width', d => d.x1 - d.x0)
+                        .attr('height', d => d.y1 - d.y0)
+                        .attr('fill', '#9FB3C8')
+                        .attr('stroke', '#333')
+                        .attr('opacity', 0.7)
+                        .attr('stroke-width', 0.3);
+
+                    // ---- layer labels for second sankey (projected with proj2) ----
+                    // derive label text from the original layerData input
+                    const idToLabel2 = new Map(layerData.nodes.map(n => [n.id, n.label]));
+
+                    const layers2 = Array.from(
+                        d3.group(graph2.nodes, d => d.x0).keys()
+                    ).sort((a, b) => a - b);
+
+                    const layerLabelY2 = d3.max(graph2.nodes, d => d.y1) + 30; // baseline just below bottom-most node of sankey2
+
+                    const layerNames2 = layers2.map(x => {
+                        const gnode = graph2.nodes.find(n => n.x0 === x);
+                        if (!gnode) return '';
+                        const origLabel = idToLabel2.get(gnode.id);
+                        if (!origLabel) return '';
+                        return String(origLabel).split('_')[0]; // ⭐ 只保留 E001
+                    });
+
+                    proj2.append('g')
+                        .attr('class', 'layer-labels-2')
+                        .selectAll('text')
+                        .data(layers2)
+                        .join('text')
+                        .attr('x', d => d + (graph2.nodes.find(n => n.x0 === d).x1 - graph2.nodes.find(n => n.x0 === d).x0) / 2)
+                        .attr('y', layerLabelY2)
+                        .attr('text-anchor', 'middle')
+                        .attr('font-size', 24)
+                        .attr('fill', '#111')
+                        .on('click', (event, d) => {
+                            let idx = layers2.indexOf(d);
+                            layerName = layerNames2[idx];
+                            console.log('Clicked layer in sankey2:', layerName);
+                            SANKEY_CSV_PATH_EPOCH = "data/sankey_spatial_epoch_"+layerName.slice(1)+".csv"
+                            ALIGN_TARGET_KEY = layerNames2[idx];
+                            console.log('New SANKEY_CSV_PATH_EPOCH:', SANKEY_CSV_PATH_EPOCH);
+                            drawSankey(SANKEY_CSV_PATH_EPOCH,SANKEY_CSV_PATH_LAYER);
+                        })
+                        .text((d, i) => layerNames2[i] || `Layer ${i + 1}`);
+
+                    // --- attempt to locate target node in second sankey (gnode2) ---
+                    {
+                        // attempt to locate the second sankey layer by ALIGN_TARGET_KEY
+                        const targetLabel = ALIGN_TARGET_KEY;
+                        let layerX2 = layers2[0];
+                        const foundIdx = layerNames2.findIndex(n => n === targetLabel);
+                        if (foundIdx >= 0) layerX2 = layers2[foundIdx];
+
+                        // find top-most node in that column for graph2
+                        const candidates2 = graph2.nodes.filter(n => {
+                            if (!n.label) return false;
+                            const base = String(n.label).split('_')[0];
+                            return base === targetLabel || String(n.label).toLowerCase().includes(String(targetLabel).toLowerCase());
+                        });
+                        var gnode2 = (candidates2.length ? candidates2.reduce((a, b) => a.y0 < b.y0 ? a : b) : graph2.nodes.find(n => n.x0 === layerX2));
+                    }
+
+                    // --- simple X-only alignment (stacked layout) ---
+                    try {
+                        // compute top-sankey chosen node x (proj-local)
+                        const mainKey = ALIGN_MAIN_KEY;
+                        let mainCandidates = graph.nodes.filter(n => {
+                            if (!n.label) return false;
+                            const base = String(n.label).split('_')[0];
+                            return base === mainKey || String(n.label).toLowerCase().includes(String(mainKey).toLowerCase());
+                        });
+                        const mainNode = (mainCandidates.length ? mainCandidates.reduce((a, b) => a.y0 < b.y0 ? a : b) : graph.nodes[0]);
+                        if (!mainNode) return;
+
+                        // compute bottom-sankey chosen node x (proj2-local)
+                        const secondNode = gnode2;
+                        if (!secondNode) return;
+
+                        const x1 = mainNode.x0; // proj-local x of chosen column in top sankey
+                        const x2 = secondNode.x0; // proj2-local x of chosen column in bottom sankey
+
+                        // set proj2Tx so that (projTx + x1) === (proj2Tx + x2)
+                        proj2Tx = projTx + x1 - x2;
+                        proj2.attr('transform', `translate(${proj2Tx}, ${offsetY2})`);
+
+                    } catch (e) {
+                        console.warn('simple X-only alignment failed', e);
+                    }
+
+                });
+            });
+        }
+        drawSankey(SANKEY_CSV_PATH_EPOCH, SANKEY_CSV_PATH_LAYER);
+    </script>
+</body>
+
+</html>
