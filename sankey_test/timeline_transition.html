@@ -16,15 +16,12 @@
         }
 
         #chart {
-            width: 1600px;
+            width: 2000px;
             height: 800px;
-            margin: 5px auto;
-            border: 1px solid #ddd;
+            margin: 10px auto;
         }
 
         svg {
-            width: 100%;
-            height: 100%;
             border: 1px solid #ddd;
         }
     </style>
@@ -32,6 +29,103 @@
 
 <body>
     <div id="chart">
-        <svg></svg>
     </div>
+
+    <script>
+        const EPOCH_NUMBER = 16;
+        const LAYER_NUMBER = 5;
+        const EPOCH_NAMES = ["000", "001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "020", "040", "060", "080", "100"];
+        const LAYER_NAMES = ["layer1", "layer2", "layer3", "layer4", "layer5"];
+
+        var data = null;
+        fetch('data/all_sankey.json')
+            .then(res => res.json())
+            .then(json => {
+                data = json;
+                console.log('alldata:', data);
+
+                const margin = { top: 0, left: 0, right: 0, bottom: 0 };
+                const width = 2000 - margin.left - margin.right;
+                const height = 800 - margin.top - margin.bottom;
+
+                const svg = d3.select('#chart')
+                    .append('svg')
+                    .attr('width', width)
+                    .attr('height', height);
+
+                const cellW = width / EPOCH_NAMES.length;
+                const cellH = height / LAYER_NAMES.length;
+
+                const cellMargin = {
+                    top: 10,
+                    right: 10,
+                    bottom: 10,
+                    left: 10
+                };
+
+                const innerW = cellW - cellMargin.left - cellMargin.right;
+                const innerH = cellH - cellMargin.top - cellMargin.bottom;
+
+                const gRoot = svg.append('g')
+                    .attr('transform', `translate(${margin.left},${margin.top})`);
+
+                const cells = [];
+                EPOCH_NAMES.forEach((epoch, col) => {
+                    LAYER_NAMES.forEach((layer, row) => {
+                        const g = gRoot.append('g')
+                            .attr('id', `cell-${epoch}-${layer}`)
+                            .attr('transform', `translate(${col * cellW}, ${row * cellH})`)
+                            .datum({ epoch, layer, col, row });
+                        g.append('rect')
+                            .attr('width', cellW)
+                            .attr('height', cellH)
+                            .attr('fill', 'none')
+                            .attr('stroke', '#ddd');
+                        const innerG = g.append('g')
+                            .attr(
+                                'transform',
+                                `translate(${cellMargin.left}, ${cellMargin.top})`
+                            );
+                        cells.push(innerG);
+                    });
+                });
+
+                const MAX_CLUSTER_NUMBER = 3;
+                const MAX_INSTANCE_NUMBER = 3000;
+
+                var x = d3.scaleBand()
+                    .range([0, innerW])
+                    .domain(d3.range(MAX_CLUSTER_NUMBER))
+                    .padding(0.6);
+                var y = d3.scaleLinear()
+                    .domain([0, MAX_INSTANCE_NUMBER])
+                    .range([innerH, 0]);
+                cells.forEach(g => {
+                    const { epoch, layer } = g.datum();
+                    console.log('Processing cell:', epoch, layer);
+                    const cellData = {
+                        epochdata: data["epoch"][epoch],
+                        layerdata: data["layer"][layer]
+                    }
+                    console.log('cellData:', cellData);
+                    g.selectAll('rect.bar')
+                        .data(cellData.epochdata.nodes[layer])
+                        .enter()
+                        .append('rect')
+                        .attr('class', 'bar')
+                        .attr('x', (d, i) => x(i))
+                        .attr('y', d => innerH - y(d.previous))
+                        .attr('width', x.bandwidth())
+                        .attr('height', d => innerH - y(d.value))
+                        .attr('fill', '#aaa');
+                });
+            });
+
+
+
+
+
+    </script>
 </body>
+
+</html>
