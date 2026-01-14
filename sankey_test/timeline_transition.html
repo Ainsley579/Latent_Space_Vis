@@ -30,9 +30,6 @@
             margin: 10px auto;
         }
 
-        svg {
-        }
-
         input[type="range"] {
             width: 600px;
         }
@@ -40,6 +37,7 @@
         .link-path.hidden {
             display: none;
         }
+
         /* dual-handle single-track slider styling */
         .range-slider {
             position: relative;
@@ -48,25 +46,30 @@
             display: inline-block;
             align-items: center;
         }
+
         .range-slider input[type="range"] {
             position: absolute;
             left: 0;
             top: 12px;
             width: 100%;
-            pointer-events: none; /* allow pointer events to be handled only on handles */
+            pointer-events: none;
+            /* allow pointer events to be handled only on handles */
             -webkit-appearance: none;
             background: transparent;
         }
+
         .range-slider input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            pointer-events: auto; /* thumb still accepts events */
+            pointer-events: auto;
+            /* thumb still accepts events */
             width: 14px;
             height: 14px;
             border-radius: 50%;
             background: #fff;
             border: 2px solid #666;
-            box-shadow: 0 0 2px rgba(0,0,0,0.3);
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
         }
+
         .range-track {
             position: absolute;
             left: 0;
@@ -75,6 +78,17 @@
             width: 100%;
             background: linear-gradient(to right, #ddd 0%, #ddd 100%);
             border-radius: 3px;
+        }
+
+        /* cell/column highlight */
+        .cell-highlight {}
+
+        .cell-dimmed {
+            opacity: 0.12 !important;
+        }
+
+        .link-dimmed {
+            stroke-opacity: 0.06 !important;
         }
     </style>
 </head>
@@ -91,7 +105,13 @@
         <span id="sep" style="margin-left:6px; margin-right:6px;">—</span>
         <span id="maxValue">3000</span>
 
-        <small style="color:#666; margin-left:12px;">link value threshold</small>
+        <small style="color:#666; margin-left:12px;">link value threshold —
+            Mode: Default, Column, Row </small>
+        <div style="margin-left:18px; display:flex; gap:8px; align-items:center;">
+            <button id="btnDefault">Default</button>
+            <button id="btnColumn">Column</button>
+            <button id="btnRow">Row</button>
+        </div>
     </div>
 
     <div id="chart">
@@ -144,7 +164,7 @@
                         g.append('rect')
                             .attr('width', cellW)
                             .attr('height', cellH)
-                            .attr('fill', 'none')
+                            .attr('fill', 'white')
                             .attr('stroke', '#888');
                         const innerG = g.append('g')
                             .attr(
@@ -152,6 +172,16 @@
                                 `translate(${cellMargin.left}, ${cellMargin.top})`
                             );
                         cells.push(innerG);
+                        // cell hover: highlight this cell's row and column (and related links)
+                        g.on('mouseenter', (event, datum) => {
+                            const ep = datum.epoch;
+                            const ly = datum.layer;
+                            setCellHighlight(ep, ly, true);
+                        }).on('mouseleave', (event, datum) => {
+                            const ep = datum.epoch;
+                            const ly = datum.layer;
+                            setCellHighlight(ep, ly, false);
+                        });
                     });
                 });
 
@@ -203,6 +233,51 @@
                     const track = document.getElementById('rangeTrack');
                     track.style.background = `linear-gradient(to right, #ddd ${startPct}%, #86A69D ${startPct}%, #86A69D ${endPct}%, #ddd ${endPct}%)`;
                 }
+
+                // interaction mode & locking
+                let INTERACTION_MODE = 'default'; // 'default' | 'column' | 'row'
+                let LOCKED = null; // {type: 'col'|'row', key: '000' or 'layer1'} when a column/row is locked
+
+                const btnDefault = document.getElementById('btnDefault');
+                const btnColumn = document.getElementById('btnColumn');
+                const btnRow = document.getElementById('btnRow');
+
+                function setMode(m) {
+                    console.log('setMode called ->', m);
+                    INTERACTION_MODE = m;
+                    // visual active state
+                    btnDefault.style.fontWeight = (m === 'default') ? '600' : '400';
+                    btnColumn.style.fontWeight = (m === 'column') ? '600' : '400';
+                    btnRow.style.fontWeight = (m === 'row') ? '600' : '400';
+                    // clear any existing lock when switching to default
+                    if (m === 'default') {
+                        LOCKED = null;
+                        // restore everything
+                        d3.selectAll('#chart svg g[id^="cell-"] rect').classed('cell-dimmed', false).classed('cell-highlight', false);
+                        d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', false).classed('link-highlight', false);
+                    }
+                    // after existing code in setMode
+                    if (m === 'column') {
+                        // show all columns' epoch-links (highlight epoch-links), dim layer-links
+                        d3.selectAll('path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+                        d3.selectAll('g.epoch-links path.link-path').classed('link-dimmed', false).classed('link-highlight', true);
+                        d3.selectAll('g.layer-links path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+                        LOCKED = null; // no row/col locked yet
+                    }
+                    if (m === 'row') {
+                        // show all rows' layer-links (highlight layer-links), dim epoch-links
+                        d3.selectAll('path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+                        d3.selectAll('g.layer-links path.link-path').classed('link-dimmed', false).classed('link-highlight', true);
+                        d3.selectAll('g.epoch-links path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+                        LOCKED = null;
+                    }
+                }
+                btnDefault.addEventListener('click', () => setMode('default'));
+                btnColumn.addEventListener('click', () => setMode('column'));
+                btnRow.addEventListener('click', () => setMode('row'));
+                // initialize UI mode (and ensure button visuals reflect initial state)
+                setMode('default');
 
                 // new visibility function that uses both bounds
                 function updateLinkVisibilityRange(minVal, maxVal) {
@@ -265,18 +340,18 @@
                 // build a global scale for link widths using absolute edge values (not pct)
                 const allEdgeValues = [];
                 Object.keys(data.epoch).forEach(k => {
-                  (data.epoch[k].edges || []).forEach(e => { allEdgeValues.push(+e.value || 0); });
+                    (data.epoch[k].edges || []).forEach(e => { allEdgeValues.push(+e.value || 0); });
                 });
                 Object.keys(data.layer).forEach(k => {
-                  (data.layer[k].edges || []).forEach(e => { allEdgeValues.push(+e.value || 0); });
+                    (data.layer[k].edges || []).forEach(e => { allEdgeValues.push(+e.value || 0); });
                 });
                 const maxEdgeVal = d3.max(allEdgeValues) || 1;
                 const linkWidthScale = d3.scaleSqrt()
-                  .domain([0, maxEdgeVal])
-                  .range([0.5, maxLink])
-                  .clamp(true);
+                    .domain([0, maxEdgeVal])
+                    .range([0.5, maxLink])
+                    .clamp(true);
 
-                const linkGroup = gRoot.append('g').attr('class', 'links');
+                const linkGroup = gRoot.append('g').attr('class', 'links epoch-links');
                 const epochCol = epochName => EPOCH_NAMES.indexOf(epochName);
                 const layerRow = layerName => LAYER_NAMES.indexOf(layerName);
 
@@ -353,12 +428,13 @@
                        ${tgtCenterX},${tgtCenterY - dy}
                        ${tgtCenterX},${tgtCenterY}`;
 
-                        appendLinkPath(linkGroup, pathD, edge.value, strokeW, '#86A69D', 0.3);
+                        const p = appendLinkPath(linkGroup, pathD, edge.value, strokeW, '#86A69D', 0.3);
+                        p.attr('data-epoch', epochKey);
 
                     });
                 });
 
-                const linkGroup2 = gRoot.append('g').attr('class', 'links');
+                const linkGroup2 = gRoot.append('g').attr('class', 'links layer-links');
                 Object.keys(data.layer).forEach(layerKey => {
                     const layerObj = data.layer[layerKey];
                     const row = layerRow(layerKey);
@@ -419,34 +495,147 @@
                        ${tgtCenterX - dx},${tgtCenterY}
                        ${tgtCenterX},${tgtCenterY}`;
 
-                        appendLinkPath(linkGroup2, pathD, edge.value, strokeW, '#F28585', 0.2);
+                        const p2 = appendLinkPath(linkGroup2, pathD, edge.value, strokeW, '#F28585', 0.2);
+                        p2.attr('data-row', layerKey);
 
                     });
                 });
 
+                function setRowHighlight(layerName, on) {
+                    if (on) {
+                        // dim all cells and links first
+                        d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', true).classed('cell-highlight', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+                        // undim & highlight cells in the chosen row
+                        EPOCH_NAMES.forEach(epoch => {
+                            const cellSel = d3.select(`#cell-${epoch}-${layerName}`);
+                            if (!cellSel.empty()) {
+                                cellSel.select('rect').classed('cell-dimmed', false).classed('cell-highlight', true);
+                                cellSel.selectAll('rect.bar').classed('cell-dimmed', false);
+                            }
+                        });
+                        // highlight only layer-links that belong to this row
+                        d3.selectAll('g.layer-links path.link-path').each(function () {
+                            const el = d3.select(this);
+                            if (el.attr('data-row') === layerName) {
+                                el.classed('link-dimmed', false).classed('link-highlight', true);
+                            }
+                        });
+                    } else {
+                        // restore everything
+                        d3.selectAll('#chart svg g[id^="cell-"] rect').classed('cell-dimmed', false).classed('cell-highlight', false);
+                        d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', false).classed('link-highlight', false);
+                    }
+                }
+
+                function setColHighlight(epochName, on) {
+                    if (on) {
+                        // dim all cells and links first
+                        d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', true).classed('cell-highlight', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+                        // undim & highlight cells in the chosen column
+                        LAYER_NAMES.forEach(layer => {
+                            const cellSel = d3.select(`#cell-${epochName}-${layer}`);
+                            if (!cellSel.empty()) {
+                                cellSel.select('rect').classed('cell-dimmed', false).classed('cell-highlight', true);
+                                cellSel.selectAll('rect.bar').classed('cell-dimmed', false);
+                            }
+                        });
+                        // highlight only epoch-links that belong to this column
+                        d3.selectAll('g.epoch-links path.link-path').each(function () {
+                            const el = d3.select(this);
+                            if (el.attr('data-epoch') === epochName) {
+                                el.classed('link-dimmed', false).classed('link-highlight', true);
+                            }
+                        });
+                    } else {
+                        // restore everything
+                        d3.selectAll('#chart svg g[id^="cell-"] rect').classed('cell-dimmed', false).classed('cell-highlight', false);
+                        d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', false).classed('link-highlight', false);
+                    }
+                }
+
+                // cell-level highlight: highlight both row and column and their respective link groups
+                function setCellHighlight(epochName, layerName, on) {
+                    if (on) {
+                        // dim everything first
+                        d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', true).classed('cell-highlight', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+
+                        // undim & highlight the entire row (layerName)
+                        EPOCH_NAMES.forEach(epoch => {
+                            const cellSel = d3.select(`#cell-${epoch}-${layerName}`);
+                            if (!cellSel.empty()) {
+                                cellSel.select('rect').classed('cell-dimmed', false).classed('cell-highlight', true);
+                                cellSel.selectAll('rect.bar').classed('cell-dimmed', false);
+                            }
+                        });
+
+                        // undim & highlight the entire column (epochName)
+                        LAYER_NAMES.forEach(layer => {
+                            const cellSel = d3.select(`#cell-${epochName}-${layer}`);
+                            if (!cellSel.empty()) {
+                                cellSel.select('rect').classed('cell-dimmed', false).classed('cell-highlight', true);
+                                cellSel.selectAll('rect.bar').classed('cell-dimmed', false);
+                            }
+                        });
+
+                        // highlight epoch-links for this column
+                        d3.selectAll('g.epoch-links path.link-path').each(function () {
+                            const el = d3.select(this);
+                            if (el.attr('data-epoch') === epochName) {
+                                el.classed('link-dimmed', false).classed('link-highlight', true);
+                            }
+                        });
+                        // highlight layer-links for this row
+                        d3.selectAll('g.layer-links path.link-path').each(function () {
+                            const el = d3.select(this);
+                            if (el.attr('data-row') === layerName) {
+                                el.classed('link-dimmed', false).classed('link-highlight', true);
+                            }
+                        });
+
+                    } else {
+                        // restore everything
+                        d3.selectAll('#chart svg g[id^="cell-"] rect').classed('cell-dimmed', false).classed('cell-highlight', false);
+                        d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', false).classed('link-highlight', false);
+                    }
+                }
+
                 const layerLegendGroup = svg.append('g').attr('class', 'legend');
                 LAYER_NAMES.forEach((layer, i) => {
                     const rowCenterY = i * cellH + cellMargin.top + innerH / 2;
-                    layerLegendGroup.append('text')
+                    const txt = layerLegendGroup.append('text')
                         .attr('class', 'legend-text')
                         .attr('x', margin.left - 5)
                         .attr('y', rowCenterY)
                         .attr('dy', '0.35em')
                         .attr('text-anchor', 'end')
-                        .text(layer);
+                        .text(layer)
+                        .attr('cursor', 'pointer');
+
+                    txt.on('mouseenter', () => setRowHighlight(layer, true))
+                        .on('mouseleave', () => setRowHighlight(layer, false));
                 });
 
                 const epochLegendGroup = svg.append('g').attr('class', 'legend');
                 EPOCH_NAMES.forEach((epoch, i) => {
                     const colCenterX = i * cellW + cellMargin.left + innerW;
                     const yBelow = height - 6;
-                    epochLegendGroup.append('text')
+                    const txt = epochLegendGroup.append('text')
                         .attr('class', 'legend-text')
                         .attr('x', colCenterX)
                         .attr('y', yBelow)
                         .attr('dy', '0.35em')
                         .attr('text-anchor', 'middle')
-                        .text('E'+epoch);
+                        .text('E' + epoch)
+                        .attr('cursor', 'pointer');
+
+                    txt.on('mouseenter', () => setColHighlight(epoch, true))
+                        .on('mouseleave', () => setColHighlight(epoch, false));
                 });
 
 
