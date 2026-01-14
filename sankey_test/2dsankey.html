@@ -72,7 +72,6 @@
         const svg = d3.select("svg")
             .attr("viewBox", [0, 0, width, height]);
 
-        // 读取你的 CSV（和 html 放在同一目录）
   function drawSankey(sankey_csv_1, sankey_csv_2) {
       // --- clear previous sankey content before redraw ---
       svg.selectAll('*').remove();
@@ -111,7 +110,6 @@
                     .nodePadding(20)
                     .extent([[20, 20], [width - 20, height - 20]]);
 
-                // ⚠️ d3-sankey 会修改数据，先深拷贝
                 const graph = sankey({
                     nodes: data.nodes.map(d => ({ ...d })),
                     links: data.links.map(d => ({ ...d }))

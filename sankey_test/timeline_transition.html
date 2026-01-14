@@ -15,6 +15,15 @@
             background: #fff;
         }
 
+        #controls {
+            width: 2000px;
+            margin: 8px auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+        }
+
         #chart {
             width: 2000px;
             height: 800px;
@@ -22,12 +31,69 @@
         }
 
         svg {
-            border: 1px solid #ddd;
+        }
+
+        input[type="range"] {
+            width: 600px;
+        }
+
+        .link-path.hidden {
+            display: none;
+        }
+        /* dual-handle single-track slider styling */
+        .range-slider {
+            position: relative;
+            width: 600px;
+            height: 36px;
+            display: inline-block;
+            align-items: center;
+        }
+        .range-slider input[type="range"] {
+            position: absolute;
+            left: 0;
+            top: 12px;
+            width: 100%;
+            pointer-events: none; /* allow pointer events to be handled only on handles */
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        .range-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            pointer-events: auto; /* thumb still accepts events */
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #666;
+            box-shadow: 0 0 2px rgba(0,0,0,0.3);
+        }
+        .range-track {
+            position: absolute;
+            left: 0;
+            top: 18px;
+            height: 6px;
+            width: 100%;
+            background: linear-gradient(to right, #ddd 0%, #ddd 100%);
+            border-radius: 3px;
         }
     </style>
 </head>
 
 <body>
+    <div id="controls">
+        <label style="margin-right:8px;">Value range:</label>
+        <div class="range-slider" id="rangeSlider">
+            <div class="range-track" id="rangeTrack"></div>
+            <input id="minRange" class="range-min" type="range" min="0" max="3000" step="1" value="0">
+            <input id="maxRange" class="range-max" type="range" min="0" max="3000" step="1" value="3000">
+        </div>
+        <span id="minValue" style="margin-left:12px;">0</span>
+        <span id="sep" style="margin-left:6px; margin-right:6px;">—</span>
+        <span id="maxValue">3000</span>
+
+        <small style="color:#666; margin-left:12px;">link value threshold</small>
+    </div>
+
     <div id="chart">
     </div>
 
@@ -43,17 +109,17 @@
             .then(json => {
                 data = json;
 
-                const margin = { top: 0, left: 0, right: 0, bottom: 0 };
-                const width = 2000 - margin.left - margin.right;
-                const height = 800 - margin.top - margin.bottom;
+                const margin = { top: 0, left: 50, right: 0, bottom: 20 };
+                const width = 2000;
+                const height = 800;
 
                 const svg = d3.select('#chart')
                     .append('svg')
                     .attr('width', width)
                     .attr('height', height);
 
-                const cellW = width / EPOCH_NAMES.length;
-                const cellH = height / LAYER_NAMES.length;
+                const cellW = (width - margin.left - margin.right) / EPOCH_NAMES.length;
+                const cellH = (height - margin.top - margin.bottom) / LAYER_NAMES.length;
 
                 const cellMargin = {
                     top: 20,
@@ -92,6 +158,82 @@
                 const MAX_CLUSTER_NUMBER = 3;
                 const MAX_INSTANCE_NUMBER = 3000;
 
+                // set dual-slider (min/max) to MAX_INSTANCE_NUMBER
+                const minRange = document.getElementById('minRange');
+                const maxRange = document.getElementById('maxRange');
+                const minValue = document.getElementById('minValue');
+                const maxValue = document.getElementById('maxValue');
+
+                // init bounds
+                minRange.min = 0;
+                minRange.max = MAX_INSTANCE_NUMBER;
+                minRange.value = 0;
+
+                maxRange.min = 0;
+                maxRange.max = MAX_INSTANCE_NUMBER;
+                maxRange.value = MAX_INSTANCE_NUMBER;
+
+                minValue.textContent = minRange.value;
+                maxValue.textContent = maxRange.value;
+
+                // helper: ensure min <= max (swap if user crosses)
+                function normalizeRange() {
+                    let a = +minRange.value;
+                    let b = +maxRange.value;
+                    if (a > b) {
+                        // swap to keep consistent
+                        const tmp = a; a = b; b = tmp;
+                        minRange.value = a;
+                        maxRange.value = b;
+                    }
+                    minValue.textContent = a;
+                    maxValue.textContent = b;
+                    return [a, b];
+                }
+
+                // update visual track to show selected interval between handles
+                function updateSliderTrack() {
+                    const minV = +minRange.min;
+                    const maxV = +maxRange.max;
+                    let a = +minRange.value;
+                    let b = +maxRange.value;
+                    if (a > b) { const tmp = a; a = b; b = tmp; }
+                    const startPct = ((a - minV) / (maxV - minV)) * 100;
+                    const endPct = ((b - minV) / (maxV - minV)) * 100;
+                    const track = document.getElementById('rangeTrack');
+                    track.style.background = `linear-gradient(to right, #ddd ${startPct}%, #86A69D ${startPct}%, #86A69D ${endPct}%, #ddd ${endPct}%)`;
+                }
+
+                // new visibility function that uses both bounds
+                function updateLinkVisibilityRange(minVal, maxVal) {
+                    d3.selectAll('path.link-path').each(function () {
+                        const el = d3.select(this);
+                        const v = +el.attr('data-value') || 0;
+                        if (v < minVal || v > maxVal) {
+                            el.classed('hidden', true);
+                        } else {
+                            el.classed('hidden', false);
+                        }
+                    });
+                }
+
+                // initialize visibility
+                const initial = normalizeRange();
+                updateLinkVisibilityRange(initial[0], initial[1]);
+                updateSliderTrack();
+
+                // wire both sliders
+                minRange.addEventListener('input', function () {
+                    const [a, b] = normalizeRange();
+                    updateLinkVisibilityRange(a, b);
+                    updateSliderTrack();
+                });
+                maxRange.addEventListener('input', function () {
+                    const [a, b] = normalizeRange();
+                    updateLinkVisibilityRange(a, b);
+                    updateSliderTrack();
+                });
+
                 var x = d3.scaleBand()
                     .range([0, innerW])
                     .domain(d3.range(MAX_CLUSTER_NUMBER))
@@ -105,8 +247,10 @@
                         epochdata: data["epoch"][epoch],
                         layerdata: data["layer"][layer]
                     }
+                    // protect if no nodes for this combination
+                    const nodesForCell = (cellData.epochdata && cellData.epochdata.nodes && cellData.epochdata.nodes[layer]) || [];
                     g.selectAll('rect.bar')
-                        .data(cellData.epochdata.nodes[layer])
+                        .data(nodesForCell)
                         .enter()
                         .append('rect')
                         .attr('class', 'bar')
@@ -131,22 +275,35 @@
                   .domain([0, maxEdgeVal])
                   .range([0.5, maxLink])
                   .clamp(true);
-                const linkGroup = gRoot.append('g').attr('class', 'links'); 
+
+                const linkGroup = gRoot.append('g').attr('class', 'links');
                 const epochCol = epochName => EPOCH_NAMES.indexOf(epochName);
                 const layerRow = layerName => LAYER_NAMES.indexOf(layerName);
+
+                // helper to create a path element and tag it with value
+                function appendLinkPath(group, pathD, edgeValue, strokeW, strokeColor, opacity) {
+                    return group.append('path')
+                        .attr('d', pathD)
+                        .attr('fill', 'none')
+                        .attr('stroke', strokeColor)
+                        .attr('stroke-width', strokeW)
+                        .attr('stroke-opacity', opacity)
+                        .attr('class', 'link-path')
+                        .attr('data-value', +edgeValue || 0);
+                }
 
                 Object.keys(data.epoch).forEach(epochKey => {
                     const epochObj = data.epoch[epochKey];
                     const col = epochCol(epochKey);
                     if (col === -1) return;
 
-                    epochObj.edges.forEach(edge => {
+                    (epochObj.edges || []).forEach(edge => {
                         let sourceInfo = null;
                         let targetInfo = null;
-                        const nodesByLayer = epochObj.nodes;
+                        const nodesByLayer = epochObj.nodes || {};
 
                         Object.keys(nodesByLayer).forEach(layerName => {
-                            nodesByLayer[layerName].forEach((node, idx) => {
+                            (nodesByLayer[layerName] || []).forEach((node, idx) => {
                                 if (node.id === edge.source_node_id) {
                                     sourceInfo = { node, layerName, idx };
                                 }
@@ -178,19 +335,15 @@
                         const tVal = targetInfo.node.value ?? 0;
 
                         const sBarY = innerH - y(sPrev);
-                        const sBarH = innerH - y(sVal); 
+                        const sBarH = innerH - y(sVal);
                         const tBarY = innerH - y(tPrev);
-                        const tBarH = innerH - y(tVal); 
+                        const tBarH = innerH - y(tVal);
 
-                        //const srcCenterX = srcCellX + cellMargin.left + x(srcIdx) + x.bandwidth() / 2;
-                        //const srcCenterY = srcCellY + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
                         const srcCenterX = srcCellX + cellMargin.left + x(srcIdx) + x.bandwidth() / 2;
                         const srcCenterY = srcCellY + cellMargin.top + sBarY + Math.max(0, sBarH);
 
-                        //const tgtCenterX = tgtCellX + cellMargin.left + x(tgtIdx) + x.bandwidth() / 2;
-                        //const tgtCenterY = tgtCellY + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
                         const tgtCenterX = tgtCellX + cellMargin.left + x(tgtIdx) + x.bandwidth() / 2;
-                        const tgtCenterY = tgtCellY + cellMargin.top + tBarY ;
+                        const tgtCenterY = tgtCellY + cellMargin.top + tBarY;
 
                         const strokeW = linkWidthScale(+edge.value || 0);
 
@@ -200,29 +353,24 @@
                        ${tgtCenterX},${tgtCenterY - dy}
                        ${tgtCenterX},${tgtCenterY}`;
 
-                        linkGroup.append('path')
-                            .attr('d', pathD)
-                            .attr('fill', 'none')
-                            .attr('stroke', '#86A69D')
-                            .attr('stroke-width', strokeW)
-                            .attr('stroke-opacity', 0.3);
+                        appendLinkPath(linkGroup, pathD, edge.value, strokeW, '#86A69D', 0.3);
 
                     });
                 });
 
-                const linkGroup2 = gRoot.append('g').attr('class', 'links'); 
+                const linkGroup2 = gRoot.append('g').attr('class', 'links');
                 Object.keys(data.layer).forEach(layerKey => {
                     const layerObj = data.layer[layerKey];
                     const row = layerRow(layerKey);
                     if (row === -1) return;
 
-                    layerObj.edges.forEach(edge => {
+                    (layerObj.edges || []).forEach(edge => {
                         let sourceInfo = null;
                         let targetInfo = null;
-                        const nodesByLayer = layerObj.nodes;
+                        const nodesByLayer = layerObj.nodes || {};
 
                         Object.keys(nodesByLayer).forEach(epochName => {
-                            nodesByLayer[epochName].forEach((node, idx) => {
+                            (nodesByLayer[epochName] || []).forEach((node, idx) => {
                                 if (node.id === edge.source_node_id) {
                                     sourceInfo = { node, epochName, idx };
                                 }
@@ -254,19 +402,15 @@
                         const tVal = targetInfo.node.value ?? 0;
 
                         const sBarY = innerH - y(sPrev);
-                        const sBarH = innerH - y(sVal); 
+                        const sBarH = innerH - y(sVal);
                         const tBarY = innerH - y(tPrev);
-                        const tBarH = innerH - y(tVal); 
+                        const tBarH = innerH - y(tVal);
 
                         const srcCenterX = srcCellX + cellMargin.left + x(srcIdx) + x.bandwidth();
                         const srcCenterY = srcCellY + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
-                        //const srcCenterX = srcCellX + cellMargin.left + x(srcIdx) + x.bandwidth() / 2;
-                        //const srcCenterY = srcCellY + cellMargin.top + sBarY + Math.max(0, sBarH);
 
                         const tgtCenterX = tgtCellX + cellMargin.left + x(tgtIdx);
                         const tgtCenterY = tgtCellY + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
-                        //const tgtCenterX = tgtCellX + cellMargin.left + x(tgtIdx) + x.bandwidth() / 2;
-                        //const tgtCenterY = tgtCellY + cellMargin.top + tBarY ;
                         const strokeW = linkWidthScale(+edge.value || 0);
 
                         const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
@@ -275,14 +419,34 @@
                        ${tgtCenterX - dx},${tgtCenterY}
                        ${tgtCenterX},${tgtCenterY}`;
 
-                        linkGroup2.append('path')
-                            .attr('d', pathD)
-                            .attr('fill', 'none')
-                            .attr('stroke', '#F28585')
-                            .attr('stroke-width', strokeW)
-                            .attr('stroke-opacity', 0.2);
+                        appendLinkPath(linkGroup2, pathD, edge.value, strokeW, '#F28585', 0.2);
 
                     });
+                });
+
+                const layerLegendGroup = svg.append('g').attr('class', 'legend');
+                LAYER_NAMES.forEach((layer, i) => {
+                    const rowCenterY = i * cellH + cellMargin.top + innerH / 2;
+                    layerLegendGroup.append('text')
+                        .attr('class', 'legend-text')
+                        .attr('x', margin.left - 5)
+                        .attr('y', rowCenterY)
+                        .attr('dy', '0.35em')
+                        .attr('text-anchor', 'end')
+                        .text(layer);
+                });
+
+                const epochLegendGroup = svg.append('g').attr('class', 'legend');
+                EPOCH_NAMES.forEach((epoch, i) => {
+                    const colCenterX = i * cellW + cellMargin.left + innerW;
+                    const yBelow = height - 6;
+                    epochLegendGroup.append('text')
+                        .attr('class', 'legend-text')
+                        .attr('x', colCenterX)
+                        .attr('y', yBelow)
+                        .attr('dy', '0.35em')
+                        .attr('text-anchor', 'middle')
+                        .text('E'+epoch);
                 });
 
 
