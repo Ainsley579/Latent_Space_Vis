@@ -42,7 +42,6 @@
             .then(res => res.json())
             .then(json => {
                 data = json;
-                console.log('alldata:', data);
 
                 const margin = { top: 0, left: 0, right: 0, bottom: 0 };
                 const width = 2000 - margin.left - margin.right;
@@ -57,9 +56,9 @@
                 const cellH = height / LAYER_NAMES.length;
 
                 const cellMargin = {
-                    top: 10,
+                    top: 20,
                     right: 10,
-                    bottom: 10,
+                    bottom: 20,
                     left: 10
                 };
 
@@ -80,7 +79,7 @@
                             .attr('width', cellW)
                             .attr('height', cellH)
                             .attr('fill', 'none')
-                            .attr('stroke', '#ddd');
+                            .attr('stroke', '#888');
                         const innerG = g.append('g')
                             .attr(
                                 'transform',
@@ -102,12 +101,10 @@
                     .range([innerH, 0]);
                 cells.forEach(g => {
                     const { epoch, layer } = g.datum();
-                    console.log('Processing cell:', epoch, layer);
                     const cellData = {
                         epochdata: data["epoch"][epoch],
                         layerdata: data["layer"][layer]
                     }
-                    console.log('cellData:', cellData);
                     g.selectAll('rect.bar')
                         .data(cellData.epochdata.nodes[layer])
                         .enter()
@@ -119,12 +116,177 @@
                         .attr('height', d => innerH - y(d.value))
                         .attr('fill', '#aaa');
                 });
+
+                const maxLink = 20;
+                // build a global scale for link widths using absolute edge values (not pct)
+                const allEdgeValues = [];
+                Object.keys(data.epoch).forEach(k => {
+                  (data.epoch[k].edges || []).forEach(e => { allEdgeValues.push(+e.value || 0); });
+                });
+                Object.keys(data.layer).forEach(k => {
+                  (data.layer[k].edges || []).forEach(e => { allEdgeValues.push(+e.value || 0); });
+                });
+                const maxEdgeVal = d3.max(allEdgeValues) || 1;
+                const linkWidthScale = d3.scaleSqrt()
+                  .domain([0, maxEdgeVal])
+                  .range([0.5, maxLink])
+                  .clamp(true);
+                const linkGroup = gRoot.append('g').attr('class', 'links'); 
+                const epochCol = epochName => EPOCH_NAMES.indexOf(epochName);
+                const layerRow = layerName => LAYER_NAMES.indexOf(layerName);
+
+                Object.keys(data.epoch).forEach(epochKey => {
+                    const epochObj = data.epoch[epochKey];
+                    const col = epochCol(epochKey);
+                    if (col === -1) return;
+
+                    epochObj.edges.forEach(edge => {
+                        let sourceInfo = null;
+                        let targetInfo = null;
+                        const nodesByLayer = epochObj.nodes;
+
+                        Object.keys(nodesByLayer).forEach(layerName => {
+                            nodesByLayer[layerName].forEach((node, idx) => {
+                                if (node.id === edge.source_node_id) {
+                                    sourceInfo = { node, layerName, idx };
+                                }
+                                if (node.id === edge.target_node_id) {
+                                    targetInfo = { node, layerName, idx };
+                                }
+                            });
+                        });
+
+                        if (!sourceInfo || !targetInfo) {
+                            console.warn('node not found for edge', edge);
+                            return;
+                        }
+
+                        const srcRow = layerRow(sourceInfo.layerName);
+                        const tgtRow = layerRow(targetInfo.layerName);
+
+                        const srcCellX = col * cellW;
+                        const srcCellY = srcRow * cellH;
+                        const tgtCellX = col * cellW;
+                        const tgtCellY = tgtRow * cellH;
+
+                        const srcIdx = sourceInfo.idx;
+                        const tgtIdx = targetInfo.idx;
+
+                        const sPrev = sourceInfo.node.previous ?? 0;
+                        const sVal = sourceInfo.node.value ?? 0;
+                        const tPrev = targetInfo.node.previous ?? 0;
+                        const tVal = targetInfo.node.value ?? 0;
+
+                        const sBarY = innerH - y(sPrev);
+                        const sBarH = innerH - y(sVal); 
+                        const tBarY = innerH - y(tPrev);
+                        const tBarH = innerH - y(tVal); 
+
+                        //const srcCenterX = srcCellX + cellMargin.left + x(srcIdx) + x.bandwidth() / 2;
+                        //const srcCenterY = srcCellY + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
+                        const srcCenterX = srcCellX + cellMargin.left + x(srcIdx) + x.bandwidth() / 2;
+                        const srcCenterY = srcCellY + cellMargin.top + sBarY + Math.max(0, sBarH);
+
+                        //const tgtCenterX = tgtCellX + cellMargin.left + x(tgtIdx) + x.bandwidth() / 2;
+                        //const tgtCenterY = tgtCellY + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
+                        const tgtCenterX = tgtCellX + cellMargin.left + x(tgtIdx) + x.bandwidth() / 2;
+                        const tgtCenterY = tgtCellY + cellMargin.top + tBarY ;
+
+                        const strokeW = linkWidthScale(+edge.value || 0);
+
+                        const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
+                        const pathD = `M ${srcCenterX},${srcCenterY}
+                     C ${srcCenterX},${srcCenterY + dy}
+                       ${tgtCenterX},${tgtCenterY - dy}
+                       ${tgtCenterX},${tgtCenterY}`;
+
+                        linkGroup.append('path')
+                            .attr('d', pathD)
+                            .attr('fill', 'none')
+                            .attr('stroke', '#86A69D')
+                            .attr('stroke-width', strokeW)
+                            .attr('stroke-opacity', 0.3);
+
+                    });
+                });
+
+                const linkGroup2 = gRoot.append('g').attr('class', 'links'); 
+                Object.keys(data.layer).forEach(layerKey => {
+                    const layerObj = data.layer[layerKey];
+                    const row = layerRow(layerKey);
+                    if (row === -1) return;
+
+                    layerObj.edges.forEach(edge => {
+                        let sourceInfo = null;
+                        let targetInfo = null;
+                        const nodesByLayer = layerObj.nodes;
+
+                        Object.keys(nodesByLayer).forEach(epochName => {
+                            nodesByLayer[epochName].forEach((node, idx) => {
+                                if (node.id === edge.source_node_id) {
+                                    sourceInfo = { node, epochName, idx };
+                                }
+                                if (node.id === edge.target_node_id) {
+                                    targetInfo = { node, epochName, idx };
+                                }
+                            });
+                        });
+
+                        if (!sourceInfo || !targetInfo) {
+                            console.warn('node not found for edge', edge);
+                            return;
+                        }
+
+                        const srcCol = epochCol(sourceInfo.epochName);
+                        const tgtCol = epochCol(targetInfo.epochName);
+
+                        const srcCellX = srcCol * cellW;
+                        const srcCellY = row * cellH;
+                        const tgtCellX = tgtCol * cellW;
+                        const tgtCellY = row * cellH;
+
+                        const srcIdx = sourceInfo.idx;
+                        const tgtIdx = targetInfo.idx;
+
+                        const sPrev = sourceInfo.node.previous ?? 0;
+                        const sVal = sourceInfo.node.value ?? 0;
+                        const tPrev = targetInfo.node.previous ?? 0;
+                        const tVal = targetInfo.node.value ?? 0;
+
+                        const sBarY = innerH - y(sPrev);
+                        const sBarH = innerH - y(sVal); 
+                        const tBarY = innerH - y(tPrev);
+                        const tBarH = innerH - y(tVal); 
+
+                        const srcCenterX = srcCellX + cellMargin.left + x(srcIdx) + x.bandwidth();
+                        const srcCenterY = srcCellY + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
+                        //const srcCenterX = srcCellX + cellMargin.left + x(srcIdx) + x.bandwidth() / 2;
+                        //const srcCenterY = srcCellY + cellMargin.top + sBarY + Math.max(0, sBarH);
+
+                        const tgtCenterX = tgtCellX + cellMargin.left + x(tgtIdx);
+                        const tgtCenterY = tgtCellY + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
+                        //const tgtCenterX = tgtCellX + cellMargin.left + x(tgtIdx) + x.bandwidth() / 2;
+                        //const tgtCenterY = tgtCellY + cellMargin.top + tBarY ;
+                        const strokeW = linkWidthScale(+edge.value || 0);
+
+                        const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
+                        const pathD = `M ${srcCenterX},${srcCenterY}
+                     C ${srcCenterX + dx},${srcCenterY}
+                       ${tgtCenterX - dx},${tgtCenterY}
+                       ${tgtCenterX},${tgtCenterY}`;
+
+                        linkGroup2.append('path')
+                            .attr('d', pathD)
+                            .attr('fill', 'none')
+                            .attr('stroke', '#F28585')
+                            .attr('stroke-width', strokeW)
+                            .attr('stroke-opacity', 0.2);
+
+                    });
+                });
+
+
             });
-
-
-
-
-
     </script>
 </body>
 

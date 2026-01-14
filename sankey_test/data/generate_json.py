@@ -17,6 +17,7 @@ import json
 from pathlib import Path
 import re
 from typing import List, Dict, Any
+from collections import OrderedDict
 
 SPATIAL_RE = re.compile(r"sankey_spatial_epoch_(?P<epoch>.+?)\.csv$", re.IGNORECASE)
 TEMPORAL_RE = re.compile(r"sankey_temporal_(?P<layername>.+?)\.csv$", re.IGNORECASE)
@@ -259,37 +260,54 @@ def compute_nodes_grouped_by_layer(edges: List[Dict[str, Any]], forced_layer: st
     import re as _re
 
     for layer_name, node_list in nodes_by_layer.items():
-        cluster_totals = {}
+        # Build mapping cluster_prefix -> list of nodes (preserve stable order)
+        cluster_to_nodes = {}
         for node in node_list:
             cid = node.get("id")
-            prefix = node_cluster_prefix.get(cid, '')
-            cluster_totals.setdefault(prefix, 0.0)
-            try:
-                cluster_totals[prefix] += float(node.get("value", 0.0))
-            except Exception:
-                pass
+            prefix = node_cluster_prefix.get(cid, '')  # '' for no cluster
+            cluster_to_nodes.setdefault(prefix, []).append(node)
 
+        # Compute cluster totals (sum of values) for ordering if needed
+        cluster_totals = {}
+        for prefix, nlist in cluster_to_nodes.items():
+            total = 0.0
+            for node in nlist:
+                try:
+                    total += float(node.get("value", 0.0))
+                except Exception:
+                    pass
+            cluster_totals[prefix] = total
+
+        # Sorting key for cluster prefixes: numeric C<digits> first, then others, empty last
         def _cluster_sort_key(pref):
-            if not pref:
-                return (1e9, pref)
+            if pref is None or pref == '':
+                return (2, pref)
             m = _re.match(r'^C(\d+)$', str(pref))
             if m:
-                return (int(m.group(1)), pref)
-            return (1e6, pref)
+                return (0, int(m.group(1)))
+            return (1, str(pref))
 
-        sorted_prefixes = sorted(cluster_totals.keys(), key=_cluster_sort_key)
+        sorted_prefixes = sorted(cluster_to_nodes.keys(), key=_cluster_sort_key)
 
+        # Now assign previous per node, cumulatively within this layer
         cumulative = 0.0
         for pref in sorted_prefixes:
-            prev_for_cluster = cumulative
-            for node in node_list:
-                cid = node.get("id")
-                if node_cluster_prefix.get(cid, '') == pref:
-                    node["previous"] = round(prev_for_cluster, 4)
-            try:
-                cumulative += float(cluster_totals.get(pref, 0.0))
-            except Exception:
-                pass
+            # sort nodes inside a cluster deterministically:
+            # prefer label (string), fallback to id
+            nodes_in_cluster = cluster_to_nodes.get(pref, [])
+            nodes_in_cluster_sorted = sorted(
+                nodes_in_cluster,
+                key=lambda n: (str(n.get("label", "")), n.get("id"))
+            )
+            for node in nodes_in_cluster_sorted:
+                # assign previous as current cumulative
+                node["previous"] = round(cumulative, 4)
+                # increment cumulative by this node's value
+                try:
+                    cumulative += float(node.get("value", 0.0))
+                except Exception:
+                    # skip increment on bad value
+                    pass
 
     return flat_nodes, nodes_by_layer
 
@@ -306,16 +324,112 @@ def build_spatial_entry(path: Path, epoch: str) -> Dict[str, Any]:
         "node_count": len(flat_nodes)
     }
 
+def _extract_epoch_from_label(label: str):
+    """
+    尝试从 label 中提取 epoch 字符串，例如：
+      - 'E000_C0_3' -> '000'
+      - '000_C0_3'  -> '000'
+      - 'layer1_E001_C0' -> '001'
+    返回 None 如果无法提取。
+    """
+    if not label:
+        return None
+    # 常见形式 E000 或 E000_... / ..._E000_...
+    m = re.search(r'E(?P<epoch>\d{1,})', str(label))
+    if m:
+        return m.group('epoch')
+    # 直接以数字开头的情况 000_xxx
+    m2 = re.match(r'^(?P<epoch>\d{1,})[_\-]', str(label))
+    if m2:
+        return m2.group('epoch')
+    # 尾部带数字的情形 e.g. ..._000
+    m3 = re.search(r'[_\-](?P<epoch>\d{1,})$', str(label))
+    if m3:
+        return m3.group('epoch')
+    return None
+
 def build_temporal_entry(path: Path, layername: str) -> Dict[str, Any]:
+    """
+    For temporal CSV (one per layer), build an entry whose `nodes` are grouped by epoch names
+    (e.g. "000", "001", ...). If epoch can't be extracted, node goes into "unknown".
+
+    Important: recompute `previous` inside each epoch group so that for each epoch
+    the cumulative offset starts at 0 and accumulates only nodes that belong to that epoch.
+    """
     edges = parse_csv_edges(path)
     flat_nodes, nodes_by_layer = compute_nodes_grouped_by_layer(edges, forced_layer=layername)
+
+    # Aggregate nodes_by_layer into nodes grouped by epoch (e.g. '000', '001', ...)
+    nodes_by_epoch: "OrderedDict[str, List[Dict[str, Any]]]" = OrderedDict()
+    for layer_nodes in nodes_by_layer.values():
+        for node in layer_nodes:
+            label = node.get("label", "")
+            epoch = _extract_epoch_from_label(label) or "unknown"
+            nodes_by_epoch.setdefault(epoch, []).append(node)
+
+    # Sort epoch keys numerically where possible, put 'unknown' last
+    def _epoch_key(k):
+        if k == "unknown":
+            return (1, k)
+        try:
+            return (0, int(k))
+        except Exception:
+            return (0, k)
+
+    sorted_items = sorted(nodes_by_epoch.items(), key=lambda it: _epoch_key(it[0]))
+    nodes_by_epoch_sorted = OrderedDict((k, v) for k, v in sorted_items)
+
+    # Recompute `previous` per-epoch so each epoch's nodes accumulate from 0
+    import re as _re
+    for epoch_name, node_list in nodes_by_epoch_sorted.items():
+        # Build cluster -> list of nodes for this epoch
+        cluster_to_nodes = OrderedDict()
+        node_cluster_prefix = {}
+        for node in node_list:
+            label = node.get("label", "")
+            cluster = ''
+            if '_' in str(label):
+                cluster = str(label).split('_', 1)[1]
+            prefix = ''
+            if cluster:
+                prefix = str(cluster).split('_', 1)[0]
+            node_cluster_prefix[node.get('id')] = prefix
+            cluster_to_nodes.setdefault(prefix, []).append(node)
+
+        # Sorting key for cluster prefixes: numeric C<digits> first, then others, empty last
+        def _cluster_sort_key(pref):
+            if pref is None or pref == '':
+                return (2, pref)
+            m = _re.match(r'^C(\d+)$', str(pref))
+            if m:
+                return (0, int(m.group(1)))
+            return (1, str(pref))
+
+        sorted_prefixes = sorted(cluster_to_nodes.keys(), key=_cluster_sort_key)
+
+        # Now assign previous per node, cumulatively within this epoch only
+        cumulative = 0.0
+        for pref in sorted_prefixes:
+            # preserve a deterministic order inside a cluster: label then id
+            nodes_in_cluster = cluster_to_nodes.get(pref, [])
+            nodes_in_cluster_sorted = sorted(
+                nodes_in_cluster,
+                key=lambda n: (str(n.get("label", "")), n.get("id"))
+            )
+            for node in nodes_in_cluster_sorted:
+                node["previous"] = round(cumulative, 4)
+                try:
+                    cumulative += float(node.get("value", 0.0))
+                except Exception:
+                    pass
+
     return {
         "filename": path.name,
         "path": str(path.resolve()),
         "type": "temporal",
         "layername": layername,
         "edges": edges,
-        "nodes": nodes_by_layer,
+        "nodes": nodes_by_epoch_sorted,
         "node_count": len(flat_nodes)
     }
 
