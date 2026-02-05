@@ -8,30 +8,41 @@ Output JSON format (one file per model + layer):
   ...
 ]
 """
-from __future__ import annotations
 
 import argparse
 import csv
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List
+try:
+    from typing import Dict, List
+except ImportError:
+    Dict = dict
+    List = list
 
 
-def _read_csv(path: Path) -> List[dict]:
-    with path.open("r", encoding="utf-8") as f:
+def _read_csv(path):
+    # type: (Path) -> list
+    """Read CSV file and return list of dicts."""
+    with open(str(path), "r") as f:
         reader = csv.DictReader(f)
         return list(reader)
 
 
-def _write_json(out_path: Path, rows: List[dict]) -> None:
+def _write_json(out_path, rows):
+    # type: (Path, list) -> None
+    """Write JSON to file."""
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
+    with open(str(out_path), "w") as f:
+        json.dump(rows, f, ensure_ascii=False, indent=2)
 
 
-def build_files(csv_path: Path, model_name: str, out_dir: Path) -> None:
+def build_files(csv_path, model_name, out_dir):
+    # type: (Path, str, Path) -> None
+    """Build JSON files from CSV for a single model."""
     rows = _read_csv(csv_path)
-    by_layer: Dict[str, List[dict]] = defaultdict(list)
+    by_layer = defaultdict(list)  # type: dict
+
     for row in rows:
         layer = row.get("layer_name") or row.get("layer") or row.get("Layer")
         if not layer:
@@ -61,7 +72,9 @@ def build_files(csv_path: Path, model_name: str, out_dir: Path) -> None:
         print(f"Wrote {len(items)} points to {out_path}")
 
 
-def main() -> None:
+def main():
+    # type: () -> None
+    """Main entry point."""
     parser = argparse.ArgumentParser(description="Build per-layer scatterplot JSON files")
     parser.add_argument(
         "--tenconf",

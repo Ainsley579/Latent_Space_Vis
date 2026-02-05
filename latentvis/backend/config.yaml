@@ -1,0 +1,22 @@
+# Backend Configuration
+
+## Default Settings
+n_components_range: [2, 10]     # GMM component range to test
+reduction_method: pca            # Options: pca, umap
+random_state: 42                 # Random seed
+scatter_k_samples: 152           # Expected number of samples
+cluster_k: 5                      # Top-k closest/farthest clusters
+
+## Usage Examples
+
+# In Python
+from utils import ConfigManager
+config = ConfigManager.load_config('config.yaml')
+config = ConfigManager.merge_with_defaults({'reduction_method': 'umap'})
+
+# Command line
+python generate_frontend_data.py \
+    --embeddings-dir /path/to/embeddings \
+    --model-name dimenet10conf \
+    --config config.yaml \
+    --output-dir frontend/public/data
