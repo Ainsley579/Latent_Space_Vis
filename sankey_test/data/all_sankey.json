@@ -1,0 +1,4536 @@
+{
+  "epoch": {
+    "dimenet10conf": {
+      "filename": "cluster_assignments_with_real_id_dimenet_noaug.csv",
+      "path": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data/clustering_metrics/cluster_assignments_with_real_id_dimenet_noaug.csv",
+      "type": "spatial_epoch",
+      "epoch": "dimenet10conf",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C1",
+          "value": 15,
+          "pct_of_source": 71.4286
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C1",
+          "target_label": "output_block_1_C2",
+          "value": 9,
+          "pct_of_source": 25.7143
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 3,
+          "source_label": "output_block_1_C2",
+          "target_label": "output_block_2_C1",
+          "value": 36,
+          "pct_of_source": 87.8049
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 4,
+          "source_label": "output_block_2_C1",
+          "target_label": "output_block_3_C0",
+          "value": 6,
+          "pct_of_source": 13.9535
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 5,
+          "source_label": "output_block_3_C0",
+          "target_label": "output_block_4_C2",
+          "value": 20,
+          "pct_of_source": 86.9565
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 6,
+          "source_label": "output_block_4_C2",
+          "target_label": "u_mlp_input_C2",
+          "value": 53,
+          "pct_of_source": 74.6479
+        },
+        {
+          "source_node_id": 6,
+          "target_node_id": 7,
+          "source_label": "u_mlp_input_C2",
+          "target_label": "u_mlp_l1_C21",
+          "value": 13,
+          "pct_of_source": 20.6349
+        },
+        {
+          "source_node_id": 7,
+          "target_node_id": 8,
+          "source_label": "u_mlp_l1_C21",
+          "target_label": "u_mlp_l2_C2",
+          "value": 13,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 9,
+          "source_label": "output_block_3_C0",
+          "target_label": "output_block_4_C1",
+          "value": 3,
+          "pct_of_source": 13.0435
+        },
+        {
+          "source_node_id": 9,
+          "target_node_id": 6,
+          "source_label": "output_block_4_C1",
+          "target_label": "u_mlp_input_C2",
+          "value": 4,
+          "pct_of_source": 11.1111
+        },
+        {
+          "source_node_id": 9,
+          "target_node_id": 10,
+          "source_label": "output_block_4_C1",
+          "target_label": "u_mlp_input_C0",
+          "value": 31,
+          "pct_of_source": 86.1111
+        },
+        {
+          "source_node_id": 10,
+          "target_node_id": 11,
+          "source_label": "u_mlp_input_C0",
+          "target_label": "u_mlp_l1_C20",
+          "value": 35,
+          "pct_of_source": 97.2222
+        },
+        {
+          "source_node_id": 11,
+          "target_node_id": 8,
+          "source_label": "u_mlp_l1_C20",
+          "target_label": "u_mlp_l2_C2",
+          "value": 45,
+          "pct_of_source": 38.4615
+        },
+        {
+          "source_node_id": 11,
+          "target_node_id": 12,
+          "source_label": "u_mlp_l1_C20",
+          "target_label": "u_mlp_l2_C0",
+          "value": 56,
+          "pct_of_source": 47.8632
+        },
+        {
+          "source_node_id": 13,
+          "target_node_id": 14,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C2",
+          "value": 25,
+          "pct_of_source": 69.4444
+        },
+        {
+          "source_node_id": 14,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C2",
+          "target_label": "output_block_1_C2",
+          "value": 22,
+          "pct_of_source": 26.8293
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 15,
+          "source_label": "output_block_1_C2",
+          "target_label": "output_block_2_C2",
+          "value": 5,
+          "pct_of_source": 12.1951
+        },
+        {
+          "source_node_id": 15,
+          "target_node_id": 16,
+          "source_label": "output_block_2_C2",
+          "target_label": "output_block_3_C1",
+          "value": 39,
+          "pct_of_source": 67.2414
+        },
+        {
+          "source_node_id": 16,
+          "target_node_id": 5,
+          "source_label": "output_block_3_C1",
+          "target_label": "output_block_4_C2",
+          "value": 50,
+          "pct_of_source": 51.0204
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 10,
+          "source_label": "output_block_4_C2",
+          "target_label": "u_mlp_input_C0",
+          "value": 3,
+          "pct_of_source": 4.2254
+        },
+        {
+          "source_node_id": 17,
+          "target_node_id": 18,
+          "source_label": "emb_C2",
+          "target_label": "output_block_0_C0",
+          "value": 31,
+          "pct_of_source": 31.3131
+        },
+        {
+          "source_node_id": 18,
+          "target_node_id": 19,
+          "source_label": "output_block_0_C0",
+          "target_label": "output_block_1_C0",
+          "value": 29,
+          "pct_of_source": 74.359
+        },
+        {
+          "source_node_id": 19,
+          "target_node_id": 20,
+          "source_label": "output_block_1_C0",
+          "target_label": "output_block_2_C0",
+          "value": 51,
+          "pct_of_source": 80.9524
+        },
+        {
+          "source_node_id": 20,
+          "target_node_id": 16,
+          "source_label": "output_block_2_C0",
+          "target_label": "output_block_3_C1",
+          "value": 55,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 16,
+          "target_node_id": 21,
+          "source_label": "output_block_3_C1",
+          "target_label": "output_block_4_C0",
+          "value": 46,
+          "pct_of_source": 46.9388
+        },
+        {
+          "source_node_id": 21,
+          "target_node_id": 22,
+          "source_label": "output_block_4_C0",
+          "target_label": "u_mlp_input_C1",
+          "value": 41,
+          "pct_of_source": 83.6735
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 23,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C0",
+          "value": 5,
+          "pct_of_source": 8.7719
+        },
+        {
+          "source_node_id": 23,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C1",
+          "value": 5,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 25,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C4",
+          "value": 1,
+          "pct_of_source": 1.7544
+        },
+        {
+          "source_node_id": 25,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C4",
+          "target_label": "u_mlp_l2_C1",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 26,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C3",
+          "value": 2,
+          "pct_of_source": 3.5088
+        },
+        {
+          "source_node_id": 26,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C3",
+          "target_label": "u_mlp_l2_C1",
+          "value": 2,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 17,
+          "target_node_id": 14,
+          "source_label": "emb_C2",
+          "target_label": "output_block_0_C2",
+          "value": 53,
+          "pct_of_source": 53.5354
+        },
+        {
+          "source_node_id": 14,
+          "target_node_id": 27,
+          "source_label": "output_block_0_C2",
+          "target_label": "output_block_1_C1",
+          "value": 27,
+          "pct_of_source": 32.9268
+        },
+        {
+          "source_node_id": 27,
+          "target_node_id": 15,
+          "source_label": "output_block_1_C1",
+          "target_label": "output_block_2_C2",
+          "value": 46,
+          "pct_of_source": 88.4615
+        },
+        {
+          "source_node_id": 6,
+          "target_node_id": 11,
+          "source_label": "u_mlp_input_C2",
+          "target_label": "u_mlp_l1_C20",
+          "value": 50,
+          "pct_of_source": 79.3651
+        },
+        {
+          "source_node_id": 17,
+          "target_node_id": 1,
+          "source_label": "emb_C2",
+          "target_label": "output_block_0_C1",
+          "value": 15,
+          "pct_of_source": 15.1515
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 27,
+          "source_label": "output_block_0_C1",
+          "target_label": "output_block_1_C1",
+          "value": 25,
+          "pct_of_source": 71.4286
+        },
+        {
+          "source_node_id": 13,
+          "target_node_id": 1,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C1",
+          "value": 5,
+          "pct_of_source": 13.8889
+        },
+        {
+          "source_node_id": 15,
+          "target_node_id": 28,
+          "source_label": "output_block_2_C2",
+          "target_label": "output_block_3_C2",
+          "value": 2,
+          "pct_of_source": 3.4483
+        },
+        {
+          "source_node_id": 28,
+          "target_node_id": 9,
+          "source_label": "output_block_3_C2",
+          "target_label": "output_block_4_C1",
+          "value": 31,
+          "pct_of_source": 88.5714
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 28,
+          "source_label": "output_block_2_C1",
+          "target_label": "output_block_3_C2",
+          "value": 33,
+          "pct_of_source": 76.7442
+        },
+        {
+          "source_node_id": 14,
+          "target_node_id": 19,
+          "source_label": "output_block_0_C2",
+          "target_label": "output_block_1_C0",
+          "value": 33,
+          "pct_of_source": 40.2439
+        },
+        {
+          "source_node_id": 19,
+          "target_node_id": 3,
+          "source_label": "output_block_1_C0",
+          "target_label": "output_block_2_C1",
+          "value": 5,
+          "pct_of_source": 7.9365
+        },
+        {
+          "source_node_id": 27,
+          "target_node_id": 3,
+          "source_label": "output_block_1_C1",
+          "target_label": "output_block_2_C1",
+          "value": 2,
+          "pct_of_source": 3.8462
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 16,
+          "source_label": "output_block_2_C1",
+          "target_label": "output_block_3_C1",
+          "value": 4,
+          "pct_of_source": 9.3023
+        },
+        {
+          "source_node_id": 16,
+          "target_node_id": 9,
+          "source_label": "output_block_3_C1",
+          "target_label": "output_block_4_C1",
+          "value": 2,
+          "pct_of_source": 2.0408
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 22,
+          "source_label": "output_block_4_C2",
+          "target_label": "u_mlp_input_C1",
+          "value": 15,
+          "pct_of_source": 21.1268
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 11,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C20",
+          "value": 32,
+          "pct_of_source": 56.1404
+        },
+        {
+          "source_node_id": 11,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C20",
+          "target_label": "u_mlp_l2_C1",
+          "value": 16,
+          "pct_of_source": 13.6752
+        },
+        {
+          "source_node_id": 15,
+          "target_node_id": 4,
+          "source_label": "output_block_2_C2",
+          "target_label": "output_block_3_C0",
+          "value": 17,
+          "pct_of_source": 29.3103
+        },
+        {
+          "source_node_id": 21,
+          "target_node_id": 6,
+          "source_label": "output_block_4_C0",
+          "target_label": "u_mlp_input_C2",
+          "value": 6,
+          "pct_of_source": 12.2449
+        },
+        {
+          "source_node_id": 19,
+          "target_node_id": 15,
+          "source_label": "output_block_1_C0",
+          "target_label": "output_block_2_C2",
+          "value": 7,
+          "pct_of_source": 11.1111
+        },
+        {
+          "source_node_id": 27,
+          "target_node_id": 20,
+          "source_label": "output_block_1_C1",
+          "target_label": "output_block_2_C0",
+          "value": 4,
+          "pct_of_source": 7.6923
+        },
+        {
+          "source_node_id": 21,
+          "target_node_id": 10,
+          "source_label": "output_block_4_C0",
+          "target_label": "u_mlp_input_C0",
+          "value": 2,
+          "pct_of_source": 4.0816
+        },
+        {
+          "source_node_id": 13,
+          "target_node_id": 18,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C0",
+          "value": 6,
+          "pct_of_source": 16.6667
+        },
+        {
+          "source_node_id": 18,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C0",
+          "target_label": "output_block_1_C2",
+          "value": 10,
+          "pct_of_source": 25.641
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 29,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C10",
+          "value": 6,
+          "pct_of_source": 10.5263
+        },
+        {
+          "source_node_id": 29,
+          "target_node_id": 12,
+          "source_label": "u_mlp_l1_C10",
+          "target_label": "u_mlp_l2_C0",
+          "value": 2,
+          "pct_of_source": 33.3333
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 30,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C16",
+          "value": 1,
+          "pct_of_source": 1.7544
+        },
+        {
+          "source_node_id": 30,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C16",
+          "target_label": "u_mlp_l2_C1",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 29,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C10",
+          "target_label": "u_mlp_l2_C1",
+          "value": 4,
+          "pct_of_source": 66.6667
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 14,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C2",
+          "value": 4,
+          "pct_of_source": 19.0476
+        },
+        {
+          "source_node_id": 10,
+          "target_node_id": 31,
+          "source_label": "u_mlp_input_C0",
+          "target_label": "u_mlp_l1_C12",
+          "value": 1,
+          "pct_of_source": 2.7778
+        },
+        {
+          "source_node_id": 31,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C12",
+          "target_label": "u_mlp_l2_C1",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 19,
+          "source_label": "output_block_0_C1",
+          "target_label": "output_block_1_C0",
+          "value": 1,
+          "pct_of_source": 2.8571
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 32,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C14",
+          "value": 3,
+          "pct_of_source": 5.2632
+        },
+        {
+          "source_node_id": 32,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C14",
+          "target_label": "u_mlp_l2_C1",
+          "value": 3,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 33,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C15",
+          "value": 1,
+          "pct_of_source": 1.7544
+        },
+        {
+          "source_node_id": 33,
+          "target_node_id": 12,
+          "source_label": "u_mlp_l1_C15",
+          "target_label": "u_mlp_l2_C0",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 28,
+          "target_node_id": 21,
+          "source_label": "output_block_3_C2",
+          "target_label": "output_block_4_C0",
+          "value": 3,
+          "pct_of_source": 8.5714
+        },
+        {
+          "source_node_id": 28,
+          "target_node_id": 5,
+          "source_label": "output_block_3_C2",
+          "target_label": "output_block_4_C2",
+          "value": 1,
+          "pct_of_source": 2.8571
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 34,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C13",
+          "value": 1,
+          "pct_of_source": 1.7544
+        },
+        {
+          "source_node_id": 34,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C13",
+          "target_label": "u_mlp_l2_C1",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 18,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C0",
+          "value": 2,
+          "pct_of_source": 9.5238
+        },
+        {
+          "source_node_id": 9,
+          "target_node_id": 22,
+          "source_label": "output_block_4_C1",
+          "target_label": "u_mlp_input_C1",
+          "value": 1,
+          "pct_of_source": 2.7778
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 35,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C1",
+          "value": 1,
+          "pct_of_source": 1.7544
+        },
+        {
+          "source_node_id": 35,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C1",
+          "target_label": "u_mlp_l2_C1",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 36,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C11",
+          "value": 2,
+          "pct_of_source": 3.5088
+        },
+        {
+          "source_node_id": 36,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C11",
+          "target_label": "u_mlp_l2_C1",
+          "value": 2,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 37,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C2",
+          "value": 1,
+          "pct_of_source": 1.7544
+        },
+        {
+          "source_node_id": 37,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C2",
+          "target_label": "u_mlp_l2_C1",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 38,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C5",
+          "value": 1,
+          "pct_of_source": 1.7544
+        },
+        {
+          "source_node_id": 38,
+          "target_node_id": 24,
+          "source_label": "u_mlp_l1_C5",
+          "target_label": "u_mlp_l2_C1",
+          "value": 1,
+          "pct_of_source": 100.0
+        }
+      ],
+      "nodes": {
+        "emb": [
+          {
+            "id": 0,
+            "cluster": "1",
+            "label": "emb_C1",
+            "value": 21.0,
+            "previous": 36.0
+          },
+          {
+            "id": 13,
+            "cluster": "0",
+            "label": "emb_C0",
+            "value": 36.0,
+            "previous": 0.0
+          },
+          {
+            "id": 17,
+            "cluster": "2",
+            "label": "emb_C2",
+            "value": 99.0,
+            "previous": 57.0
+          }
+        ],
+        "output_block_0": [
+          {
+            "id": 1,
+            "cluster": "1",
+            "label": "output_block_0_C1",
+            "value": 35.0,
+            "previous": 39.0
+          },
+          {
+            "id": 14,
+            "cluster": "2",
+            "label": "output_block_0_C2",
+            "value": 82.0,
+            "previous": 74.0
+          },
+          {
+            "id": 18,
+            "cluster": "0",
+            "label": "output_block_0_C0",
+            "value": 39.0,
+            "previous": 0.0
+          }
+        ],
+        "output_block_1": [
+          {
+            "id": 2,
+            "cluster": "2",
+            "label": "output_block_1_C2",
+            "value": 41.0,
+            "previous": 115.0
+          },
+          {
+            "id": 19,
+            "cluster": "0",
+            "label": "output_block_1_C0",
+            "value": 63.0,
+            "previous": 0.0
+          },
+          {
+            "id": 27,
+            "cluster": "1",
+            "label": "output_block_1_C1",
+            "value": 52.0,
+            "previous": 63.0
+          }
+        ],
+        "output_block_2": [
+          {
+            "id": 3,
+            "cluster": "1",
+            "label": "output_block_2_C1",
+            "value": 43.0,
+            "previous": 55.0
+          },
+          {
+            "id": 15,
+            "cluster": "2",
+            "label": "output_block_2_C2",
+            "value": 58.0,
+            "previous": 98.0
+          },
+          {
+            "id": 20,
+            "cluster": "0",
+            "label": "output_block_2_C0",
+            "value": 55.0,
+            "previous": 0.0
+          }
+        ],
+        "output_block_3": [
+          {
+            "id": 4,
+            "cluster": "0",
+            "label": "output_block_3_C0",
+            "value": 23.0,
+            "previous": 0.0
+          },
+          {
+            "id": 16,
+            "cluster": "1",
+            "label": "output_block_3_C1",
+            "value": 98.0,
+            "previous": 23.0
+          },
+          {
+            "id": 28,
+            "cluster": "2",
+            "label": "output_block_3_C2",
+            "value": 35.0,
+            "previous": 121.0
+          }
+        ],
+        "output_block_4": [
+          {
+            "id": 5,
+            "cluster": "2",
+            "label": "output_block_4_C2",
+            "value": 71.0,
+            "previous": 85.0
+          },
+          {
+            "id": 9,
+            "cluster": "1",
+            "label": "output_block_4_C1",
+            "value": 36.0,
+            "previous": 49.0
+          },
+          {
+            "id": 21,
+            "cluster": "0",
+            "label": "output_block_4_C0",
+            "value": 49.0,
+            "previous": 0.0
+          }
+        ],
+        "u_mlp_input": [
+          {
+            "id": 6,
+            "cluster": "2",
+            "label": "u_mlp_input_C2",
+            "value": 63.0,
+            "previous": 93.0
+          },
+          {
+            "id": 10,
+            "cluster": "0",
+            "label": "u_mlp_input_C0",
+            "value": 36.0,
+            "previous": 0.0
+          },
+          {
+            "id": 22,
+            "cluster": "1",
+            "label": "u_mlp_input_C1",
+            "value": 57.0,
+            "previous": 36.0
+          }
+        ],
+        "u_mlp_l1": [
+          {
+            "id": 7,
+            "cluster": "21",
+            "label": "u_mlp_l1_C21",
+            "value": 13.0,
+            "previous": 139.0
+          },
+          {
+            "id": 11,
+            "cluster": "20",
+            "label": "u_mlp_l1_C20",
+            "value": 117.0,
+            "previous": 22.0
+          },
+          {
+            "id": 23,
+            "cluster": "0",
+            "label": "u_mlp_l1_C0",
+            "value": 5.0,
+            "previous": 0.0
+          },
+          {
+            "id": 25,
+            "cluster": "4",
+            "label": "u_mlp_l1_C4",
+            "value": 1.0,
+            "previous": 154.0
+          },
+          {
+            "id": 26,
+            "cluster": "3",
+            "label": "u_mlp_l1_C3",
+            "value": 2.0,
+            "previous": 152.0
+          },
+          {
+            "id": 29,
+            "cluster": "10",
+            "label": "u_mlp_l1_C10",
+            "value": 6.0,
+            "previous": 6.0
+          },
+          {
+            "id": 30,
+            "cluster": "16",
+            "label": "u_mlp_l1_C16",
+            "value": 1.0,
+            "previous": 20.0
+          },
+          {
+            "id": 31,
+            "cluster": "12",
+            "label": "u_mlp_l1_C12",
+            "value": 1.0,
+            "previous": 14.0
+          },
+          {
+            "id": 32,
+            "cluster": "14",
+            "label": "u_mlp_l1_C14",
+            "value": 3.0,
+            "previous": 16.0
+          },
+          {
+            "id": 33,
+            "cluster": "15",
+            "label": "u_mlp_l1_C15",
+            "value": 1.0,
+            "previous": 19.0
+          },
+          {
+            "id": 34,
+            "cluster": "13",
+            "label": "u_mlp_l1_C13",
+            "value": 1.0,
+            "previous": 15.0
+          },
+          {
+            "id": 35,
+            "cluster": "1",
+            "label": "u_mlp_l1_C1",
+            "value": 1.0,
+            "previous": 5.0
+          },
+          {
+            "id": 36,
+            "cluster": "11",
+            "label": "u_mlp_l1_C11",
+            "value": 2.0,
+            "previous": 12.0
+          },
+          {
+            "id": 37,
+            "cluster": "2",
+            "label": "u_mlp_l1_C2",
+            "value": 1.0,
+            "previous": 21.0
+          },
+          {
+            "id": 38,
+            "cluster": "5",
+            "label": "u_mlp_l1_C5",
+            "value": 1.0,
+            "previous": 155.0
+          }
+        ],
+        "u_mlp_l2": [
+          {
+            "id": 8,
+            "cluster": "2",
+            "label": "u_mlp_l2_C2",
+            "value": 58.0,
+            "previous": 98.0
+          },
+          {
+            "id": 12,
+            "cluster": "0",
+            "label": "u_mlp_l2_C0",
+            "value": 59.0,
+            "previous": 0.0
+          },
+          {
+            "id": 24,
+            "cluster": "1",
+            "label": "u_mlp_l2_C1",
+            "value": 39.0,
+            "previous": 59.0
+          }
+        ]
+      },
+      "node_count": 39
+    },
+    "dimenet_noaug": {
+      "filename": "cluster_assignments_with_real_id.csv",
+      "path": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data/clustering_metrics/cluster_assignments_with_real_id.csv",
+      "type": "spatial_epoch",
+      "epoch": "dimenet_noaug",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C8",
+          "value": 2,
+          "pct_of_source": 25.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C8",
+          "target_label": "output_block_1_C2",
+          "value": 16,
+          "pct_of_source": 43.2432
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 3,
+          "source_label": "output_block_1_C2",
+          "target_label": "output_block_2_C7",
+          "value": 31,
+          "pct_of_source": 44.2857
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 4,
+          "source_label": "output_block_2_C7",
+          "target_label": "output_block_3_C3",
+          "value": 16,
+          "pct_of_source": 24.2424
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 5,
+          "source_label": "output_block_3_C3",
+          "target_label": "output_block_4_C3",
+          "value": 23,
+          "pct_of_source": 67.6471
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 6,
+          "source_label": "output_block_4_C3",
+          "target_label": "u_mlp_input_C2",
+          "value": 56,
+          "pct_of_source": 58.3333
+        },
+        {
+          "source_node_id": 6,
+          "target_node_id": 7,
+          "source_label": "u_mlp_input_C2",
+          "target_label": "u_mlp_l1_C0",
+          "value": 56,
+          "pct_of_source": 66.6667
+        },
+        {
+          "source_node_id": 7,
+          "target_node_id": 8,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C9",
+          "value": 13,
+          "pct_of_source": 13.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 9,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C2",
+          "value": 3,
+          "pct_of_source": 37.5
+        },
+        {
+          "source_node_id": 9,
+          "target_node_id": 10,
+          "source_label": "output_block_0_C2",
+          "target_label": "output_block_1_C4",
+          "value": 16,
+          "pct_of_source": 30.1887
+        },
+        {
+          "source_node_id": 10,
+          "target_node_id": 11,
+          "source_label": "output_block_1_C4",
+          "target_label": "output_block_2_C3",
+          "value": 11,
+          "pct_of_source": 27.5
+        },
+        {
+          "source_node_id": 11,
+          "target_node_id": 12,
+          "source_label": "output_block_2_C3",
+          "target_label": "output_block_3_C6",
+          "value": 13,
+          "pct_of_source": 36.1111
+        },
+        {
+          "source_node_id": 12,
+          "target_node_id": 5,
+          "source_label": "output_block_3_C6",
+          "target_label": "output_block_4_C3",
+          "value": 45,
+          "pct_of_source": 68.1818
+        },
+        {
+          "source_node_id": 13,
+          "target_node_id": 9,
+          "source_label": "emb_C2",
+          "target_label": "output_block_0_C2",
+          "value": 26,
+          "pct_of_source": 37.1429
+        },
+        {
+          "source_node_id": 10,
+          "target_node_id": 3,
+          "source_label": "output_block_1_C4",
+          "target_label": "output_block_2_C7",
+          "value": 16,
+          "pct_of_source": 40.0
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 14,
+          "source_label": "output_block_4_C3",
+          "target_label": "u_mlp_input_C5",
+          "value": 27,
+          "pct_of_source": 28.125
+        },
+        {
+          "source_node_id": 14,
+          "target_node_id": 7,
+          "source_label": "u_mlp_input_C5",
+          "target_label": "u_mlp_l1_C0",
+          "value": 26,
+          "pct_of_source": 61.9048
+        },
+        {
+          "source_node_id": 7,
+          "target_node_id": 15,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C3",
+          "value": 51,
+          "pct_of_source": 51.0
+        },
+        {
+          "source_node_id": 16,
+          "target_node_id": 17,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C7",
+          "value": 9,
+          "pct_of_source": 21.4286
+        },
+        {
+          "source_node_id": 17,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C7",
+          "target_label": "output_block_1_C2",
+          "value": 20,
+          "pct_of_source": 40.8163
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 18,
+          "source_label": "output_block_2_C7",
+          "target_label": "output_block_3_C5",
+          "value": 13,
+          "pct_of_source": 19.697
+        },
+        {
+          "source_node_id": 18,
+          "target_node_id": 19,
+          "source_label": "output_block_3_C5",
+          "target_label": "output_block_4_C2",
+          "value": 9,
+          "pct_of_source": 34.6154
+        },
+        {
+          "source_node_id": 19,
+          "target_node_id": 14,
+          "source_label": "output_block_4_C2",
+          "target_label": "u_mlp_input_C5",
+          "value": 13,
+          "pct_of_source": 28.8889
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 12,
+          "source_label": "output_block_2_C7",
+          "target_label": "output_block_3_C6",
+          "value": 30,
+          "pct_of_source": 45.4545
+        },
+        {
+          "source_node_id": 16,
+          "target_node_id": 1,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C8",
+          "value": 15,
+          "pct_of_source": 35.7143
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 19,
+          "source_label": "output_block_3_C3",
+          "target_label": "output_block_4_C2",
+          "value": 9,
+          "pct_of_source": 26.4706
+        },
+        {
+          "source_node_id": 19,
+          "target_node_id": 20,
+          "source_label": "output_block_4_C2",
+          "target_label": "u_mlp_input_C1",
+          "value": 6,
+          "pct_of_source": 13.3333
+        },
+        {
+          "source_node_id": 20,
+          "target_node_id": 21,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C1",
+          "value": 2,
+          "pct_of_source": 13.3333
+        },
+        {
+          "source_node_id": 21,
+          "target_node_id": 15,
+          "source_label": "u_mlp_l1_C1",
+          "target_label": "u_mlp_l2_C3",
+          "value": 26,
+          "pct_of_source": 50.0
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 17,
+          "source_label": "emb_C3",
+          "target_label": "output_block_0_C7",
+          "value": 10,
+          "pct_of_source": 37.037
+        },
+        {
+          "source_node_id": 17,
+          "target_node_id": 23,
+          "source_label": "output_block_0_C7",
+          "target_label": "output_block_1_C6",
+          "value": 9,
+          "pct_of_source": 18.3673
+        },
+        {
+          "source_node_id": 23,
+          "target_node_id": 24,
+          "source_label": "output_block_1_C6",
+          "target_label": "output_block_2_C2",
+          "value": 6,
+          "pct_of_source": 35.2941
+        },
+        {
+          "source_node_id": 24,
+          "target_node_id": 12,
+          "source_label": "output_block_2_C2",
+          "target_label": "output_block_3_C6",
+          "value": 20,
+          "pct_of_source": 47.619
+        },
+        {
+          "source_node_id": 6,
+          "target_node_id": 21,
+          "source_label": "u_mlp_input_C2",
+          "target_label": "u_mlp_l1_C1",
+          "value": 28,
+          "pct_of_source": 33.3333
+        },
+        {
+          "source_node_id": 21,
+          "target_node_id": 25,
+          "source_label": "u_mlp_l1_C1",
+          "target_label": "u_mlp_l2_C8",
+          "value": 1,
+          "pct_of_source": 1.9231
+        },
+        {
+          "source_node_id": 9,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C2",
+          "target_label": "output_block_1_C2",
+          "value": 27,
+          "pct_of_source": 50.9434
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 11,
+          "source_label": "output_block_1_C2",
+          "target_label": "output_block_2_C3",
+          "value": 19,
+          "pct_of_source": 27.1429
+        },
+        {
+          "source_node_id": 11,
+          "target_node_id": 18,
+          "source_label": "output_block_2_C3",
+          "target_label": "output_block_3_C5",
+          "value": 9,
+          "pct_of_source": 25.0
+        },
+        {
+          "source_node_id": 19,
+          "target_node_id": 6,
+          "source_label": "output_block_4_C2",
+          "target_label": "u_mlp_input_C2",
+          "value": 22,
+          "pct_of_source": 48.8889
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 24,
+          "source_label": "output_block_1_C2",
+          "target_label": "output_block_2_C2",
+          "value": 19,
+          "pct_of_source": 27.1429
+        },
+        {
+          "source_node_id": 24,
+          "target_node_id": 26,
+          "source_label": "output_block_2_C2",
+          "target_label": "output_block_3_C2",
+          "value": 2,
+          "pct_of_source": 4.7619
+        },
+        {
+          "source_node_id": 26,
+          "target_node_id": 19,
+          "source_label": "output_block_3_C2",
+          "target_label": "output_block_4_C2",
+          "value": 2,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 27,
+          "source_label": "output_block_0_C8",
+          "target_label": "output_block_1_C1",
+          "value": 9,
+          "pct_of_source": 24.3243
+        },
+        {
+          "source_node_id": 27,
+          "target_node_id": 3,
+          "source_label": "output_block_1_C1",
+          "target_label": "output_block_2_C7",
+          "value": 10,
+          "pct_of_source": 45.4545
+        },
+        {
+          "source_node_id": 12,
+          "target_node_id": 19,
+          "source_label": "output_block_3_C6",
+          "target_label": "output_block_4_C2",
+          "value": 19,
+          "pct_of_source": 28.7879
+        },
+        {
+          "source_node_id": 16,
+          "target_node_id": 9,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C2",
+          "value": 13,
+          "pct_of_source": 30.9524
+        },
+        {
+          "source_node_id": 11,
+          "target_node_id": 28,
+          "source_label": "output_block_2_C3",
+          "target_label": "output_block_3_C1",
+          "value": 4,
+          "pct_of_source": 11.1111
+        },
+        {
+          "source_node_id": 28,
+          "target_node_id": 5,
+          "source_label": "output_block_3_C1",
+          "target_label": "output_block_4_C3",
+          "value": 6,
+          "pct_of_source": 85.7143
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 20,
+          "source_label": "output_block_4_C3",
+          "target_label": "u_mlp_input_C1",
+          "value": 8,
+          "pct_of_source": 8.3333
+        },
+        {
+          "source_node_id": 20,
+          "target_node_id": 7,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C0",
+          "value": 13,
+          "pct_of_source": 86.6667
+        },
+        {
+          "source_node_id": 7,
+          "target_node_id": 29,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C6",
+          "value": 12,
+          "pct_of_source": 12.0
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 1,
+          "source_label": "emb_C3",
+          "target_label": "output_block_0_C8",
+          "value": 6,
+          "pct_of_source": 22.2222
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 10,
+          "source_label": "output_block_0_C8",
+          "target_label": "output_block_1_C4",
+          "value": 7,
+          "pct_of_source": 18.9189
+        },
+        {
+          "source_node_id": 10,
+          "target_node_id": 24,
+          "source_label": "output_block_1_C4",
+          "target_label": "output_block_2_C2",
+          "value": 10,
+          "pct_of_source": 25.0
+        },
+        {
+          "source_node_id": 24,
+          "target_node_id": 4,
+          "source_label": "output_block_2_C2",
+          "target_label": "output_block_3_C3",
+          "value": 10,
+          "pct_of_source": 23.8095
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 30,
+          "source_label": "output_block_4_C3",
+          "target_label": "u_mlp_input_C4",
+          "value": 4,
+          "pct_of_source": 4.1667
+        },
+        {
+          "source_node_id": 30,
+          "target_node_id": 7,
+          "source_label": "u_mlp_input_C4",
+          "target_label": "u_mlp_l1_C0",
+          "value": 3,
+          "pct_of_source": 33.3333
+        },
+        {
+          "source_node_id": 27,
+          "target_node_id": 31,
+          "source_label": "output_block_1_C1",
+          "target_label": "output_block_2_C1",
+          "value": 3,
+          "pct_of_source": 13.6364
+        },
+        {
+          "source_node_id": 31,
+          "target_node_id": 4,
+          "source_label": "output_block_2_C1",
+          "target_label": "output_block_3_C3",
+          "value": 1,
+          "pct_of_source": 25.0
+        },
+        {
+          "source_node_id": 7,
+          "target_node_id": 32,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C11",
+          "value": 9,
+          "pct_of_source": 9.0
+        },
+        {
+          "source_node_id": 13,
+          "target_node_id": 1,
+          "source_label": "emb_C2",
+          "target_label": "output_block_0_C8",
+          "value": 13,
+          "pct_of_source": 18.5714
+        },
+        {
+          "source_node_id": 17,
+          "target_node_id": 27,
+          "source_label": "output_block_0_C7",
+          "target_label": "output_block_1_C1",
+          "value": 7,
+          "pct_of_source": 14.2857
+        },
+        {
+          "source_node_id": 27,
+          "target_node_id": 24,
+          "source_label": "output_block_1_C1",
+          "target_label": "output_block_2_C2",
+          "value": 7,
+          "pct_of_source": 31.8182
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 33,
+          "source_label": "output_block_3_C3",
+          "target_label": "output_block_4_C1",
+          "value": 2,
+          "pct_of_source": 5.8824
+        },
+        {
+          "source_node_id": 33,
+          "target_node_id": 6,
+          "source_label": "output_block_4_C1",
+          "target_label": "u_mlp_input_C2",
+          "value": 6,
+          "pct_of_source": 60.0
+        },
+        {
+          "source_node_id": 13,
+          "target_node_id": 17,
+          "source_label": "emb_C2",
+          "target_label": "output_block_0_C7",
+          "value": 26,
+          "pct_of_source": 37.1429
+        },
+        {
+          "source_node_id": 17,
+          "target_node_id": 10,
+          "source_label": "output_block_0_C7",
+          "target_label": "output_block_1_C4",
+          "value": 13,
+          "pct_of_source": 26.5306
+        },
+        {
+          "source_node_id": 18,
+          "target_node_id": 5,
+          "source_label": "output_block_3_C5",
+          "target_label": "output_block_4_C3",
+          "value": 14,
+          "pct_of_source": 53.8462
+        },
+        {
+          "source_node_id": 13,
+          "target_node_id": 34,
+          "source_label": "emb_C2",
+          "target_label": "output_block_0_C1",
+          "value": 2,
+          "pct_of_source": 2.8571
+        },
+        {
+          "source_node_id": 34,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C1",
+          "target_label": "output_block_1_C2",
+          "value": 2,
+          "pct_of_source": 50.0
+        },
+        {
+          "source_node_id": 21,
+          "target_node_id": 32,
+          "source_label": "u_mlp_l1_C1",
+          "target_label": "u_mlp_l2_C11",
+          "value": 14,
+          "pct_of_source": 26.9231
+        },
+        {
+          "source_node_id": 21,
+          "target_node_id": 35,
+          "source_label": "u_mlp_l1_C1",
+          "target_label": "u_mlp_l2_C1",
+          "value": 10,
+          "pct_of_source": 19.2308
+        },
+        {
+          "source_node_id": 16,
+          "target_node_id": 34,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C1",
+          "value": 2,
+          "pct_of_source": 4.7619
+        },
+        {
+          "source_node_id": 34,
+          "target_node_id": 10,
+          "source_label": "output_block_0_C1",
+          "target_label": "output_block_1_C4",
+          "value": 2,
+          "pct_of_source": 50.0
+        },
+        {
+          "source_node_id": 7,
+          "target_node_id": 36,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C0",
+          "value": 4,
+          "pct_of_source": 4.0
+        },
+        {
+          "source_node_id": 7,
+          "target_node_id": 37,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C4",
+          "value": 4,
+          "pct_of_source": 4.0
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 9,
+          "source_label": "emb_C3",
+          "target_label": "output_block_0_C2",
+          "value": 9,
+          "pct_of_source": 33.3333
+        },
+        {
+          "source_node_id": 9,
+          "target_node_id": 38,
+          "source_label": "output_block_0_C2",
+          "target_label": "output_block_1_C5",
+          "value": 1,
+          "pct_of_source": 1.8868
+        },
+        {
+          "source_node_id": 38,
+          "target_node_id": 11,
+          "source_label": "output_block_1_C5",
+          "target_label": "output_block_2_C3",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 16,
+          "target_node_id": 39,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C4",
+          "value": 1,
+          "pct_of_source": 2.381
+        },
+        {
+          "source_node_id": 39,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C4",
+          "target_label": "output_block_1_C2",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 40,
+          "source_label": "output_block_1_C2",
+          "target_label": "output_block_2_C4",
+          "value": 1,
+          "pct_of_source": 1.4286
+        },
+        {
+          "source_node_id": 40,
+          "target_node_id": 41,
+          "source_label": "output_block_2_C4",
+          "target_label": "output_block_3_C4",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 41,
+          "target_node_id": 5,
+          "source_label": "output_block_3_C4",
+          "target_label": "output_block_4_C3",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 24,
+          "target_node_id": 42,
+          "source_label": "output_block_2_C2",
+          "target_label": "output_block_3_C7",
+          "value": 4,
+          "pct_of_source": 9.5238
+        },
+        {
+          "source_node_id": 42,
+          "target_node_id": 19,
+          "source_label": "output_block_3_C7",
+          "target_label": "output_block_4_C2",
+          "value": 6,
+          "pct_of_source": 40.0
+        },
+        {
+          "source_node_id": 14,
+          "target_node_id": 21,
+          "source_label": "u_mlp_input_C5",
+          "target_label": "u_mlp_l1_C1",
+          "value": 16,
+          "pct_of_source": 38.0952
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 42,
+          "source_label": "output_block_2_C7",
+          "target_label": "output_block_3_C7",
+          "value": 7,
+          "pct_of_source": 10.6061
+        },
+        {
+          "source_node_id": 13,
+          "target_node_id": 43,
+          "source_label": "emb_C2",
+          "target_label": "output_block_0_C3",
+          "value": 2,
+          "pct_of_source": 2.8571
+        },
+        {
+          "source_node_id": 43,
+          "target_node_id": 10,
+          "source_label": "output_block_0_C3",
+          "target_label": "output_block_1_C4",
+          "value": 1,
+          "pct_of_source": 20.0
+        },
+        {
+          "source_node_id": 11,
+          "target_node_id": 4,
+          "source_label": "output_block_2_C3",
+          "target_label": "output_block_3_C3",
+          "value": 6,
+          "pct_of_source": 16.6667
+        },
+        {
+          "source_node_id": 44,
+          "target_node_id": 9,
+          "source_label": "emb_C4",
+          "target_label": "output_block_0_C2",
+          "value": 2,
+          "pct_of_source": 40.0
+        },
+        {
+          "source_node_id": 19,
+          "target_node_id": 30,
+          "source_label": "output_block_4_C2",
+          "target_label": "u_mlp_input_C4",
+          "value": 4,
+          "pct_of_source": 8.8889
+        },
+        {
+          "source_node_id": 24,
+          "target_node_id": 18,
+          "source_label": "output_block_2_C2",
+          "target_label": "output_block_3_C5",
+          "value": 3,
+          "pct_of_source": 7.1429
+        },
+        {
+          "source_node_id": 9,
+          "target_node_id": 27,
+          "source_label": "output_block_0_C2",
+          "target_label": "output_block_1_C1",
+          "value": 5,
+          "pct_of_source": 9.434
+        },
+        {
+          "source_node_id": 7,
+          "target_node_id": 45,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C5",
+          "value": 3,
+          "pct_of_source": 3.0
+        },
+        {
+          "source_node_id": 7,
+          "target_node_id": 46,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C2",
+          "value": 2,
+          "pct_of_source": 2.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 23,
+          "source_label": "output_block_0_C8",
+          "target_label": "output_block_1_C6",
+          "value": 4,
+          "pct_of_source": 10.8108
+        },
+        {
+          "source_node_id": 23,
+          "target_node_id": 3,
+          "source_label": "output_block_1_C6",
+          "target_label": "output_block_2_C7",
+          "value": 8,
+          "pct_of_source": 47.0588
+        },
+        {
+          "source_node_id": 42,
+          "target_node_id": 5,
+          "source_label": "output_block_3_C7",
+          "target_label": "output_block_4_C3",
+          "value": 7,
+          "pct_of_source": 46.6667
+        },
+        {
+          "source_node_id": 31,
+          "target_node_id": 12,
+          "source_label": "output_block_2_C1",
+          "target_label": "output_block_3_C6",
+          "value": 2,
+          "pct_of_source": 50.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 47,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C0",
+          "value": 1,
+          "pct_of_source": 12.5
+        },
+        {
+          "source_node_id": 47,
+          "target_node_id": 48,
+          "source_label": "output_block_0_C0",
+          "target_label": "output_block_1_C0",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 48,
+          "target_node_id": 49,
+          "source_label": "output_block_1_C0",
+          "target_label": "output_block_2_C0",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 49,
+          "target_node_id": 50,
+          "source_label": "output_block_2_C0",
+          "target_label": "output_block_3_C0",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 50,
+          "target_node_id": 51,
+          "source_label": "output_block_3_C0",
+          "target_label": "output_block_4_C0",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 51,
+          "target_node_id": 52,
+          "source_label": "output_block_4_C0",
+          "target_label": "u_mlp_input_C0",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 52,
+          "target_node_id": 7,
+          "source_label": "u_mlp_input_C0",
+          "target_label": "u_mlp_l1_C0",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 17,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C7",
+          "value": 2,
+          "pct_of_source": 25.0
+        },
+        {
+          "source_node_id": 23,
+          "target_node_id": 11,
+          "source_label": "output_block_1_C6",
+          "target_label": "output_block_2_C3",
+          "value": 3,
+          "pct_of_source": 17.6471
+        },
+        {
+          "source_node_id": 44,
+          "target_node_id": 1,
+          "source_label": "emb_C4",
+          "target_label": "output_block_0_C8",
+          "value": 1,
+          "pct_of_source": 20.0
+        },
+        {
+          "source_node_id": 30,
+          "target_node_id": 21,
+          "source_label": "u_mlp_input_C4",
+          "target_label": "u_mlp_l1_C1",
+          "value": 6,
+          "pct_of_source": 66.6667
+        },
+        {
+          "source_node_id": 44,
+          "target_node_id": 17,
+          "source_label": "emb_C4",
+          "target_label": "output_block_0_C7",
+          "value": 2,
+          "pct_of_source": 40.0
+        },
+        {
+          "source_node_id": 24,
+          "target_node_id": 28,
+          "source_label": "output_block_2_C2",
+          "target_label": "output_block_3_C1",
+          "value": 3,
+          "pct_of_source": 7.1429
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 53,
+          "source_label": "emb_C3",
+          "target_label": "output_block_0_C5",
+          "value": 1,
+          "pct_of_source": 3.7037
+        },
+        {
+          "source_node_id": 53,
+          "target_node_id": 10,
+          "source_label": "output_block_0_C5",
+          "target_label": "output_block_1_C4",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 10,
+          "target_node_id": 54,
+          "source_label": "output_block_1_C4",
+          "target_label": "output_block_2_C6",
+          "value": 1,
+          "pct_of_source": 2.5
+        },
+        {
+          "source_node_id": 54,
+          "target_node_id": 4,
+          "source_label": "output_block_2_C6",
+          "target_label": "output_block_3_C3",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 13,
+          "target_node_id": 55,
+          "source_label": "emb_C2",
+          "target_label": "output_block_0_C6",
+          "value": 1,
+          "pct_of_source": 1.4286
+        },
+        {
+          "source_node_id": 55,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C6",
+          "target_label": "output_block_1_C2",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 22,
+          "target_node_id": 43,
+          "source_label": "emb_C3",
+          "target_label": "output_block_0_C3",
+          "value": 1,
+          "pct_of_source": 3.7037
+        },
+        {
+          "source_node_id": 43,
+          "target_node_id": 27,
+          "source_label": "output_block_0_C3",
+          "target_label": "output_block_1_C1",
+          "value": 1,
+          "pct_of_source": 20.0
+        },
+        {
+          "source_node_id": 18,
+          "target_node_id": 33,
+          "source_label": "output_block_3_C5",
+          "target_label": "output_block_4_C1",
+          "value": 3,
+          "pct_of_source": 11.5385
+        },
+        {
+          "source_node_id": 33,
+          "target_node_id": 14,
+          "source_label": "output_block_4_C1",
+          "target_label": "u_mlp_input_C5",
+          "value": 2,
+          "pct_of_source": 20.0
+        },
+        {
+          "source_node_id": 33,
+          "target_node_id": 20,
+          "source_label": "output_block_4_C1",
+          "target_label": "u_mlp_input_C1",
+          "value": 1,
+          "pct_of_source": 10.0
+        },
+        {
+          "source_node_id": 9,
+          "target_node_id": 23,
+          "source_label": "output_block_0_C2",
+          "target_label": "output_block_1_C6",
+          "value": 4,
+          "pct_of_source": 7.5472
+        },
+        {
+          "source_node_id": 16,
+          "target_node_id": 43,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C3",
+          "value": 2,
+          "pct_of_source": 4.7619
+        },
+        {
+          "source_node_id": 43,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C3",
+          "target_label": "output_block_1_C2",
+          "value": 3,
+          "pct_of_source": 60.0
+        },
+        {
+          "source_node_id": 7,
+          "target_node_id": 56,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C7",
+          "value": 1,
+          "pct_of_source": 1.0
+        },
+        {
+          "source_node_id": 10,
+          "target_node_id": 57,
+          "source_label": "output_block_1_C4",
+          "target_label": "output_block_2_C5",
+          "value": 1,
+          "pct_of_source": 2.5
+        },
+        {
+          "source_node_id": 57,
+          "target_node_id": 12,
+          "source_label": "output_block_2_C5",
+          "target_label": "output_block_3_C6",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 11,
+          "target_node_id": 42,
+          "source_label": "output_block_2_C3",
+          "target_label": "output_block_3_C7",
+          "value": 4,
+          "pct_of_source": 11.1111
+        },
+        {
+          "source_node_id": 27,
+          "target_node_id": 11,
+          "source_label": "output_block_1_C1",
+          "target_label": "output_block_2_C3",
+          "value": 2,
+          "pct_of_source": 9.0909
+        },
+        {
+          "source_node_id": 7,
+          "target_node_id": 58,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C10",
+          "value": 1,
+          "pct_of_source": 1.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 59,
+          "source_label": "output_block_0_C8",
+          "target_label": "output_block_1_C3",
+          "value": 1,
+          "pct_of_source": 2.7027
+        },
+        {
+          "source_node_id": 59,
+          "target_node_id": 3,
+          "source_label": "output_block_1_C3",
+          "target_label": "output_block_2_C7",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 31,
+          "target_node_id": 18,
+          "source_label": "output_block_2_C1",
+          "target_label": "output_block_3_C5",
+          "value": 1,
+          "pct_of_source": 25.0
+        },
+        {
+          "source_node_id": 42,
+          "target_node_id": 33,
+          "source_label": "output_block_3_C7",
+          "target_label": "output_block_4_C1",
+          "value": 2,
+          "pct_of_source": 13.3333
+        },
+        {
+          "source_node_id": 10,
+          "target_node_id": 31,
+          "source_label": "output_block_1_C4",
+          "target_label": "output_block_2_C1",
+          "value": 1,
+          "pct_of_source": 2.5
+        },
+        {
+          "source_node_id": 12,
+          "target_node_id": 33,
+          "source_label": "output_block_3_C6",
+          "target_label": "output_block_4_C1",
+          "value": 2,
+          "pct_of_source": 3.0303
+        },
+        {
+          "source_node_id": 33,
+          "target_node_id": 30,
+          "source_label": "output_block_4_C1",
+          "target_label": "u_mlp_input_C4",
+          "value": 1,
+          "pct_of_source": 10.0
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 60,
+          "source_label": "output_block_4_C3",
+          "target_label": "u_mlp_input_C3",
+          "value": 1,
+          "pct_of_source": 1.0417
+        },
+        {
+          "source_node_id": 60,
+          "target_node_id": 7,
+          "source_label": "u_mlp_input_C3",
+          "target_label": "u_mlp_l1_C0",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 28,
+          "target_node_id": 33,
+          "source_label": "output_block_3_C1",
+          "target_label": "output_block_4_C1",
+          "value": 1,
+          "pct_of_source": 14.2857
+        },
+        {
+          "source_node_id": 21,
+          "target_node_id": 8,
+          "source_label": "u_mlp_l1_C1",
+          "target_label": "u_mlp_l2_C9",
+          "value": 1,
+          "pct_of_source": 1.9231
+        }
+      ],
+      "nodes": {
+        "emb": [
+          {
+            "id": 0,
+            "cluster": "0",
+            "label": "emb_C0",
+            "value": 8.0,
+            "previous": 0.0
+          },
+          {
+            "id": 13,
+            "cluster": "2",
+            "label": "emb_C2",
+            "value": 70.0,
+            "previous": 50.0
+          },
+          {
+            "id": 16,
+            "cluster": "1",
+            "label": "emb_C1",
+            "value": 42.0,
+            "previous": 8.0
+          },
+          {
+            "id": 22,
+            "cluster": "3",
+            "label": "emb_C3",
+            "value": 27.0,
+            "previous": 120.0
+          },
+          {
+            "id": 44,
+            "cluster": "4",
+            "label": "emb_C4",
+            "value": 5.0,
+            "previous": 147.0
+          }
+        ],
+        "output_block_0": [
+          {
+            "id": 1,
+            "cluster": "8",
+            "label": "output_block_0_C8",
+            "value": 37.0,
+            "previous": 115.0
+          },
+          {
+            "id": 9,
+            "cluster": "2",
+            "label": "output_block_0_C2",
+            "value": 53.0,
+            "previous": 5.0
+          },
+          {
+            "id": 17,
+            "cluster": "7",
+            "label": "output_block_0_C7",
+            "value": 49.0,
+            "previous": 66.0
+          },
+          {
+            "id": 34,
+            "cluster": "1",
+            "label": "output_block_0_C1",
+            "value": 4.0,
+            "previous": 1.0
+          },
+          {
+            "id": 39,
+            "cluster": "4",
+            "label": "output_block_0_C4",
+            "value": 1.0,
+            "previous": 63.0
+          },
+          {
+            "id": 43,
+            "cluster": "3",
+            "label": "output_block_0_C3",
+            "value": 5.0,
+            "previous": 58.0
+          },
+          {
+            "id": 47,
+            "cluster": "0",
+            "label": "output_block_0_C0",
+            "value": 1.0,
+            "previous": 0.0
+          },
+          {
+            "id": 53,
+            "cluster": "5",
+            "label": "output_block_0_C5",
+            "value": 1.0,
+            "previous": 64.0
+          },
+          {
+            "id": 55,
+            "cluster": "6",
+            "label": "output_block_0_C6",
+            "value": 1.0,
+            "previous": 65.0
+          }
+        ],
+        "output_block_1": [
+          {
+            "id": 2,
+            "cluster": "2",
+            "label": "output_block_1_C2",
+            "value": 70.0,
+            "previous": 23.0
+          },
+          {
+            "id": 10,
+            "cluster": "4",
+            "label": "output_block_1_C4",
+            "value": 40.0,
+            "previous": 94.0
+          },
+          {
+            "id": 23,
+            "cluster": "6",
+            "label": "output_block_1_C6",
+            "value": 17.0,
+            "previous": 135.0
+          },
+          {
+            "id": 27,
+            "cluster": "1",
+            "label": "output_block_1_C1",
+            "value": 22.0,
+            "previous": 1.0
+          },
+          {
+            "id": 38,
+            "cluster": "5",
+            "label": "output_block_1_C5",
+            "value": 1.0,
+            "previous": 134.0
+          },
+          {
+            "id": 48,
+            "cluster": "0",
+            "label": "output_block_1_C0",
+            "value": 1.0,
+            "previous": 0.0
+          },
+          {
+            "id": 59,
+            "cluster": "3",
+            "label": "output_block_1_C3",
+            "value": 1.0,
+            "previous": 93.0
+          }
+        ],
+        "output_block_2": [
+          {
+            "id": 3,
+            "cluster": "7",
+            "label": "output_block_2_C7",
+            "value": 66.0,
+            "previous": 86.0
+          },
+          {
+            "id": 11,
+            "cluster": "3",
+            "label": "output_block_2_C3",
+            "value": 36.0,
+            "previous": 47.0
+          },
+          {
+            "id": 24,
+            "cluster": "2",
+            "label": "output_block_2_C2",
+            "value": 42.0,
+            "previous": 5.0
+          },
+          {
+            "id": 31,
+            "cluster": "1",
+            "label": "output_block_2_C1",
+            "value": 4.0,
+            "previous": 1.0
+          },
+          {
+            "id": 40,
+            "cluster": "4",
+            "label": "output_block_2_C4",
+            "value": 1.0,
+            "previous": 83.0
+          },
+          {
+            "id": 49,
+            "cluster": "0",
+            "label": "output_block_2_C0",
+            "value": 1.0,
+            "previous": 0.0
+          },
+          {
+            "id": 54,
+            "cluster": "6",
+            "label": "output_block_2_C6",
+            "value": 1.0,
+            "previous": 85.0
+          },
+          {
+            "id": 57,
+            "cluster": "5",
+            "label": "output_block_2_C5",
+            "value": 1.0,
+            "previous": 84.0
+          }
+        ],
+        "output_block_3": [
+          {
+            "id": 4,
+            "cluster": "3",
+            "label": "output_block_3_C3",
+            "value": 34.0,
+            "previous": 10.0
+          },
+          {
+            "id": 12,
+            "cluster": "6",
+            "label": "output_block_3_C6",
+            "value": 66.0,
+            "previous": 71.0
+          },
+          {
+            "id": 18,
+            "cluster": "5",
+            "label": "output_block_3_C5",
+            "value": 26.0,
+            "previous": 45.0
+          },
+          {
+            "id": 26,
+            "cluster": "2",
+            "label": "output_block_3_C2",
+            "value": 2.0,
+            "previous": 8.0
+          },
+          {
+            "id": 28,
+            "cluster": "1",
+            "label": "output_block_3_C1",
+            "value": 7.0,
+            "previous": 1.0
+          },
+          {
+            "id": 41,
+            "cluster": "4",
+            "label": "output_block_3_C4",
+            "value": 1.0,
+            "previous": 44.0
+          },
+          {
+            "id": 42,
+            "cluster": "7",
+            "label": "output_block_3_C7",
+            "value": 15.0,
+            "previous": 137.0
+          },
+          {
+            "id": 50,
+            "cluster": "0",
+            "label": "output_block_3_C0",
+            "value": 1.0,
+            "previous": 0.0
+          }
+        ],
+        "output_block_4": [
+          {
+            "id": 5,
+            "cluster": "3",
+            "label": "output_block_4_C3",
+            "value": 96.0,
+            "previous": 56.0
+          },
+          {
+            "id": 19,
+            "cluster": "2",
+            "label": "output_block_4_C2",
+            "value": 45.0,
+            "previous": 11.0
+          },
+          {
+            "id": 33,
+            "cluster": "1",
+            "label": "output_block_4_C1",
+            "value": 10.0,
+            "previous": 1.0
+          },
+          {
+            "id": 51,
+            "cluster": "0",
+            "label": "output_block_4_C0",
+            "value": 1.0,
+            "previous": 0.0
+          }
+        ],
+        "u_mlp_input": [
+          {
+            "id": 6,
+            "cluster": "2",
+            "label": "u_mlp_input_C2",
+            "value": 84.0,
+            "previous": 16.0
+          },
+          {
+            "id": 14,
+            "cluster": "5",
+            "label": "u_mlp_input_C5",
+            "value": 42.0,
+            "previous": 110.0
+          },
+          {
+            "id": 20,
+            "cluster": "1",
+            "label": "u_mlp_input_C1",
+            "value": 15.0,
+            "previous": 1.0
+          },
+          {
+            "id": 30,
+            "cluster": "4",
+            "label": "u_mlp_input_C4",
+            "value": 9.0,
+            "previous": 101.0
+          },
+          {
+            "id": 52,
+            "cluster": "0",
+            "label": "u_mlp_input_C0",
+            "value": 1.0,
+            "previous": 0.0
+          },
+          {
+            "id": 60,
+            "cluster": "3",
+            "label": "u_mlp_input_C3",
+            "value": 1.0,
+            "previous": 100.0
+          }
+        ],
+        "u_mlp_l1": [
+          {
+            "id": 7,
+            "cluster": "0",
+            "label": "u_mlp_l1_C0",
+            "value": 100.0,
+            "previous": 0.0
+          },
+          {
+            "id": 21,
+            "cluster": "1",
+            "label": "u_mlp_l1_C1",
+            "value": 52.0,
+            "previous": 100.0
+          }
+        ],
+        "u_mlp_l2": [
+          {
+            "id": 8,
+            "cluster": "9",
+            "label": "u_mlp_l2_C9",
+            "value": 14.0,
+            "previous": 138.0
+          },
+          {
+            "id": 15,
+            "cluster": "3",
+            "label": "u_mlp_l2_C3",
+            "value": 77.0,
+            "previous": 40.0
+          },
+          {
+            "id": 25,
+            "cluster": "8",
+            "label": "u_mlp_l2_C8",
+            "value": 1.0,
+            "previous": 137.0
+          },
+          {
+            "id": 29,
+            "cluster": "6",
+            "label": "u_mlp_l2_C6",
+            "value": 12.0,
+            "previous": 124.0
+          },
+          {
+            "id": 32,
+            "cluster": "11",
+            "label": "u_mlp_l2_C11",
+            "value": 23.0,
+            "previous": 15.0
+          },
+          {
+            "id": 35,
+            "cluster": "1",
+            "label": "u_mlp_l2_C1",
+            "value": 10.0,
+            "previous": 4.0
+          },
+          {
+            "id": 36,
+            "cluster": "0",
+            "label": "u_mlp_l2_C0",
+            "value": 4.0,
+            "previous": 0.0
+          },
+          {
+            "id": 37,
+            "cluster": "4",
+            "label": "u_mlp_l2_C4",
+            "value": 4.0,
+            "previous": 117.0
+          },
+          {
+            "id": 45,
+            "cluster": "5",
+            "label": "u_mlp_l2_C5",
+            "value": 3.0,
+            "previous": 121.0
+          },
+          {
+            "id": 46,
+            "cluster": "2",
+            "label": "u_mlp_l2_C2",
+            "value": 2.0,
+            "previous": 38.0
+          },
+          {
+            "id": 56,
+            "cluster": "7",
+            "label": "u_mlp_l2_C7",
+            "value": 1.0,
+            "previous": 136.0
+          },
+          {
+            "id": 58,
+            "cluster": "10",
+            "label": "u_mlp_l2_C10",
+            "value": 1.0,
+            "previous": 14.0
+          }
+        ]
+      },
+      "node_count": 61
+    }
+  },
+  "layer": {
+    "emb": {
+      "filename": null,
+      "path": null,
+      "type": "temporal",
+      "layername": "emb",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C0",
+          "value": 2,
+          "pct_of_source": 9.5238
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C2",
+          "value": 4,
+          "pct_of_source": 19.0476
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C1",
+          "value": 7,
+          "pct_of_source": 33.3333
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C2",
+          "value": 15,
+          "pct_of_source": 41.6667
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C1",
+          "value": 27,
+          "pct_of_source": 28.4211
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C3",
+          "value": 13,
+          "pct_of_source": 13.6842
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C2",
+          "value": 51,
+          "pct_of_source": 53.6842
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C1",
+          "value": 8,
+          "pct_of_source": 22.2222
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C3",
+          "value": 7,
+          "pct_of_source": 19.4444
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 7,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C4",
+          "value": 4,
+          "pct_of_source": 4.2105
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C3",
+          "value": 7,
+          "pct_of_source": 33.3333
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C0",
+          "value": 6,
+          "pct_of_source": 16.6667
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 7,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C4",
+          "value": 1,
+          "pct_of_source": 4.7619
+        }
+      ],
+      "nodes": {
+        "dimenet10conf": [
+          {
+            "id": 0,
+            "cluster": "1",
+            "label": "dimenet10conf_C1",
+            "value": 21.0,
+            "previous": 36.0
+          },
+          {
+            "id": 4,
+            "cluster": "0",
+            "label": "dimenet10conf_C0",
+            "value": 36.0,
+            "previous": 0.0
+          },
+          {
+            "id": 5,
+            "cluster": "2",
+            "label": "dimenet10conf_C2",
+            "value": 95.0,
+            "previous": 57.0
+          }
+        ],
+        "dimenet_noaug": [
+          {
+            "id": 1,
+            "cluster": "0",
+            "label": "dimenet_noaug_C0",
+            "value": 8.0,
+            "previous": 0.0
+          },
+          {
+            "id": 2,
+            "cluster": "2",
+            "label": "dimenet_noaug_C2",
+            "value": 70.0,
+            "previous": 50.0
+          },
+          {
+            "id": 3,
+            "cluster": "1",
+            "label": "dimenet_noaug_C1",
+            "value": 42.0,
+            "previous": 8.0
+          },
+          {
+            "id": 6,
+            "cluster": "3",
+            "label": "dimenet_noaug_C3",
+            "value": 27.0,
+            "previous": 120.0
+          },
+          {
+            "id": 7,
+            "cluster": "4",
+            "label": "dimenet_noaug_C4",
+            "value": 5.0,
+            "previous": 147.0
+          }
+        ]
+      },
+      "node_count": 8
+    },
+    "output_block_0": {
+      "filename": null,
+      "path": null,
+      "type": "temporal",
+      "layername": "output_block_0",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C8",
+          "value": 13,
+          "pct_of_source": 37.1429
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C2",
+          "value": 11,
+          "pct_of_source": 31.4286
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C7",
+          "value": 8,
+          "pct_of_source": 22.8571
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C2",
+          "value": 32,
+          "pct_of_source": 40.0
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C8",
+          "value": 8,
+          "pct_of_source": 21.6216
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C7",
+          "value": 16,
+          "pct_of_source": 43.2432
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C2",
+          "value": 10,
+          "pct_of_source": 27.027
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C8",
+          "value": 16,
+          "pct_of_source": 20.0
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C7",
+          "value": 25,
+          "pct_of_source": 31.25
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C1",
+          "value": 3,
+          "pct_of_source": 8.1081
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 7,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C4",
+          "value": 1,
+          "pct_of_source": 2.8571
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 8,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C3",
+          "value": 3,
+          "pct_of_source": 3.75
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 9,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C0",
+          "value": 1,
+          "pct_of_source": 1.25
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 10,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C5",
+          "value": 1,
+          "pct_of_source": 1.25
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 11,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C6",
+          "value": 1,
+          "pct_of_source": 1.25
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C1",
+          "value": 1,
+          "pct_of_source": 1.25
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 8,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C3",
+          "value": 2,
+          "pct_of_source": 5.7143
+        }
+      ],
+      "nodes": {
+        "dimenet10conf": [
+          {
+            "id": 0,
+            "cluster": "1",
+            "label": "dimenet10conf_C1",
+            "value": 35.0,
+            "previous": 37.0
+          },
+          {
+            "id": 4,
+            "cluster": "2",
+            "label": "dimenet10conf_C2",
+            "value": 80.0,
+            "previous": 72.0
+          },
+          {
+            "id": 5,
+            "cluster": "0",
+            "label": "dimenet10conf_C0",
+            "value": 37.0,
+            "previous": 0.0
+          }
+        ],
+        "dimenet_noaug": [
+          {
+            "id": 1,
+            "cluster": "8",
+            "label": "dimenet_noaug_C8",
+            "value": 37.0,
+            "previous": 115.0
+          },
+          {
+            "id": 2,
+            "cluster": "2",
+            "label": "dimenet_noaug_C2",
+            "value": 53.0,
+            "previous": 5.0
+          },
+          {
+            "id": 3,
+            "cluster": "7",
+            "label": "dimenet_noaug_C7",
+            "value": 49.0,
+            "previous": 66.0
+          },
+          {
+            "id": 6,
+            "cluster": "1",
+            "label": "dimenet_noaug_C1",
+            "value": 4.0,
+            "previous": 1.0
+          },
+          {
+            "id": 7,
+            "cluster": "4",
+            "label": "dimenet_noaug_C4",
+            "value": 1.0,
+            "previous": 63.0
+          },
+          {
+            "id": 8,
+            "cluster": "3",
+            "label": "dimenet_noaug_C3",
+            "value": 5.0,
+            "previous": 58.0
+          },
+          {
+            "id": 9,
+            "cluster": "0",
+            "label": "dimenet_noaug_C0",
+            "value": 1.0,
+            "previous": 0.0
+          },
+          {
+            "id": 10,
+            "cluster": "5",
+            "label": "dimenet_noaug_C5",
+            "value": 1.0,
+            "previous": 64.0
+          },
+          {
+            "id": 11,
+            "cluster": "6",
+            "label": "dimenet_noaug_C6",
+            "value": 1.0,
+            "previous": 65.0
+          }
+        ]
+      },
+      "node_count": 12
+    },
+    "output_block_1": {
+      "filename": null,
+      "path": null,
+      "type": "temporal",
+      "layername": "output_block_1",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C2",
+          "value": 14,
+          "pct_of_source": 34.1463
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C4",
+          "value": 14,
+          "pct_of_source": 34.1463
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C2",
+          "value": 29,
+          "pct_of_source": 49.1525
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C6",
+          "value": 11,
+          "pct_of_source": 18.6441
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C2",
+          "value": 27,
+          "pct_of_source": 51.9231
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C1",
+          "value": 8,
+          "pct_of_source": 15.3846
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C4",
+          "value": 14,
+          "pct_of_source": 26.9231
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C1",
+          "value": 7,
+          "pct_of_source": 11.8644
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C4",
+          "value": 12,
+          "pct_of_source": 20.339
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 7,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C5",
+          "value": 1,
+          "pct_of_source": 2.439
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C6",
+          "value": 3,
+          "pct_of_source": 5.7692
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C1",
+          "value": 7,
+          "pct_of_source": 17.0732
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 8,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C0",
+          "value": 1,
+          "pct_of_source": 2.439
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C6",
+          "value": 3,
+          "pct_of_source": 7.3171
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 9,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C3",
+          "value": 1,
+          "pct_of_source": 2.439
+        }
+      ],
+      "nodes": {
+        "dimenet10conf": [
+          {
+            "id": 0,
+            "cluster": "2",
+            "label": "dimenet10conf_C2",
+            "value": 41.0,
+            "previous": 111.0
+          },
+          {
+            "id": 3,
+            "cluster": "0",
+            "label": "dimenet10conf_C0",
+            "value": 59.0,
+            "previous": 0.0
+          },
+          {
+            "id": 5,
+            "cluster": "1",
+            "label": "dimenet10conf_C1",
+            "value": 52.0,
+            "previous": 59.0
+          }
+        ],
+        "dimenet_noaug": [
+          {
+            "id": 1,
+            "cluster": "2",
+            "label": "dimenet_noaug_C2",
+            "value": 70.0,
+            "previous": 23.0
+          },
+          {
+            "id": 2,
+            "cluster": "4",
+            "label": "dimenet_noaug_C4",
+            "value": 40.0,
+            "previous": 94.0
+          },
+          {
+            "id": 4,
+            "cluster": "6",
+            "label": "dimenet_noaug_C6",
+            "value": 17.0,
+            "previous": 135.0
+          },
+          {
+            "id": 6,
+            "cluster": "1",
+            "label": "dimenet_noaug_C1",
+            "value": 22.0,
+            "previous": 1.0
+          },
+          {
+            "id": 7,
+            "cluster": "5",
+            "label": "dimenet_noaug_C5",
+            "value": 1.0,
+            "previous": 134.0
+          },
+          {
+            "id": 8,
+            "cluster": "0",
+            "label": "dimenet_noaug_C0",
+            "value": 1.0,
+            "previous": 0.0
+          },
+          {
+            "id": 9,
+            "cluster": "3",
+            "label": "dimenet_noaug_C3",
+            "value": 1.0,
+            "previous": 93.0
+          }
+        ]
+      },
+      "node_count": 10
+    },
+    "output_block_2": {
+      "filename": null,
+      "path": null,
+      "type": "temporal",
+      "layername": "output_block_2",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C7",
+          "value": 19,
+          "pct_of_source": 44.186
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C3",
+          "value": 9,
+          "pct_of_source": 20.9302
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C7",
+          "value": 25,
+          "pct_of_source": 43.8596
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C7",
+          "value": 22,
+          "pct_of_source": 42.3077
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 5,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C2",
+          "value": 10,
+          "pct_of_source": 19.2308
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C3",
+          "value": 18,
+          "pct_of_source": 34.6154
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 5,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C2",
+          "value": 20,
+          "pct_of_source": 35.0877
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C3",
+          "value": 9,
+          "pct_of_source": 15.7895
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C1",
+          "value": 1,
+          "pct_of_source": 1.7544
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 5,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C2",
+          "value": 12,
+          "pct_of_source": 27.907
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 7,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C4",
+          "value": 1,
+          "pct_of_source": 1.7544
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C1",
+          "value": 1,
+          "pct_of_source": 1.9231
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 8,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C0",
+          "value": 1,
+          "pct_of_source": 2.3256
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 9,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C6",
+          "value": 1,
+          "pct_of_source": 1.9231
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 10,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C5",
+          "value": 1,
+          "pct_of_source": 1.7544
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C1",
+          "value": 2,
+          "pct_of_source": 4.6512
+        }
+      ],
+      "nodes": {
+        "dimenet10conf": [
+          {
+            "id": 0,
+            "cluster": "1",
+            "label": "dimenet10conf_C1",
+            "value": 43.0,
+            "previous": 52.0
+          },
+          {
+            "id": 3,
+            "cluster": "2",
+            "label": "dimenet10conf_C2",
+            "value": 57.0,
+            "previous": 95.0
+          },
+          {
+            "id": 4,
+            "cluster": "0",
+            "label": "dimenet10conf_C0",
+            "value": 52.0,
+            "previous": 0.0
+          }
+        ],
+        "dimenet_noaug": [
+          {
+            "id": 1,
+            "cluster": "7",
+            "label": "dimenet_noaug_C7",
+            "value": 66.0,
+            "previous": 86.0
+          },
+          {
+            "id": 2,
+            "cluster": "3",
+            "label": "dimenet_noaug_C3",
+            "value": 36.0,
+            "previous": 47.0
+          },
+          {
+            "id": 5,
+            "cluster": "2",
+            "label": "dimenet_noaug_C2",
+            "value": 42.0,
+            "previous": 5.0
+          },
+          {
+            "id": 6,
+            "cluster": "1",
+            "label": "dimenet_noaug_C1",
+            "value": 4.0,
+            "previous": 1.0
+          },
+          {
+            "id": 7,
+            "cluster": "4",
+            "label": "dimenet_noaug_C4",
+            "value": 1.0,
+            "previous": 83.0
+          },
+          {
+            "id": 8,
+            "cluster": "0",
+            "label": "dimenet_noaug_C0",
+            "value": 1.0,
+            "previous": 0.0
+          },
+          {
+            "id": 9,
+            "cluster": "6",
+            "label": "dimenet_noaug_C6",
+            "value": 1.0,
+            "previous": 85.0
+          },
+          {
+            "id": 10,
+            "cluster": "5",
+            "label": "dimenet_noaug_C5",
+            "value": 1.0,
+            "previous": 84.0
+          }
+        ]
+      },
+      "node_count": 11
+    },
+    "output_block_3": {
+      "filename": null,
+      "path": null,
+      "type": "temporal",
+      "layername": "output_block_3",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C3",
+          "value": 4,
+          "pct_of_source": 17.3913
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C6",
+          "value": 11,
+          "pct_of_source": 47.8261
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C5",
+          "value": 5,
+          "pct_of_source": 21.7391
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C6",
+          "value": 38,
+          "pct_of_source": 40.4255
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C3",
+          "value": 25,
+          "pct_of_source": 26.5957
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C5",
+          "value": 15,
+          "pct_of_source": 15.9574
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 5,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C2",
+          "value": 2,
+          "pct_of_source": 2.1277
+        },
+        {
+          "source_node_id": 6,
+          "target_node_id": 7,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C1",
+          "value": 3,
+          "pct_of_source": 8.5714
+        },
+        {
+          "source_node_id": 6,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C6",
+          "value": 17,
+          "pct_of_source": 48.5714
+        },
+        {
+          "source_node_id": 6,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C3",
+          "value": 5,
+          "pct_of_source": 14.2857
+        },
+        {
+          "source_node_id": 6,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C5",
+          "value": 6,
+          "pct_of_source": 17.1429
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 7,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C1",
+          "value": 4,
+          "pct_of_source": 4.2553
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 8,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C4",
+          "value": 1,
+          "pct_of_source": 4.3478
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 9,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C7",
+          "value": 10,
+          "pct_of_source": 10.6383
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 9,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C7",
+          "value": 2,
+          "pct_of_source": 8.6957
+        },
+        {
+          "source_node_id": 6,
+          "target_node_id": 10,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C0",
+          "value": 1,
+          "pct_of_source": 2.8571
+        },
+        {
+          "source_node_id": 6,
+          "target_node_id": 9,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C7",
+          "value": 3,
+          "pct_of_source": 8.5714
+        }
+      ],
+      "nodes": {
+        "dimenet10conf": [
+          {
+            "id": 0,
+            "cluster": "0",
+            "label": "dimenet10conf_C0",
+            "value": 23.0,
+            "previous": 0.0
+          },
+          {
+            "id": 4,
+            "cluster": "1",
+            "label": "dimenet10conf_C1",
+            "value": 94.0,
+            "previous": 23.0
+          },
+          {
+            "id": 6,
+            "cluster": "2",
+            "label": "dimenet10conf_C2",
+            "value": 35.0,
+            "previous": 117.0
+          }
+        ],
+        "dimenet_noaug": [
+          {
+            "id": 1,
+            "cluster": "3",
+            "label": "dimenet_noaug_C3",
+            "value": 34.0,
+            "previous": 10.0
+          },
+          {
+            "id": 2,
+            "cluster": "6",
+            "label": "dimenet_noaug_C6",
+            "value": 66.0,
+            "previous": 71.0
+          },
+          {
+            "id": 3,
+            "cluster": "5",
+            "label": "dimenet_noaug_C5",
+            "value": 26.0,
+            "previous": 45.0
+          },
+          {
+            "id": 5,
+            "cluster": "2",
+            "label": "dimenet_noaug_C2",
+            "value": 2.0,
+            "previous": 8.0
+          },
+          {
+            "id": 7,
+            "cluster": "1",
+            "label": "dimenet_noaug_C1",
+            "value": 7.0,
+            "previous": 1.0
+          },
+          {
+            "id": 8,
+            "cluster": "4",
+            "label": "dimenet_noaug_C4",
+            "value": 1.0,
+            "previous": 44.0
+          },
+          {
+            "id": 9,
+            "cluster": "7",
+            "label": "dimenet_noaug_C7",
+            "value": 15.0,
+            "previous": 137.0
+          },
+          {
+            "id": 10,
+            "cluster": "0",
+            "label": "dimenet_noaug_C0",
+            "value": 1.0,
+            "previous": 0.0
+          }
+        ]
+      },
+      "node_count": 11
+    },
+    "output_block_4": {
+      "filename": null,
+      "path": null,
+      "type": "temporal",
+      "layername": "output_block_4",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C3",
+          "value": 43,
+          "pct_of_source": 61.4286
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C3",
+          "value": 27,
+          "pct_of_source": 75.0
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C2",
+          "value": 6,
+          "pct_of_source": 16.6667
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C2",
+          "value": 17,
+          "pct_of_source": 36.9565
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C3",
+          "value": 26,
+          "pct_of_source": 56.5217
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C2",
+          "value": 22,
+          "pct_of_source": 31.4286
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 5,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C1",
+          "value": 2,
+          "pct_of_source": 5.5556
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C0",
+          "value": 1,
+          "pct_of_source": 2.7778
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 5,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C1",
+          "value": 5,
+          "pct_of_source": 7.1429
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 5,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C1",
+          "value": 3,
+          "pct_of_source": 6.5217
+        }
+      ],
+      "nodes": {
+        "dimenet10conf": [
+          {
+            "id": 0,
+            "cluster": "2",
+            "label": "dimenet10conf_C2",
+            "value": 70.0,
+            "previous": 82.0
+          },
+          {
+            "id": 2,
+            "cluster": "1",
+            "label": "dimenet10conf_C1",
+            "value": 36.0,
+            "previous": 46.0
+          },
+          {
+            "id": 4,
+            "cluster": "0",
+            "label": "dimenet10conf_C0",
+            "value": 46.0,
+            "previous": 0.0
+          }
+        ],
+        "dimenet_noaug": [
+          {
+            "id": 1,
+            "cluster": "3",
+            "label": "dimenet_noaug_C3",
+            "value": 96.0,
+            "previous": 56.0
+          },
+          {
+            "id": 3,
+            "cluster": "2",
+            "label": "dimenet_noaug_C2",
+            "value": 45.0,
+            "previous": 11.0
+          },
+          {
+            "id": 5,
+            "cluster": "1",
+            "label": "dimenet_noaug_C1",
+            "value": 10.0,
+            "previous": 1.0
+          },
+          {
+            "id": 6,
+            "cluster": "0",
+            "label": "dimenet_noaug_C0",
+            "value": 1.0,
+            "previous": 0.0
+          }
+        ]
+      },
+      "node_count": 7
+    },
+    "u_mlp_input": {
+      "filename": null,
+      "path": null,
+      "type": "temporal",
+      "layername": "u_mlp_input",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C2",
+          "value": 36,
+          "pct_of_source": 57.1429
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C5",
+          "value": 13,
+          "pct_of_source": 36.1111
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C2",
+          "value": 18,
+          "pct_of_source": 50.0
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 5,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C1",
+          "value": 5,
+          "pct_of_source": 9.434
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C2",
+          "value": 30,
+          "pct_of_source": 56.6038
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C5",
+          "value": 17,
+          "pct_of_source": 26.9841
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 5,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C1",
+          "value": 6,
+          "pct_of_source": 9.5238
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C4",
+          "value": 3,
+          "pct_of_source": 4.7619
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 5,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C1",
+          "value": 4,
+          "pct_of_source": 11.1111
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 3,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C5",
+          "value": 12,
+          "pct_of_source": 22.6415
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 7,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C0",
+          "value": 1,
+          "pct_of_source": 2.7778
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C4",
+          "value": 6,
+          "pct_of_source": 11.3208
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 8,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C3",
+          "value": 1,
+          "pct_of_source": 1.5873
+        }
+      ],
+      "nodes": {
+        "dimenet10conf": [
+          {
+            "id": 0,
+            "cluster": "2",
+            "label": "dimenet10conf_C2",
+            "value": 63.0,
+            "previous": 89.0
+          },
+          {
+            "id": 2,
+            "cluster": "0",
+            "label": "dimenet10conf_C0",
+            "value": 36.0,
+            "previous": 0.0
+          },
+          {
+            "id": 4,
+            "cluster": "1",
+            "label": "dimenet10conf_C1",
+            "value": 53.0,
+            "previous": 36.0
+          }
+        ],
+        "dimenet_noaug": [
+          {
+            "id": 1,
+            "cluster": "2",
+            "label": "dimenet_noaug_C2",
+            "value": 84.0,
+            "previous": 16.0
+          },
+          {
+            "id": 3,
+            "cluster": "5",
+            "label": "dimenet_noaug_C5",
+            "value": 42.0,
+            "previous": 110.0
+          },
+          {
+            "id": 5,
+            "cluster": "1",
+            "label": "dimenet_noaug_C1",
+            "value": 15.0,
+            "previous": 1.0
+          },
+          {
+            "id": 6,
+            "cluster": "4",
+            "label": "dimenet_noaug_C4",
+            "value": 9.0,
+            "previous": 101.0
+          },
+          {
+            "id": 7,
+            "cluster": "0",
+            "label": "dimenet_noaug_C0",
+            "value": 1.0,
+            "previous": 0.0
+          },
+          {
+            "id": 8,
+            "cluster": "3",
+            "label": "dimenet_noaug_C3",
+            "value": 1.0,
+            "previous": 100.0
+          }
+        ]
+      },
+      "node_count": 9
+    },
+    "u_mlp_l1": {
+      "filename": null,
+      "path": null,
+      "type": "temporal",
+      "layername": "u_mlp_l1",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C21",
+          "target_label": "dimenet_noaug_C0",
+          "value": 13,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C20",
+          "target_label": "dimenet_noaug_C0",
+          "value": 82,
+          "pct_of_source": 71.3043
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C1",
+          "value": 5,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 5,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C4",
+          "target_label": "dimenet_noaug_C1",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 6,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C3",
+          "target_label": "dimenet_noaug_C1",
+          "value": 2,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C20",
+          "target_label": "dimenet_noaug_C1",
+          "value": 33,
+          "pct_of_source": 28.6957
+        },
+        {
+          "source_node_id": 7,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C10",
+          "target_label": "dimenet_noaug_C1",
+          "value": 5,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 8,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C16",
+          "target_label": "dimenet_noaug_C1",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 9,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C12",
+          "target_label": "dimenet_noaug_C0",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 10,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C14",
+          "target_label": "dimenet_noaug_C1",
+          "value": 1,
+          "pct_of_source": 33.3333
+        },
+        {
+          "source_node_id": 10,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C14",
+          "target_label": "dimenet_noaug_C0",
+          "value": 2,
+          "pct_of_source": 66.6667
+        },
+        {
+          "source_node_id": 11,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C15",
+          "target_label": "dimenet_noaug_C0",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 12,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C13",
+          "target_label": "dimenet_noaug_C1",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 13,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C0",
+          "value": 1,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 14,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C11",
+          "target_label": "dimenet_noaug_C1",
+          "value": 2,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 15,
+          "target_node_id": 4,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C1",
+          "value": 1,
+          "pct_of_source": 100.0
+        }
+      ],
+      "nodes": {
+        "dimenet10conf": [
+          {
+            "id": 0,
+            "cluster": "21",
+            "label": "dimenet10conf_C21",
+            "value": 13.0,
+            "previous": 136.0
+          },
+          {
+            "id": 2,
+            "cluster": "20",
+            "label": "dimenet10conf_C20",
+            "value": 115.0,
+            "previous": 21.0
+          },
+          {
+            "id": 3,
+            "cluster": "0",
+            "label": "dimenet10conf_C0",
+            "value": 5.0,
+            "previous": 0.0
+          },
+          {
+            "id": 5,
+            "cluster": "4",
+            "label": "dimenet10conf_C4",
+            "value": 1.0,
+            "previous": 151.0
+          },
+          {
+            "id": 6,
+            "cluster": "3",
+            "label": "dimenet10conf_C3",
+            "value": 2.0,
+            "previous": 149.0
+          },
+          {
+            "id": 7,
+            "cluster": "10",
+            "label": "dimenet10conf_C10",
+            "value": 5.0,
+            "previous": 6.0
+          },
+          {
+            "id": 8,
+            "cluster": "16",
+            "label": "dimenet10conf_C16",
+            "value": 1.0,
+            "previous": 19.0
+          },
+          {
+            "id": 9,
+            "cluster": "12",
+            "label": "dimenet10conf_C12",
+            "value": 1.0,
+            "previous": 13.0
+          },
+          {
+            "id": 10,
+            "cluster": "14",
+            "label": "dimenet10conf_C14",
+            "value": 3.0,
+            "previous": 15.0
+          },
+          {
+            "id": 11,
+            "cluster": "15",
+            "label": "dimenet10conf_C15",
+            "value": 1.0,
+            "previous": 18.0
+          },
+          {
+            "id": 12,
+            "cluster": "13",
+            "label": "dimenet10conf_C13",
+            "value": 1.0,
+            "previous": 14.0
+          },
+          {
+            "id": 13,
+            "cluster": "1",
+            "label": "dimenet10conf_C1",
+            "value": 1.0,
+            "previous": 5.0
+          },
+          {
+            "id": 14,
+            "cluster": "11",
+            "label": "dimenet10conf_C11",
+            "value": 2.0,
+            "previous": 11.0
+          },
+          {
+            "id": 15,
+            "cluster": "2",
+            "label": "dimenet10conf_C2",
+            "value": 1.0,
+            "previous": 20.0
+          }
+        ],
+        "dimenet_noaug": [
+          {
+            "id": 1,
+            "cluster": "0",
+            "label": "dimenet_noaug_C0",
+            "value": 100.0,
+            "previous": 0.0
+          },
+          {
+            "id": 4,
+            "cluster": "1",
+            "label": "dimenet_noaug_C1",
+            "value": 52.0,
+            "previous": 100.0
+          }
+        ]
+      },
+      "node_count": 16
+    },
+    "u_mlp_l2": {
+      "filename": null,
+      "path": null,
+      "type": "temporal",
+      "layername": "u_mlp_l2",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C9",
+          "value": 7,
+          "pct_of_source": 12.069
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C3",
+          "value": 31,
+          "pct_of_source": 53.4483
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C3",
+          "value": 24,
+          "pct_of_source": 42.1053
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C9",
+          "value": 6,
+          "pct_of_source": 10.5263
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 2,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C3",
+          "value": 22,
+          "pct_of_source": 59.4595
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 5,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C8",
+          "value": 1,
+          "pct_of_source": 2.7027
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C6",
+          "value": 9,
+          "pct_of_source": 15.5172
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 7,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C11",
+          "value": 4,
+          "pct_of_source": 6.8966
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 6,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C6",
+          "value": 3,
+          "pct_of_source": 5.2632
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 7,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C11",
+          "value": 6,
+          "pct_of_source": 16.2162
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 8,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C1",
+          "value": 5,
+          "pct_of_source": 13.5135
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 9,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C0",
+          "value": 3,
+          "pct_of_source": 5.2632
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 10,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C4",
+          "value": 3,
+          "pct_of_source": 5.2632
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 8,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C1",
+          "value": 5,
+          "pct_of_source": 8.7719
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 11,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C5",
+          "value": 3,
+          "pct_of_source": 5.1724
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 12,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C2",
+          "value": 2,
+          "pct_of_source": 3.4483
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 7,
+          "source_label": "dimenet10conf_C0",
+          "target_label": "dimenet_noaug_C11",
+          "value": 13,
+          "pct_of_source": 22.807
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 9,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C0",
+          "value": 1,
+          "pct_of_source": 2.7027
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 13,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C7",
+          "value": 1,
+          "pct_of_source": 1.7241
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 14,
+          "source_label": "dimenet10conf_C2",
+          "target_label": "dimenet_noaug_C10",
+          "value": 1,
+          "pct_of_source": 1.7241
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 10,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C4",
+          "value": 1,
+          "pct_of_source": 2.7027
+        },
+        {
+          "source_node_id": 4,
+          "target_node_id": 1,
+          "source_label": "dimenet10conf_C1",
+          "target_label": "dimenet_noaug_C9",
+          "value": 1,
+          "pct_of_source": 2.7027
+        }
+      ],
+      "nodes": {
+        "dimenet10conf": [
+          {
+            "id": 0,
+            "cluster": "2",
+            "label": "dimenet10conf_C2",
+            "value": 58.0,
+            "previous": 94.0
+          },
+          {
+            "id": 3,
+            "cluster": "0",
+            "label": "dimenet10conf_C0",
+            "value": 57.0,
+            "previous": 0.0
+          },
+          {
+            "id": 4,
+            "cluster": "1",
+            "label": "dimenet10conf_C1",
+            "value": 37.0,
+            "previous": 57.0
+          }
+        ],
+        "dimenet_noaug": [
+          {
+            "id": 1,
+            "cluster": "9",
+            "label": "dimenet_noaug_C9",
+            "value": 14.0,
+            "previous": 138.0
+          },
+          {
+            "id": 2,
+            "cluster": "3",
+            "label": "dimenet_noaug_C3",
+            "value": 77.0,
+            "previous": 40.0
+          },
+          {
+            "id": 5,
+            "cluster": "8",
+            "label": "dimenet_noaug_C8",
+            "value": 1.0,
+            "previous": 137.0
+          },
+          {
+            "id": 6,
+            "cluster": "6",
+            "label": "dimenet_noaug_C6",
+            "value": 12.0,
+            "previous": 124.0
+          },
+          {
+            "id": 7,
+            "cluster": "11",
+            "label": "dimenet_noaug_C11",
+            "value": 23.0,
+            "previous": 15.0
+          },
+          {
+            "id": 8,
+            "cluster": "1",
+            "label": "dimenet_noaug_C1",
+            "value": 10.0,
+            "previous": 4.0
+          },
+          {
+            "id": 9,
+            "cluster": "0",
+            "label": "dimenet_noaug_C0",
+            "value": 4.0,
+            "previous": 0.0
+          },
+          {
+            "id": 10,
+            "cluster": "4",
+            "label": "dimenet_noaug_C4",
+            "value": 4.0,
+            "previous": 117.0
+          },
+          {
+            "id": 11,
+            "cluster": "5",
+            "label": "dimenet_noaug_C5",
+            "value": 3.0,
+            "previous": 121.0
+          },
+          {
+            "id": 12,
+            "cluster": "2",
+            "label": "dimenet_noaug_C2",
+            "value": 2.0,
+            "previous": 38.0
+          },
+          {
+            "id": 13,
+            "cluster": "7",
+            "label": "dimenet_noaug_C7",
+            "value": 1.0,
+            "previous": 136.0
+          },
+          {
+            "id": 14,
+            "cluster": "10",
+            "label": "dimenet_noaug_C10",
+            "value": 1.0,
+            "previous": 14.0
+          }
+        ]
+      },
+      "node_count": 15
+    }
+  }
+}

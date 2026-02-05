@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="zh">
+
+<head>
+    <meta charset="utf-8">
+    <title>Timeline Transition</title>
+
+    <!-- D3 v7 -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont;
+            background: #fff;
+        }
+
+        #controls {
+            width: fit-content;
+            max-width: 100%;
+            margin: 8px auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+
+        #chart {
+            width: fit-content;
+            max-width: 100%;
+            margin: 10px auto;
+        }
+
+        input[type="range"] {
+            width: 600px;
+        }
+
+        .link-path.hidden {
+            display: none;
+        }
+
+        /* dual-handle single-track slider styling */
+        .range-slider {
+            position: relative;
+            width: 600px;
+            height: 36px;
+            display: inline-block;
+            align-items: center;
+        }
+
+        .range-slider input[type="range"] {
+            position: absolute;
+            left: 0;
+            top: 12px;
+            width: 100%;
+            pointer-events: none;
+            /* allow pointer events to be handled only on handles */
+            -webkit-appearance: none;
+            background: transparent;
+        }
+
+        .range-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            pointer-events: auto;
+            /* thumb still accepts events */
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #666;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .range-track {
+            position: absolute;
+            left: 0;
+            top: 18px;
+            height: 6px;
+            width: 100%;
+            background: linear-gradient(to right, #ddd 0%, #ddd 100%);
+            border-radius: 3px;
+        }
+
+        /* cell/column highlight */
+        .cell-highlight {}
+
+        .cell-dimmed {
+            opacity: 0.12 !important;
+        }
+
+        .link-dimmed {
+            stroke-opacity: 0.06 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="controls">
+        <label style="margin-right:8px;">Value range:</label>
+        <div class="range-slider" id="rangeSlider">
+            <div class="range-track" id="rangeTrack"></div>
+            <input id="minRange" class="range-min" type="range" min="0" max="152" step="1" value="0">
+            <input id="maxRange" class="range-max" type="range" min="0" max="152" step="1" value="152">
+        </div>
+        <span id="minValue" style="margin-left:12px;">0</span>
+        <span id="sep" style="margin-left:6px; margin-right:6px;">—</span>
+        <span id="maxValue">152</span>
+
+        <small style="color:#666; margin-left:12px;">link value threshold —
+            Mode: Default, Column, Row </small>
+        <div style="margin-left:18px; display:flex; gap:8px; align-items:center;">
+            <button id="btnDefault">Default</button>
+            <button id="btnColumn">Column</button>
+            <button id="btnRow">Row</button>
+            <button id="btnSwap">Swap X/Y</button>
+        </div>
+    </div>
+
+    <div id="chart">
+    </div>
+
+    <script>
+        // const EPOCH_NUMBER = 16;
+        // const LAYER_NUMBER = 5;
+        // const EPOCH_NAMES = ["000", "001", "002", "00", "004", "005", "006", "007", "008", "009", "010", "020", "040", "060", "080", "100"];
+        // const LAYER_NAMES = ["layer1", "layer2", "layer3", "layer4", "layer5"];
+        let EPOCH_NUMBER = 2;
+        let LAYER_NUMBER = 9;
+        let EPOCH_NAMES = ["dimenet10conf", "dimenet_noaug"];
+        let LAYER_NAMES = ["emb", "output_block_0", "output_block_1", "output_block_2", "output_block_3", "output_block_4", "u_mlp_input", "u_mlp_l1", "u_mlp_l2"];
+
+        // One-click swap X/Y axes (transpose the grid): controlled by URL param ?swap=1
+        const urlParams = new URLSearchParams(window.location.search);
+        let SWAP_AXES = (urlParams.get('swap') === '1');
+
+        const EPOCH_INDEX = new Map(EPOCH_NAMES.map((d, i) => [d, i]));
+        const LAYER_INDEX = new Map(LAYER_NAMES.map((d, i) => [d, i]));
+
+        // Current axis names (X is columns, Y is rows)
+        const X_NAMES = SWAP_AXES ? LAYER_NAMES : EPOCH_NAMES;
+        const Y_NAMES = SWAP_AXES ? EPOCH_NAMES : LAYER_NAMES;
+
+        function cellOrigin(epochName, layerName, cellW, cellH) {
+            const col = SWAP_AXES ? (LAYER_INDEX.get(layerName) ?? 0) : (EPOCH_INDEX.get(epochName) ?? 0);
+            const row = SWAP_AXES ? (EPOCH_INDEX.get(epochName) ?? 0) : (LAYER_INDEX.get(layerName) ?? 0);
+            return {
+                col,
+                row,
+                x: col * cellW,
+                y: row * cellH
+            };
+        }
+
+        function setSwapParam(nextSwap) {
+            const p = new URLSearchParams(window.location.search);
+            if (nextSwap) p.set('swap', '1');
+            else p.delete('swap');
+
+            // 把当前 slider 的 min/max 也写进 URL（如果元素已经存在）
+            const minEl = document.getElementById('minRange');
+            const maxEl = document.getElementById('maxRange');
+            if (minEl && maxEl) {
+                p.set('min', String(minEl.value));
+                p.set('max', String(maxEl.value));
+            }
+
+            const next = window.location.pathname + (p.toString() ? ('?' + p.toString()) : '');
+            window.location.href = next;
+        }
+
+        var data = null;
+        fetch('../latentvis/backend/data/sankey/all_sankey.json')
+            .then(res => res.json())
+            .then(json => {
+                data = json;
+
+                // Prefer keys from JSON to avoid mismatches
+                EPOCH_NAMES = Object.keys(data.epoch || {});
+                LAYER_NAMES = Object.keys(data.layer || {});
+                EPOCH_NUMBER = EPOCH_NAMES.length;
+                LAYER_NUMBER = LAYER_NAMES.length;
+
+                const margin = { top: 0, left: 50, right: 0, bottom: 20 };
+
+                // Grid-driven sizing (keep cell size roughly constant; overall SVG grows with grid)
+                const CELL_W = 120;   // width per grid cell
+                const CELL_H = 150;   // height per grid cell
+
+                const width = margin.left + margin.right + CELL_W * X_NAMES.length;
+                const height = margin.top + margin.bottom + CELL_H * Y_NAMES.length;
+
+                const svg = d3.select('#chart')
+                    .append('svg')
+                    .attr('width', width)
+                    .attr('height', height)
+                    .attr('viewBox', `0 0 ${width} ${height}`)
+                    .attr('preserveAspectRatio', 'xMinYMin meet');
+
+                d3.select('#chart').style('width', width + 'px');
+                d3.select('#chart').style('height', height + 'px');
+
+                const cellW = CELL_W;
+                const cellH = CELL_H;
+
+                const cellMargin = {
+                    top: 10,
+                    right: 5,
+                    bottom: 10,
+                    left: 5
+                };
+
+                const innerW = cellW - cellMargin.left - cellMargin.right;
+                const innerH = cellH - cellMargin.top - cellMargin.bottom;
+
+                const gRoot = svg.append('g')
+                    .attr('transform', `translate(${margin.left},${margin.top})`);
+
+                const cells = [];
+                X_NAMES.forEach((xKey, col) => {
+                    Y_NAMES.forEach((yKey, row) => {
+                        // Keep datum as {epoch, layer} regardless of swap
+                        const epoch = SWAP_AXES ? yKey : xKey;
+                        const layer = SWAP_AXES ? xKey : yKey;
+
+                        const g = gRoot.append('g')
+                            .attr('id', `cell-${epoch}-${layer}`)
+                            .attr('transform', `translate(${col * cellW}, ${row * cellH})`)
+                            .datum({ epoch, layer, col, row });
+                        g.append('rect')
+                            .attr('width', cellW)
+                            .attr('height', cellH)
+                            .attr('fill', 'white')
+                            .attr('stroke', '#888');
+                        const innerG = g.append('g')
+                            .attr(
+                                'transform',
+                                `translate(${cellMargin.left}, ${cellMargin.top})`
+                            );
+                        cells.push(innerG);
+                        // cell hover: highlight this cell's row and column (and related links)
+                        g.on('mouseenter', (event, datum) => {
+                            const ep = datum.epoch;
+                            const ly = datum.layer;
+                            setCellHighlight(ep, ly, true);
+                        }).on('mouseleave', (event, datum) => {
+                            const ep = datum.epoch;
+                            const ly = datum.layer;
+                            setCellHighlight(ep, ly, false);
+                        });
+                    });
+                });
+
+                const MAX_CLUSTER_NUMBER =15;
+                const MAX_INSTANCE_NUMBER = 156;
+
+                // set dual-slider (min/max) to MAX_INSTANCE_NUMBER
+                const minRange = document.getElementById('minRange');
+                const maxRange = document.getElementById('maxRange');
+                const minValue = document.getElementById('minValue');
+                const maxValue = document.getElementById('maxValue');
+
+                // init bounds
+                minRange.min = 0;
+                minRange.max = MAX_INSTANCE_NUMBER;
+                minRange.value = 0;
+
+                maxRange.min = 0;
+                maxRange.max = MAX_INSTANCE_NUMBER;
+                maxRange.value = MAX_INSTANCE_NUMBER;
+
+                const qMin = urlParams.get('min');
+                const qMax = urlParams.get('max');
+
+                if (qMin !== null) {
+                    const v = Math.max(0, Math.min(MAX_INSTANCE_NUMBER, +qMin));
+                    minRange.value = String(v);
+                }
+                if (qMax !== null) {
+                    const v = Math.max(0, Math.min(MAX_INSTANCE_NUMBER, +qMax));
+                    maxRange.value = String(v);
+                }
+
+                minValue.textContent = minRange.value;
+                maxValue.textContent = maxRange.value;
+
+                // helper: ensure min <= max (swap if user crosses)
+                function normalizeRange() {
+                    let a = +minRange.value;
+                    let b = +maxRange.value;
+                    if (a > b) {
+                        // swap to keep consistent
+                        const tmp = a; a = b; b = tmp;
+                        minRange.value = a;
+                        maxRange.value = b;
+                    }
+                    minValue.textContent = a;
+                    maxValue.textContent = b;
+                    return [a, b];
+                }
+
+                // update visual track to show selected interval between handles
+                function updateSliderTrack() {
+                    const minV = +minRange.min;
+                    const maxV = +maxRange.max;
+                    let a = +minRange.value;
+                    let b = +maxRange.value;
+                    if (a > b) { const tmp = a; a = b; b = tmp; }
+                    const startPct = ((a - minV) / (maxV - minV)) * 100;
+                    const endPct = ((b - minV) / (maxV - minV)) * 100;
+                    const track = document.getElementById('rangeTrack');
+                    track.style.background = `linear-gradient(to right, #ddd ${startPct}%, #86A69D ${startPct}%, #86A69D ${endPct}%, #ddd ${endPct}%)`;
+                }
+
+                // interaction mode & locking
+                let INTERACTION_MODE = 'default'; // 'default' | 'column' | 'row'
+                let LOCKED = null; // {type: 'col'|'row', key: '000' or 'layer1'} when a column/row is locked
+
+                const btnDefault = document.getElementById('btnDefault');
+                const btnColumn = document.getElementById('btnColumn');
+                const btnRow = document.getElementById('btnRow');
+                const btnSwap = document.getElementById('btnSwap');
+
+                function setMode(m) {
+                    console.log('setMode called ->', m);
+                    INTERACTION_MODE = m;
+                    // visual active state
+                    btnDefault.style.fontWeight = (m === 'default') ? '600' : '400';
+                    btnColumn.style.fontWeight = (m === 'column') ? '600' : '400';
+                    btnRow.style.fontWeight = (m === 'row') ? '600' : '400';
+                    // clear any existing lock when switching to default
+                    if (m === 'default') {
+                        LOCKED = null;
+                        // restore everything
+                        d3.selectAll('#chart svg g[id^="cell-"] rect').classed('cell-dimmed', false).classed('cell-highlight', false);
+                        d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', false).classed('link-highlight', false);
+                    }
+                    if (m === 'column') {
+                        // show links aligned with X-axis columns
+                        d3.selectAll('path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+                        if (!SWAP_AXES) {
+                            d3.selectAll('g.epoch-links path.link-path').classed('link-dimmed', false).classed('link-highlight', true);
+                            d3.selectAll('g.layer-links path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+                        } else {
+                            d3.selectAll('g.layer-links path.link-path').classed('link-dimmed', false).classed('link-highlight', true);
+                            d3.selectAll('g.epoch-links path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+                        }
+                        LOCKED = null;
+                    }
+                    if (m === 'row') {
+                        // show links aligned with Y-axis rows
+                        d3.selectAll('path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+                        if (!SWAP_AXES) {
+                            d3.selectAll('g.layer-links path.link-path').classed('link-dimmed', false).classed('link-highlight', true);
+                            d3.selectAll('g.epoch-links path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+                        } else {
+                            d3.selectAll('g.epoch-links path.link-path').classed('link-dimmed', false).classed('link-highlight', true);
+                            d3.selectAll('g.layer-links path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+                        }
+                        LOCKED = null;
+                    }
+                }
+                btnDefault.addEventListener('click', () => setMode('default'));
+                btnColumn.addEventListener('click', () => setMode('column'));
+                btnRow.addEventListener('click', () => setMode('row'));
+                btnSwap.addEventListener('click', () => setSwapParam(!SWAP_AXES));
+
+                // visual hint for current orientation
+                btnSwap.style.fontWeight = SWAP_AXES ? '600' : '400';
+                // initialize UI mode (and ensure button visuals reflect initial state)
+                setMode('default');
+
+                // new visibility function that uses both bounds
+                function updateLinkVisibilityRange(minVal, maxVal) {
+                    d3.selectAll('path.link-path').each(function () {
+                        const el = d3.select(this);
+                        const v = +el.attr('data-value') || 0;
+                        if (v < minVal || v > maxVal) {
+                            el.classed('hidden', true);
+                        } else {
+                            el.classed('hidden', false);
+                        }
+                    });
+                }
+
+                // initialize visibility
+                // const initial = normalizeRange();
+                // updateLinkVisibilityRange(initial[0], initial[1]);
+                // updateSliderTrack();
+                normalizeRange();
+                updateSliderTrack();
+
+                // wire both sliders
+                minRange.addEventListener('input', function () {
+                    const [a, b] = normalizeRange();
+                    updateLinkVisibilityRange(a, b);
+                    updateSliderTrack();
+                });
+                maxRange.addEventListener('input', function () {
+                    const [a, b] = normalizeRange();
+                    updateLinkVisibilityRange(a, b);
+                    updateSliderTrack();
+                });
+
+                var x = d3.scaleBand()
+                    .range([0, innerW])
+                    .domain(d3.range(MAX_CLUSTER_NUMBER))
+                    .padding(0.3);
+                var y = d3.scaleLinear()
+                    .domain([0, MAX_INSTANCE_NUMBER])
+                    .range([innerH, 0]);
+                cells.forEach(g => {
+                    const { epoch, layer } = g.datum();
+                    const cellData = {
+                        epochdata: data["epoch"][epoch],
+                        layerdata: data["layer"][layer]
+                    }
+                    // protect if no nodes for this combination
+                    const nodesForCell = (cellData.epochdata && cellData.epochdata.nodes && cellData.epochdata.nodes[layer]) || [];
+                    g.selectAll('rect.bar')
+                        .data(nodesForCell)
+                        .enter()
+                        .append('rect')
+                        .attr('class', 'bar')
+                        .attr('x', (d, i) => x(i))
+                        .attr('y', d => innerH - y(d.previous))
+                        .attr('width', x.bandwidth())
+                        .attr('height', d => innerH - y(d.value))
+                        .attr('fill', '#aaa');
+                });
+
+                const maxLink = 20;
+                // build a global scale for link widths using absolute edge values (not pct)
+                const allEdgeValues = [];
+                Object.keys(data.epoch).forEach(k => {
+                    (data.epoch[k].edges || []).forEach(e => { allEdgeValues.push(+e.value || 0); });
+                });
+                Object.keys(data.layer).forEach(k => {
+                    (data.layer[k].edges || []).forEach(e => { allEdgeValues.push(+e.value || 0); });
+                });
+                const maxEdgeVal = d3.max(allEdgeValues) || 1;
+                const linkWidthScale = d3.scaleSqrt()
+                    .domain([0, maxEdgeVal])
+                    .range([0.5, maxLink])
+                    .clamp(true);
+
+                const linkGroup = gRoot.append('g').attr('class', 'links epoch-links');
+                const epochCol = epochName => EPOCH_INDEX.get(epochName) ?? -1;
+                const layerRow = layerName => LAYER_INDEX.get(layerName) ?? -1;
+
+                // helper to create a path element and tag it with value
+                function appendLinkPath(group, pathD, edgeValue, strokeW, strokeColor, opacity) {
+                    return group.append('path')
+                        .attr('d', pathD)
+                        .attr('fill', 'none')
+                        .attr('stroke', strokeColor)
+                        .attr('stroke-width', strokeW)
+                        .attr('stroke-opacity', opacity)
+                        .attr('class', 'link-path')
+                        .attr('data-value', +edgeValue || 0);
+                }
+
+                Object.keys(data.epoch).forEach(epochKey => {
+                    const epochObj = data.epoch[epochKey];
+                    const col = epochCol(epochKey);
+                    if (col === -1) return;
+
+                    (epochObj.edges || []).forEach(edge => {
+                        let sourceInfo = null;
+                        let targetInfo = null;
+                        const nodesByLayer = epochObj.nodes || {};
+
+                        Object.keys(nodesByLayer).forEach(layerName => {
+                            (nodesByLayer[layerName] || []).forEach((node, idx) => {
+                                if (node.id === edge.source_node_id) {
+                                    sourceInfo = { node, layerName, idx };
+                                }
+                                if (node.id === edge.target_node_id) {
+                                    targetInfo = { node, layerName, idx };
+                                }
+                            });
+                        });
+
+                        if (!sourceInfo || !targetInfo) {
+                            console.warn('node not found for edge', edge);
+                            return;
+                        }
+
+                        const srcO = cellOrigin(epochKey, sourceInfo.layerName, cellW, cellH);
+                        const tgtO = cellOrigin(epochKey, targetInfo.layerName, cellW, cellH);
+
+                        const srcCellX = srcO.x;
+                        const srcCellY = srcO.y;
+                        const tgtCellX = tgtO.x;
+                        const tgtCellY = tgtO.y;
+
+                        const srcIdx = sourceInfo.idx;
+                        const tgtIdx = targetInfo.idx;
+
+                        const sPrev = sourceInfo.node.previous ?? 0;
+                        const sVal = sourceInfo.node.value ?? 0;
+                        const tPrev = targetInfo.node.previous ?? 0;
+                        const tVal = targetInfo.node.value ?? 0;
+
+                        const sBarY = innerH - y(sPrev);
+                        const sBarH = innerH - y(sVal);
+                        const tBarY = innerH - y(tPrev);
+                        const tBarH = innerH - y(tVal);
+
+                        const strokeW = linkWidthScale(+edge.value || 0);
+
+                        let pathD = '';
+                        if (!SWAP_AXES) {
+                            // vertical curve inside the same epoch column
+                            const srcCenterX = srcCellX + cellMargin.left + x(srcIdx) + x.bandwidth() / 2;
+                            const srcCenterY = srcCellY + cellMargin.top + sBarY + Math.max(0, sBarH);
+
+                            const tgtCenterX = tgtCellX + cellMargin.left + x(tgtIdx) + x.bandwidth() / 2;
+                            const tgtCenterY = tgtCellY + cellMargin.top + tBarY;
+
+                            const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
+                            pathD = `M ${srcCenterX},${srcCenterY}
+                     C ${srcCenterX},${srcCenterY + dy}
+                       ${tgtCenterX},${tgtCenterY - dy}
+                       ${tgtCenterX},${tgtCenterY}`;
+                        } else {
+                            // when swapped, epoch is a row -> curve horizontally across layer-columns
+                            const srcCenterX = srcCellX + cellMargin.left + x(srcIdx) + x.bandwidth();
+                            const srcCenterY = srcCellY + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
+
+                            const tgtCenterX = tgtCellX + cellMargin.left + x(tgtIdx);
+                            const tgtCenterY = tgtCellY + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
+
+                            const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
+                            pathD = `M ${srcCenterX},${srcCenterY}
+                     C ${srcCenterX + dx},${srcCenterY}
+                       ${tgtCenterX - dx},${tgtCenterY}
+                       ${tgtCenterX},${tgtCenterY}`;
+                        }
+
+                        const p = appendLinkPath(linkGroup, pathD, edge.value, strokeW, '#86A69D', 0.3);
+                        p.attr('data-epoch', epochKey);
+
+                    });
+                });
+
+                const linkGroup2 = gRoot.append('g').attr('class', 'links layer-links');
+                Object.keys(data.layer).forEach(layerKey => {
+                    const layerObj = data.layer[layerKey];
+                    const row = layerRow(layerKey);
+                    if (row === -1) return;
+
+                    (layerObj.edges || []).forEach(edge => {
+                        let sourceInfo = null;
+                        let targetInfo = null;
+                        const nodesByLayer = layerObj.nodes || {};
+
+                        Object.keys(nodesByLayer).forEach(epochName => {
+                            (nodesByLayer[epochName] || []).forEach((node, idx) => {
+                                if (node.id === edge.source_node_id) {
+                                    sourceInfo = { node, epochName, idx };
+                                }
+                                if (node.id === edge.target_node_id) {
+                                    targetInfo = { node, epochName, idx };
+                                }
+                            });
+                        });
+
+                        if (!sourceInfo || !targetInfo) {
+                            console.warn('node not found for edge', edge);
+                            return;
+                        }
+
+                        const srcO = cellOrigin(sourceInfo.epochName, layerKey, cellW, cellH);
+                        const tgtO = cellOrigin(targetInfo.epochName, layerKey, cellW, cellH);
+
+                        const srcCellX = srcO.x;
+                        const srcCellY = srcO.y;
+                        const tgtCellX = tgtO.x;
+                        const tgtCellY = tgtO.y;
+
+                        const srcIdx = sourceInfo.idx;
+                        const tgtIdx = targetInfo.idx;
+
+                        const sPrev = sourceInfo.node.previous ?? 0;
+                        const sVal = sourceInfo.node.value ?? 0;
+                        const tPrev = targetInfo.node.previous ?? 0;
+                        const tVal = targetInfo.node.value ?? 0;
+
+                        const sBarY = innerH - y(sPrev);
+                        const sBarH = innerH - y(sVal);
+                        const tBarY = innerH - y(tPrev);
+                        const tBarH = innerH - y(tVal);
+
+                        const strokeW = linkWidthScale(+edge.value || 0);
+
+                        let pathD = '';
+                        if (!SWAP_AXES) {
+                            // horizontal curve inside the same layer row
+                            const srcCenterX = srcCellX + cellMargin.left + x(srcIdx) + x.bandwidth();
+                            const srcCenterY = srcCellY + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
+
+                            const tgtCenterX = tgtCellX + cellMargin.left + x(tgtIdx);
+                            const tgtCenterY = tgtCellY + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
+
+                            const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
+                            pathD = `M ${srcCenterX},${srcCenterY}
+                     C ${srcCenterX + dx},${srcCenterY}
+                       ${tgtCenterX - dx},${tgtCenterY}
+                       ${tgtCenterX},${tgtCenterY}`;
+                        } else {
+                            // when swapped, layer is a column -> curve vertically across epoch-rows
+                            const srcCenterX = srcCellX + cellMargin.left + x(srcIdx) + x.bandwidth() / 2;
+                            const srcCenterY = srcCellY + cellMargin.top + sBarY + Math.max(0, sBarH);
+
+                            const tgtCenterX = tgtCellX + cellMargin.left + x(tgtIdx) + x.bandwidth() / 2;
+                            const tgtCenterY = tgtCellY + cellMargin.top + tBarY;
+
+                            const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
+                            pathD = `M ${srcCenterX},${srcCenterY}
+                     C ${srcCenterX},${srcCenterY + dy}
+                       ${tgtCenterX},${tgtCenterY - dy}
+                       ${tgtCenterX},${tgtCenterY}`;
+                        }
+
+                        const p2 = appendLinkPath(linkGroup2, pathD, edge.value, strokeW, '#F28585', 0.2);
+                        p2.attr('data-row', layerKey);
+
+                    });
+                });
+
+                const [initMin, initMax] = normalizeRange();
+                updateLinkVisibilityRange(initMin, initMax);
+
+                function setRowHighlight(rowKey, on) {
+                    if (on) {
+                        // dim all cells and links first
+                        d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', true).classed('cell-highlight', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+
+                        // undim & highlight cells in the chosen visual row (Y-axis)
+                        X_NAMES.forEach(xKey => {
+                            const epoch = SWAP_AXES ? rowKey : xKey;
+                            const layer = SWAP_AXES ? xKey : rowKey;
+                            const cellSel = d3.select(`#cell-${epoch}-${layer}`);
+                            if (!cellSel.empty()) {
+                                cellSel.select('rect').classed('cell-dimmed', false).classed('cell-highlight', true);
+                                cellSel.selectAll('rect.bar').classed('cell-dimmed', false);
+                            }
+                        });
+
+                        // highlight only links aligned with this visual row
+                        if (!SWAP_AXES) {
+                            // original: row is layer -> show layer-links for this layer
+                            d3.selectAll('g.layer-links path.link-path').each(function () {
+                                const el = d3.select(this);
+                                if (el.attr('data-row') === rowKey) {
+                                    el.classed('link-dimmed', false).classed('link-highlight', true);
+                                }
+                            });
+                        } else {
+                            // swapped: row is epoch -> show epoch-links for this epoch
+                            d3.selectAll('g.epoch-links path.link-path').each(function () {
+                                const el = d3.select(this);
+                                if (el.attr('data-epoch') === rowKey) {
+                                    el.classed('link-dimmed', false).classed('link-highlight', true);
+                                }
+                            });
+                        }
+                    } else {
+                        // restore everything
+                        d3.selectAll('#chart svg g[id^="cell-"] rect').classed('cell-dimmed', false).classed('cell-highlight', false);
+                        d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', false).classed('link-highlight', false);
+                    }
+                }
+
+                function setColHighlight(colKey, on) {
+                    if (on) {
+                        // dim all cells and links first
+                        d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', true).classed('cell-highlight', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+
+                        // undim & highlight cells in the chosen visual column (X-axis)
+                        Y_NAMES.forEach(yKey => {
+                            const epoch = SWAP_AXES ? yKey : colKey;
+                            const layer = SWAP_AXES ? colKey : yKey;
+                            const cellSel = d3.select(`#cell-${epoch}-${layer}`);
+                            if (!cellSel.empty()) {
+                                cellSel.select('rect').classed('cell-dimmed', false).classed('cell-highlight', true);
+                                cellSel.selectAll('rect.bar').classed('cell-dimmed', false);
+                            }
+                        });
+
+                        // highlight only links aligned with this visual column
+                        if (!SWAP_AXES) {
+                            // original: column is epoch -> show epoch-links for this epoch
+                            d3.selectAll('g.epoch-links path.link-path').each(function () {
+                                const el = d3.select(this);
+                                if (el.attr('data-epoch') === colKey) {
+                                    el.classed('link-dimmed', false).classed('link-highlight', true);
+                                }
+                            });
+                        } else {
+                            // swapped: column is layer -> show layer-links for this layer
+                            d3.selectAll('g.layer-links path.link-path').each(function () {
+                                const el = d3.select(this);
+                                if (el.attr('data-row') === colKey) {
+                                    el.classed('link-dimmed', false).classed('link-highlight', true);
+                                }
+                            });
+                        }
+                    } else {
+                        // restore everything
+                        d3.selectAll('#chart svg g[id^="cell-"] rect').classed('cell-dimmed', false).classed('cell-highlight', false);
+                        d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', false).classed('link-highlight', false);
+                    }
+                }
+
+                // cell-level highlight: highlight both row and column and their respective link groups
+                function setCellHighlight(epochName, layerName, on) {
+                    if (on) {
+                        // dim everything first
+                        d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', true).classed('cell-highlight', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', true).classed('link-highlight', false);
+
+                        // undim & highlight the entire row (layerName)
+                        EPOCH_NAMES.forEach(epoch => {
+                            const cellSel = d3.select(`#cell-${epoch}-${layerName}`);
+                            if (!cellSel.empty()) {
+                                cellSel.select('rect').classed('cell-dimmed', false).classed('cell-highlight', true);
+                                cellSel.selectAll('rect.bar').classed('cell-dimmed', false);
+                            }
+                        });
+
+                        // undim & highlight the entire column (epochName)
+                        LAYER_NAMES.forEach(layer => {
+                            const cellSel = d3.select(`#cell-${epochName}-${layer}`);
+                            if (!cellSel.empty()) {
+                                cellSel.select('rect').classed('cell-dimmed', false).classed('cell-highlight', true);
+                                cellSel.selectAll('rect.bar').classed('cell-dimmed', false);
+                            }
+                        });
+
+                        // highlight epoch-links for this column
+                        d3.selectAll('g.epoch-links path.link-path').each(function () {
+                            const el = d3.select(this);
+                            if (el.attr('data-epoch') === epochName) {
+                                el.classed('link-dimmed', false).classed('link-highlight', true);
+                            }
+                        });
+                        // highlight layer-links for this row
+                        d3.selectAll('g.layer-links path.link-path').each(function () {
+                            const el = d3.select(this);
+                            if (el.attr('data-row') === layerName) {
+                                el.classed('link-dimmed', false).classed('link-highlight', true);
+                            }
+                        });
+
+                    } else {
+                        // restore everything
+                        d3.selectAll('#chart svg g[id^="cell-"] rect').classed('cell-dimmed', false).classed('cell-highlight', false);
+                        d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed('cell-dimmed', false);
+                        d3.selectAll('path.link-path').classed('link-dimmed', false).classed('link-highlight', false);
+                    }
+                }
+
+                // Legends follow the current axes (left = Y axis, bottom = X axis)
+                const yLegendGroup = svg.append('g').attr('class', 'legend');
+                Y_NAMES.forEach((yKey, i) => {
+                    const rowCenterY = i * cellH + cellMargin.top + innerH / 2;
+                    const label = SWAP_AXES ? ('E' + yKey) : yKey;
+                    const txt = yLegendGroup.append('text')
+                        .attr('class', 'legend-text')
+                        .attr('x', margin.left - 5)
+                        .attr('y', rowCenterY)
+                        .attr('dy', '0.35em')
+                        .attr('text-anchor', 'end')
+                        .text(label)
+                        .attr('cursor', 'pointer');
+
+                    txt.on('mouseenter', () => setRowHighlight(yKey, true))
+                        .on('mouseleave', () => setRowHighlight(yKey, false));
+                });
+
+                const xLegendGroup = svg.append('g').attr('class', 'legend');
+                X_NAMES.forEach((xKey, i) => {
+                    const colCenterX = i * cellW + cellMargin.left + innerW;
+                    const yBelow = height - 6;
+                    const label = SWAP_AXES ? xKey : ('E' + xKey);
+                    const txt = xLegendGroup.append('text')
+                        .attr('class', 'legend-text')
+                        .attr('x', colCenterX)
+                        .attr('y', yBelow)
+                        .attr('dy', '0.35em')
+                        .attr('text-anchor', 'middle')
+                        .text(label)
+                        .attr('cursor', 'pointer');
+
+                    txt.on('mouseenter', () => setColHighlight(xKey, true))
+                        .on('mouseleave', () => setColHighlight(xKey, false));
+                });
+
+
+            });
+    </script>
+</body>
+
+</html>

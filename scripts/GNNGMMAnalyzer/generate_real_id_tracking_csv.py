@@ -293,7 +293,8 @@ class RealIDTracker:
             return
         
         # Create output folder for layer transitions with version suffix
-        layer_transitions_dir = self.output_dir / f'real_id_layer_transitions_{self.version}'
+        # layer_transitions_dir = self.output_dir / f'real_id_layer_transitions_{self.version}'
+        layer_transitions_dir = self.output_dir / f'real_id_layer_transitions'
         layer_transitions_dir.mkdir(parents=True, exist_ok=True)
         
         # Determine optimal components if not provided

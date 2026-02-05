@@ -228,7 +228,11 @@ def compute_mds_positions(embeddings_dict, n_components=2, random_state=42):
         X_squared = np.sum(X**2, axis=1, keepdims=True)
         distances_squared = X_squared + X_squared.T - 2 * X @ X.T
         distances_squared = np.maximum(distances_squared, 0)
-        return np.sqrt(distances_squared)
+        distances = np.sqrt(distances_squared)
+        # Ensure symmetry to avoid floating-point precision issues
+        # MDS requires a symmetric distance matrix
+        distances = (distances + distances.T) / 2.0
+        return distances
     
     positions = {}
     reducer = MDS(
