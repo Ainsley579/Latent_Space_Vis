@@ -1,12 +1,16 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import ZoomPan from "./ZoomPan.tsx";
 
 const DATA_PATH = "/data/sankey/all_sankey.json";
 const DEFAULT_MAX_INSTANCE = 158;
 
-export default function SankeyView() {
+type SankeyViewProps = {
+  onModelSelect?: (modelKey: string) => void;
+};
+
+export default function SankeyView({ onModelSelect }: SankeyViewProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [maxInstanceValue, setMaxInstanceValue] = useState(DEFAULT_MAX_INSTANCE);
@@ -124,6 +128,11 @@ export default function SankeyView() {
               setCellHighlight(datum.rowName, datum.columnName, true);
             }).on("mouseleave", (_event: any, datum: any) => {
               setCellHighlight(datum.rowName, datum.columnName, false);
+            }).on("click", (_event: any, datum: any) => {
+              const candidate = SWAP_AXES ? datum.columnName : datum.rowName;
+              if (candidate === "dimenet_noaug" || candidate === "dimenet10conf") {
+                onModelSelect?.(candidate);
+              }
             });
           });
         });
