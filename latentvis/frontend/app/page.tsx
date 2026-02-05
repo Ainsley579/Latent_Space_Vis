@@ -1,14 +1,21 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SankeyView from "./component/SankeyView.tsx";
 import SankeyHorizontal from "./component/SankeyHorizontal.tsx";
 import SankeyVertical from "./component/SankeyVertical.tsx";
+import ScatterPlot from "./component/ScatterPlot.tsx";
 
 export default function Home() {
   const [sankeyPath, setSankeyPath] = useState("/data/sankey/noaug_sankey_samples.json");
   const [sankeyPathVertical, setSankeyPathVertical] = useState("/data/sankey/vertical_model_samples_emb.json");
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [selectedLayer, setSelectedLayer] = useState("emb");
+  const [selectedModel, setSelectedModel] = useState("dimenet_noaug");
+  const [scatterPath, setScatterPath] = useState("/data/scatterplot/dimenet_noaug_emb.json");
+
+  useEffect(() => {
+    setScatterPath(`/data/scatterplot/${selectedModel}_${selectedLayer}.json`);
+  }, [selectedModel, selectedLayer]);
   return (
     <div className="flex min-h-screen">
       <main className="flex min-h-screen">
@@ -25,6 +32,7 @@ export default function Home() {
                   } else if (model === "dimenet10conf") {
                     setSankeyPath("/data/sankey/10conf_sankey_samples.json");
                   }
+                  setSelectedModel(model);
                 }}
                 onLayerSelect={(layer) => {
                   setSelectedLayer(layer);
@@ -59,7 +67,9 @@ export default function Home() {
             <div
               id="scatterplot"
               className="w-full h-full border border-zinc-400"
-            />
+            >
+              <ScatterPlot dataPath={scatterPath} />
+            </div>
           </div>
           <div className="w-[50%] h-[25%] p-1 box-border">
             <div
