@@ -1,3 +1,5 @@
+import SankeyView from "./component/sankeyView.tsx";
+
 export default function Home() {
   return (
     <div className="flex min-h-screen">
@@ -7,7 +9,9 @@ export default function Home() {
             <div
               id="sankey2d"
               className="w-full h-full border border-zinc-400"
-            />
+            >
+              <SankeyView />
+            </div>
           </div>
           <div className="w-[25%] h-[50%] p-1 box-border">
             <div
