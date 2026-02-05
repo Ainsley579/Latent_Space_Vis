@@ -43,7 +43,8 @@ export default function ScatterPlot({ dataPath, activeCluster, activeIds, modelK
       const innerH = Math.max(1, height - margin.top - margin.bottom);
 
       const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
-      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+      const gRoot = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+      const g = gRoot.append("g");
 
       const xExtent = d3.extent(lastRows, (d) => d.x) as [number, number];
       const yExtent = d3.extent(lastRows, (d) => d.y) as [number, number];
@@ -61,12 +62,12 @@ export default function ScatterPlot({ dataPath, activeCluster, activeIds, modelK
         .append("circle")
         .attr("cx", (d) => x(d.x))
         .attr("cy", (d) => y(d.y))
-        .attr("r", 2.2)
+        .attr("r", 3.2)
         .attr("fill", (d) => color(Math.max(0, d.cluster_id)))
         .attr("fill-opacity", (d) => {
-          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? 0.95 : 0.12;
-          if (activeCluster == null) return 0.85;
-          return d.cluster_id === activeCluster ? 0.95 : 0.12;
+          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? 0.95 : 0.45;
+          if (activeCluster == null) return 0.55;
+          return d.cluster_id === activeCluster ? 0.95 : 0.45;
         })
         .attr("stroke", (d) => {
           if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? "#222" : "none";
@@ -84,6 +85,23 @@ export default function ScatterPlot({ dataPath, activeCluster, activeIds, modelK
             real_id: String(d.real_id),
           });
         });
+
+      const extent: [[number, number], [number, number]] = [
+        [margin.left, margin.top],
+        [margin.left + innerW, margin.top + innerH],
+      ];
+      const zoom = d3
+        .zoom<SVGSVGElement, unknown>()
+        .scaleExtent([1, 8])
+        .translateExtent(extent)
+        .extent(extent)
+        .on("zoom", (event) => {
+          const t = event.transform;
+          g.attr("transform", `translate(${t.x - margin.left},${t.y - margin.top}) scale(${t.k})`);
+        });
+
+      svg.call(zoom);
+      svg.call(zoom.transform, d3.zoomIdentity.translate(margin.left, margin.top));
     }
 
     fetch(dataPath)

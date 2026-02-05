@@ -15,7 +15,7 @@ export default function Home() {
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
 
-  function toggleNode(sel: { model: string; layer: string; cluster: number }) {
+  function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }) {
     if (
       selectedNode &&
       selectedNode.model === sel.model &&
@@ -27,7 +27,7 @@ export default function Home() {
       return;
     }
     setSelectedNode(sel);
-    setSelectedIds(null);
+    setSelectedIds(sel.ids ?? null);
   }
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export default function Home() {
                 }
                 onNodeSelect={(sel) => {
                   if (!sel.model || sel.layer == null) return;
-                  toggleNode({ model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster });
+                  toggleNode({ model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster, ids: sel.ids });
                   setSelectedModel(sel.model);
                   setSelectedLayer(sel.layer ?? selectedLayer);
                   if (sel.model === "dimenet_noaug") {
@@ -121,7 +121,7 @@ export default function Home() {
                 }
                 onNodeSelect={(sel) => {
                   if (!sel.layer || !sel.model) return;
-                  toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
+                  toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: sel.ids });
                   setSelectedModel(sel.model);
                   setSelectedLayer(sel.layer);
                   if (sel.model === "dimenet_noaug") {
@@ -147,7 +147,7 @@ export default function Home() {
                 layerKey={selectedLayer}
                 onPointSelect={(sel) => {
                   if (!sel.model || !sel.layer) return;
-                  toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
+                  toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: [sel.real_id] });
                   setSelectedModel(sel.model);
                   setSelectedLayer(sel.layer);
                   if (sel.model === "dimenet_noaug") {

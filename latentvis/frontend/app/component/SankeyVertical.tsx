@@ -18,7 +18,7 @@ type SankeyVerticalProps = {
   mode?: "layer" | "model";
   layerKey?: string;
   activeNodeKey?: string | null;
-  onNodeSelect?: (sel: { model?: string; layer?: string; cluster: number }) => void;
+  onNodeSelect?: (sel: { model?: string; layer?: string; cluster: number; ids?: string[] }) => void;
 };
 
 const LAYER_ORDER = [
@@ -291,7 +291,8 @@ export default function SankeyVertical({
           const idx = d.key.lastIndexOf("_");
           const model = idx === -1 ? d.key : d.key.slice(0, idx);
           const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
-          onNodeSelect?.({ model, layer: layerKey, cluster });
+          const ids = Array.from(nodeSamples.get(d.key) || []);
+          onNodeSelect?.({ model, layer: layerKey, cluster, ids });
         });
 
       nodeSel.append("title").text((d) => d.key);

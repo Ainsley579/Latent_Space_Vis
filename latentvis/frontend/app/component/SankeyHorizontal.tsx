@@ -19,7 +19,7 @@ type SankeyHorizontalProps = {
   modelKey?: string;
   layerKey?: string;
   activeNodeKey?: string | null;
-  onNodeSelect?: (sel: { model?: string; layer?: string; cluster: number }) => void;
+  onNodeSelect?: (sel: { model?: string; layer?: string; cluster: number; ids?: string[] }) => void;
 };
 
 const LAYER_ORDER = [
@@ -272,7 +272,8 @@ export default function SankeyHorizontal({
           const idx = name.lastIndexOf("_");
           const layer = idx === -1 ? name : name.slice(0, idx);
           const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
-          onNodeSelect?.({ model: modelKey, layer, cluster });
+          const ids = Array.from(nodeSamples.get(name) || []);
+          onNodeSelect?.({ model: modelKey, layer, cluster, ids });
         });
 
       nodeSel.append("title").text((d: any) => String(d.name || ""));
