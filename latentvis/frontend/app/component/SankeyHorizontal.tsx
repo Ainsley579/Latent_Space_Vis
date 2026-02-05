@@ -15,6 +15,7 @@ type SampleRow = {
 type SankeyHorizontalProps = {
   dataPath?: string;
   syncTransform?: { x: number; scale: number };
+  mode?: "layer" | "model";
 };
 
 const LAYER_ORDER = [
@@ -29,7 +30,13 @@ const LAYER_ORDER = [
   "u_mlp_l2",
 ];
 
-export default function SankeyHorizontal({ dataPath = "/data/sankey/noaug_sankey_samples.json", syncTransform }: SankeyHorizontalProps) {
+const MODEL_ORDER = ["dimenet10conf","dimenet_noaug"];
+
+export default function SankeyHorizontal({
+  dataPath = "/data/sankey/noaug_sankey_samples.json",
+  syncTransform,
+  mode = "layer",
+}: SankeyHorizontalProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [zoomX, setZoomX] = useState(1);
@@ -87,9 +94,8 @@ export default function SankeyHorizontal({ dataPath = "/data/sankey/noaug_sankey
       const width = Math.max(1, container.clientWidth);
       const height = Math.max(1, container.clientHeight);
 
-      const graph = buildGraph(lastRows);
-
       const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
+      const graph = buildGraph(lastRows);
 
       const NODE_W = 12;
       const CELL_W = 120;

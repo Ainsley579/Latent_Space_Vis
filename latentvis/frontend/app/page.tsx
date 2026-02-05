@@ -2,10 +2,13 @@
 import { useState } from "react";
 import SankeyView from "./component/SankeyView.tsx";
 import SankeyHorizontal from "./component/SankeyHorizontal.tsx";
+import SankeyVertical from "./component/SankeyVertical.tsx";
 
 export default function Home() {
   const [sankeyPath, setSankeyPath] = useState("/data/sankey/noaug_sankey_samples.json");
+  const [sankeyPathVertical, setSankeyPathVertical] = useState("/data/sankey/vertical_model_samples_emb.json");
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
+  const [selectedLayer, setSelectedLayer] = useState("emb");
   return (
     <div className="flex min-h-screen">
       <main className="flex min-h-screen">
@@ -23,6 +26,10 @@ export default function Home() {
                     setSankeyPath("/data/sankey/10conf_sankey_samples.json");
                   }
                 }}
+                onLayerSelect={(layer) => {
+                  setSelectedLayer(layer);
+                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${layer}.json`);
+                }}
                 onTransform={(t) => setSankeyTransform(t)}
               />
             </div>
@@ -32,7 +39,11 @@ export default function Home() {
               id="sankeyVertical"
               className="w-full h-full border border-zinc-400"
             >
-              
+              <SankeyVertical
+                dataPath={sankeyPathVertical}
+                layerKey={selectedLayer}
+                syncTransform={{ x: sankeyTransform.x, y: sankeyTransform.y, scale: sankeyTransform.scale }}
+              />
             </div>
           </div>
 

@@ -395,8 +395,8 @@ def main() -> None:
         ),
         help="Path to epoch1 CSV",
     )
-    parser.add_argument("--epoch0-name", default="dimenet10conf", help="Model name for first CSV")
-    parser.add_argument("--epoch1-name", default="dimenet_noaug", help="Model name for second CSV")
+    parser.add_argument("--epoch0-name", default="dimenet_noaug", help="Model name for first CSV")
+    parser.add_argument("--epoch1-name", default="dimenet10conf", help="Model name for second CSV")
     parser.add_argument(
         "--out",
         type=Path,

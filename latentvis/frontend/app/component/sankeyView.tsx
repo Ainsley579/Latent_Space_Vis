@@ -9,9 +9,10 @@ const DEFAULT_MAX_INSTANCE = 158;
 type SankeyViewProps = {
   onModelSelect?: (modelKey: string) => void;
   onTransform?: (t: { x: number; y: number; scale: number }) => void;
+  onLayerSelect?: (layerKey: string) => void;
 };
 
-export default function SankeyView({ onModelSelect, onTransform }: SankeyViewProps) {
+export default function SankeyView({ onModelSelect, onTransform, onLayerSelect }: SankeyViewProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [maxInstanceValue, setMaxInstanceValue] = useState(DEFAULT_MAX_INSTANCE);
@@ -58,6 +59,8 @@ export default function SankeyView({ onModelSelect, onTransform }: SankeyViewPro
       .then((data) => {
         const ROW_NAMES: string[] = Object.keys(data?.epoch || {});
         const COLUMN_NAMES: string[] = Object.keys(data?.layer || {});
+        const MODEL_SET = new Set(ROW_NAMES);
+        const LAYER_SET = new Set(COLUMN_NAMES);
 
         const ROW_INDEX = new Map(ROW_NAMES.map((d, i) => [d, i]));
         const COLUMN_INDEX = new Map(COLUMN_NAMES.map((d, i) => [d, i]));
@@ -109,6 +112,7 @@ export default function SankeyView({ onModelSelect, onTransform }: SankeyViewPro
         });
 
         const cells: d3.Selection<SVGGElement, any, any, any>[] = [];
+        let lockedCell: { rowName: string; columnName: string } | null = null;
         X_NAMES.forEach((xKey, col) => {
           Y_NAMES.forEach((yKey, row) => {
             const rowName = SWAP_AXES ? xKey : yKey;
@@ -126,15 +130,35 @@ export default function SankeyView({ onModelSelect, onTransform }: SankeyViewPro
             cells.push(innerG);
 
             g.on("mouseenter", (_event: any, datum: any) => {
+              if (lockedCell) return;
               setCellHighlight(datum.rowName, datum.columnName, true);
-            }).on("mouseleave", (_event: any, datum: any) => {
-              setCellHighlight(datum.rowName, datum.columnName, false);
-            }).on("click", (_event: any, datum: any) => {
-              const candidate = SWAP_AXES ? datum.columnName : datum.rowName;
-              if (candidate === "dimenet_noaug" || candidate === "dimenet10conf") {
-                onModelSelect?.(candidate);
-              }
-            });
+            })
+              .on("mouseleave", (_event: any, datum: any) => {
+                if (lockedCell) return;
+                setCellHighlight(datum.rowName, datum.columnName, false);
+              })
+              .on("click", (_event: any, datum: any) => {
+                if (lockedCell && lockedCell.rowName === datum.rowName && lockedCell.columnName === datum.columnName) {
+                  lockedCell = null;
+                  setCellHighlight(datum.rowName, datum.columnName, false);
+                } else {
+                  lockedCell = { rowName: datum.rowName, columnName: datum.columnName };
+                  setCellHighlight(datum.rowName, datum.columnName, true);
+                }
+
+                const modelCandidate = MODEL_SET.has(datum.rowName) ? datum.rowName : null;
+                if (modelCandidate) {
+                  onModelSelect?.(modelCandidate);
+                }
+                const layerCandidate = LAYER_SET.has(datum.rowName)
+                  ? datum.rowName
+                  : LAYER_SET.has(datum.columnName)
+                    ? datum.columnName
+                    : null;
+                if (layerCandidate) {
+                  onLayerSelect?.(layerCandidate);
+                }
+              });
           });
         });
 
@@ -754,6 +778,11 @@ export default function SankeyView({ onModelSelect, onTransform }: SankeyViewPro
 
         :global(.link-dimmed) {
           stroke-opacity: 0.06 !important;
+        }
+
+        :global(#chart svg rect.bar),
+        :global(#chart svg path.link-path) {
+          pointer-events: none;
         }
       `}</style>
     </div>
