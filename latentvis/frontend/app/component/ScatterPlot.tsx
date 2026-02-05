@@ -12,9 +12,14 @@ type ScatterPoint = {
 
 type ScatterPlotProps = {
   dataPath: string;
+  activeCluster?: number | null;
+  activeIds?: string[] | null;
+  modelKey?: string;
+  layerKey?: string;
+  onPointSelect?: (sel: { model?: string; layer?: string; cluster: number; real_id: string }) => void;
 };
 
-export default function ScatterPlot({ dataPath }: ScatterPlotProps) {
+export default function ScatterPlot({ dataPath, activeCluster, activeIds, modelKey, layerKey, onPointSelect }: ScatterPlotProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -48,6 +53,7 @@ export default function ScatterPlot({ dataPath }: ScatterPlotProps) {
       const maxCluster = d3.max(lastRows, (d) => d.cluster_id) ?? 0;
       const color = d3.scaleOrdinal<number, string>(d3.schemeTableau10).domain(d3.range(maxCluster + 1));
 
+      const activeIdSet = activeIds ? new Set(activeIds) : null;
       g.append("g")
         .selectAll("circle")
         .data(lastRows)
@@ -57,7 +63,27 @@ export default function ScatterPlot({ dataPath }: ScatterPlotProps) {
         .attr("cy", (d) => y(d.y))
         .attr("r", 2.2)
         .attr("fill", (d) => color(Math.max(0, d.cluster_id)))
-        .attr("fill-opacity", 0.8);
+        .attr("fill-opacity", (d) => {
+          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? 0.95 : 0.12;
+          if (activeCluster == null) return 0.85;
+          return d.cluster_id === activeCluster ? 0.95 : 0.12;
+        })
+        .attr("stroke", (d) => {
+          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? "#222" : "none";
+          if (activeCluster == null) return "none";
+          return d.cluster_id === activeCluster ? "#222" : "none";
+        })
+        .attr("stroke-width", 0.6)
+        .style("cursor", "pointer")
+        .on("click", (event, d) => {
+          event.stopPropagation();
+          onPointSelect?.({
+            model: modelKey,
+            layer: layerKey,
+            cluster: d.cluster_id,
+            real_id: String(d.real_id),
+          });
+        });
     }
 
     fetch(dataPath)
@@ -77,7 +103,7 @@ export default function ScatterPlot({ dataPath }: ScatterPlotProps) {
     return () => {
       ro.disconnect();
     };
-  }, [dataPath]);
+  }, [dataPath, activeCluster, activeIds, modelKey, layerKey, onPointSelect]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 }

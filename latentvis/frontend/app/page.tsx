@@ -12,6 +12,23 @@ export default function Home() {
   const [selectedLayer, setSelectedLayer] = useState("emb");
   const [selectedModel, setSelectedModel] = useState("dimenet_noaug");
   const [scatterPath, setScatterPath] = useState("/data/scatterplot/dimenet_noaug_emb.json");
+  const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
+
+  function toggleNode(sel: { model: string; layer: string; cluster: number }) {
+    if (
+      selectedNode &&
+      selectedNode.model === sel.model &&
+      selectedNode.layer === sel.layer &&
+      selectedNode.cluster === sel.cluster
+    ) {
+      setSelectedNode(null);
+      setSelectedIds(null);
+      return;
+    }
+    setSelectedNode(sel);
+    setSelectedIds(null);
+  }
 
   useEffect(() => {
     setScatterPath(`/data/scatterplot/${selectedModel}_${selectedLayer}.json`);
@@ -33,11 +50,27 @@ export default function Home() {
                     setSankeyPath("/data/sankey/10conf_sankey_samples.json");
                   }
                   setSelectedModel(model);
+                  setSelectedNode(null);
+                  setSelectedIds(null);
                 }}
                 onLayerSelect={(layer) => {
                   setSelectedLayer(layer);
                   setSankeyPathVertical(`/data/sankey/vertical_model_samples_${layer}.json`);
+                  setSelectedNode(null);
+                  setSelectedIds(null);
                 }}
+                onNodeSelect={(sel) => {
+                  toggleNode(sel);
+                  setSelectedModel(sel.model);
+                  setSelectedLayer(sel.layer);
+                  if (sel.model === "dimenet_noaug") {
+                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                  } else if (sel.model === "dimenet10conf") {
+                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                  }
+                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                }}
+                selectedNode={selectedNode}
                 onTransform={(t) => setSankeyTransform(t)}
               />
             </div>
@@ -51,6 +84,23 @@ export default function Home() {
                 dataPath={sankeyPathVertical}
                 layerKey={selectedLayer}
                 syncTransform={{ x: sankeyTransform.x, y: sankeyTransform.y, scale: sankeyTransform.scale }}
+                activeNodeKey={
+                  selectedNode && selectedNode.layer === selectedLayer
+                    ? `${selectedNode.model}_${selectedNode.cluster}`
+                    : null
+                }
+                onNodeSelect={(sel) => {
+                  if (!sel.model || sel.layer == null) return;
+                  toggleNode({ model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster });
+                  setSelectedModel(sel.model);
+                  setSelectedLayer(sel.layer ?? selectedLayer);
+                  if (sel.model === "dimenet_noaug") {
+                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                  } else if (sel.model === "dimenet10conf") {
+                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                  }
+                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer ?? selectedLayer}.json`);
+                }}
               />
             </div>
           </div>
@@ -60,7 +110,28 @@ export default function Home() {
               id="sankeyHorizontal"
               className="w-full h-full border border-zinc-400"
             >
-              <SankeyHorizontal dataPath={sankeyPath} syncTransform={{ x: sankeyTransform.x, scale: sankeyTransform.scale }} />
+              <SankeyHorizontal
+                dataPath={sankeyPath}
+                modelKey={selectedModel}
+                syncTransform={{ x: sankeyTransform.x, scale: sankeyTransform.scale }}
+                activeNodeKey={
+                  selectedNode && selectedNode.model === selectedModel
+                    ? `${selectedNode.layer}_${selectedNode.cluster}`
+                    : null
+                }
+                onNodeSelect={(sel) => {
+                  if (!sel.layer || !sel.model) return;
+                  toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
+                  setSelectedModel(sel.model);
+                  setSelectedLayer(sel.layer);
+                  if (sel.model === "dimenet_noaug") {
+                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                  } else if (sel.model === "dimenet10conf") {
+                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                  }
+                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                }}
+              />
             </div>
           </div>
           <div className="w-[25%] h-[25%] p-1 box-border">
@@ -68,7 +139,25 @@ export default function Home() {
               id="scatterplot"
               className="w-full h-full border border-zinc-400"
             >
-              <ScatterPlot dataPath={scatterPath} />
+              <ScatterPlot
+                dataPath={scatterPath}
+                activeCluster={selectedNode?.cluster ?? null}
+                activeIds={selectedIds}
+                modelKey={selectedModel}
+                layerKey={selectedLayer}
+                onPointSelect={(sel) => {
+                  if (!sel.model || !sel.layer) return;
+                  toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
+                  setSelectedModel(sel.model);
+                  setSelectedLayer(sel.layer);
+                  if (sel.model === "dimenet_noaug") {
+                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                  } else if (sel.model === "dimenet10conf") {
+                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                  }
+                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                }}
+              />
             </div>
           </div>
           <div className="w-[50%] h-[25%] p-1 box-border">

@@ -17,6 +17,8 @@ type SankeyVerticalProps = {
   syncTransform?: { x: number; y: number; scale: number };
   mode?: "layer" | "model";
   layerKey?: string;
+  activeNodeKey?: string | null;
+  onNodeSelect?: (sel: { model?: string; layer?: string; cluster: number }) => void;
 };
 
 const LAYER_ORDER = [
@@ -37,10 +39,20 @@ export default function SankeyVertical({
   dataPath = "/data/sankey/noaug_sankey_samples.json",
   syncTransform,
   mode = "layer",
+  layerKey,
+  activeNodeKey,
+  onNodeSelect,
 }: SankeyVerticalProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [zoomX, setZoomX] = useState(1);
+  const displayActiveNode = activeNodeKey ?? activeNode;
+
+  useEffect(() => {
+    if (activeNodeKey == null) {
+      setActiveNode(null);
+    }
+  }, [activeNodeKey]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -267,17 +279,25 @@ export default function SankeyVertical({
         .attr("y", (d) => d.y)
         .attr("width", NODE_W)
         .attr("height", (d) => Math.max(1, d.h))
-        .attr("fill", "#c9d6df")
-        .attr("stroke", "#6b7c8a")
+        .attr("fill", (d) => (displayActiveNode && d.key === displayActiveNode ? "#f4b266" : "#c9d6df"))
+        .attr("stroke", (d) => (displayActiveNode && d.key === displayActiveNode ? "#c27d2b" : "#6b7c8a"))
         .style("cursor", "pointer")
-        .on("click", (_event, d) => {
-          setActiveNode((prev) => (prev === d.key ? null : d.key));
+        .on("click", (event, d) => {
+          event.stopPropagation();
+          const next = displayActiveNode === d.key ? null : d.key;
+          if (activeNodeKey == null) {
+            setActiveNode(next);
+          }
+          const idx = d.key.lastIndexOf("_");
+          const model = idx === -1 ? d.key : d.key.slice(0, idx);
+          const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
+          onNodeSelect?.({ model, layer: layerKey, cluster });
         });
 
       nodeSel.append("title").text((d) => d.key);
 
-      if (activeNode) {
-        const samples = nodeSamples.get(activeNode) || new Set();
+      if (displayActiveNode) {
+        const samples = nodeSamples.get(displayActiveNode) || new Set();
         sampleSel.attr("opacity", (d) => (samples.has(d.id) ? 0.8 : 0));
       } else {
         sampleSel.attr("opacity", 0);
@@ -312,7 +332,7 @@ export default function SankeyVertical({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, activeNode, zoomX, syncTransform]);
+  }, [dataPath, activeNode, activeNodeKey, zoomX, syncTransform]);
 
   return <div ref={containerRef} className="w-full h-full" style={{ overflowX: "auto", overflowY: "hidden" }} />;
 }

@@ -10,9 +10,11 @@ type SankeyViewProps = {
   onModelSelect?: (modelKey: string) => void;
   onTransform?: (t: { x: number; y: number; scale: number }) => void;
   onLayerSelect?: (layerKey: string) => void;
+  onNodeSelect?: (sel: { model: string; layer: string; cluster: number }) => void;
+  selectedNode?: { model: string; layer: string; cluster: number } | null;
 };
 
-export default function SankeyView({ onModelSelect, onTransform, onLayerSelect }: SankeyViewProps) {
+export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, onNodeSelect, selectedNode }: SankeyViewProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [maxInstanceValue, setMaxInstanceValue] = useState(DEFAULT_MAX_INSTANCE);
@@ -218,7 +220,31 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect }
             .attr("y", (d: any) => innerH - y(d.previous))
             .attr("width", x.bandwidth())
             .attr("height", (d: any) => innerH - y(d.value))
-            .attr("fill", "#aaa");
+            .attr("fill", "#aaa")
+            .attr("data-row", rowName)
+            .attr("data-column", columnName)
+            .attr("data-cluster", (d: any) => {
+              const c = d?.cluster;
+              if (c !== null && c !== undefined && c !== "") return Number(c);
+              const label = String(d?.label ?? "");
+              const i = label.lastIndexOf("_C");
+              if (i === -1) return "";
+              return Number(label.slice(i + 2));
+            })
+            .style("cursor", "pointer")
+            .on("click", (event: any, d: any) => {
+              event.stopPropagation();
+              const c = d?.cluster;
+              let cluster = c !== null && c !== undefined && c !== "" ? Number(c) : NaN;
+              if (Number.isNaN(cluster)) {
+                const label = String(d?.label ?? "");
+                const i = label.lastIndexOf("_C");
+                if (i !== -1) cluster = Number(label.slice(i + 2));
+              }
+              if (!Number.isNaN(cluster)) {
+                onNodeSelect?.({ model: rowName, layer: columnName, cluster });
+              }
+            });
 
           nodesForCell.forEach((node: any, idx: number) => {
             const label = String(node.label ?? "");
@@ -628,6 +654,76 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect }
       });
   }, []);
 
+  useEffect(() => {
+    const container = chartRef.current;
+    if (!container) return;
+    const sel = d3.select(container).selectAll<SVGRectElement, any>("rect.bar");
+    if (!selectedNode) {
+      sel.classed("node-highlight", false).classed("node-dimmed", false);
+      d3.select(container)
+        .selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar')
+        .classed("cell-dimmed", false)
+        .classed("cell-highlight", false);
+      d3.select(container)
+        .selectAll("path.link-path")
+        .classed("link-dimmed", false)
+        .classed("link-highlight", false);
+      return;
+    }
+    sel.each(function () {
+      const el = d3.select(this);
+      const row = el.attr("data-row");
+      const col = el.attr("data-column");
+      const cluster = Number(el.attr("data-cluster"));
+      const isMatch =
+        row === selectedNode.model &&
+        col === selectedNode.layer &&
+        Number.isFinite(cluster) &&
+        cluster === selectedNode.cluster;
+      el.classed("node-highlight", isMatch);
+      el.classed("node-dimmed", false);
+    });
+
+    const rowKey = selectedNode.model;
+    const colKey = selectedNode.layer;
+    const cellSel = d3.select(container).selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar');
+    cellSel.classed("cell-dimmed", true).classed("cell-highlight", false);
+
+    d3.select(container)
+      .selectAll<SVGGElement, any>('#chart svg g[id^="cell-"]')
+      .each(function () {
+        const g = d3.select(this);
+        const id = g.attr("id") || "";
+        if (!id.startsWith("cell-")) return;
+        const raw = id.slice(5);
+        const idx = raw.lastIndexOf("-");
+        if (idx === -1) return;
+        const row = raw.slice(0, idx);
+        const col = raw.slice(idx + 1);
+        if (row === rowKey || col === colKey) {
+          g.select("rect").classed("cell-dimmed", false).classed("cell-highlight", true);
+          g.selectAll("rect.bar").classed("cell-dimmed", false);
+        }
+      });
+
+    d3.select(container)
+      .selectAll("path.link-path")
+      .classed("link-dimmed", true)
+      .classed("link-highlight", false);
+    d3.select(container)
+      .selectAll("g.row-links path.link-path")
+      .each(function () {
+        const el = d3.select(this);
+        if (el.attr("data-row") === rowKey) el.classed("link-dimmed", false).classed("link-highlight", true);
+      });
+    d3.select(container)
+      .selectAll("g.column-links path.link-path")
+      .each(function () {
+        const el = d3.select(this);
+        if (el.attr("data-column") === colKey) el.classed("link-dimmed", false).classed("link-highlight", true);
+      });
+  }, [selectedNode]);
+
   return (
     <div className="timeline-root h-full flex flex-col">
       <div id="controls" className="shrink-0">
@@ -780,7 +876,15 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect }
           stroke-opacity: 0.06 !important;
         }
 
-        :global(#chart svg rect.bar),
+        :global(#chart svg rect.bar.node-highlight) {
+          fill: #f4b266 !important;
+          stroke: #c27d2b !important;
+        }
+
+        :global(#chart svg rect.bar.node-dimmed) {
+          opacity: 0.18 !important;
+        }
+
         :global(#chart svg path.link-path) {
           pointer-events: none;
         }

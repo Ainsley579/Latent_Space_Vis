@@ -16,6 +16,10 @@ type SankeyHorizontalProps = {
   dataPath?: string;
   syncTransform?: { x: number; scale: number };
   mode?: "layer" | "model";
+  modelKey?: string;
+  layerKey?: string;
+  activeNodeKey?: string | null;
+  onNodeSelect?: (sel: { model?: string; layer?: string; cluster: number }) => void;
 };
 
 const LAYER_ORDER = [
@@ -36,10 +40,21 @@ export default function SankeyHorizontal({
   dataPath = "/data/sankey/noaug_sankey_samples.json",
   syncTransform,
   mode = "layer",
+  modelKey,
+  layerKey,
+  activeNodeKey,
+  onNodeSelect,
 }: SankeyHorizontalProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [zoomX, setZoomX] = useState(1);
+  const displayActiveNode = activeNodeKey ?? activeNode;
+
+  useEffect(() => {
+    if (activeNodeKey == null) {
+      setActiveNode(null);
+    }
+  }, [activeNodeKey]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -243,19 +258,27 @@ export default function SankeyHorizontal({
         .attr("y", (d: any) => d.y0)
         .attr("width", (d: any) => d.x1 - d.x0)
         .attr("height", (d: any) => Math.max(1, d.y1 - d.y0))
-        .attr("fill", "#c9d6df")
-        .attr("stroke", "#6b7c8a")
+        .attr("fill", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? "#f4b266" : "#c9d6df"))
+        .attr("stroke", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? "#c27d2b" : "#6b7c8a"))
         .attr("data-name", (d: any) => d.name)
         .style("cursor", "pointer")
-        .on("click", (_event: any, d: any) => {
+        .on("click", (event: any, d: any) => {
+          event.stopPropagation();
           const name = String(d.name || "");
-          setActiveNode((prev) => (prev === name ? null : name));
+          const next = displayActiveNode === name ? null : name;
+          if (activeNodeKey == null) {
+            setActiveNode(next);
+          }
+          const idx = name.lastIndexOf("_");
+          const layer = idx === -1 ? name : name.slice(0, idx);
+          const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
+          onNodeSelect?.({ model: modelKey, layer, cluster });
         });
 
       nodeSel.append("title").text((d: any) => String(d.name || ""));
 
-      if (activeNode) {
-        const samples = nodeSamples.get(activeNode) || new Set();
+      if (displayActiveNode) {
+        const samples = nodeSamples.get(displayActiveNode) || new Set();
         sampleSel.attr("opacity", (d) => (samples.has(d.id) ? 0.8 : 0));
       } else {
         sampleSel.attr("opacity", 0);
@@ -290,7 +313,7 @@ export default function SankeyHorizontal({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, activeNode, zoomX, syncTransform]);
+  }, [dataPath, activeNode, activeNodeKey, zoomX, syncTransform]);
 
   return <div ref={containerRef} className="w-full h-full" style={{ overflowX: "auto", overflowY: "hidden" }} />;
 }
