@@ -8,9 +8,10 @@ const DEFAULT_MAX_INSTANCE = 158;
 
 type SankeyViewProps = {
   onModelSelect?: (modelKey: string) => void;
+  onTransform?: (t: { x: number; y: number; scale: number }) => void;
 };
 
-export default function SankeyView({ onModelSelect }: SankeyViewProps) {
+export default function SankeyView({ onModelSelect, onTransform }: SankeyViewProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [maxInstanceValue, setMaxInstanceValue] = useState(DEFAULT_MAX_INSTANCE);
@@ -628,7 +629,13 @@ export default function SankeyView({ onModelSelect }: SankeyViewProps) {
       </div>
 
       <div className="relative w-full flex-1 min-h-0 overflow-hidden">
-        <ZoomPan className="w-full h-full" onTransform={setTransform}>
+        <ZoomPan
+          className="w-full h-full"
+          onTransform={(t) => {
+            setTransform(t);
+            onTransform?.(t);
+          }}
+        >
           <div id="chart" ref={chartRef}></div>
         </ZoomPan>
 

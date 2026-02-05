@@ -12,13 +12,27 @@ type SampleRow = {
   to_cluster: number;
 };
 
-type NoaugSankeyProps = {
+type SankeyHorizontalProps = {
   dataPath?: string;
+  syncTransform?: { x: number; scale: number };
 };
 
-export default function NoaugSankey({ dataPath = "/data/sankey/noaug_sankey_samples.json" }: NoaugSankeyProps) {
+const LAYER_ORDER = [
+  "emb",
+  "output_block_0",
+  "output_block_1",
+  "output_block_2",
+  "output_block_3",
+  "output_block_4",
+  "u_mlp_input",
+  "u_mlp_l1",
+  "u_mlp_l2",
+];
+
+export default function SankeyHorizontal({ dataPath = "/data/sankey/noaug_sankey_samples.json", syncTransform }: SankeyHorizontalProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [activeNode, setActiveNode] = useState<string | null>(null);
+  const [zoomX, setZoomX] = useState(1);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -77,17 +91,58 @@ export default function NoaugSankey({ dataPath = "/data/sankey/noaug_sankey_samp
 
       const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
 
+      const NODE_W = 12;
+      const CELL_W = 120;
+      const CELL_MARGIN_LEFT = 10;
+      const INNER_W = 100;
+      const LEGEND_LEFT = 32;
+      const MARGIN_LEFT = 50 + LEGEND_LEFT;
+      const TOP = 10;
+      const BOTTOM = 10;
+
       const sankeyGen = sankey<{ name: string }, { source: number; target: number; value: number; key: string }>()
-        .nodeWidth(12)
-        .nodePadding(10)
+        .nodeWidth(NODE_W)
+        .nodePadding(5)
         .extent([
-          [10, 10],
-          [width - 10, height - 10],
+          [10, TOP],
+          [width - 10, height - BOTTOM],
         ]);
 
       const sankeyGraph = sankeyGen({
         nodes: graph.nodes.map((d) => ({ ...d })),
         links: graph.links.map((d) => ({ ...d })),
+      });
+
+      // enforce x positions by layer order to align with SankeyView columns
+      const presentLayers = new Set<string>();
+      lastRows.forEach((r) => {
+        presentLayers.add(r.from_layer);
+        presentLayers.add(r.to_layer);
+      });
+      const layers = LAYER_ORDER.filter((l) => presentLayers.has(l));
+      const layerIndex = new Map(layers.map((l, i) => [l, i]));
+      const centerOffset = CELL_MARGIN_LEFT + INNER_W / 2;
+      const scaleX = syncTransform?.scale ?? zoomX;
+      const offsetX = (syncTransform?.x ?? 0) - 1 * CELL_W * scaleX;
+      const spacing = CELL_W * scaleX;
+      const totalWidth = Math.max(
+        width,
+        scaleX * (MARGIN_LEFT + centerOffset + (layers.length - 0.5) * CELL_W) + offsetX + NODE_W / 2 + 10
+      );
+
+      // re-create svg with expanded width if needed
+      svg.attr("width", totalWidth);
+
+      (sankeyGraph.nodes as SankeyNode<any, any>[]).forEach((node: any) => {
+        const name = String(node.name || "");
+        const idxC = name.lastIndexOf("_");
+        const layer = idxC === -1 ? name : name.slice(0, idxC);
+        const idx = layerIndex.get(layer);
+        if (idx == null) return;
+        const baseX = MARGIN_LEFT + centerOffset + (idx + 0.5) * CELL_W;
+        const centerX = scaleX * baseX + offsetX;
+        node.x0 = centerX - NODE_W / 2;
+        node.x1 = node.x0 + NODE_W;
       });
 
       const nodeByName = new Map<string, any>();
@@ -168,7 +223,7 @@ export default function NoaugSankey({ dataPath = "/data/sankey/noaug_sankey_samp
         .attr("y1", (d) => d.y1)
         .attr("x2", (d) => d.x2)
         .attr("y2", (d) => d.y2)
-        .attr("stroke", "#d97706")
+        .attr("stroke", "#4a7bc4ff")
         .attr("stroke-width", 1.2)
         .attr("opacity", 0)
         .attr("class", (d) => `sample-${d.id}`);
@@ -215,9 +270,21 @@ export default function NoaugSankey({ dataPath = "/data/sankey/noaug_sankey_samp
         if (container) container.innerHTML = "<div style='color:red'>Failed to load sankey data.</div>";
       });
 
-    return () => ro.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, activeNode]);
+    function onWheel(e: WheelEvent) {
+      if (syncTransform) return;
+      e.preventDefault();
+      const next = Math.max(0.5, Math.min(4, zoomX * (1 + -e.deltaY * 0.002)));
+      if (next !== zoomX) setZoomX(next);
+    }
 
-  return <div ref={containerRef} className="w-full h-full" />;
+    container.addEventListener("wheel", onWheel, { passive: false });
+
+    return () => {
+      container.removeEventListener("wheel", onWheel as EventListener);
+      ro.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataPath, activeNode, zoomX, syncTransform]);
+
+  return <div ref={containerRef} className="w-full h-full" style={{ overflowX: "auto", overflowY: "hidden" }} />;
 }

@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
 import SankeyView from "./component/SankeyView.tsx";
-import Sankey from "./component/Sankey.tsx";
+import SankeyHorizontal from "./component/SankeyHorizontal.tsx";
 
 export default function Home() {
   const [sankeyPath, setSankeyPath] = useState("/data/sankey/noaug_sankey_samples.json");
+  const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   return (
     <div className="flex min-h-screen">
       <main className="flex min-h-screen">
@@ -22,6 +23,7 @@ export default function Home() {
                     setSankeyPath("/data/sankey/10conf_sankey_samples.json");
                   }
                 }}
+                onTransform={(t) => setSankeyTransform(t)}
               />
             </div>
           </div>
@@ -30,6 +32,7 @@ export default function Home() {
               id="sankeyVertical"
               className="w-full h-full border border-zinc-400"
             >
+              
             </div>
           </div>
 
@@ -38,7 +41,7 @@ export default function Home() {
               id="sankeyHorizontal"
               className="w-full h-full border border-zinc-400"
             >
-              <Sankey dataPath={sankeyPath} />
+              <SankeyHorizontal dataPath={sankeyPath} syncTransform={{ x: sankeyTransform.x, scale: sankeyTransform.scale }} />
             </div>
           </div>
           <div className="w-[25%] h-[25%] p-1 box-border">
