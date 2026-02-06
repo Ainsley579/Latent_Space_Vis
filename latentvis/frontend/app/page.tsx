@@ -15,6 +15,7 @@ export default function Home() {
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [imageMap, setImageMap] = useState<Record<string, Record<string, string>> | null>(null);
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -60,6 +61,21 @@ export default function Home() {
       });
   }, []);
 
+  useEffect(() => {
+    fetch("/molecule_images/real_id_to_image_mapping.json")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load image mapping");
+        return res.json();
+      })
+      .then((json) => {
+        setImageMap(json ?? null);
+      })
+      .catch((err) => {
+        console.error(err);
+        setImageMap(null);
+      });
+  }, []);
+
   const topkEntry = useMemo(() => {
     if (!selectedNode) return null;
     return (
@@ -71,6 +87,13 @@ export default function Home() {
       ) ?? null
     );
   }, [topkData, selectedNode]);
+
+  function resolveImageSrc(realId: string | number, imageType: string) {
+    const key = String(realId);
+    const entry = imageMap?.[key];
+    const mapped = entry?.[imageType];
+    return mapped ? `/molecule_images/${mapped}` : `/molecule_images/${key}_${imageType}.png`;
+  }
   return (
     <div className="flex min-h-screen">
       <main className="flex min-h-screen">
@@ -184,6 +207,7 @@ export default function Home() {
                 activeCluster={selectedNode?.cluster ?? null}
                 activeIds={selectedIds}
                 highlightId={hoveredId}
+                imageMap={imageMap}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
                 onPointSelect={(sel) => {
@@ -222,7 +246,7 @@ export default function Home() {
                       {topkEntry.top_k_closest_real_ids.map((id) => (
                         <div key={`close-${id}`} className="flex flex-col items-center gap-1">
                           <img
-                            src={`/molecule_images/${id}_ligand.png`}
+                            src={resolveImageSrc(id, "ligand")}
                             alt={`ligand ${id}`}
                             className="w-20 h-20 object-contain bg-white border border-zinc-200"
                             onError={(e) => {
@@ -247,7 +271,7 @@ export default function Home() {
                       {topkEntry.top_k_farthest_real_ids.map((id) => (
                         <div key={`far-${id}`} className="flex flex-col items-center gap-1">
                           <img
-                            src={`/molecule_images/${id}_ligand.png`}
+                            src={resolveImageSrc(id, "ligand")}
                             alt={`ligand ${id}`}
                             className="w-20 h-20 object-contain bg-white border border-zinc-200"
                             onError={(e) => {

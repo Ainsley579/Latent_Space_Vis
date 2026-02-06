@@ -17,6 +17,7 @@ type ScatterPlotProps = {
   highlightId?: string | null;
   modelKey?: string;
   layerKey?: string;
+  imageMap?: Record<string, Record<string, string>> | null;
   onPointSelect?: (sel: { model?: string; layer?: string; cluster: number; real_id: string }) => void;
 };
 
@@ -27,6 +28,7 @@ export default function ScatterPlot({
   highlightId,
   modelKey,
   layerKey,
+  imageMap,
   onPointSelect,
 }: ScatterPlotProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -41,6 +43,12 @@ export default function ScatterPlot({
     ro.observe(container);
 
     let lastRows: ScatterPoint[] | null = null;
+
+    function resolveImageSrc(realId: string, imageType: string) {
+      const entry = imageMap?.[realId];
+      const mapped = entry?.[imageType];
+      return mapped ? `/molecule_images/${mapped}` : `/molecule_images/${realId}_${imageType}.png`;
+    }
 
     function draw() {
       if (!container || !lastRows) return;
@@ -113,7 +121,7 @@ export default function ScatterPlot({
         .attr("stroke-width", (d) => (highlightId && String(d.real_id) === highlightId ? 1.4 : 0.6))
         .style("cursor", "pointer")
         .on("mouseover", (event, d) => {
-          const imgSrc = `/molecule_images/${String(d.real_id)}_ligand.png`;
+          const imgSrc = resolveImageSrc(String(d.real_id), "ligand");
           tooltipImg.style("display", "block").attr("src", imgSrc);
           tooltip.style("display", "block");
           const [mx, my] = d3.pointer(event, container);
@@ -187,7 +195,7 @@ export default function ScatterPlot({
     return () => {
       ro.disconnect();
     };
-  }, [dataPath, activeCluster, activeIds, highlightId, modelKey, layerKey, onPointSelect]);
+  }, [dataPath, activeCluster, activeIds, highlightId, modelKey, layerKey, imageMap, onPointSelect]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 }
