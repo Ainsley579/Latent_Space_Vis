@@ -26,6 +26,7 @@ export default function ScatterPlot({ dataPath, activeCluster, activeIds, modelK
     const container = containerRef.current;
     if (!container) return;
     container.innerHTML = "";
+    container.style.position = "relative";
 
     const ro = new ResizeObserver(() => draw());
     ro.observe(container);
@@ -37,6 +38,30 @@ export default function ScatterPlot({ dataPath, activeCluster, activeIds, modelK
       container.innerHTML = "";
       const width = Math.max(1, container.clientWidth);
       const height = Math.max(1, container.clientHeight);
+
+      const tooltip = d3
+        .select(container)
+        .append("div")
+        .style("position", "absolute")
+        .style("display", "none")
+        .style("pointer-events", "none")
+        .style("background", "rgba(255,255,255,0.95)")
+        .style("border", "1px solid #d1d5db")
+        .style("box-shadow", "0 6px 20px rgba(0,0,0,0.12)")
+        .style("padding", "6px")
+        .style("border-radius", "6px")
+        .style("z-index", "5");
+
+      const tooltipImg = tooltip
+        .append("img")
+        .attr("alt", "ligand")
+        .style("display", "block")
+        .style("width", "140px")
+        .style("height", "140px")
+        .style("object-fit", "contain")
+        .on("error", function () {
+          d3.select(this).style("display", "none");
+        });
 
       const margin = { top: 8, right: 8, bottom: 8, left: 8 };
       const innerW = Math.max(1, width - margin.left - margin.right);
@@ -76,6 +101,20 @@ export default function ScatterPlot({ dataPath, activeCluster, activeIds, modelK
         })
         .attr("stroke-width", 0.6)
         .style("cursor", "pointer")
+        .on("mouseover", (event, d) => {
+          const imgSrc = `/molecule_images/${String(d.real_id)}_ligand.png`;
+          tooltipImg.style("display", "block").attr("src", imgSrc);
+          tooltip.style("display", "block");
+          const [mx, my] = d3.pointer(event, container);
+          tooltip.style("left", `${mx + 12}px`).style("top", `${my + 12}px`);
+        })
+        .on("mousemove", (event) => {
+          const [mx, my] = d3.pointer(event, container);
+          tooltip.style("left", `${mx + 12}px`).style("top", `${my + 12}px`);
+        })
+        .on("mouseout", () => {
+          tooltip.style("display", "none");
+        })
         .on("click", (event, d) => {
           event.stopPropagation();
           onPointSelect?.({

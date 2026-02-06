@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SankeyView from "./component/SankeyView.tsx";
 import SankeyHorizontal from "./component/SankeyHorizontal.tsx";
 import SankeyVertical from "./component/SankeyVertical.tsx";
@@ -14,6 +14,16 @@ export default function Home() {
   const [scatterPath, setScatterPath] = useState("/data/scatterplot/dimenet_noaug_emb.json");
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
+  const [topkData, setTopkData] = useState<
+    {
+      layer_name: string;
+      model_type: string;
+      cluster_id: number;
+      top_k_closest_real_ids: number[];
+      top_k_farthest_real_ids: number[];
+      k: number;
+    }[]
+  >([]);
 
   function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }) {
     if (
@@ -33,6 +43,33 @@ export default function Home() {
   useEffect(() => {
     setScatterPath(`/data/scatterplot/${selectedModel}_${selectedLayer}.json`);
   }, [selectedModel, selectedLayer]);
+
+  useEffect(() => {
+    fetch("/data/topk/cluster_representatives.json")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load topk data");
+        return res.json();
+      })
+      .then((json) => {
+        setTopkData(Array.isArray(json) ? json : []);
+      })
+      .catch((err) => {
+        console.error(err);
+        setTopkData([]);
+      });
+  }, []);
+
+  const topkEntry = useMemo(() => {
+    if (!selectedNode) return null;
+    return (
+      topkData.find(
+        (d) =>
+          d.model_type === selectedNode.model &&
+          d.layer_name === selectedNode.layer &&
+          d.cluster_id === selectedNode.cluster,
+      ) ?? null
+    );
+  }, [topkData, selectedNode]);
   return (
     <div className="flex min-h-screen">
       <main className="flex min-h-screen">
@@ -163,8 +200,57 @@ export default function Home() {
           <div className="w-[50%] h-[25%] p-1 box-border">
             <div
               id="instanceview"
-              className="w-full h-full border border-zinc-400"
-            />
+              className="w-full h-full border border-zinc-400 bg-white"
+            >
+              <div className="w-full h-full p-2 box-border overflow-auto">
+                {!selectedNode && (
+                  <div className="text-xs text-zinc-500">Select a cluster to view top-k closest/farthest.</div>
+                )}
+                {selectedNode && !topkEntry && (
+                  <div className="text-xs text-zinc-500">
+                    No top-k data for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
+                  </div>
+                )}
+                {selectedNode && topkEntry && (
+                  <div className="flex flex-col gap-2">
+                    <div className="text-xs font-semibold text-zinc-700">Top-k Closest</div>
+                    <div className="flex flex-wrap gap-2">
+                      {topkEntry.top_k_closest_real_ids.map((id) => (
+                        <div key={`close-${id}`} className="flex flex-col items-center gap-1">
+                          <img
+                            src={`/molecule_images/${id}_ligand.png`}
+                            alt={`ligand ${id}`}
+                            className="w-20 h-20 object-contain bg-white border border-zinc-200"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = "none";
+                            }}
+                          />
+                          <div className="text-[10px] text-zinc-600">{id}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-xs font-semibold text-zinc-700">Top-k Farthest</div>
+                    <div className="flex flex-wrap gap-2">
+                      {topkEntry.top_k_farthest_real_ids.map((id) => (
+                        <div key={`far-${id}`} className="flex flex-col items-center gap-1">
+                          <img
+                            src={`/molecule_images/${id}_ligand.png`}
+                            alt={`ligand ${id}`}
+                            className="w-20 h-20 object-contain bg-white border border-zinc-200"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = "none";
+                            }}
+                          />
+                          <div className="text-[10px] text-zinc-600">{id}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           <div className="w-[25%] h-[25%] p-1 box-border">
             <div
