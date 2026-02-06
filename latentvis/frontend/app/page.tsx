@@ -14,6 +14,7 @@ export default function Home() {
   const [scatterPath, setScatterPath] = useState("/data/scatterplot/dimenet_noaug_emb.json");
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -126,6 +127,7 @@ export default function Home() {
                     ? `${selectedNode.model}_${selectedNode.cluster}`
                     : null
                 }
+                highlightId={hoveredId}
                 onNodeSelect={(sel) => {
                   if (!sel.model || sel.layer == null) return;
                   toggleNode({ model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster, ids: sel.ids });
@@ -156,6 +158,7 @@ export default function Home() {
                     ? `${selectedNode.layer}_${selectedNode.cluster}`
                     : null
                 }
+                highlightId={hoveredId}
                 onNodeSelect={(sel) => {
                   if (!sel.layer || !sel.model) return;
                   toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: sel.ids });
@@ -180,6 +183,7 @@ export default function Home() {
                 dataPath={scatterPath}
                 activeCluster={selectedNode?.cluster ?? null}
                 activeIds={selectedIds}
+                highlightId={hoveredId}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
                 onPointSelect={(sel) => {
@@ -226,7 +230,15 @@ export default function Home() {
                               target.style.display = "none";
                             }}
                           />
-                          <div className="text-[10px] text-zinc-600">{id}</div>
+                          <div
+                            className={
+                              `text-[11px] cursor-pointer ` +
+                              (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-600")
+                            }
+                            onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
+                          >
+                            {id}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -243,7 +255,15 @@ export default function Home() {
                               target.style.display = "none";
                             }}
                           />
-                          <div className="text-[10px] text-zinc-600">{id}</div>
+                          <div
+                            className={
+                              `text-[11px] cursor-pointer ` +
+                              (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-600")
+                            }
+                            onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
+                          >
+                            {id}
+                          </div>
                         </div>
                       ))}
                     </div>

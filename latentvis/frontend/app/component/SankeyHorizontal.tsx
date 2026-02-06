@@ -19,6 +19,7 @@ type SankeyHorizontalProps = {
   modelKey?: string;
   layerKey?: string;
   activeNodeKey?: string | null;
+  highlightId?: string | null;
   onNodeSelect?: (sel: { model?: string; layer?: string; cluster: number; ids?: string[] }) => void;
 };
 
@@ -43,6 +44,7 @@ export default function SankeyHorizontal({
   modelKey,
   layerKey,
   activeNodeKey,
+  highlightId,
   onNodeSelect,
 }: SankeyHorizontalProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -171,6 +173,22 @@ export default function SankeyHorizontal({
         nodeByName.set(String(n.name), n);
       });
 
+      let activeLayer: string | null = null;
+      if (displayActiveNode) {
+        const idx = displayActiveNode.lastIndexOf("_");
+        activeLayer = idx === -1 ? displayActiveNode : displayActiveNode.slice(0, idx);
+      }
+      const clusterValues: number[] = [];
+      (sankeyGraph.nodes as SankeyNode<any, any>[]).forEach((n: any) => {
+        const name = String(n.name || "");
+        const idx = name.lastIndexOf("_");
+        const layer = idx === -1 ? name : name.slice(0, idx);
+        const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
+        if (activeLayer && layer === activeLayer && Number.isFinite(cluster)) clusterValues.push(cluster);
+      });
+      const maxCluster = clusterValues.length ? Math.max(...clusterValues) : 0;
+      const color = d3.scaleOrdinal<number, string>(d3.schemeTableau10).domain(d3.range(maxCluster + 1));
+
       const linkGroup = svg.append("g").attr("class", "noaug-links");
       const nodeGroup = svg.append("g").attr("class", "noaug-nodes");
       const sampleGroup = svg.append("g").attr("class", "sample-trajectories");
@@ -258,8 +276,18 @@ export default function SankeyHorizontal({
         .attr("y", (d: any) => d.y0)
         .attr("width", (d: any) => d.x1 - d.x0)
         .attr("height", (d: any) => Math.max(1, d.y1 - d.y0))
-        .attr("fill", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? "#f4b266" : "#c9d6df"))
-        .attr("stroke", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? "#c27d2b" : "#6b7c8a"))
+        .attr("fill", (d: any) => {
+          if (displayActiveNode && activeLayer) {
+            const name = String(d.name || "");
+            const idx = name.lastIndexOf("_");
+            const layer = idx === -1 ? name : name.slice(0, idx);
+            const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
+            if (layer === activeLayer && Number.isFinite(cluster)) return color(Math.max(0, cluster));
+          }
+          return "#c9d6df";
+        })
+        .attr("stroke", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? "#ef4444" : "#6b7c8a"))
+        .attr("stroke-width", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? 2 : 1))
         .attr("data-name", (d: any) => d.name)
         .style("cursor", "pointer")
         .on("click", (event: any, d: any) => {
@@ -278,12 +306,18 @@ export default function SankeyHorizontal({
 
       nodeSel.append("title").text((d: any) => String(d.name || ""));
 
-      if (displayActiveNode) {
-        const samples = nodeSamples.get(displayActiveNode) || new Set();
-        sampleSel.attr("opacity", (d) => (samples.has(d.id) ? 0.8 : 0));
-      } else {
-        sampleSel.attr("opacity", 0);
-      }
+      const baseOpacity = (d: { id: string }) => {
+        if (displayActiveNode) {
+          const samples = nodeSamples.get(displayActiveNode) || new Set();
+          return samples.has(d.id) ? 0.8 : 0;
+        }
+        return 0;
+      };
+
+      sampleSel
+        .attr("opacity", (d) => (highlightId && d.id === highlightId ? 1 : baseOpacity(d)))
+        .attr("stroke", (d) => (highlightId && d.id === highlightId ? "#ef4444" : "#4a7bc4ff"))
+        .attr("stroke-width", (d) => (highlightId && d.id === highlightId ? 2.2 : 1.2));
     }
 
     fetch(dataPath)
@@ -314,7 +348,7 @@ export default function SankeyHorizontal({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, activeNode, activeNodeKey, zoomX, syncTransform]);
+  }, [dataPath, activeNode, activeNodeKey, highlightId, zoomX, syncTransform]);
 
   return <div ref={containerRef} className="w-full h-full" style={{ overflowX: "auto", overflowY: "hidden" }} />;
 }

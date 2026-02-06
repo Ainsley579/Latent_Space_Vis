@@ -659,6 +659,7 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, 
     if (!container) return;
     const sel = d3.select(container).selectAll<SVGRectElement, any>("rect.bar");
     if (!selectedNode) {
+      sel.attr("fill", "#aaa");
       sel.classed("node-highlight", false).classed("node-dimmed", false);
       d3.select(container)
         .selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar')
@@ -670,11 +671,27 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, 
         .classed("link-highlight", false);
       return;
     }
+    const clusterValues: number[] = [];
+    sel.each(function () {
+      const el = d3.select(this);
+      const row = el.attr("data-row");
+      const col = el.attr("data-column");
+      if (row !== selectedNode.model || col !== selectedNode.layer) return;
+      const cluster = Number(el.attr("data-cluster"));
+      if (Number.isFinite(cluster)) clusterValues.push(cluster);
+    });
+    const maxCluster = clusterValues.length ? Math.max(...clusterValues) : 0;
+    const color = d3.scaleOrdinal<number, string>(d3.schemeTableau10).domain(d3.range(maxCluster + 1));
     sel.each(function () {
       const el = d3.select(this);
       const row = el.attr("data-row");
       const col = el.attr("data-column");
       const cluster = Number(el.attr("data-cluster"));
+      if (row === selectedNode.model && col === selectedNode.layer && Number.isFinite(cluster)) {
+        el.attr("fill", color(Math.max(0, cluster)));
+      } else {
+        el.attr("fill", "#aaa");
+      }
       const isMatch =
         row === selectedNode.model &&
         col === selectedNode.layer &&
@@ -877,8 +894,8 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, 
         }
 
         :global(#chart svg rect.bar.node-highlight) {
-          fill: #f4b266 !important;
-          stroke: #c27d2b !important;
+          stroke: #ef4444 !important;
+          stroke-width: 2 !important;
         }
 
         :global(#chart svg rect.bar.node-dimmed) {
