@@ -3,11 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal, SankeyLink, SankeyNode } from "d3-sankey";
+import { CLUSTER_COLORS } from "../theme/colors";
 
 type SampleRow = {
   real_id: string | number;
   from_layer: string;
   to_layer: string;
+  from_model?: string;
+  to_model?: string;
   from_cluster: number;
   to_cluster: number;
 };
@@ -35,7 +38,7 @@ const LAYER_ORDER = [
   "u_mlp_l2",
 ];
 
-const MODEL_ORDER = ["dimenet10conf","dimenet_noaug"];
+const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
 
 export default function SankeyHorizontal({
   dataPath = "/data/sankey/noaug_sankey_samples.json",
@@ -74,8 +77,10 @@ export default function SankeyHorizontal({
       const linksMap = new Map<string, number>();
 
       rows.forEach((r) => {
-        const src = `${r.from_layer}_${r.from_cluster}`;
-        const tgt = `${r.to_layer}_${r.to_cluster}`;
+        const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
+        const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
+        const src = `${fromKey}_${r.from_cluster}`;
+        const tgt = `${toKey}_${r.to_cluster}`;
         if (!nodesMap.has(src)) {
           nodesMap.set(src, nodes.length);
           nodes.push({ name: src });
@@ -139,10 +144,13 @@ export default function SankeyHorizontal({
       // enforce x positions by layer order to align with SankeyView columns
       const presentLayers = new Set<string>();
       lastRows.forEach((r) => {
-        presentLayers.add(r.from_layer);
-        presentLayers.add(r.to_layer);
+        const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
+        const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
+        presentLayers.add(fromKey);
+        presentLayers.add(toKey);
       });
-      const layers = LAYER_ORDER.filter((l) => presentLayers.has(l));
+      const order = mode === "model" ? MODEL_ORDER : LAYER_ORDER;
+      const layers = order.filter((l) => presentLayers.has(l));
       const layerIndex = new Map(layers.map((l, i) => [l, i]));
       const centerOffset = CELL_MARGIN_LEFT + INNER_W / 2;
       const scaleX = syncTransform?.scale ?? zoomX;
@@ -187,7 +195,10 @@ export default function SankeyHorizontal({
         if (activeLayer && layer === activeLayer && Number.isFinite(cluster)) clusterValues.push(cluster);
       });
       const maxCluster = clusterValues.length ? Math.max(...clusterValues) : 0;
-      const color = d3.scaleOrdinal<number, string>(d3.schemeTableau10).domain(d3.range(maxCluster + 1));
+      const color = d3
+        .scaleOrdinal<number, string>()
+        .domain(d3.range(maxCluster + 1))
+        .range(CLUSTER_COLORS);
 
       const linkGroup = svg.append("g").attr("class", "noaug-links");
       const nodeGroup = svg.append("g").attr("class", "noaug-nodes");
@@ -208,8 +219,10 @@ export default function SankeyHorizontal({
       // build per-sample trajectories with per-node y offsets (spread inside node height)
       const nodeSamples = new Map<string, Set<string>>();
       lastRows.forEach((r) => {
-        const srcName = `${r.from_layer}_${r.from_cluster}`;
-        const tgtName = `${r.to_layer}_${r.to_cluster}`;
+        const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
+        const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
+        const srcName = `${fromKey}_${r.from_cluster}`;
+        const tgtName = `${toKey}_${r.to_cluster}`;
         const id = String(r.real_id);
         if (!nodeSamples.has(srcName)) nodeSamples.set(srcName, new Set());
         if (!nodeSamples.has(tgtName)) nodeSamples.set(tgtName, new Set());
@@ -239,8 +252,10 @@ export default function SankeyHorizontal({
 
       const sampleLines: Array<{ id: string; x1: number; y1: number; x2: number; y2: number }> = [];
       lastRows.forEach((r) => {
-        const srcName = `${r.from_layer}_${r.from_cluster}`;
-        const tgtName = `${r.to_layer}_${r.to_cluster}`;
+        const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
+        const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
+        const srcName = `${fromKey}_${r.from_cluster}`;
+        const tgtName = `${toKey}_${r.to_cluster}`;
         const src = nodeByName.get(srcName);
         const tgt = nodeByName.get(tgtName);
         if (!src || !tgt) return;
@@ -298,10 +313,14 @@ export default function SankeyHorizontal({
             setActiveNode(next);
           }
           const idx = name.lastIndexOf("_");
-          const layer = idx === -1 ? name : name.slice(0, idx);
+          const keyName = idx === -1 ? name : name.slice(0, idx);
           const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
           const ids = Array.from(nodeSamples.get(name) || []);
-          onNodeSelect?.({ model: modelKey, layer, cluster, ids });
+          if (mode === "model") {
+            onNodeSelect?.({ model: keyName, layer: layerKey, cluster, ids });
+          } else {
+            onNodeSelect?.({ model: modelKey, layer: keyName, cluster, ids });
+          }
         });
 
       nodeSel.append("title").text((d: any) => String(d.name || ""));

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import ZoomPan from "./ZoomPan.tsx";
+import { CLUSTER_COLORS } from "../theme/colors";
 
 const DATA_PATH = "/data/sankey/all_sankey.json";
 const DEFAULT_MAX_INSTANCE = 158;
@@ -12,9 +13,19 @@ type SankeyViewProps = {
   onLayerSelect?: (layerKey: string) => void;
   onNodeSelect?: (sel: { model: string; layer: string; cluster: number }) => void;
   selectedNode?: { model: string; layer: string; cluster: number } | null;
+  onCellSelect?: (active: boolean) => void;
+  onSwapAxes?: (swap: boolean) => void;
 };
 
-export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, onNodeSelect, selectedNode }: SankeyViewProps) {
+export default function SankeyView({
+  onModelSelect,
+  onTransform,
+  onLayerSelect,
+  onNodeSelect,
+  selectedNode,
+  onCellSelect,
+  onSwapAxes,
+}: SankeyViewProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [maxInstanceValue, setMaxInstanceValue] = useState(DEFAULT_MAX_INSTANCE);
@@ -38,6 +49,7 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, 
     let SWAP_AXES = urlParams.get("swap") === "1";
 
     function setSwapParam(nextSwap: boolean) {
+      onSwapAxes?.(nextSwap);
       const p = new URLSearchParams(window.location.search);
       if (nextSwap) p.set("swap", "1");
       else p.delete("swap");
@@ -143,12 +155,19 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, 
                 if (lockedCell && lockedCell.rowName === datum.rowName && lockedCell.columnName === datum.columnName) {
                   lockedCell = null;
                   setCellHighlight(datum.rowName, datum.columnName, false);
-                } else {
-                  lockedCell = { rowName: datum.rowName, columnName: datum.columnName };
-                  setCellHighlight(datum.rowName, datum.columnName, true);
+                  onCellSelect?.(false);
+                  return;
                 }
 
-                const modelCandidate = MODEL_SET.has(datum.rowName) ? datum.rowName : null;
+                lockedCell = { rowName: datum.rowName, columnName: datum.columnName };
+                setCellHighlight(datum.rowName, datum.columnName, true);
+                onCellSelect?.(true);
+
+                const modelCandidate = MODEL_SET.has(datum.rowName)
+                  ? datum.rowName
+                  : MODEL_SET.has(datum.columnName)
+                    ? datum.columnName
+                    : null;
                 if (modelCandidate) {
                   onModelSelect?.(modelCandidate);
                 }
@@ -681,7 +700,10 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, 
       if (Number.isFinite(cluster)) clusterValues.push(cluster);
     });
     const maxCluster = clusterValues.length ? Math.max(...clusterValues) : 0;
-    const color = d3.scaleOrdinal<number, string>(d3.schemeTableau10).domain(d3.range(maxCluster + 1));
+    const color = d3
+      .scaleOrdinal<number, string>()
+      .domain(d3.range(maxCluster + 1))
+      .range(CLUSTER_COLORS);
     sel.each(function () {
       const el = d3.select(this);
       const row = el.attr("data-row");
@@ -743,8 +765,8 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, 
 
   return (
     <div className="timeline-root h-full flex flex-col">
-      <div id="controls" className="shrink-0">
-        <label style={{ marginRight: 8 }}>Value range:</label>
+      <div id="controls" className="shrink-0" style={{ marginBottom: 20, marginTop: 20 }}>
+        <label style={{ marginRight: 8, marginLeft: 12 }}>Value range:</label>
         <div className="range-slider" id="rangeSlider">
           <div className="range-track" id="rangeTrack"></div>
           <input id="minRange" className="range-min" type="range" min={0} max={maxInstanceValue} step={1} defaultValue={0} />
@@ -753,10 +775,6 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, 
         <span id="minValue" style={{ marginLeft: 12 }}>0</span>
         <span id="sep" style={{ marginLeft: 6, marginRight: 6 }}>—</span>
         <span id="maxValue">{maxInstanceValue}</span>
-
-        <small style={{ color: "#666", marginLeft: 12 }}>
-          link value threshold — Mode: Default, Column, Row
-        </small>
         <div id="controlButtons" style={{ marginLeft: 0, display: "flex", gap: 8, alignItems: "center" }}>
           <button id="btnDefault">Default</button>
           <button id="btnColumn">Column</button>

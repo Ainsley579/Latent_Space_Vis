@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
+import { CLUSTER_COLORS } from "../theme/colors";
 
 type ScatterPoint = {
   real_id: string;
@@ -86,7 +87,10 @@ export default function ScatterPlot({
       const y = d3.scaleLinear().domain(yExtent).range([innerH, 0]).nice();
 
       const maxCluster = d3.max(lastRows, (d) => d.cluster_id) ?? 0;
-      const color = d3.scaleOrdinal<number, string>(d3.schemeTableau10).domain(d3.range(maxCluster + 1));
+      const color = d3
+        .scaleOrdinal<number, string>()
+        .domain(d3.range(maxCluster + 1))
+        .range(CLUSTER_COLORS);
 
       const activeIdSet = activeIds ? new Set(activeIds) : null;
       const circles = g.append("g")

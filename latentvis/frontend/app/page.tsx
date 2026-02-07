@@ -4,6 +4,7 @@ import SankeyView from "./component/SankeyView.tsx";
 import SankeyHorizontal from "./component/SankeyHorizontal.tsx";
 import SankeyVertical from "./component/SankeyVertical.tsx";
 import ScatterPlot from "./component/ScatterPlot.tsx";
+import AicBicChart from "./component/AicBicChart.tsx";
 
 export default function Home() {
   const [sankeyPath, setSankeyPath] = useState("/data/sankey/noaug_sankey_samples.json");
@@ -15,6 +16,8 @@ export default function Home() {
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [cellSelected, setCellSelected] = useState(false);
+  const [swapAxes, setSwapAxes] = useState(false);
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -25,6 +28,21 @@ export default function Home() {
       k: number;
     }[]
   >([]);
+  const allAicBicPaths = useMemo(() => {
+    const models = ["dimenet_noaug", "dimenet10conf"];
+    const layers = [
+      "emb",
+      "output_block_0",
+      "output_block_1",
+      "output_block_2",
+      "output_block_3",
+      "output_block_4",
+      "u_mlp_input",
+      "u_mlp_l1",
+      "u_mlp_l2",
+    ];
+    return models.flatMap((m) => layers.map((l) => `/data/bic_aic/${m}_${l}.json`));
+  }, []);
 
   function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }) {
     if (
@@ -35,6 +53,7 @@ export default function Home() {
     ) {
       setSelectedNode(null);
       setSelectedIds(null);
+      setCellSelected(false);
       return;
     }
     setSelectedNode(sel);
@@ -44,6 +63,17 @@ export default function Home() {
   useEffect(() => {
     setScatterPath(`/data/scatterplot/${selectedModel}_${selectedLayer}.json`);
   }, [selectedModel, selectedLayer]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setSwapAxes(params.get("swap") === "1");
+  }, []);
+
+  useEffect(() => {
+    if (!selectedNode) {
+      setCellSelected(false);
+    }
+  }, [selectedNode]);
 
   useEffect(() => {
     fetch("/data/topk/cluster_representatives.json")
@@ -113,8 +143,11 @@ export default function Home() {
                     setSankeyPath("/data/sankey/10conf_sankey_samples.json");
                   }
                   setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                  setCellSelected(true);
                 }}
                 selectedNode={selectedNode}
+                onCellSelect={(active) => setCellSelected(active)}
+                onSwapAxes={(swap) => setSwapAxes(swap)}
                 onTransform={(t) => setSankeyTransform(t)}
               />
             </div>
@@ -124,18 +157,31 @@ export default function Home() {
               id="aicbic"
               className="w-full flex-[1] border border-zinc-400"
             >
+              <AicBicChart
+                dataPath={`/data/bic_aic/${selectedModel}_${selectedLayer}.json`}
+                title={`${selectedModel} / ${selectedLayer}`}
+                isSelected={cellSelected}
+                allDataPaths={allAicBicPaths}
+              />
             </div>
             <div
               id="sankeyVertical"
-              className="w-full flex-[3] border border-zinc-400 min-h-0"
+              className="w-full flex-[3] border border-zinc-400 min-h-0 relative"
             >
+              <div className="absolute top-1 right-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
+                {swapAxes ? selectedModel : selectedLayer}
+              </div>
               <SankeyVertical
-                dataPath={sankeyPathVertical}
+                dataPath={swapAxes ? sankeyPath : sankeyPathVertical}
+                mode={swapAxes ? "layer" : "model"}
                 layerKey={selectedLayer}
+                modelKey={selectedModel}
                 syncTransform={{ x: sankeyTransform.x, y: sankeyTransform.y, scale: sankeyTransform.scale }}
                 activeNodeKey={
-                  selectedNode && selectedNode.layer === selectedLayer
-                    ? `${selectedNode.model}_${selectedNode.cluster}`
+                  selectedNode
+                    ? swapAxes
+                      ? `${selectedNode.layer}_${selectedNode.cluster}`
+                      : `${selectedNode.model}_${selectedNode.cluster}`
                     : null
                 }
                 highlightId={hoveredId}
@@ -150,6 +196,7 @@ export default function Home() {
                     setSankeyPath("/data/sankey/10conf_sankey_samples.json");
                   }
                   setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer ?? selectedLayer}.json`);
+                  setCellSelected(true);
                 }}
               />
             </div>
@@ -158,15 +205,22 @@ export default function Home() {
           <div className="w-[75%] h-[25%] p-1 box-border">
             <div
               id="sankeyHorizontal"
-              className="w-full h-full border border-zinc-400"
+              className="w-full h-full border border-zinc-400 relative"
             >
+              <div className="absolute top-1 left-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
+                {swapAxes ? selectedLayer : selectedModel}
+              </div>
               <SankeyHorizontal
-                dataPath={sankeyPath}
+                dataPath={swapAxes ? sankeyPathVertical : sankeyPath}
+                mode={swapAxes ? "model" : "layer"}
                 modelKey={selectedModel}
+                layerKey={selectedLayer}
                 syncTransform={{ x: sankeyTransform.x, scale: sankeyTransform.scale }}
                 activeNodeKey={
-                  selectedNode && selectedNode.model === selectedModel
-                    ? `${selectedNode.layer}_${selectedNode.cluster}`
+                  selectedNode
+                    ? swapAxes
+                      ? `${selectedNode.model}_${selectedNode.cluster}`
+                      : `${selectedNode.layer}_${selectedNode.cluster}`
                     : null
                 }
                 highlightId={hoveredId}
@@ -181,6 +235,7 @@ export default function Home() {
                     setSankeyPath("/data/sankey/10conf_sankey_samples.json");
                   }
                   setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                  setCellSelected(true);
                 }}
               />
             </div>
@@ -188,8 +243,11 @@ export default function Home() {
           <div className="w-[25%] h-[25%] p-1 box-border">
             <div
               id="scatterplot"
-              className="w-full h-full border border-zinc-400"
+              className="w-full h-full border border-zinc-400 relative"
             >
+              <div className="absolute top-1 right-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
+                {selectedModel} / {selectedLayer}
+              </div>
               <ScatterPlot
                 dataPath={scatterPath}
                 activeCluster={selectedNode?.cluster ?? null}
@@ -208,6 +266,7 @@ export default function Home() {
                     setSankeyPath("/data/sankey/10conf_sankey_samples.json");
                   }
                   setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                  setCellSelected(true);
                 }}
               />
             </div>
