@@ -15,7 +15,6 @@ export default function Home() {
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [imageMap, setImageMap] = useState<Record<string, Record<string, string>> | null>(null);
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -61,20 +60,6 @@ export default function Home() {
       });
   }, []);
 
-  useEffect(() => {
-    fetch("/molecule_images/real_id_to_image_mapping.json")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load image mapping");
-        return res.json();
-      })
-      .then((json) => {
-        setImageMap(json ?? null);
-      })
-      .catch((err) => {
-        console.error(err);
-        setImageMap(null);
-      });
-  }, []);
 
   const topkEntry = useMemo(() => {
     if (!selectedNode) return null;
@@ -90,9 +75,7 @@ export default function Home() {
 
   function resolveImageSrc(realId: string | number, imageType: string) {
     const key = String(realId);
-    const entry = imageMap?.[key];
-    const mapped = entry?.[imageType];
-    return mapped ? `/molecule_images/${mapped}` : `/molecule_images/${key}_${imageType}.png`;
+    return `/molecule_images/${key}_${imageType}.png`;
   }
   return (
     <div className="flex min-h-screen">
@@ -136,10 +119,15 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="w-[25%] h-[50%] p-1 box-border">
+          <div className="w-[25%] h-[50%] p-1 flex flex-col gap-1">
+            <div
+              id="aicbic"
+              className="w-full flex-[1] border border-zinc-400"
+            >
+            </div>
             <div
               id="sankeyVertical"
-              className="w-full h-full border border-zinc-400"
+              className="w-full flex-[3] border border-zinc-400 min-h-0"
             >
               <SankeyVertical
                 dataPath={sankeyPathVertical}
@@ -207,7 +195,6 @@ export default function Home() {
                 activeCluster={selectedNode?.cluster ?? null}
                 activeIds={selectedIds}
                 highlightId={hoveredId}
-                imageMap={imageMap}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
                 onPointSelect={(sel) => {
@@ -296,15 +283,9 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="w-[25%] h-[25%] p-1 box-border">
+          <div className="w-[50%] h-[25%] p-1 box-border">
             <div
               id="patternview"
-              className="w-full h-full border border-zinc-400"
-            />
-          </div>
-          <div className="w-[25%] h-[25%] p-1 box-border">
-            <div
-              id="aicbic"
               className="w-full h-full border border-zinc-400"
             />
           </div>

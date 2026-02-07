@@ -127,7 +127,7 @@ export default function SankeyVertical({
       // model spacing should match cell height
       const MODEL_GAP = CELL_H;
       const scale = syncTransform?.scale ?? 1;
-      const offsetY = (syncTransform?.y ?? 0) - 1 * CELL_H * scale;
+      const offsetY = (syncTransform?.y ?? 0) - 1.6 * CELL_H * scale;
 
       const nodeValue = new Map<string, number>();
       rows.forEach((r) => {

@@ -757,7 +757,7 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, 
         <small style={{ color: "#666", marginLeft: 12 }}>
           link value threshold — Mode: Default, Column, Row
         </small>
-        <div style={{ marginLeft: 0, display: "flex", gap: 8, alignItems: "center" }}>
+        <div id="controlButtons" style={{ marginLeft: 0, display: "flex", gap: 8, alignItems: "center" }}>
           <button id="btnDefault">Default</button>
           <button id="btnColumn">Column</button>
           <button id="btnRow">Row</button>
@@ -822,14 +822,16 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, 
         }
 
         #controls {
-          width: fit-content;
+          width: 100%;
           max-width: 100%;
-          margin: 8px auto;
+          margin: 8px 0;
           display: flex;
           align-items: center;
           gap: 12px;
           font-size: 14px;
           flex-wrap: wrap;
+          position: relative;
+          padding-right: 260px;
         }
 
         #chart {
@@ -839,7 +841,7 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, 
         }
 
         input[type="range"] {
-          width: 600px;
+          width: 360px;
         }
 
         :global(.link-path.hidden) {
@@ -848,10 +850,16 @@ export default function SankeyView({ onModelSelect, onTransform, onLayerSelect, 
 
         .range-slider {
           position: relative;
-          width: 600px;
+          width: 360px;
           height: 36px;
           display: inline-block;
           align-items: center;
+        }
+
+        #controlButtons {
+          position: absolute;
+          right: 8px;
+          top: 0;
         }
 
         .range-slider input[type="range"] {
