@@ -12,3 +12,6 @@ export const CLUSTER_COLORS = [
   "#f057a3ff",
   "#b79556ff",
 ];
+
+export const SANKEY_NODE_COLOR = "#e1d1bdff";
+export const SANKEY_LINK_COLOR = "#E1D5C9";

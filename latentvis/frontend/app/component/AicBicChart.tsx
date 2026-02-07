@@ -95,12 +95,14 @@ export default function AicBicChart({ dataPath, allDataPaths, title, isSelected 
       const aicLine = d3
         .line<number>()
         .x((_, i) => x(kValues[i]))
-        .y((d) => yAic(d));
+        .y((d) => yAic(d))
+        .curve(d3.curveMonotoneX);
 
       const bicLine = d3
         .line<number>()
         .x((_, i) => x(kValues[i]))
-        .y((d) => yBic(d));
+        .y((d) => yBic(d))
+        .curve(d3.curveMonotoneX);
 
       const baseOpacity = isSelected ? 0.2 : 0.6;
       const baseWidth = isSelected ? 2.2 : 1.6;

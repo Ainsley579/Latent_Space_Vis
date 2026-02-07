@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal, SankeyLink, SankeyNode } from "d3-sankey";
-import { CLUSTER_COLORS } from "../theme/colors";
+import { CLUSTER_COLORS, SANKEY_NODE_COLOR, SANKEY_LINK_COLOR } from "../theme/colors";
 
 type SampleRow = {
   real_id: string | number;
@@ -211,7 +211,7 @@ export default function SankeyHorizontal({
         .append("path")
         .attr("d", sankeyLinkHorizontal())
         .attr("fill", "none")
-        .attr("stroke", "#8aa1b3")
+        .attr("stroke", SANKEY_LINK_COLOR)
         .attr("stroke-opacity", 0.4)
         .attr("stroke-width", (d: any) => Math.max(1, d.width || 1))
         .attr("data-key", (d: any) => d.key);
@@ -277,7 +277,7 @@ export default function SankeyHorizontal({
         .attr("y1", (d) => d.y1)
         .attr("x2", (d) => d.x2)
         .attr("y2", (d) => d.y2)
-        .attr("stroke", "#4a7bc4ff")
+        .attr("stroke", SANKEY_LINK_COLOR)
         .attr("stroke-width", 1.2)
         .attr("opacity", 0)
         .attr("class", (d) => `sample-${d.id}`);
@@ -299,10 +299,10 @@ export default function SankeyHorizontal({
             const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
             if (layer === activeLayer && Number.isFinite(cluster)) return color(Math.max(0, cluster));
           }
-          return "#c9d6df";
+          return SANKEY_NODE_COLOR;
         })
-        .attr("stroke", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? "#ef4444" : "#6b7c8a"))
-        .attr("stroke-width", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? 2 : 1))
+        .attr("stroke", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? "#ef4444" : "none"))
+        .attr("stroke-width", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? 2 : 0))
         .attr("data-name", (d: any) => d.name)
         .style("cursor", "pointer")
         .on("click", (event: any, d: any) => {
@@ -335,7 +335,7 @@ export default function SankeyHorizontal({
 
       sampleSel
         .attr("opacity", (d) => (highlightId && d.id === highlightId ? 1 : baseOpacity(d)))
-        .attr("stroke", (d) => (highlightId && d.id === highlightId ? "#ef4444" : "#4a7bc4ff"))
+        .attr("stroke", (d) => (highlightId && d.id === highlightId ? "#ef4444" : SANKEY_LINK_COLOR))
         .attr("stroke-width", (d) => (highlightId && d.id === highlightId ? 2.2 : 1.2));
     }
 

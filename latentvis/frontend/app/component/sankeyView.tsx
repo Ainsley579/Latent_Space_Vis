@@ -27,8 +27,10 @@ export default function SankeyView({
   onSwapAxes,
 }: SankeyViewProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const fmiRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [maxInstanceValue, setMaxInstanceValue] = useState(DEFAULT_MAX_INSTANCE);
+  const [fmiData, setFmiData] = useState<Array<{ layer: string; fmi: number }>>([]);
   const [layout, setLayout] = useState<{
     rowNames: string[];
     colNames: string[];
@@ -489,7 +491,7 @@ export default function SankeyView({
           const endPct = ((b - minV) / (maxV - minV)) * 100;
           const track = document.getElementById("rangeTrack") as HTMLDivElement | null;
           if (track) {
-            track.style.background = `linear-gradient(to right, #ddd ${startPct}%, #86A69D ${startPct}%, #86A69D ${endPct}%, #ddd ${endPct}%)`;
+            track.style.background = `linear-gradient(to right, #ddd ${startPct}%, #9c795b ${startPct}%, #9c795b ${endPct}%, #ddd ${endPct}%)`;
           }
         }
 
@@ -763,9 +765,105 @@ export default function SankeyView({
       });
   }, [selectedNode]);
 
+  useEffect(() => {
+    fetch("/data/clustering_metrics/dimenet10conf_vs_noaug_fmi.json")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load FMI metrics");
+        return res.json();
+      })
+      .then((json) => {
+        const layers: Array<{ layer: string; fmi: number }> = json?.layers || [];
+        setFmiData(layers);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, []);
+
+  useEffect(() => {
+    const container = fmiRef.current;
+    if (!container) return;
+    if (!layout || !fmiData.length) {
+      container.innerHTML = "";
+      return;
+    }
+
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(container);
+
+    function draw() {
+      if (!container || !layout) return;
+      container.innerHTML = "";
+      const width = Math.max(1, container.clientWidth);
+      const height = Math.max(30, container.clientHeight || 40);
+      const margin = { top: 6, right: 8, bottom: 6, left: 28 };
+      const innerH = Math.max(1, height - margin.top - margin.bottom);
+
+      const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
+      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const fmiByLayer = new Map(fmiData.map((d) => [d.layer, d.fmi]));
+      const fmiValues = fmiData.map((d) => d.fmi);
+      const fmiMin = Math.min(...fmiValues);
+      const fmiMax = Math.max(...fmiValues);
+      const color = d3
+        .scaleLinear<string>()
+        .domain([fmiMin, fmiMin + (fmiMax - fmiMin) * 0.4, fmiMin + (fmiMax - fmiMin) * 0.8, fmiMax])
+        .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
+      const points = layout.colNames
+        .map((name, i) => {
+          const x =
+            transform.x +
+            transform.scale *
+              (layout.margin.left + i * layout.cellW + layout.cellMargin.left + layout.innerW / 2);
+          const fmi = fmiByLayer.get(name);
+          if (fmi == null) return null;
+          return { x, fmi };
+        })
+        .filter((d): d is { x: number; fmi: number } => !!d);
+
+      const cellW = transform.scale * layout.cellW;
+      g.selectAll("rect.fmi-cell")
+        .data(points)
+        .enter()
+        .append("rect")
+        .attr("class", "fmi-cell")
+        .attr("x", (d) => (d.x - margin.left) - cellW / 2 + 1)
+        .attr("y", 20)
+        .attr("width", Math.max(1, cellW - 2))
+        .attr("height", innerH * 0.3)
+        .attr("rx", 2)
+        .attr("fill", (d) => color(d.fmi));
+
+      g.selectAll("text.fmi-val")
+        .data(points)
+        .enter()
+        .append("text")
+        .attr("class", "fmi-val")
+        .attr("x", (d) => d.x - margin.left)
+        .attr("y", innerH * 1 / 2 + 8)
+        .attr("text-anchor", "middle")
+        .attr("font-size", 9)
+        .attr("fill", "#0f172a")
+        .text((d) => d.fmi.toFixed(3));
+
+      svg
+        .append("text")
+        .attr("x", width - 6)
+        .attr("y", 11)
+        .attr("text-anchor", "end")
+        .attr("font-size", 10)
+        .attr("fill", "#64748b")
+        .text("FMI (dimenet10conf vs noaug)");
+    }
+
+    draw();
+    return () => ro.disconnect();
+  }, [layout, transform, fmiData]);
+
   return (
     <div className="timeline-root h-full flex flex-col">
-      <div id="controls" className="shrink-0" style={{ marginBottom: 40, marginTop: 40 }}>
+      <div id="controls" className="shrink-0">
         <label style={{ marginRight: 8, marginLeft: 12 }}>Value range:</label>
         <div className="range-slider" id="rangeSlider">
           <div className="range-track" id="rangeTrack"></div>
@@ -775,13 +873,14 @@ export default function SankeyView({
         <span id="minValue" style={{ marginLeft: 12 }}>0</span>
         <span id="sep" style={{ marginLeft: 6, marginRight: 6 }}>—</span>
         <span id="maxValue">{maxInstanceValue}</span>
-        <div id="controlButtons" style={{ marginLeft: 0, display: "flex", gap: 8, alignItems: "center" }}>
+        <div id="controlButtons" style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center" }}>
           <button id="btnDefault">Default</button>
           <button id="btnColumn">Column</button>
           <button id="btnRow">Row</button>
           <button id="btnSwap">Swap X/Y</button>
         </div>
       </div>
+      <div id="fmiChart" ref={fmiRef} style={{ width: "100%", height: 56, marginTop: 4, marginBottom: 6 }} />
 
       <div className="relative w-full flex-1 min-h-0 overflow-hidden">
         <ZoomPan
