@@ -110,8 +110,8 @@ export default function Home() {
   return (
     <div className="flex min-h-screen">
       <main className="flex min-h-screen">
-        <div className="h-[850px] w-[1280px] flex  flex-wrap">
-          <div className="w-[75%] h-[50%] p-1 box-border">
+        <div className="h-[850px] w-[1480px] flex  flex-wrap">
+          <div className="w-[60%] h-[65%] p-1 box-border">
             <div
               id="sankey2d"
               className="w-full h-full border border-zinc-400"
@@ -152,7 +152,7 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="w-[25%] h-[50%] p-1 flex flex-col gap-1">
+          <div className="w-[20%] h-[65%] p-1 flex flex-col gap-1">
             <div
               id="aicbic"
               className="w-full flex-[1] border border-zinc-400"
@@ -201,77 +201,8 @@ export default function Home() {
               />
             </div>
           </div>
-
-          <div className="w-[75%] h-[25%] p-1 box-border">
-            <div
-              id="sankeyHorizontal"
-              className="w-full h-full border border-zinc-400 relative"
-            >
-              <div className="absolute top-1 left-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
-                {swapAxes ? selectedLayer : selectedModel}
-              </div>
-              <SankeyHorizontal
-                dataPath={swapAxes ? sankeyPathVertical : sankeyPath}
-                mode={swapAxes ? "model" : "layer"}
-                modelKey={selectedModel}
-                layerKey={selectedLayer}
-                syncTransform={{ x: sankeyTransform.x, scale: sankeyTransform.scale }}
-                activeNodeKey={
-                  selectedNode
-                    ? swapAxes
-                      ? `${selectedNode.model}_${selectedNode.cluster}`
-                      : `${selectedNode.layer}_${selectedNode.cluster}`
-                    : null
-                }
-                highlightId={hoveredId}
-                onNodeSelect={(sel) => {
-                  if (!sel.layer || !sel.model) return;
-                  toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: sel.ids });
-                  setSelectedModel(sel.model);
-                  setSelectedLayer(sel.layer);
-                  if (sel.model === "dimenet_noaug") {
-                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
-                  } else if (sel.model === "dimenet10conf") {
-                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
-                  }
-                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
-                  setCellSelected(true);
-                }}
-              />
-            </div>
-          </div>
-          <div className="w-[25%] h-[25%] p-1 box-border">
-            <div
-              id="scatterplot"
-              className="w-full h-full border border-zinc-400 relative"
-            >
-              <div className="absolute top-1 right-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
-                {selectedModel} / {selectedLayer}
-              </div>
-              <ScatterPlot
-                dataPath={scatterPath}
-                activeCluster={selectedNode?.cluster ?? null}
-                activeIds={selectedIds}
-                highlightId={hoveredId}
-                modelKey={selectedModel}
-                layerKey={selectedLayer}
-                onPointSelect={(sel) => {
-                  if (!sel.model || !sel.layer) return;
-                  toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: [sel.real_id] });
-                  setSelectedModel(sel.model);
-                  setSelectedLayer(sel.layer);
-                  if (sel.model === "dimenet_noaug") {
-                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
-                  } else if (sel.model === "dimenet10conf") {
-                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
-                  }
-                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
-                  setCellSelected(true);
-                }}
-              />
-            </div>
-          </div>
-          <div className="w-[50%] h-[25%] p-1 box-border">
+          <div className="w-[20%] h-[65%] p-1 box-border">
+          
             <div
               id="instanceview"
               className="w-full h-full border border-zinc-400 bg-white"
@@ -342,7 +273,76 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="w-[50%] h-[25%] p-1 box-border">
+          <div className="w-[60%] h-[35%] p-1 box-border">
+            <div
+              id="sankeyHorizontal"
+              className="w-full h-full border border-zinc-400 relative"
+            >
+              <div className="absolute top-1 left-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
+                {swapAxes ? selectedLayer : selectedModel}
+              </div>
+              <SankeyHorizontal
+                dataPath={swapAxes ? sankeyPathVertical : sankeyPath}
+                mode={swapAxes ? "model" : "layer"}
+                modelKey={selectedModel}
+                layerKey={selectedLayer}
+                syncTransform={{ x: sankeyTransform.x, scale: sankeyTransform.scale }}
+                activeNodeKey={
+                  selectedNode
+                    ? swapAxes
+                      ? `${selectedNode.model}_${selectedNode.cluster}`
+                      : `${selectedNode.layer}_${selectedNode.cluster}`
+                    : null
+                }
+                highlightId={hoveredId}
+                onNodeSelect={(sel) => {
+                  if (!sel.layer || !sel.model) return;
+                  toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: sel.ids });
+                  setSelectedModel(sel.model);
+                  setSelectedLayer(sel.layer);
+                  if (sel.model === "dimenet_noaug") {
+                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                  } else if (sel.model === "dimenet10conf") {
+                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                  }
+                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                  setCellSelected(true);
+                }}
+              />
+            </div>
+          </div>
+          <div className="w-[20%] h-[35%] p-1 box-border">
+            <div
+              id="scatterplot"
+              className="w-full h-full border border-zinc-400 relative"
+            >
+              <div className="absolute top-1 right-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
+                {selectedModel} / {selectedLayer}
+              </div>
+              <ScatterPlot
+                dataPath={scatterPath}
+                activeCluster={selectedNode?.cluster ?? null}
+                activeIds={selectedIds}
+                highlightId={hoveredId}
+                modelKey={selectedModel}
+                layerKey={selectedLayer}
+                onPointSelect={(sel) => {
+                  if (!sel.model || !sel.layer) return;
+                  toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: [sel.real_id] });
+                  setSelectedModel(sel.model);
+                  setSelectedLayer(sel.layer);
+                  if (sel.model === "dimenet_noaug") {
+                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                  } else if (sel.model === "dimenet10conf") {
+                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                  }
+                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                  setCellSelected(true);
+                }}
+              />
+            </div>
+          </div>
+          <div className="w-[20%] h-[35%] p-1 box-border">
             <div
               id="patternview"
               className="w-full h-full border border-zinc-400"

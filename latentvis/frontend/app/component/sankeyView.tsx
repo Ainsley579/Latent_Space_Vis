@@ -765,7 +765,7 @@ export default function SankeyView({
 
   return (
     <div className="timeline-root h-full flex flex-col">
-      <div id="controls" className="shrink-0" style={{ marginBottom: 20, marginTop: 20 }}>
+      <div id="controls" className="shrink-0" style={{ marginBottom: 40, marginTop: 40 }}>
         <label style={{ marginRight: 8, marginLeft: 12 }}>Value range:</label>
         <div className="range-slider" id="rangeSlider">
           <div className="range-track" id="rangeTrack"></div>
