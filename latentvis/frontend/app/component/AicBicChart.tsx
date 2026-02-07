@@ -181,15 +181,6 @@ export default function AicBicChart({ dataPath, allDataPaths, title, isSelected 
           .text(title);
       }
 
-      svg
-        .append("text")
-        .attr("x", width - 6)
-        .attr("y", height - 6)
-        .attr("text-anchor", "end")
-        .attr("font-size", 10)
-        .attr("fill", "#6b7280")
-        .text(`K ${effectiveMin}–${effectiveMax}`);
-
       const brush = d3
         .brushX()
         .extent([
@@ -211,8 +202,8 @@ export default function AicBicChart({ dataPath, allDataPaths, title, isSelected 
 
       const gBrush = g.append("g").attr("class", "k-brush");
       gBrush.call(brush);
-      gBrush.selectAll(".selection").attr("fill", "#94a3b8").attr("fill-opacity", 0.25);
-      gBrush.selectAll(".handle").attr("fill", "#64748b");
+      gBrush.selectAll(".selection").attr("fill", "#d5bb9eff").attr("fill-opacity", 0.25);
+      gBrush.selectAll(".handle").attr("fill", "#cfaa80ff");
       gBrush.call(brush.move, [x(effectiveMin), x(effectiveMax)]);
     }
 

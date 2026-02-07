@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import ZoomPan from "./ZoomPan.tsx";
+import ZoomPan from "./ZoomPan";
 import { CLUSTER_COLORS } from "../theme/colors";
 
 const DATA_PATH = "/data/sankey/all_sankey.json";
@@ -228,44 +228,17 @@ export default function SankeyView({
           return label.slice(0, i);
         }
 
+        const nodeDrawQueue: Array<{
+          g: d3.Selection<SVGGElement, any, any, any>;
+          rowName: string;
+          columnName: string;
+          nodesForCell: any[];
+        }> = [];
         cells.forEach((g) => {
           const { rowName, columnName } = g.datum();
           const rowData = data.epoch?.[rowName];
           const nodesForCell = (rowData && rowData.nodes && rowData.nodes[columnName]) || [];
-          g.selectAll("rect.bar")
-            .data(nodesForCell)
-            .enter()
-            .append("rect")
-            .attr("class", "bar")
-            .attr("x", (_d: any, i: number) => x(i) as number)
-            .attr("y", (d: any) => innerH - y(d.previous))
-            .attr("width", x.bandwidth())
-            .attr("height", (d: any) => innerH - y(d.value))
-            .attr("fill", "#aaa")
-            .attr("data-row", rowName)
-            .attr("data-column", columnName)
-            .attr("data-cluster", (d: any) => {
-              const c = d?.cluster;
-              if (c !== null && c !== undefined && c !== "") return Number(c);
-              const label = String(d?.label ?? "");
-              const i = label.lastIndexOf("_C");
-              if (i === -1) return "";
-              return Number(label.slice(i + 2));
-            })
-            .style("cursor", "pointer")
-            .on("click", (event: any, d: any) => {
-              event.stopPropagation();
-              const c = d?.cluster;
-              let cluster = c !== null && c !== undefined && c !== "" ? Number(c) : NaN;
-              if (Number.isNaN(cluster)) {
-                const label = String(d?.label ?? "");
-                const i = label.lastIndexOf("_C");
-                if (i !== -1) cluster = Number(label.slice(i + 2));
-              }
-              if (!Number.isNaN(cluster)) {
-                onNodeSelect?.({ model: rowName, layer: columnName, cluster });
-              }
-            });
+          nodeDrawQueue.push({ g, rowName, columnName, nodesForCell });
 
           nodesForCell.forEach((node: any, idx: number) => {
             const label = String(node.label ?? "");
@@ -435,6 +408,44 @@ export default function SankeyView({
             const p2 = appendLinkPath(linkGroup2 as any, pathD, edge.value, strokeW, "#F28585", 0.2);
             p2.attr("data-row", rowKey);
           });
+        });
+
+        // draw nodes after links so they are on top
+        nodeDrawQueue.forEach(({ g, rowName, columnName, nodesForCell }) => {
+          g.selectAll("rect.bar")
+            .data(nodesForCell)
+            .enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("x", (_d: any, i: number) => x(i) as number)
+            .attr("y", (d: any) => innerH - y(d.previous))
+            .attr("width", x.bandwidth())
+            .attr("height", (d: any) => innerH - y(d.value))
+            .attr("fill", "#aaa")
+            .attr("data-row", rowName)
+            .attr("data-column", columnName)
+            .attr("data-cluster", (d: any) => {
+              const c = d?.cluster;
+              if (c !== null && c !== undefined && c !== "") return Number(c);
+              const label = String(d?.label ?? "");
+              const i = label.lastIndexOf("_C");
+              if (i === -1) return "";
+              return Number(label.slice(i + 2));
+            })
+            .style("cursor", "pointer")
+            .on("click", (event: any, d: any) => {
+              event.stopPropagation();
+              const c = d?.cluster;
+              let cluster = c !== null && c !== undefined && c !== "" ? Number(c) : NaN;
+              if (Number.isNaN(cluster)) {
+                const label = String(d?.label ?? "");
+                const i = label.lastIndexOf("_C");
+                if (i !== -1) cluster = Number(label.slice(i + 2));
+              }
+              if (!Number.isNaN(cluster)) {
+                onNodeSelect?.({ model: rowName, layer: columnName, cluster });
+              }
+            });
         });
 
         // slider + mode controls

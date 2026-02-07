@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import SankeyView from "./component/SankeyView.tsx";
-import SankeyHorizontal from "./component/SankeyHorizontal.tsx";
-import SankeyVertical from "./component/SankeyVertical.tsx";
-import ScatterPlot from "./component/ScatterPlot.tsx";
+import SankeyView from "./component/SankeyView";
+import SankeyHorizontal from "./component/SankeyHorizontal";
+import SankeyVertical from "./component/SankeyVertical";
+import ScatterPlot from "./component/ScatterPlot";
 import AicBicChart from "./component/AicBicChart.tsx";
 
 export default function Home() {
