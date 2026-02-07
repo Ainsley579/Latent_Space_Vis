@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
-import { CLUSTER_COLORS } from "../theme/colors";
+import { CLUSTER_COLORS, HIGHLIGHT_RED } from "../theme/colors";
 
 type ScatterPoint = {
   real_id: string;
@@ -19,6 +19,7 @@ type ScatterPlotProps = {
   modelKey?: string;
   layerKey?: string;
   onPointSelect?: (sel: { model?: string; layer?: string; cluster: number; real_id: string }) => void;
+  onClearSelection?: () => void;
 };
 
 export default function ScatterPlot({
@@ -29,6 +30,7 @@ export default function ScatterPlot({
   modelKey,
   layerKey,
   onPointSelect,
+  onClearSelection,
 }: ScatterPlotProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -149,7 +151,7 @@ export default function ScatterPlot({
             .attr("d", star)
             .attr("transform", `translate(${x(hit.x)},${y(hit.y)})`)
             .attr("fill", clusterColor)
-            .attr("stroke", d3.color(clusterColor)?.darker(0.9)?.toString() ?? "#1f2937")
+            .attr("stroke", HIGHLIGHT_RED)
             .attr("stroke-width", 1.2)
             .attr("opacity", 0.95)
             .style("pointer-events", "none");
@@ -172,6 +174,10 @@ export default function ScatterPlot({
 
       svg.call(zoom);
       svg.call(zoom.transform, d3.zoomIdentity.translate(margin.left, margin.top));
+
+      svg.on("click", () => {
+        onClearSelection?.();
+      });
     }
 
     fetch(dataPath)

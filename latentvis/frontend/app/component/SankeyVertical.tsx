@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal, SankeyLink, SankeyNode } from "d3-sankey";
-import { CLUSTER_COLORS, SANKEY_NODE_COLOR, SANKEY_LINK_COLOR } from "../theme/colors";
+import { CLUSTER_COLORS, SANKEY_NODE_COLOR, SANKEY_LINK_COLOR, HIGHLIGHT_RED } from "../theme/colors";
 
 type SampleRow = {
   real_id: string | number;
@@ -218,8 +218,8 @@ export default function SankeyVertical({
       });
 
       const linkGroup = g.append("g").attr("class", "links");
-      const nodeGroup = g.append("g").attr("class", "nodes");
       const sampleGroup = g.append("g").attr("class", "sample-trajectories");
+      const nodeGroup = g.append("g").attr("class", "nodes");
 
       linkGroup
         .selectAll("path")
@@ -324,7 +324,7 @@ export default function SankeyVertical({
           }
           return SANKEY_NODE_COLOR;
         })
-        .attr("stroke", (d) => (displayActiveNode && d.key === displayActiveNode ? "#ef4444" : "none"))
+        .attr("stroke", (d) => (displayActiveNode && d.key === displayActiveNode ? HIGHLIGHT_RED : "none"))
         .attr("stroke-width", (d) => (displayActiveNode && d.key === displayActiveNode ? 2 : 0))
         .style("cursor", "pointer")
         .on("click", (event, d) => {
@@ -345,6 +345,7 @@ export default function SankeyVertical({
         });
 
       nodeSel.append("title").text((d) => d.key);
+      nodeGroup.raise();
 
       const baseOpacity = (d: { id: string }) => {
         if (displayActiveNode) {
@@ -356,7 +357,7 @@ export default function SankeyVertical({
 
       sampleSel
         .attr("opacity", (d) => (highlightId && d.id === highlightId ? 1 : baseOpacity(d)))
-        .attr("stroke", (d) => (highlightId && d.id === highlightId ? "#ef4444" : SANKEY_LINK_COLOR))
+        .attr("stroke", (d) => (highlightId && d.id === highlightId ? HIGHLIGHT_RED : SANKEY_LINK_COLOR))
         .attr("stroke-width", (d) => (highlightId && d.id === highlightId ? 2 : 1.1));
     }
 

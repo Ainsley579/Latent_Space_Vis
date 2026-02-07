@@ -18,6 +18,7 @@ export default function Home() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [cellSelected, setCellSelected] = useState(false);
   const [swapAxes, setSwapAxes] = useState(false);
+  const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -54,10 +55,12 @@ export default function Home() {
       setSelectedNode(null);
       setSelectedIds(null);
       setCellSelected(false);
+      setSuppressScatterCluster(false);
       return;
     }
     setSelectedNode(sel);
     setSelectedIds(sel.ids ?? null);
+    setSuppressScatterCluster(false);
   }
 
   useEffect(() => {
@@ -321,14 +324,17 @@ export default function Home() {
               </div>
               <ScatterPlot
                 dataPath={scatterPath}
-                activeCluster={selectedNode?.cluster ?? null}
+                activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
                 activeIds={selectedIds}
                 highlightId={hoveredId}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
                 onPointSelect={(sel) => {
                   if (!sel.model || !sel.layer) return;
-                  toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: [sel.real_id] });
+                  setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
+                  setSelectedIds([sel.real_id]);
+                  setHoveredId((prev) => (prev === String(sel.real_id) ? null : String(sel.real_id)));
+                  setSuppressScatterCluster(true);
                   setSelectedModel(sel.model);
                   setSelectedLayer(sel.layer);
                   if (sel.model === "dimenet_noaug") {
@@ -337,7 +343,12 @@ export default function Home() {
                     setSankeyPath("/data/sankey/10conf_sankey_samples.json");
                   }
                   setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
-                  setCellSelected(true);
+                }}
+                onClearSelection={() => {
+                  setSelectedNode(null);
+                  setSelectedIds(null);
+                  setHoveredId(null);
+                  setSuppressScatterCluster(false);
                 }}
               />
             </div>

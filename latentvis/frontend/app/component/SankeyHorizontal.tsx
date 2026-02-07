@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal, SankeyLink, SankeyNode } from "d3-sankey";
-import { CLUSTER_COLORS, SANKEY_NODE_COLOR, SANKEY_LINK_COLOR } from "../theme/colors";
+import { CLUSTER_COLORS, SANKEY_NODE_COLOR, SANKEY_LINK_COLOR, HIGHLIGHT_RED } from "../theme/colors";
 
 type SampleRow = {
   real_id: string | number;
@@ -201,8 +201,8 @@ export default function SankeyHorizontal({
         .range(CLUSTER_COLORS);
 
       const linkGroup = svg.append("g").attr("class", "noaug-links");
-      const nodeGroup = svg.append("g").attr("class", "noaug-nodes");
       const sampleGroup = svg.append("g").attr("class", "sample-trajectories");
+      const nodeGroup = svg.append("g").attr("class", "noaug-nodes");
 
       const linkSel = linkGroup
         .selectAll("path")
@@ -301,7 +301,7 @@ export default function SankeyHorizontal({
           }
           return SANKEY_NODE_COLOR;
         })
-        .attr("stroke", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? "#ef4444" : "none"))
+        .attr("stroke", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? HIGHLIGHT_RED : "none"))
         .attr("stroke-width", (d: any) => (displayActiveNode && String(d.name) === displayActiveNode ? 2 : 0))
         .attr("data-name", (d: any) => d.name)
         .style("cursor", "pointer")
@@ -324,6 +324,7 @@ export default function SankeyHorizontal({
         });
 
       nodeSel.append("title").text((d: any) => String(d.name || ""));
+      nodeGroup.raise();
 
       const baseOpacity = (d: { id: string }) => {
         if (displayActiveNode) {
@@ -335,7 +336,7 @@ export default function SankeyHorizontal({
 
       sampleSel
         .attr("opacity", (d) => (highlightId && d.id === highlightId ? 1 : baseOpacity(d)))
-        .attr("stroke", (d) => (highlightId && d.id === highlightId ? "#ef4444" : SANKEY_LINK_COLOR))
+        .attr("stroke", (d) => (highlightId && d.id === highlightId ? HIGHLIGHT_RED : SANKEY_LINK_COLOR))
         .attr("stroke-width", (d) => (highlightId && d.id === highlightId ? 2.2 : 1.2));
     }
 
