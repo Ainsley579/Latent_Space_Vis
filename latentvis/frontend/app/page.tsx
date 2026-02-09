@@ -4,7 +4,7 @@ import SankeyView from "./component/SankeyView";
 import SankeyHorizontal from "./component/SankeyHorizontal";
 import SankeyVertical from "./component/SankeyVertical";
 import ScatterPlot from "./component/ScatterPlot";
-import AicBicChart from "./component/AicBicChart.tsx";
+import AicBicChart from "./component/AicBicChart";
 
 export default function Home() {
   const [sankeyPath, setSankeyPath] = useState("/data/sankey/noaug_sankey_samples.json");
