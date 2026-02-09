@@ -28,9 +28,11 @@ export default function SankeyView({
 }: SankeyViewProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const fmiRef = useRef<HTMLDivElement | null>(null);
+  const rowMetricRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [maxInstanceValue, setMaxInstanceValue] = useState(DEFAULT_MAX_INSTANCE);
   const [fmiData, setFmiData] = useState<Array<{ layer: string; fmi: number; cspa: number }>>([]);
+  const [rowMetricData, setRowMetricData] = useState<Array<{ model: string; fmi: number; cspa: number }>>([]);
   const [layout, setLayout] = useState<{
     rowNames: string[];
     colNames: string[];
@@ -777,35 +779,35 @@ export default function SankeyView({
   }, [selectedNode]);
 
   useEffect(() => {
-    if (!layout?.colNames?.length) return;
-    const layers = layout.colNames;
-    Promise.all(
-      layers.map((layer) =>
-        fetch(`/data/bic_aic/dimenet_noaug_${layer}.json`)
-          .then((res) => {
-            if (!res.ok) throw new Error(`Failed to load bic_aic for ${layer}`);
-            return res.json();
-          })
-          .then((json) => ({
-            layer,
-            fmi: Number(json?.avg_fmi_vs_10conf),
-            cspa: Number(json?.avg_cspa_vs_10conf),
-          }))
-          .catch((err) => {
-            console.error(err);
-            return null;
-          }),
-      ),
-    )
-      .then((list) => {
-        const next = list.filter(
-          (d): d is { layer: string; fmi: number; cspa: number } =>
-            !!d && Number.isFinite(d.fmi) && Number.isFinite(d.cspa),
-        );
-        setFmiData(next);
+    fetch("/data/bic_aic/avg_fmi_cspa_by_layer.json")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load avg fmi/cspa metrics");
+        return res.json();
       })
-      .catch((err) => console.error(err));
-  }, [layout]);
+      .then((json) => {
+        const layers: Array<{ layer: string; avg_fmi: number; avg_cspa: number }> = json?.layers || [];
+        const models: Array<{ model: string; avg_fmi: number; avg_cspa: number }> = json?.models || [];
+        const next = layers
+          .map((d) => ({
+            layer: d.layer,
+            fmi: Number(d.avg_fmi),
+            cspa: Number(d.avg_cspa),
+          }))
+          .filter((d) => Number.isFinite(d.fmi) && Number.isFinite(d.cspa));
+        const nextModels = models
+          .map((d) => ({
+            model: d.model,
+            fmi: Number(d.avg_fmi),
+            cspa: Number(d.avg_cspa),
+          }))
+          .filter((d) => Number.isFinite(d.fmi) && Number.isFinite(d.cspa));
+        setFmiData(next);
+        setRowMetricData(nextModels);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, []);
 
   useEffect(() => {
     const container = fmiRef.current;
@@ -823,7 +825,7 @@ export default function SankeyView({
       container.innerHTML = "";
       const width = Math.max(1, container.clientWidth);
       const height = Math.max(30, container.clientHeight || 40);
-      const margin = { top: 6, right: 8, bottom: 6, left: 28 };
+      const margin = { top: 6, right: 8, bottom: 6, left: 35 };
       const innerH = Math.max(1, height - margin.top - margin.bottom);
 
       const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
@@ -866,14 +868,14 @@ export default function SankeyView({
       const cspaY = fmiY + rowHeight + rowGap;
 
       g.append("text")
-        .attr("x", -8)
+        .attr("x", -8 + 30)
         .attr("y", fmiY + rowHeight / 2 + 2)
         .attr("text-anchor", "end")
         .attr("font-size", 9)
         .attr("fill", "#64748b")
         .text("FMI");
       g.append("text")
-        .attr("x", -8)
+        .attr("x", -8 + 30)
         .attr("y", cspaY + rowHeight / 2 + 2)
         .attr("text-anchor", "end")
         .attr("font-size", 9)
@@ -885,7 +887,7 @@ export default function SankeyView({
         .enter()
         .append("rect")
         .attr("class", "fmi-cell")
-        .attr("x", (d) => (d.x - margin.left) - cellW / 2 + 1)
+        .attr("x", (d) => (d.x - margin.left) - cellW / 2 + 40)
         .attr("y", fmiY)
         .attr("width", Math.max(1, cellW - 2))
         .attr("height", rowHeight)
@@ -897,7 +899,7 @@ export default function SankeyView({
         .enter()
         .append("text")
         .attr("class", "fmi-val")
-        .attr("x", (d) => d.x - margin.left)
+        .attr("x", (d) => d.x - margin.left + 40)
         .attr("y", fmiY + rowHeight / 2 + 3)
         .attr("text-anchor", "middle")
         .attr("font-size", 9)
@@ -909,7 +911,7 @@ export default function SankeyView({
         .enter()
         .append("rect")
         .attr("class", "cspa-cell")
-        .attr("x", (d) => (d.x - margin.left) - cellW / 2 + 1)
+        .attr("x", (d) => (d.x - margin.left) - cellW / 2 + 40)
         .attr("y", cspaY)
         .attr("width", Math.max(1, cellW - 2))
         .attr("height", rowHeight)
@@ -921,31 +923,137 @@ export default function SankeyView({
         .enter()
         .append("text")
         .attr("class", "cspa-val")
-        .attr("x", (d) => d.x - margin.left)
+        .attr("x", (d) => d.x - margin.left + 40)
         .attr("y", cspaY + rowHeight / 2 + 3)
         .attr("text-anchor", "middle")
         .attr("font-size", 9)
         .attr("fill", "#0f172a")
         .text((d) => d.cspa.toFixed(3));
-
-      svg
-        .append("text")
-        .attr("x", width - 6)
-        .attr("y", 11)
-        .attr("text-anchor", "end")
-        .attr("font-size", 10)
-        .attr("fill", "#64748b")
-        .text("avg_fmi_vs_10conf / avg_cspa_vs_10conf");
     }
 
     draw();
     return () => ro.disconnect();
   }, [layout, transform, fmiData]);
 
+  useEffect(() => {
+    const container = rowMetricRef.current;
+    if (!container) return;
+    if (!layout || !rowMetricData.length) {
+      container.innerHTML = "";
+      return;
+    }
+
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(container);
+
+    function draw() {
+      if (!container || !layout) return;
+      container.innerHTML = "";
+      const width = Math.max(1, container.clientWidth);
+      const height = Math.max(30, container.clientHeight || 40);
+      const margin = { top: 6, right: 6, bottom: 6, left: 6 };
+      const innerW = Math.max(1, width - margin.left - margin.right);
+
+      const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
+      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const fmiByModel = new Map(rowMetricData.map((d) => [d.model, d.fmi]));
+      const cspaByModel = new Map(rowMetricData.map((d) => [d.model, d.cspa]));
+      const fmiValues = rowMetricData.map((d) => d.fmi);
+      const cspaValues = rowMetricData.map((d) => d.cspa);
+      const fmiMin = Math.min(...fmiValues);
+      const fmiMax = Math.max(...fmiValues);
+      const cspaMin = Math.min(...cspaValues);
+      const cspaMax = Math.max(...cspaValues);
+
+      const fmiColor = d3
+        .scaleLinear<string>()
+        .domain([fmiMin, fmiMin + (fmiMax - fmiMin) * 0.4, fmiMin + (fmiMax - fmiMin) * 0.8, fmiMax])
+        .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
+      const cspaColor = d3
+        .scaleLinear<string>()
+        .domain([cspaMin, cspaMin + (cspaMax - cspaMin) * 0.4, cspaMin + (cspaMax - cspaMin) * 0.8, cspaMax])
+        .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
+
+      const rowHeight = Math.max(10, transform.scale * layout.cellH);
+      const blockH = rowHeight;
+      const gap = 2;
+      const blockW = Math.min(15, Math.max(6, Math.floor(innerW / 2) - gap));
+      const fmiX = 8;
+      const cspaX = Math.min(innerW - blockW, blockW + gap) + 8;
+      const labelY = 6;
+
+      layout.rowNames.forEach((name, i) => {
+        const y =
+          transform.y +
+          transform.scale * (layout.margin.top + i * layout.cellH + layout.cellMargin.top + layout.innerH / 2);
+        const fmi = fmiByModel.get(name);
+        const cspa = cspaByModel.get(name);
+        if (fmi == null || cspa == null) return;
+
+        const yTop = y - margin.top - blockH / 2 + 7;
+        g.append("rect")
+          .attr("x", fmiX)
+          .attr("y", yTop)
+          .attr("width", blockW)
+          .attr("height", blockH)
+          .attr("rx", 2)
+          .attr("fill", fmiColor(fmi));
+
+        g.append("rect")
+          .attr("x", cspaX )
+          .attr("y", yTop )
+          .attr("width", blockW)
+          .attr("height", blockH)
+          .attr("rx", 2)
+          .attr("fill", cspaColor(cspa));
+
+        g.append("text")
+          .attr("x", fmiX + blockW / 2)
+          .attr("y", yTop + blockH / 2 + 2)
+          .attr("text-anchor", "middle")
+          .attr("font-size", 7)
+          .attr("fill", "#111827")
+          .attr("transform", `rotate(-90, ${fmiX + blockW / 2}, ${yTop + blockH / 2})`)
+          .text(fmi.toFixed(3));
+
+        g.append("text")
+          .attr("x", cspaX + blockW / 2)
+          .attr("y", yTop + blockH / 2 + 2)
+          .attr("text-anchor", "middle")
+          .attr("font-size", 7)
+          .attr("fill", "#111827")
+          .attr("transform", `rotate(-90, ${cspaX + blockW / 2}, ${yTop + blockH / 2})`)
+          .text(cspa.toFixed(3));
+      });
+
+      g.append("text")
+        .attr("x", fmiX + blockW / 2 + 5)
+        .attr("y", labelY + 2)
+        .attr("text-anchor", "middle")
+        .attr("font-size", 8)
+        .attr("fill", "#6b7280")
+        .attr("transform", `rotate(-90, ${fmiX + blockW / 2}, ${labelY})`)
+        .text("FMI");
+
+      g.append("text")
+        .attr("x", cspaX + blockW / 2 + 5)
+        .attr("y", labelY+2)
+        .attr("text-anchor", "middle")
+        .attr("font-size", 6)
+        .attr("fill", "#6b7280")
+        .attr("transform", `rotate(-90, ${cspaX + blockW / 2}, ${labelY})`)
+        .text("CSPA");
+    }
+
+    draw();
+    return () => ro.disconnect();
+  }, [layout, transform, rowMetricData]);
+
   return (
-    <div className="timeline-root h-full flex flex-col">
+    <div className="timeline-root h-full flex flex-col" style={{ marginLeft: -12 }}>
       <div id="controls" className="shrink-0">
-        <label style={{ marginRight: 8, marginLeft: 12 }}>Value range:</label>
+        <label style={{ marginRight: 8, marginLeft: 5 }}>Value range:</label>
         <div className="range-slider" id="rangeSlider">
           <div className="range-track" id="rangeTrack"></div>
           <input id="minRange" className="range-min" type="range" min={0} max={maxInstanceValue} step={1} defaultValue={0} />
@@ -961,55 +1069,60 @@ export default function SankeyView({
           <button id="btnSwap">Swap X/Y</button>
         </div>
       </div>
-      <div id="fmiChart" ref={fmiRef} style={{ width: "100%", height: 78, marginTop: 4, marginBottom: 6 }} />
+      <div id="fmiChart" ref={fmiRef} style={{ width: "100%", height: 78, marginTop: 4, marginBottom: 6, marginLeft: 0 }} />
 
-      <div className="relative w-full flex-1 min-h-0 overflow-hidden">
-        <ZoomPan
-          className="w-full h-full"
-          onTransform={(t) => {
-            setTransform(t);
-            onTransform?.(t);
-          }}
-        >
-          <div id="chart" ref={chartRef}></div>
-        </ZoomPan>
+      <div className="w-full flex-1 min-h-0 overflow-hidden">
+        <div className="h-full flex">
+          <div id="rowMetricChart" ref={rowMetricRef} className="shrink-0 w-10 h-full pointer-events-none" />
+          <div className="relative flex-1 min-w-0">
+            <ZoomPan
+              className="w-full h-full"
+              onTransform={(t) => {
+                setTransform(t);
+                onTransform?.(t);
+              }}
+            >
+              <div id="chart" ref={chartRef}></div>
+            </ZoomPan>
 
-        {layout && (
-          <>
-            <div className="absolute left-0 top-0 right-0 h-6 pointer-events-none bg-white/90 z-10">
-              {layout.colNames.map((name, i) => {
-                const x =
-                  transform.x +
-                  transform.scale * (layout.margin.left + i * layout.cellW + layout.cellMargin.left + layout.innerW / 2);
-                return (
-                  <div
-                    key={name}
-                    className="absolute text-xs text-zinc-700"
-                    style={{ transform: `translate(${x}px, 0px) translateX(-50%)` }}
-                  >
-                    {name}
-                  </div>
-                );
-              })}
-            </div>
-            <div className="absolute left-0 top-0 bottom-0 w-6 pointer-events-none bg-white/90 z-10">
-              {layout.rowNames.map((name, i) => {
-                const y =
-                  transform.y +
-                  transform.scale * (layout.margin.top + i * layout.cellH + layout.cellMargin.top + layout.innerH / 2);
-                return (
-                  <div
-                    key={name}
-                    className="absolute text-xs text-zinc-700"
-                    style={{ transform: `translate(-27px, ${y}px) translateY(-50%) rotate(-90deg)` }}
-                  >
-                    {name}
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
+            {layout && (
+              <>
+                <div className="absolute left-0 top-0 right-0 h-5 pointer-events-none bg-white/90 z-10">
+                  {layout.colNames.map((name, i) => {
+                    const x =
+                      transform.x +
+                      transform.scale * (layout.margin.left + i * layout.cellW + layout.cellMargin.left + layout.innerW / 2);
+                    return (
+                      <div
+                        key={name}
+                        className="absolute text-xs text-zinc-700"
+                        style={{ transform: `translate(${x}px, 0px) translateX(-50%)` }}
+                      >
+                        {name}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="absolute left-0 top-0 bottom-0 w-5 pointer-events-none bg-white/90 z-10">
+                  {layout.rowNames.map((name, i) => {
+                    const y =
+                      transform.y +
+                      transform.scale * (layout.margin.top + i * layout.cellH + layout.cellMargin.top + layout.innerH / 2);
+                    return (
+                      <div
+                        key={name}
+                        className="absolute text-xs text-zinc-700"
+                        style={{ transform: `translate(-27px, ${y}px) translateY(-50%) rotate(-90deg)` }}
+                      >
+                        {name}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       <style jsx>{`

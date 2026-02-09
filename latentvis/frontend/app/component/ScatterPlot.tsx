@@ -106,28 +106,28 @@ export default function ScatterPlot({
         .attr("fill", (d) => (highlightId && String(d.real_id) === highlightId ? "#f59e0b" : color(Math.max(0, d.cluster_id))))
         .attr("fill-opacity", (d) => {
           if (highlightId && String(d.real_id) === highlightId) return 1;
-          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? 0.95 : 0.7;
+          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? 1 : 0.22;
           if (activeCluster == null) return 0.75;
-          return d.cluster_id === activeCluster ? 0.95 : 0.7;
+          return d.cluster_id === activeCluster ? 1 : 0.22;
         })
         .attr("stroke", (d) => {
-          if (highlightId && String(d.real_id) === highlightId) return "#b45309";
-          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? "#222" : "none";
+          if (highlightId && String(d.real_id) === highlightId) return "#dc2626";
+          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? "#dc2626" : "none";
           if (activeCluster == null) return "none";
-          return d.cluster_id === activeCluster ? "#222" : "none";
+          return d.cluster_id === activeCluster ? "#dc2626" : "none";
         })
-        .attr("stroke-width", (d) => (highlightId && String(d.real_id) === highlightId ? 1.4 : 0.6))
+        .attr("stroke-width", (d) => (highlightId && String(d.real_id) === highlightId ? 1.8 : 0.9))
         .style("cursor", "pointer")
         .on("mouseover", (event, d) => {
           const imgSrc = `/molecule_images/${String(d.real_id)}_ligand.png`;
           tooltipImg.style("display", "block").attr("src", imgSrc);
           tooltip.style("display", "block");
           const [mx, my] = d3.pointer(event, container);
-          tooltip.style("left", `${mx + 12}px`).style("top", `${my + 12}px`);
+          positionTooltip(mx, my);
         })
         .on("mousemove", (event) => {
           const [mx, my] = d3.pointer(event, container);
-          tooltip.style("left", `${mx + 12}px`).style("top", `${my + 12}px`);
+          positionTooltip(mx, my);
         })
         .on("mouseout", () => {
           tooltip.style("display", "none");
@@ -178,6 +178,26 @@ export default function ScatterPlot({
       svg.on("click", () => {
         onClearSelection?.();
       });
+
+      function positionTooltip(mx: number, my: number) {
+        const pad = 12;
+        const bounds = container.getBoundingClientRect();
+        const tipBounds = (tooltip.node() as HTMLDivElement | null)?.getBoundingClientRect();
+        const tipW = tipBounds?.width ?? 0;
+        const tipH = tipBounds?.height ?? 0;
+
+        let x = mx + pad;
+        let y = my + pad;
+
+        if (x + tipW > bounds.width) {
+          x = Math.max(pad, mx - pad - tipW);
+        }
+        if (y + tipH > bounds.height) {
+          y = Math.max(pad, my - pad - tipH);
+        }
+
+        tooltip.style("left", `${x}px`).style("top", `${y}px`);
+      }
     }
 
     fetch(dataPath)
