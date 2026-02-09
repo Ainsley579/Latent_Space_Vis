@@ -217,7 +217,7 @@ export default function SankeyView({
         })();
         setMaxInstanceValue(maxInstance);
 
-        const x = d3.scaleBand().range([0, innerW]).domain(d3.range(maxClusters) as any).padding(0.2);
+        const x = d3.scaleBand<number>().range([0, innerW]).domain(d3.range(maxClusters)).padding(0.2);
         const y = d3.scaleLinear().domain([0, maxInstance]).range([innerH, 0]);
 
         const nodeLookup = new Map<string, { rowName: string; columnName: string; idx: number; node: any }>();
