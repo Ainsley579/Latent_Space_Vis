@@ -30,7 +30,7 @@ export default function SankeyView({
   const fmiRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [maxInstanceValue, setMaxInstanceValue] = useState(DEFAULT_MAX_INSTANCE);
-  const [fmiData, setFmiData] = useState<Array<{ layer: string; fmi: number }>>([]);
+  const [fmiData, setFmiData] = useState<Array<{ layer: string; fmi: number; cspa: number }>>([]);
   const [layout, setLayout] = useState<{
     rowNames: string[];
     colNames: string[];
@@ -777,19 +777,35 @@ export default function SankeyView({
   }, [selectedNode]);
 
   useEffect(() => {
-    fetch("/data/clustering_metrics/dimenet10conf_vs_noaug_fmi.json")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load FMI metrics");
-        return res.json();
+    if (!layout?.colNames?.length) return;
+    const layers = layout.colNames;
+    Promise.all(
+      layers.map((layer) =>
+        fetch(`/data/bic_aic/dimenet_noaug_${layer}.json`)
+          .then((res) => {
+            if (!res.ok) throw new Error(`Failed to load bic_aic for ${layer}`);
+            return res.json();
+          })
+          .then((json) => ({
+            layer,
+            fmi: Number(json?.avg_fmi_vs_10conf),
+            cspa: Number(json?.avg_cspa_vs_10conf),
+          }))
+          .catch((err) => {
+            console.error(err);
+            return null;
+          }),
+      ),
+    )
+      .then((list) => {
+        const next = list.filter(
+          (d): d is { layer: string; fmi: number; cspa: number } =>
+            !!d && Number.isFinite(d.fmi) && Number.isFinite(d.cspa),
+        );
+        setFmiData(next);
       })
-      .then((json) => {
-        const layers: Array<{ layer: string; fmi: number }> = json?.layers || [];
-        setFmiData(layers);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  }, []);
+      .catch((err) => console.error(err));
+  }, [layout]);
 
   useEffect(() => {
     const container = fmiRef.current;
@@ -814,13 +830,22 @@ export default function SankeyView({
       const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
       const fmiByLayer = new Map(fmiData.map((d) => [d.layer, d.fmi]));
+      const cspaByLayer = new Map(fmiData.map((d) => [d.layer, d.cspa]));
       const fmiValues = fmiData.map((d) => d.fmi);
+      const cspaValues = fmiData.map((d) => d.cspa);
       const fmiMin = Math.min(...fmiValues);
       const fmiMax = Math.max(...fmiValues);
-      const color = d3
+      const fmiColor = d3
         .scaleLinear<string>()
         .domain([fmiMin, fmiMin + (fmiMax - fmiMin) * 0.4, fmiMin + (fmiMax - fmiMin) * 0.8, fmiMax])
         .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
+      const cspaMin = Math.min(...cspaValues);
+      const cspaMax = Math.max(...cspaValues);
+      const cspaColor = d3
+        .scaleLinear<string>()
+        .domain([cspaMin, cspaMin + (cspaMax - cspaMin) * 0.4, cspaMin + (cspaMax - cspaMin) * 0.8, cspaMax])
+        .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
+
       const points = layout.colNames
         .map((name, i) => {
           const x =
@@ -828,23 +853,44 @@ export default function SankeyView({
             transform.scale *
               (layout.margin.left + i * layout.cellW + layout.cellMargin.left + layout.innerW / 2);
           const fmi = fmiByLayer.get(name);
-          if (fmi == null) return null;
-          return { x, fmi };
+          const cspa = cspaByLayer.get(name);
+          if (fmi == null || cspa == null) return null;
+          return { x, fmi, cspa };
         })
-        .filter((d): d is { x: number; fmi: number } => !!d);
+        .filter((d): d is { x: number; fmi: number; cspa: number } => !!d);
 
       const cellW = transform.scale * layout.cellW;
+      const rowHeight = Math.max(6, innerH * 0.28);
+      const rowGap = 6;
+      const fmiY = 16;
+      const cspaY = fmiY + rowHeight + rowGap;
+
+      g.append("text")
+        .attr("x", -8)
+        .attr("y", fmiY + rowHeight / 2 + 2)
+        .attr("text-anchor", "end")
+        .attr("font-size", 9)
+        .attr("fill", "#64748b")
+        .text("FMI");
+      g.append("text")
+        .attr("x", -8)
+        .attr("y", cspaY + rowHeight / 2 + 2)
+        .attr("text-anchor", "end")
+        .attr("font-size", 9)
+        .attr("fill", "#64748b")
+        .text("CSPA");
+
       g.selectAll("rect.fmi-cell")
         .data(points)
         .enter()
         .append("rect")
         .attr("class", "fmi-cell")
         .attr("x", (d) => (d.x - margin.left) - cellW / 2 + 1)
-        .attr("y", 20)
+        .attr("y", fmiY)
         .attr("width", Math.max(1, cellW - 2))
-        .attr("height", innerH * 0.3)
+        .attr("height", rowHeight)
         .attr("rx", 2)
-        .attr("fill", (d) => color(d.fmi));
+        .attr("fill", (d) => fmiColor(d.fmi));
 
       g.selectAll("text.fmi-val")
         .data(points)
@@ -852,11 +898,35 @@ export default function SankeyView({
         .append("text")
         .attr("class", "fmi-val")
         .attr("x", (d) => d.x - margin.left)
-        .attr("y", innerH * 1 / 2 + 8)
+        .attr("y", fmiY + rowHeight / 2 + 3)
         .attr("text-anchor", "middle")
         .attr("font-size", 9)
         .attr("fill", "#0f172a")
         .text((d) => d.fmi.toFixed(3));
+
+      g.selectAll("rect.cspa-cell")
+        .data(points)
+        .enter()
+        .append("rect")
+        .attr("class", "cspa-cell")
+        .attr("x", (d) => (d.x - margin.left) - cellW / 2 + 1)
+        .attr("y", cspaY)
+        .attr("width", Math.max(1, cellW - 2))
+        .attr("height", rowHeight)
+        .attr("rx", 2)
+        .attr("fill", (d) => cspaColor(d.cspa));
+
+      g.selectAll("text.cspa-val")
+        .data(points)
+        .enter()
+        .append("text")
+        .attr("class", "cspa-val")
+        .attr("x", (d) => d.x - margin.left)
+        .attr("y", cspaY + rowHeight / 2 + 3)
+        .attr("text-anchor", "middle")
+        .attr("font-size", 9)
+        .attr("fill", "#0f172a")
+        .text((d) => d.cspa.toFixed(3));
 
       svg
         .append("text")
@@ -865,7 +935,7 @@ export default function SankeyView({
         .attr("text-anchor", "end")
         .attr("font-size", 10)
         .attr("fill", "#64748b")
-        .text("FMI (dimenet10conf vs noaug)");
+        .text("avg_fmi_vs_10conf / avg_cspa_vs_10conf");
     }
 
     draw();
@@ -891,7 +961,7 @@ export default function SankeyView({
           <button id="btnSwap">Swap X/Y</button>
         </div>
       </div>
-      <div id="fmiChart" ref={fmiRef} style={{ width: "100%", height: 56, marginTop: 4, marginBottom: 6 }} />
+      <div id="fmiChart" ref={fmiRef} style={{ width: "100%", height: 78, marginTop: 4, marginBottom: 6 }} />
 
       <div className="relative w-full flex-1 min-h-0 overflow-hidden">
         <ZoomPan
