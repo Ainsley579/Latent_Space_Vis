@@ -3,11 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal, SankeyLink, SankeyNode } from "d3-sankey";
+import { CLUSTER_COLORS, SANKEY_NODE_COLOR, SANKEY_LINK_COLOR, HIGHLIGHT_RED } from "../theme/colors";
 
 type SampleRow = {
   real_id: string | number;
-  from_layer: string;
-  to_layer: string;
+  from_layer?: string;
+  to_layer?: string;
+  from_model?: string;
+  to_model?: string;
   from_cluster: number;
   to_cluster: number;
 };
@@ -17,6 +20,7 @@ type SankeyVerticalProps = {
   syncTransform?: { x: number; y: number; scale: number };
   mode?: "layer" | "model";
   layerKey?: string;
+  modelKey?: string;
   activeNodeKey?: string | null;
   highlightId?: string | null;
   onNodeSelect?: (sel: { model?: string; layer?: string; cluster: number; ids?: string[] }) => void;
@@ -39,8 +43,9 @@ const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
 export default function SankeyVertical({
   dataPath = "/data/sankey/noaug_sankey_samples.json",
   syncTransform,
-  mode = "layer",
+  mode = "model",
   layerKey,
+  modelKey,
   activeNodeKey,
   highlightId,
   onNodeSelect,
@@ -126,13 +131,15 @@ export default function SankeyVertical({
       const bandH = Math.max(1, drawH - TOP - BOTTOM);
       // model spacing should match cell height
       const MODEL_GAP = CELL_H;
-      const scale = syncTransform?.scale ?? 1;
-      const offsetY = (syncTransform?.y ?? 0) - 1 * CELL_H * scale;
+      const scale = syncTransform?.scale ?? zoomX;
+      const offsetY = (syncTransform?.y ?? 0) - 1.6 * CELL_H * scale;
 
       const nodeValue = new Map<string, number>();
       rows.forEach((r) => {
-        const src = `${r.from_model}_${r.from_cluster}`;
-        const tgt = `${r.to_model}_${r.to_cluster}`;
+        const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
+        const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+        const src = `${fromKey}_${r.from_cluster}`;
+        const tgt = `${toKey}_${r.to_cluster}`;
         nodeValue.set(src, (nodeValue.get(src) ?? 0) + 1);
         nodeValue.set(tgt, (nodeValue.get(tgt) ?? 0) + 1);
       });
@@ -147,7 +154,8 @@ export default function SankeyVertical({
       });
 
       const nodes: Array<{ key: string; model: string; value: number; x: number; y: number; h: number }> = [];
-      MODEL_ORDER.forEach((model, i) => {
+      const order = mode === "model" ? MODEL_ORDER : LAYER_ORDER;
+      order.forEach((model, i) => {
         const list = nodesByModel.get(model) || [];
         list.sort((a, b) => a.cluster - b.cluster);
         const total = list.reduce((s, n) => s + n.value, 0) || 1;
@@ -156,27 +164,41 @@ export default function SankeyVertical({
         let cur = TOP;
         list.forEach((n) => {
           const h = (n.value / total) * availH;
-          const baseX = i === 0 ? MARGIN_LEFT : MARGIN_LEFT + MODEL_GAP;
+          const baseX = MARGIN_LEFT + i * MODEL_GAP;
           const x = baseX * scale + offsetY;
           nodes.push({ key: n.key, model, value: n.value, x, y: cur, h });
           cur += h + NODE_PAD;
         });
       });
 
+      let activeModel: string | null = null;
+      if (displayActiveNode) {
+        const idx = displayActiveNode.lastIndexOf("_");
+        activeModel = idx === -1 ? displayActiveNode : displayActiveNode.slice(0, idx);
+      }
+
       const clusterValues: number[] = [];
       nodes.forEach((n) => {
+        if (!activeModel || n.model !== activeModel) return;
         const idx = n.key.lastIndexOf("_");
         const cluster = Number(idx === -1 ? 0 : n.key.slice(idx + 1));
         if (Number.isFinite(cluster)) clusterValues.push(cluster);
       });
       const maxCluster = clusterValues.length ? Math.max(...clusterValues) : 0;
-      const color = d3.scaleOrdinal<number, string>(d3.schemeTableau10).domain(d3.range(maxCluster + 1));
+      // const color = d3.scaleOrdinal<number, string>(d3.schemeTableau10).domain(d3.range(maxCluster + 1));
+
+      const color = d3
+        .scaleOrdinal<number, string>()
+        .domain(d3.range(maxCluster + 1))
+        .range(CLUSTER_COLORS);
 
       const nodeByKey = new Map(nodes.map((n) => [n.key, n]));
       const linkMap = new Map<string, number>();
       rows.forEach((r) => {
-        const src = `${r.from_model}_${r.from_cluster}`;
-        const tgt = `${r.to_model}_${r.to_cluster}`;
+        const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
+        const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+        const src = `${fromKey}_${r.from_cluster}`;
+        const tgt = `${toKey}_${r.to_cluster}`;
         const k = `${src}->${tgt}`;
         linkMap.set(k, (linkMap.get(k) ?? 0) + 1);
       });
@@ -196,8 +218,8 @@ export default function SankeyVertical({
       });
 
       const linkGroup = g.append("g").attr("class", "links");
-      const nodeGroup = g.append("g").attr("class", "nodes");
       const sampleGroup = g.append("g").attr("class", "sample-trajectories");
+      const nodeGroup = g.append("g").attr("class", "nodes");
 
       linkGroup
         .selectAll("path")
@@ -222,7 +244,7 @@ export default function SankeyVertical({
           return `M ${x1},${y1} C ${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
         })
         .attr("fill", "none")
-        .attr("stroke", "#8aa1b3")
+        .attr("stroke", SANKEY_LINK_COLOR)
         .attr("stroke-opacity", 0.35)
         .attr("stroke-width", (d) => {
           const s = nodeByKey.get(d.src);
@@ -233,8 +255,10 @@ export default function SankeyVertical({
 
       const nodeSamples = new Map<string, Set<string>>();
       rows.forEach((r) => {
-        const src = `${r.from_model}_${r.from_cluster}`;
-        const tgt = `${r.to_model}_${r.to_cluster}`;
+        const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
+        const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+        const src = `${fromKey}_${r.from_cluster}`;
+        const tgt = `${toKey}_${r.to_cluster}`;
         const id = String(r.real_id);
         if (!nodeSamples.has(src)) nodeSamples.set(src, new Set());
         if (!nodeSamples.has(tgt)) nodeSamples.set(tgt, new Set());
@@ -255,8 +279,10 @@ export default function SankeyVertical({
       });
 
       const sampleLines = rows.flatMap((r) => {
-        const src = `${r.from_model}_${r.from_cluster}`;
-        const tgt = `${r.to_model}_${r.to_cluster}`;
+        const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
+        const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+        const src = `${fromKey}_${r.from_cluster}`;
+        const tgt = `${toKey}_${r.to_cluster}`;
         const s = nodeByKey.get(src);
         const t = nodeByKey.get(tgt);
         if (!s || !t) return [];
@@ -276,7 +302,7 @@ export default function SankeyVertical({
         .attr("y1", (d) => d.y1)
         .attr("x2", (d) => d.x2)
         .attr("y2", (d) => d.y2)
-        .attr("stroke", "#4a7bc4")
+        .attr("stroke", SANKEY_LINK_COLOR)
         .attr("stroke-width", 1.1)
         .attr("opacity", 0)
         .attr("class", (d) => `sample-${d.id}`);
@@ -291,15 +317,15 @@ export default function SankeyVertical({
         .attr("width", NODE_W)
         .attr("height", (d) => Math.max(1, d.h))
         .attr("fill", (d) => {
-          if (displayActiveNode) {
+          if (displayActiveNode && activeModel && d.model === activeModel) {
             const idx = d.key.lastIndexOf("_");
             const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
             if (Number.isFinite(cluster)) return color(Math.max(0, cluster));
           }
-          return "#c9d6df";
+          return SANKEY_NODE_COLOR;
         })
-        .attr("stroke", (d) => (displayActiveNode && d.key === displayActiveNode ? "#ef4444" : "#6b7c8a"))
-        .attr("stroke-width", (d) => (displayActiveNode && d.key === displayActiveNode ? 2 : 1))
+        .attr("stroke", (d) => (displayActiveNode && d.key === displayActiveNode ? HIGHLIGHT_RED : "none"))
+        .attr("stroke-width", (d) => (displayActiveNode && d.key === displayActiveNode ? 2 : 0))
         .style("cursor", "pointer")
         .on("click", (event, d) => {
           event.stopPropagation();
@@ -308,13 +334,18 @@ export default function SankeyVertical({
             setActiveNode(next);
           }
           const idx = d.key.lastIndexOf("_");
-          const model = idx === -1 ? d.key : d.key.slice(0, idx);
+          const keyName = idx === -1 ? d.key : d.key.slice(0, idx);
           const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
           const ids = Array.from(nodeSamples.get(d.key) || []);
-          onNodeSelect?.({ model, layer: layerKey, cluster, ids });
+          if (mode === "model") {
+            onNodeSelect?.({ model: keyName, layer: layerKey, cluster, ids });
+          } else {
+            onNodeSelect?.({ model: modelKey, layer: keyName, cluster, ids });
+          }
         });
 
       nodeSel.append("title").text((d) => d.key);
+      nodeGroup.raise();
 
       const baseOpacity = (d: { id: string }) => {
         if (displayActiveNode) {
@@ -326,7 +357,7 @@ export default function SankeyVertical({
 
       sampleSel
         .attr("opacity", (d) => (highlightId && d.id === highlightId ? 1 : baseOpacity(d)))
-        .attr("stroke", (d) => (highlightId && d.id === highlightId ? "#ef4444" : "#4a7bc4"))
+        .attr("stroke", (d) => (highlightId && d.id === highlightId ? HIGHLIGHT_RED : SANKEY_LINK_COLOR))
         .attr("stroke-width", (d) => (highlightId && d.id === highlightId ? 2 : 1.1));
     }
 

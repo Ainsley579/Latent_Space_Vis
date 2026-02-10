@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
+import { CLUSTER_COLORS, HIGHLIGHT_RED } from "../theme/colors";
 
 type ScatterPoint = {
   real_id: string;
@@ -17,8 +18,8 @@ type ScatterPlotProps = {
   highlightId?: string | null;
   modelKey?: string;
   layerKey?: string;
-  imageMap?: Record<string, Record<string, string>> | null;
   onPointSelect?: (sel: { model?: string; layer?: string; cluster: number; real_id: string }) => void;
+  onClearSelection?: () => void;
 };
 
 export default function ScatterPlot({
@@ -28,8 +29,8 @@ export default function ScatterPlot({
   highlightId,
   modelKey,
   layerKey,
-  imageMap,
   onPointSelect,
+  onClearSelection,
 }: ScatterPlotProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -43,12 +44,6 @@ export default function ScatterPlot({
     ro.observe(container);
 
     let lastRows: ScatterPoint[] | null = null;
-
-    function resolveImageSrc(realId: string, imageType: string) {
-      const entry = imageMap?.[realId];
-      const mapped = entry?.[imageType];
-      return mapped ? `/molecule_images/${mapped}` : `/molecule_images/${realId}_${imageType}.png`;
-    }
 
     function draw() {
       if (!container || !lastRows) return;
@@ -94,7 +89,10 @@ export default function ScatterPlot({
       const y = d3.scaleLinear().domain(yExtent).range([innerH, 0]).nice();
 
       const maxCluster = d3.max(lastRows, (d) => d.cluster_id) ?? 0;
-      const color = d3.scaleOrdinal<number, string>(d3.schemeTableau10).domain(d3.range(maxCluster + 1));
+      const color = d3
+        .scaleOrdinal<number, string>()
+        .domain(d3.range(maxCluster + 1))
+        .range(CLUSTER_COLORS);
 
       const activeIdSet = activeIds ? new Set(activeIds) : null;
       const circles = g.append("g")
@@ -108,28 +106,28 @@ export default function ScatterPlot({
         .attr("fill", (d) => (highlightId && String(d.real_id) === highlightId ? "#f59e0b" : color(Math.max(0, d.cluster_id))))
         .attr("fill-opacity", (d) => {
           if (highlightId && String(d.real_id) === highlightId) return 1;
-          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? 0.95 : 0.7;
+          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? 1 : 0.22;
           if (activeCluster == null) return 0.75;
-          return d.cluster_id === activeCluster ? 0.95 : 0.7;
+          return d.cluster_id === activeCluster ? 1 : 0.22;
         })
         .attr("stroke", (d) => {
-          if (highlightId && String(d.real_id) === highlightId) return "#b45309";
-          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? "#222" : "none";
+          if (highlightId && String(d.real_id) === highlightId) return "#dc2626";
+          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? "#dc2626" : "none";
           if (activeCluster == null) return "none";
-          return d.cluster_id === activeCluster ? "#222" : "none";
+          return d.cluster_id === activeCluster ? "#dc2626" : "none";
         })
-        .attr("stroke-width", (d) => (highlightId && String(d.real_id) === highlightId ? 1.4 : 0.6))
+        .attr("stroke-width", (d) => (highlightId && String(d.real_id) === highlightId ? 1.8 : 0.9))
         .style("cursor", "pointer")
         .on("mouseover", (event, d) => {
-          const imgSrc = resolveImageSrc(String(d.real_id), "ligand");
+          const imgSrc = `/molecule_images/${String(d.real_id)}_ligand.png`;
           tooltipImg.style("display", "block").attr("src", imgSrc);
           tooltip.style("display", "block");
           const [mx, my] = d3.pointer(event, container);
-          tooltip.style("left", `${mx + 12}px`).style("top", `${my + 12}px`);
+          positionTooltip(mx, my);
         })
         .on("mousemove", (event) => {
           const [mx, my] = d3.pointer(event, container);
-          tooltip.style("left", `${mx + 12}px`).style("top", `${my + 12}px`);
+          positionTooltip(mx, my);
         })
         .on("mouseout", () => {
           tooltip.style("display", "none");
@@ -153,7 +151,7 @@ export default function ScatterPlot({
             .attr("d", star)
             .attr("transform", `translate(${x(hit.x)},${y(hit.y)})`)
             .attr("fill", clusterColor)
-            .attr("stroke", d3.color(clusterColor)?.darker(0.9)?.toString() ?? "#1f2937")
+            .attr("stroke", HIGHLIGHT_RED)
             .attr("stroke-width", 1.2)
             .attr("opacity", 0.95)
             .style("pointer-events", "none");
@@ -176,6 +174,31 @@ export default function ScatterPlot({
 
       svg.call(zoom);
       svg.call(zoom.transform, d3.zoomIdentity.translate(margin.left, margin.top));
+
+      svg.on("click", () => {
+        onClearSelection?.();
+      });
+
+      function positionTooltip(mx: number, my: number) {
+        const bounds = containerRef.current?.getBoundingClientRect();
+        if (!bounds) return;
+        const pad = 12;
+        const tipBounds = (tooltip.node() as HTMLDivElement | null)?.getBoundingClientRect();
+        const tipW = tipBounds?.width ?? 0;
+        const tipH = tipBounds?.height ?? 0;
+
+        let x = mx + pad;
+        let y = my + pad;
+
+        if (x + tipW > bounds.width) {
+          x = Math.max(pad, mx - pad - tipW);
+        }
+        if (y + tipH > bounds.height) {
+          y = Math.max(pad, my - pad - tipH);
+        }
+
+        tooltip.style("left", `${x}px`).style("top", `${y}px`);
+      }
     }
 
     fetch(dataPath)
@@ -195,7 +218,7 @@ export default function ScatterPlot({
     return () => {
       ro.disconnect();
     };
-  }, [dataPath, activeCluster, activeIds, highlightId, modelKey, layerKey, imageMap, onPointSelect]);
+  }, [dataPath, activeCluster, activeIds, highlightId, modelKey, layerKey, onPointSelect]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 }
