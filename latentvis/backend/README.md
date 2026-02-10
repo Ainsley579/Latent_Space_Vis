@@ -10,6 +10,7 @@ The Latent Space Vis backend provides a unified pipeline for generating frontend
 - **Dimensionality Reduction**: PCA or UMAP 2D projections
 - **Cluster Analysis**: Compute transitions across layers (for Sankey diagrams)
 - **Representative Extraction**: Find top-k closest/farthest samples per cluster
+- **Substructure Extraction**: Compute common substructures (MCS) for KNN/KFN sets
 - **Real-ID Tracking**: All data points tracked with real_id for consistency
 
 ## Directory Structure
@@ -181,6 +182,29 @@ Format:
 ]
 ```
 
+### Cluster Substructures (MCS)
+
+Location: `frontend/public/data/substructures/cluster_substructures.json`
+
+Format:
+```json
+[
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [5, 12, 23, 45, 67],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "C1=CC=CC=C1",
+    "mcs_smiles": "c1ccccc1"
+  }
+]
+```
+
 ## Validation
 
 Verify generated data:
@@ -220,11 +244,16 @@ User Embeddings (.npy)
 [ClusterRepresentativesExtractor]
   - Find top-k closest/farthest
   - Create cluster_representatives.json
-         ↓
+        ↓
+[SubstructureExtractor]
+  - Compute MCS for KNN/KFN per cluster
+  - Create cluster_substructures.json
+        ↓
 Frontend JSON files
   latentvis/frontend/public/data/
     ├── scatterplot/*.json
     └── cluster_representatives.json
+    └── substructures/cluster_substructures.json
 ```
 
 ## Configuration Options

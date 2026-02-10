@@ -16,6 +16,21 @@ export default function Home() {
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [imageMap, setImageMap] = useState<Record<string, Record<string, string>> | null>(null);
+  const [substructures, setSubstructures] = useState<
+    {
+      layer_name: string;
+      model_type: string;
+      cluster_id: number;
+      group: "knn" | "kfn";
+      k: number;
+      real_ids: number[];
+      valid_molecules: number;
+      missing_real_ids: number[];
+      invalid_smiles_real_ids: number[];
+      mcs_smarts: string | null;
+      mcs_smiles: string | null;
+    }[]
+  >([]);
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -76,6 +91,21 @@ export default function Home() {
       });
   }, []);
 
+  useEffect(() => {
+    fetch("/data/substructures/cluster_substructures.json")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load substructure data");
+        return res.json();
+      })
+      .then((json) => {
+        setSubstructures(Array.isArray(json) ? json : []);
+      })
+      .catch((err) => {
+        console.error(err);
+        setSubstructures([]);
+      });
+  }, []);
+
   const topkEntry = useMemo(() => {
     if (!selectedNode) return null;
     return (
@@ -88,11 +118,36 @@ export default function Home() {
     );
   }, [topkData, selectedNode]);
 
+  const substructureEntry = useMemo(() => {
+    if (!selectedNode) return null;
+    const matches = substructures.filter(
+      (d) =>
+        d.model_type === selectedNode.model &&
+        d.layer_name === selectedNode.layer &&
+        d.cluster_id === selectedNode.cluster,
+    );
+    if (!matches.length) return null;
+    const knn = matches.find((d) => d.group === "knn") ?? null;
+    const kfn = matches.find((d) => d.group === "kfn") ?? null;
+    return { knn, kfn };
+  }, [substructures, selectedNode]);
+
   function resolveImageSrc(realId: string | number, imageType: string) {
     const key = String(realId);
     const entry = imageMap?.[key];
     const mapped = entry?.[imageType];
     return mapped ? `/molecule_images/${mapped}` : `/molecule_images/${key}_${imageType}.png`;
+  }
+
+  function resolveSubstructureImage(
+    model: string,
+    layer: string,
+    cluster: number,
+    group: "knn" | "kfn",
+  ) {
+    const safeModel = model.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const safeLayer = layer.replace(/[^a-zA-Z0-9_-]/g, "_");
+    return `/data/substructures/images/${safeModel}_${safeLayer}_cluster${cluster}_${group}.png`;
   }
   return (
     <div className="flex min-h-screen">
@@ -299,8 +354,60 @@ export default function Home() {
           <div className="w-[25%] h-[25%] p-1 box-border">
             <div
               id="patternview"
-              className="w-full h-full border border-zinc-400"
-            />
+              className="w-full h-full border border-zinc-400 bg-white"
+            >
+              <div className="w-full h-full p-2 box-border overflow-auto">
+                {!selectedNode && (
+                  <div className="text-xs text-zinc-500">Select a cluster to view substructures.</div>
+                )}
+                {selectedNode && !substructureEntry && (
+                  <div className="text-xs text-zinc-500">
+                    No substructure data for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
+                  </div>
+                )}
+                {selectedNode && substructureEntry && (
+                  <div className="flex flex-col gap-3">
+                    {(["knn", "kfn"] as const).map((group) => {
+                      const entry = group === "knn" ? substructureEntry.knn : substructureEntry.kfn;
+                      return (
+                        <div key={group} className="flex flex-col gap-1">
+                          <div className="text-xs font-semibold text-zinc-700">
+                            {group === "knn" ? "KNN Substructure" : "KFN Substructure"}
+                          </div>
+                          {!entry && (
+                            <div className="text-[11px] text-zinc-500">No entry for this group.</div>
+                          )}
+                          {entry && (
+                            <div className="flex flex-col gap-1">
+                              <img
+                                src={resolveSubstructureImage(selectedNode.model, selectedNode.layer, selectedNode.cluster, group)}
+                                alt={`${group} substructure`}
+                                className="w-full max-h-36 object-contain border border-zinc-200 bg-white"
+                                onError={(e) => {
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  target.style.display = "none";
+                                }}
+                              />
+                              <div className="text-[11px] text-zinc-600">
+                                <span className="font-semibold">SMILES:</span>{" "}
+                                {entry.mcs_smiles ?? "null"}
+                              </div>
+                              <div className="text-[11px] text-zinc-600 break-all">
+                                <span className="font-semibold">SMARTS:</span>{" "}
+                                {entry.mcs_smarts ?? "null"}
+                              </div>
+                              <div className="text-[11px] text-zinc-500">
+                                Valid molecules: {entry.valid_molecules} / K={entry.k}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           <div className="w-[25%] h-[25%] p-1 box-border">
             <div
