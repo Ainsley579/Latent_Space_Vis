@@ -180,9 +180,9 @@ export default function ScatterPlot({
       });
 
       function positionTooltip(mx: number, my: number) {
-        if (!container) return;
+        const bounds = containerRef.current?.getBoundingClientRect();
+        if (!bounds) return;
         const pad = 12;
-        const bounds = container.getBoundingClientRect();
         const tipBounds = (tooltip.node() as HTMLDivElement | null)?.getBoundingClientRect();
         const tipW = tipBounds?.width ?? 0;
         const tipH = tipBounds?.height ?? 0;
