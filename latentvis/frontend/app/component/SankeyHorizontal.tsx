@@ -326,6 +326,36 @@ export default function SankeyHorizontal({
       nodeSel.append("title").text((d: any) => String(d.name || ""));
       nodeGroup.raise();
 
+      // When a cluster is activated, annotate cluster numbers on the same layer/model.
+      if (displayActiveNode && activeLayer) {
+        const labelData = (sankeyGraph.nodes as SankeyNode<any, any>[])
+          .map((n: any) => {
+            const name = String(n.name || "");
+            const idx = name.lastIndexOf("_");
+            const layer = idx === -1 ? name : name.slice(0, idx);
+            const cluster = Number(idx === -1 ? NaN : name.slice(idx + 1));
+            if (layer !== activeLayer || !Number.isFinite(cluster)) return null;
+            return { node: n, cluster, isActive: name === displayActiveNode };
+          })
+          .filter((d): d is { node: any; cluster: number; isActive: boolean } => !!d);
+
+        const labelGroup = svg.append("g").attr("class", "cluster-number-labels").style("pointer-events", "none");
+        labelGroup
+          .selectAll("text")
+          .data(labelData)
+          .enter()
+          .append("text")
+          .attr("x", (d) => (d.node.x1 ?? 0) + 6)
+          .attr("y", (d) => ((d.node.y0 ?? 0) + (d.node.y1 ?? 0)) / 2 + 4)
+          .attr("font-size", 11)
+          .attr("font-weight", (d) => (d.isActive ? 800 : 700))
+          .attr("fill", (d) => (d.isActive ? HIGHLIGHT_RED : "#1f2937"))
+          .attr("stroke", "#ffffff")
+          .attr("stroke-width", 2.4)
+          .attr("paint-order", "stroke")
+          .text((d) => String(d.cluster));
+      }
+
       const baseOpacity = (d: { id: string }) => {
         if (displayActiveNode) {
           const samples = nodeSamples.get(displayActiveNode) || new Set();

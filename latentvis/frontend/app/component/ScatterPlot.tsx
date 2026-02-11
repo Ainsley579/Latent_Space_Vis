@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { CLUSTER_COLORS, HIGHLIGHT_RED } from "../theme/colors";
 
@@ -33,6 +33,7 @@ export default function ScatterPlot({
   onClearSelection,
 }: ScatterPlotProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [legendClusters, setLegendClusters] = useState<number[]>([]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -44,36 +45,35 @@ export default function ScatterPlot({
     ro.observe(container);
 
     let lastRows: ScatterPoint[] | null = null;
+    const tooltip = d3
+      .select(document.body)
+      .append("div")
+      .style("position", "fixed")
+      .style("display", "none")
+      .style("pointer-events", "none")
+      .style("background", "rgba(255,255,255,0.95)")
+      .style("border", "1px solid #d1d5db")
+      .style("box-shadow", "0 6px 20px rgba(0,0,0,0.12)")
+      .style("padding", "6px")
+      .style("border-radius", "6px")
+      .style("z-index", "9999");
+
+    const tooltipImg = tooltip
+      .append("img")
+      .attr("alt", "ligand")
+      .style("display", "block")
+      .style("width", "140px")
+      .style("height", "140px")
+      .style("object-fit", "contain")
+      .on("error", function () {
+        d3.select(this).style("display", "none");
+      });
 
     function draw() {
       if (!container || !lastRows) return;
       container.innerHTML = "";
       const width = Math.max(1, container.clientWidth);
       const height = Math.max(1, container.clientHeight);
-
-      const tooltip = d3
-        .select(container)
-        .append("div")
-        .style("position", "absolute")
-        .style("display", "none")
-        .style("pointer-events", "none")
-        .style("background", "rgba(255,255,255,0.95)")
-        .style("border", "1px solid #d1d5db")
-        .style("box-shadow", "0 6px 20px rgba(0,0,0,0.12)")
-        .style("padding", "6px")
-        .style("border-radius", "6px")
-        .style("z-index", "5");
-
-      const tooltipImg = tooltip
-        .append("img")
-        .attr("alt", "ligand")
-        .style("display", "block")
-        .style("width", "140px")
-        .style("height", "140px")
-        .style("object-fit", "contain")
-        .on("error", function () {
-          d3.select(this).style("display", "none");
-        });
 
       const margin = { top: 8, right: 8, bottom: 8, left: 8 };
       const innerW = Math.max(1, width - margin.left - margin.right);
@@ -122,12 +122,10 @@ export default function ScatterPlot({
           const imgSrc = `/molecule_images/${String(d.real_id)}_ligand.png`;
           tooltipImg.style("display", "block").attr("src", imgSrc);
           tooltip.style("display", "block");
-          const [mx, my] = d3.pointer(event, container);
-          positionTooltip(mx, my);
+          positionTooltip(event.clientX, event.clientY);
         })
         .on("mousemove", (event) => {
-          const [mx, my] = d3.pointer(event, container);
-          positionTooltip(mx, my);
+          positionTooltip(event.clientX, event.clientY);
         })
         .on("mouseout", () => {
           tooltip.style("display", "none");
@@ -179,22 +177,20 @@ export default function ScatterPlot({
         onClearSelection?.();
       });
 
-      function positionTooltip(mx: number, my: number) {
-        const bounds = containerRef.current?.getBoundingClientRect();
-        if (!bounds) return;
+      function positionTooltip(clientX: number, clientY: number) {
         const pad = 12;
         const tipBounds = (tooltip.node() as HTMLDivElement | null)?.getBoundingClientRect();
         const tipW = tipBounds?.width ?? 0;
         const tipH = tipBounds?.height ?? 0;
 
-        let x = mx + pad;
-        let y = my + pad;
+        let x = clientX + pad;
+        let y = clientY + pad;
 
-        if (x + tipW > bounds.width) {
-          x = Math.max(pad, mx - pad - tipW);
+        if (x + tipW > window.innerWidth) {
+          x = Math.max(pad, clientX - pad - tipW);
         }
-        if (y + tipH > bounds.height) {
-          y = Math.max(pad, my - pad - tipH);
+        if (y + tipH > window.innerHeight) {
+          y = Math.max(pad, clientY - pad - tipH);
         }
 
         tooltip.style("left", `${x}px`).style("top", `${y}px`);
@@ -208,6 +204,8 @@ export default function ScatterPlot({
       })
       .then((json: ScatterPoint[]) => {
         lastRows = json;
+        const clusterIds = Array.from(new Set(json.map((d) => d.cluster_id))).sort((a, b) => a - b);
+        setLegendClusters(clusterIds);
         draw();
       })
       .catch((err) => {
@@ -216,9 +214,31 @@ export default function ScatterPlot({
       });
 
     return () => {
+      tooltip.remove();
       ro.disconnect();
     };
-  }, [dataPath, activeCluster, activeIds, highlightId, modelKey, layerKey, onPointSelect]);
+  }, [dataPath, activeCluster, activeIds, highlightId, modelKey, layerKey, onPointSelect, onClearSelection]);
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  return (
+    <div className="w-full h-full flex flex-col">
+      <div ref={containerRef} className="w-full flex-1 min-h-0" />
+      <div className="shrink-0 border-t border-zinc-200 bg-white/90 px-2 py-1 overflow-x-auto overflow-y-hidden">
+        <div className="flex flex-nowrap gap-x-3 gap-y-1 min-w-max">
+          {legendClusters.map((clusterId) => (
+            <div key={clusterId} className="flex items-center gap-1">
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: CLUSTER_COLORS[clusterId % CLUSTER_COLORS.length] }}
+              />
+              <span
+                className={`text-xs ${activeCluster != null && clusterId === activeCluster ? "text-red-600 font-bold" : "text-zinc-700"}`}
+              >
+                {clusterId}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }

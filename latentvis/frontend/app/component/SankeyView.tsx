@@ -6,6 +6,7 @@ import { CLUSTER_COLORS } from "../theme/colors";
 
 const DATA_PATH = "/data/sankey/all_sankey.json";
 const DEFAULT_MAX_INSTANCE = 158;
+const SHOW_FMI_CSPA = false;
 
 type SankeyViewProps = {
   onModelSelect?: (modelKey: string) => void;
@@ -779,6 +780,7 @@ export default function SankeyView({
   }, [selectedNode]);
 
   useEffect(() => {
+    if (!SHOW_FMI_CSPA) return;
     fetch("/data/bic_aic/avg_fmi_cspa_by_layer.json")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load avg fmi/cspa metrics");
@@ -810,6 +812,11 @@ export default function SankeyView({
   }, []);
 
   useEffect(() => {
+    if (!SHOW_FMI_CSPA) {
+      const container = fmiRef.current;
+      if (container) container.innerHTML = "";
+      return;
+    }
     const container = fmiRef.current;
     if (!container) return;
     if (!layout || !fmiData.length) {
@@ -871,14 +878,14 @@ export default function SankeyView({
         .attr("x", -8 + 30)
         .attr("y", fmiY + rowHeight / 2 + 2)
         .attr("text-anchor", "end")
-        .attr("font-size", 9)
+        .attr("font-size", 11)
         .attr("fill", "#64748b")
         .text("FMI");
       g.append("text")
         .attr("x", -8 + 30)
         .attr("y", cspaY + rowHeight / 2 + 2)
         .attr("text-anchor", "end")
-        .attr("font-size", 9)
+        .attr("font-size", 11)
         .attr("fill", "#64748b")
         .text("CSPA");
 
@@ -902,7 +909,7 @@ export default function SankeyView({
         .attr("x", (d) => d.x - margin.left + 40)
         .attr("y", fmiY + rowHeight / 2 + 3)
         .attr("text-anchor", "middle")
-        .attr("font-size", 9)
+        .attr("font-size", 11)
         .attr("fill", "#0f172a")
         .text((d) => d.fmi.toFixed(3));
 
@@ -926,7 +933,7 @@ export default function SankeyView({
         .attr("x", (d) => d.x - margin.left + 40)
         .attr("y", cspaY + rowHeight / 2 + 3)
         .attr("text-anchor", "middle")
-        .attr("font-size", 9)
+        .attr("font-size", 11)
         .attr("fill", "#0f172a")
         .text((d) => d.cspa.toFixed(3));
     }
@@ -936,6 +943,11 @@ export default function SankeyView({
   }, [layout, transform, fmiData]);
 
   useEffect(() => {
+    if (!SHOW_FMI_CSPA) {
+      const container = rowMetricRef.current;
+      if (container) container.innerHTML = "";
+      return;
+    }
     const container = rowMetricRef.current;
     if (!container) return;
     if (!layout || !rowMetricData.length) {
@@ -1012,7 +1024,7 @@ export default function SankeyView({
           .attr("x", fmiX + blockW / 2)
           .attr("y", yTop + blockH / 2 + 2)
           .attr("text-anchor", "middle")
-          .attr("font-size", 7)
+          .attr("font-size", 9)
           .attr("fill", "#111827")
           .attr("transform", `rotate(-90, ${fmiX + blockW / 2}, ${yTop + blockH / 2})`)
           .text(fmi.toFixed(3));
@@ -1021,7 +1033,7 @@ export default function SankeyView({
           .attr("x", cspaX + blockW / 2)
           .attr("y", yTop + blockH / 2 + 2)
           .attr("text-anchor", "middle")
-          .attr("font-size", 7)
+          .attr("font-size", 9)
           .attr("fill", "#111827")
           .attr("transform", `rotate(-90, ${cspaX + blockW / 2}, ${yTop + blockH / 2})`)
           .text(cspa.toFixed(3));
@@ -1031,7 +1043,7 @@ export default function SankeyView({
         .attr("x", fmiX + blockW / 2 + 5)
         .attr("y", labelY + 2)
         .attr("text-anchor", "middle")
-        .attr("font-size", 8)
+        .attr("font-size", 10)
         .attr("fill", "#6b7280")
         .attr("transform", `rotate(-90, ${fmiX + blockW / 2}, ${labelY})`)
         .text("FMI");
@@ -1040,7 +1052,7 @@ export default function SankeyView({
         .attr("x", cspaX + blockW / 2 + 5)
         .attr("y", labelY+2)
         .attr("text-anchor", "middle")
-        .attr("font-size", 6)
+        .attr("font-size", 8)
         .attr("fill", "#6b7280")
         .attr("transform", `rotate(-90, ${cspaX + blockW / 2}, ${labelY})`)
         .text("CSPA");
@@ -1051,7 +1063,7 @@ export default function SankeyView({
   }, [layout, transform, rowMetricData]);
 
   return (
-    <div className="timeline-root h-full flex flex-col" style={{ marginLeft: -12 }}>
+    <div className="timeline-root h-full flex flex-col" style={{ marginLeft: 0 }}>
       <div id="controls" className="shrink-0">
         <label style={{ marginRight: 8, marginLeft: 5 }}>Value range:</label>
         <div className="range-slider" id="rangeSlider">
@@ -1069,14 +1081,19 @@ export default function SankeyView({
           <button id="btnSwap">Swap X/Y</button>
         </div>
       </div>
+      {/* FMI/CSPA panel is temporarily hidden, keep code for future use.
       <div id="fmiChart" ref={fmiRef} style={{ width: "100%", height: 78, marginTop: 4, marginBottom: 6, marginLeft: 0 }} />
+      */}
 
       <div className="w-full flex-1 min-h-0 overflow-hidden">
         <div className="h-full flex">
+          {/* FMI/CSPA row metric strip is temporarily hidden, keep code for future use.
           <div id="rowMetricChart" ref={rowMetricRef} className="shrink-0 w-10 h-full pointer-events-none" />
+          */}
           <div className="relative flex-1 min-w-0">
             <ZoomPan
               className="w-full h-full"
+              panPadding={220}
               onTransform={(t) => {
                 setTransform(t);
                 onTransform?.(t);
@@ -1095,7 +1112,7 @@ export default function SankeyView({
                     return (
                       <div
                         key={name}
-                        className="absolute text-xs text-zinc-700"
+                        className="absolute text-sm text-zinc-700"
                         style={{ transform: `translate(${x}px, 0px) translateX(-50%)` }}
                       >
                         {name}
@@ -1111,7 +1128,7 @@ export default function SankeyView({
                     return (
                       <div
                         key={name}
-                        className="absolute text-xs text-zinc-700"
+                        className="absolute text-sm text-zinc-700"
                         style={{ transform: `translate(-27px, ${y}px) translateY(-50%) rotate(-90deg)` }}
                       >
                         {name}
@@ -1139,7 +1156,7 @@ export default function SankeyView({
           display: flex;
           align-items: center;
           gap: 12px;
-          font-size: 14px;
+          font-size: 16px;
           flex-wrap: wrap;
           position: relative;
           padding-right: 260px;
@@ -1148,7 +1165,7 @@ export default function SankeyView({
         #chart {
           width: fit-content;
           max-width: 100%;
-          margin: 10px auto;
+          margin: 16px auto 10px;
         }
 
         input[type="range"] {

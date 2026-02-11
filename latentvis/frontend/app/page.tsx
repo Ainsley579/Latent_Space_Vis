@@ -5,6 +5,17 @@ import SankeyHorizontal from "./component/SankeyHorizontal";
 import SankeyVertical from "./component/SankeyVertical";
 import ScatterPlot from "./component/ScatterPlot";
 import AicBicChart from "./component/AicBicChart";
+import { CLUSTER_COLORS } from "./theme/colors";
+
+type SankeySampleRow = {
+  real_id: string | number;
+  from_layer: string;
+  to_layer: string;
+  from_model?: string;
+  to_model?: string;
+  from_cluster: number;
+  to_cluster: number;
+};
 
 export default function Home() {
   const [sankeyPath, setSankeyPath] = useState("/data/sankey/noaug_sankey_samples.json");
@@ -35,6 +46,7 @@ export default function Home() {
   const [cellSelected, setCellSelected] = useState(false);
   const [swapAxes, setSwapAxes] = useState(false);
   const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
+  const [activeSankeyRows, setActiveSankeyRows] = useState<SankeySampleRow[]>([]);
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -94,6 +106,100 @@ export default function Home() {
     }
   }, [selectedNode]);
 
+  const activeSankeyPath = useMemo(() => {
+    return swapAxes ? sankeyPathVertical : sankeyPath;
+  }, [swapAxes, sankeyPath, sankeyPathVertical]);
+
+  useEffect(() => {
+    fetch(activeSankeyPath)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load active sankey rows");
+        return res.json();
+      })
+      .then((json: SankeySampleRow[]) => {
+        setActiveSankeyRows(Array.isArray(json) ? json : []);
+      })
+      .catch((err) => {
+        console.error(err);
+        setActiveSankeyRows([]);
+      });
+  }, [activeSankeyPath]);
+
+  const tabCycleData = useMemo(() => {
+    if (!selectedNode) return null;
+
+    const clusterSet = new Set<number>();
+    const idsByCluster = new Map<number, Set<string>>();
+
+    const add = (cluster: number, id: string | number) => {
+      if (!Number.isFinite(cluster)) return;
+      clusterSet.add(cluster);
+      if (!idsByCluster.has(cluster)) idsByCluster.set(cluster, new Set());
+      idsByCluster.get(cluster)?.add(String(id));
+    };
+
+    activeSankeyRows.forEach((r) => {
+      if (swapAxes) {
+        const fromModel = r.from_model ?? r.from_layer;
+        const toModel = r.to_model ?? r.to_layer;
+        if (fromModel === selectedNode.model) add(r.from_cluster, r.real_id);
+        if (toModel === selectedNode.model) add(r.to_cluster, r.real_id);
+      } else {
+        if (r.from_layer === selectedNode.layer) add(r.from_cluster, r.real_id);
+        if (r.to_layer === selectedNode.layer) add(r.to_cluster, r.real_id);
+      }
+    });
+
+    const clusters = Array.from(clusterSet).sort((a, b) => a - b);
+    return { clusters, idsByCluster };
+  }, [activeSankeyRows, selectedNode, swapAxes]);
+
+  useEffect(() => {
+    function isInteractiveTarget(target: EventTarget | null) {
+      const el = target as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName?.toLowerCase();
+      return (
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select" ||
+        el.isContentEditable
+      );
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Tab") return;
+      if (!selectedNode || !tabCycleData || tabCycleData.clusters.length === 0) return;
+      if (isInteractiveTarget(event.target)) return;
+
+      event.preventDefault();
+
+      const { clusters, idsByCluster } = tabCycleData;
+      const currIdx = clusters.indexOf(selectedNode.cluster);
+      const nextIdx = event.shiftKey
+        ? (currIdx <= 0 ? clusters.length - 1 : currIdx - 1)
+        : (currIdx === -1 ? 0 : (currIdx + 1) % clusters.length);
+      const nextCluster = clusters[nextIdx];
+
+      setSelectedNode({
+        model: selectedNode.model,
+        layer: selectedNode.layer,
+        cluster: nextCluster,
+      });
+      setSelectedIds(Array.from(idsByCluster.get(nextCluster) ?? []));
+      setSelectedModel(selectedNode.model);
+      setSelectedLayer(selectedNode.layer);
+      setCellSelected(true);
+      setSuppressScatterCluster(false);
+      setHoveredId(null);
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [selectedNode, tabCycleData]);
+
   useEffect(() => {
     fetch("/data/topk/cluster_representatives.json")
       .then((res) => {
@@ -151,6 +257,37 @@ export default function Home() {
     return { knn, kfn };
   }, [substructures, selectedNode]);
 
+  const clusterInstanceIds = useMemo(() => {
+    if (!selectedNode) return [];
+
+    const ids = new Set<string>();
+    activeSankeyRows.forEach((r) => {
+      const fromModel = r.from_model ?? null;
+      const toModel = r.to_model ?? null;
+
+      const fromMatch =
+        r.from_cluster === selectedNode.cluster &&
+        r.from_layer === selectedNode.layer &&
+        (fromModel == null || fromModel === selectedNode.model);
+
+      const toMatch =
+        r.to_cluster === selectedNode.cluster &&
+        r.to_layer === selectedNode.layer &&
+        (toModel == null || toModel === selectedNode.model);
+
+      if (fromMatch || toMatch) {
+        ids.add(String(r.real_id));
+      }
+    });
+
+    return Array.from(ids).sort((a, b) => {
+      const na = Number(a);
+      const nb = Number(b);
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+  }, [activeSankeyRows, selectedNode]);
+
   function resolveImageSrc(realId: string | number, imageType: string) {
     const key = String(realId);
     return `/molecule_images/${key}_${imageType}.png`;
@@ -166,11 +303,17 @@ export default function Home() {
     const safeLayer = layer.replace(/[^a-zA-Z0-9_-]/g, "_");
     return `/data/substructures/images/${safeModel}_${safeLayer}_cluster${cluster}_${group}.png`;
   }
+
+  function clusterBadgeColor(cluster: number) {
+    const len = CLUSTER_COLORS.length || 1;
+    const idx = ((cluster % len) + len) % len;
+    return CLUSTER_COLORS[idx];
+  }
   return (
-    <div className="flex min-h-screen">
-      <main className="flex min-h-screen">
-        <div className="h-[850px] w-[1480px] flex  flex-wrap">
-          <div className="w-[60%] h-[65%] p-1 box-border">
+    <div className="flex min-h-screen w-full">
+      <main className="flex min-h-screen w-full">
+        <div className="h-screen w-full flex flex-wrap">
+          <div className="w-[60%] h-[50%] p-1 box-border">
             <div
               id="sankey2d"
               className="w-full h-full border border-zinc-400"
@@ -211,23 +354,22 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="w-[20%] h-[65%] p-1 flex flex-col gap-1">
+          <div className="w-[15%] h-[50%] p-1 flex flex-col gap-1">
             <div
               id="aicbic"
-              className="w-full flex-[1] border border-zinc-400"
+              className="w-full flex-[2] border border-zinc-400"
             >
               <AicBicChart
                 dataPath={`/data/bic_aic/${selectedModel}_${selectedLayer}.json`}
-                title={`${selectedModel} / ${selectedLayer}`}
                 isSelected={cellSelected}
                 allDataPaths={allAicBicPaths}
               />
             </div>
             <div
               id="sankeyVertical"
-              className="w-full flex-[3] border border-zinc-400 min-h-0 relative"
+              className="w-full flex-[9] border border-zinc-400 min-h-0 relative"
             >
-              <div className="absolute top-1 right-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
+              <div className="absolute top-1 right-2 text-xs text-zinc-600 bg-white/80 px-1 rounded">
                 {swapAxes ? selectedModel : selectedLayer}
               </div>
               <SankeyVertical
@@ -260,84 +402,19 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="w-[20%] h-[65%] p-1 box-border">
+          <div className="w-[25%] h-[50%] p-1 box-border">
           
             <div
               id="instanceview"
               className="w-full h-full border border-zinc-400 bg-white"
-            >
-              <div className="w-full h-full p-2 box-border overflow-auto">
-                {!selectedNode && (
-                  <div className="text-xs text-zinc-500">Select a cluster to view top-k closest/farthest.</div>
-                )}
-                {selectedNode && !topkEntry && (
-                  <div className="text-xs text-zinc-500">
-                    No top-k data for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
-                  </div>
-                )}
-                {selectedNode && topkEntry && (
-                  <div className="flex flex-col gap-2">
-                    <div className="text-xs font-semibold text-zinc-700">Top-k Closest</div>
-                    <div className="flex flex-wrap gap-2">
-                      {topkEntry.top_k_closest_real_ids.map((id) => (
-                        <div key={`close-${id}`} className="flex flex-col items-center gap-1">
-                          <img
-                            src={resolveImageSrc(id, "ligand")}
-                            alt={`ligand ${id}`}
-                            className="w-20 h-20 object-contain bg-white border border-zinc-200"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.style.display = "none";
-                            }}
-                          />
-                          <div
-                            className={
-                              `text-[11px] cursor-pointer ` +
-                              (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-600")
-                            }
-                            onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
-                          >
-                            {id}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="text-xs font-semibold text-zinc-700">Top-k Farthest</div>
-                    <div className="flex flex-wrap gap-2">
-                      {topkEntry.top_k_farthest_real_ids.map((id) => (
-                        <div key={`far-${id}`} className="flex flex-col items-center gap-1">
-                          <img
-                            src={resolveImageSrc(id, "ligand")}
-                            alt={`ligand ${id}`}
-                            className="w-20 h-20 object-contain bg-white border border-zinc-200"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.style.display = "none";
-                            }}
-                          />
-                          <div
-                            className={
-                              `text-[11px] cursor-pointer ` +
-                              (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-600")
-                            }
-                            onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
-                          >
-                            {id}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            />
           </div>
-          <div className="w-[60%] h-[35%] p-1 box-border">
+          <div className="w-[60%] h-[25%] p-1 box-border">
             <div
               id="sankeyHorizontal"
               className="w-full h-full border border-zinc-400 relative"
             >
-              <div className="absolute top-1 left-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
+              <div className="absolute top-1 left-2 text-xs text-zinc-600 bg-white/80 px-1 rounded">
                 {swapAxes ? selectedLayer : selectedModel}
               </div>
               <SankeyHorizontal
@@ -370,14 +447,11 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="w-[20%] h-[35%] p-1 box-border">
+          <div className="w-[15%] h-[25%] p-1 box-border">
             <div
               id="scatterplot"
               className="w-full h-full border border-zinc-400 relative"
             >
-              <div className="absolute top-1 right-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
-                {selectedModel} / {selectedLayer}
-              </div>
               <ScatterPlot
                 dataPath={scatterPath}
                 activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
@@ -409,17 +483,17 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="w-[20%] h-[35%] p-1 box-border">
+          <div className="w-[25%] h-[25%] p-1 box-border">
             <div
               id="patternview"
               className="w-full h-full border border-zinc-400 bg-white"
             >
               <div className="w-full h-full p-2 box-border overflow-auto">
                 {!selectedNode && (
-                  <div className="text-xs text-zinc-500">Select a cluster to view substructures.</div>
+                  <div className="text-sm text-zinc-500">Select a cluster to view substructures.</div>
                 )}
                 {selectedNode && !substructureEntry && (
-                  <div className="text-xs text-zinc-500">
+                  <div className="text-sm text-zinc-500">
                     No substructure data for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
                   </div>
                 )}
@@ -429,32 +503,47 @@ export default function Home() {
                       const entry = group === "knn" ? substructureEntry.knn : substructureEntry.kfn;
                       return (
                         <div key={group} className="flex flex-col gap-1">
-                          <div className="text-xs font-semibold text-zinc-700">
+                          <div className="text-sm font-semibold text-zinc-700">
                             {group === "knn" ? "KNN Substructure" : "KFN Substructure"}
                           </div>
                           {!entry && (
-                            <div className="text-[11px] text-zinc-500">No entry for this group.</div>
+                            <div className="text-xs text-zinc-500">No entry for this group.</div>
                           )}
                           {entry && (
                             <div className="flex flex-col gap-1">
-                              <img
-                                src={resolveSubstructureImage(selectedNode.model, selectedNode.layer, selectedNode.cluster, group)}
-                                alt={`${group} substructure`}
-                                className="w-full max-h-36 object-contain border border-zinc-200 bg-white"
-                                onError={(e) => {
-                                  const target = e.currentTarget as HTMLImageElement;
-                                  target.style.display = "none";
-                                }}
-                              />
-                              <div className="text-[11px] text-zinc-600">
+                              <div className="relative w-full">
+                                <img
+                                  key={`${selectedNode.model}-${selectedNode.layer}-${selectedNode.cluster}-${group}`}
+                                  src={resolveSubstructureImage(selectedNode.model, selectedNode.layer, selectedNode.cluster, group)}
+                                  alt={`${group} substructure`}
+                                  className="w-full max-h-36 object-contain border border-zinc-200 bg-white"
+                                  onLoad={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    target.style.display = "block";
+                                  }}
+                                  onError={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    target.style.display = "none";
+                                  }}
+                                />
+                                {group !== "knn" && (
+                                  <div
+                                    className="absolute top-1 right-1 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
+                                    style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
+                                  >
+                                    {selectedNode.cluster}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-xs text-zinc-600">
                                 <span className="font-semibold">SMILES:</span>{" "}
                                 {entry.mcs_smiles ?? "null"}
                               </div>
-                              <div className="text-[11px] text-zinc-600 break-all">
+                              <div className="text-xs text-zinc-600 break-all">
                                 <span className="font-semibold">SMARTS:</span>{" "}
                                 {entry.mcs_smarts ?? "null"}
                               </div>
-                              <div className="text-[11px] text-zinc-500">
+                              <div className="text-xs text-zinc-500">
                                 Valid molecules: {entry.valid_molecules} / K={entry.k}
                               </div>
                             </div>
@@ -462,6 +551,163 @@ export default function Home() {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="w-[60%] h-[25%] p-1 box-border">
+            <div
+              id="bottomPanel1"
+              className="w-full h-full border border-zinc-400 bg-white"
+            >
+              <div className="w-full h-full p-2 box-border overflow-auto">
+                {!selectedNode && (
+                  <div className="text-sm text-zinc-500">Select a cluster to view all instances.</div>
+                )}
+                {selectedNode && (
+                  <div className="flex flex-col gap-2">
+                    <div className="text-sm font-semibold text-zinc-700">
+                      Cluster Instances ({clusterInstanceIds.length})
+                    </div>
+                    {clusterInstanceIds.length === 0 && (
+                      <div className="text-sm text-zinc-500">
+                        No instances found for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
+                      </div>
+                    )}
+                    {clusterInstanceIds.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {clusterInstanceIds.map((id) => (
+                          <div key={`instance-${id}`} className="relative w-32 h-32">
+                            <img
+                              src={resolveImageSrc(id, "ligand")}
+                              alt={`ligand ${id}`}
+                              className="w-32 h-32 object-contain bg-white border border-zinc-200"
+                              onLoad={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.style.display = "block";
+                              }}
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.style.display = "none";
+                              }}
+                            />
+                            {selectedNode && (
+                              <div
+                                className="absolute top-0.5 right-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
+                                style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
+                              >
+                                {selectedNode.cluster}
+                              </div>
+                            )}
+                            <div
+                              className={
+                                `absolute top-0.5 left-0.5 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
+                                (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
+                              }
+                              onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
+                            >
+                              {id}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="w-[40%] h-[25%] p-1 box-border">
+            <div
+              id="bottomPanel2"
+              className="w-full h-full border border-zinc-400 bg-white"
+            >
+              <div className="w-full h-full p-2 box-border overflow-auto">
+                {!selectedNode && (
+                  <div className="text-sm text-zinc-500">Select a cluster to view top-k closest/farthest.</div>
+                )}
+                {selectedNode && !topkEntry && (
+                  <div className="text-sm text-zinc-500">
+                    No top-k data for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
+                  </div>
+                )}
+                {selectedNode && topkEntry && (
+                  <div className="flex flex-col gap-2">
+                    <div className="text-sm font-semibold text-zinc-700">Top-k Closest</div>
+                    <div className="flex flex-wrap gap-1">
+                      {topkEntry.top_k_closest_real_ids.map((id) => (
+                        <div key={`close-${id}`} className="relative w-32 h-32">
+                          <img
+                            src={resolveImageSrc(id, "ligand")}
+                            alt={`ligand ${id}`}
+                            className="w-32 h-32 object-contain bg-white border border-zinc-200"
+                            onLoad={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = "block";
+                            }}
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = "none";
+                            }}
+                          />
+                          {selectedNode && (
+                            <div
+                              className="absolute top-1 right-1 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
+                              style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
+                            >
+                              {selectedNode.cluster}
+                            </div>
+                          )}
+                          <div
+                            className={
+                              `absolute top-1 left-1 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
+                              (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
+                            }
+                            onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
+                          >
+                            {id}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-sm font-semibold text-zinc-700">Top-k Farthest</div>
+                    <div className="flex flex-wrap gap-1">
+                      {topkEntry.top_k_farthest_real_ids.map((id) => (
+                        <div key={`far-${id}`} className="relative w-32 h-32">
+                          <img
+                            src={resolveImageSrc(id, "ligand")}
+                            alt={`ligand ${id}`}
+                            className="w-32 h-32 object-contain bg-white border border-zinc-200"
+                            onLoad={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = "block";
+                            }}
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = "none";
+                            }}
+                          />
+                          {selectedNode && (
+                            <div
+                              className="absolute top-1 right-1 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
+                              style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
+                            >
+                              {selectedNode.cluster}
+                            </div>
+                          )}
+                          <div
+                            className={
+                              `absolute top-1 left-1 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
+                              (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
+                            }
+                            onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
+                          >
+                            {id}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

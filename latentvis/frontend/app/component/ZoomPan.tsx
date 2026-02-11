@@ -7,6 +7,7 @@ type ZoomPanProps = {
   className?: string;
   id?: string;
   maxScale?: number;
+  panPadding?: number;
   onTransform?: (t: { x: number; y: number; scale: number }) => void;
 };
 
@@ -20,7 +21,7 @@ function clamp(val: number, min: number, max: number) {
   return Math.min(max, Math.max(min, val));
 }
 
-export default function ZoomPan({ children, className, id, maxScale = 6, onTransform }: ZoomPanProps) {
+export default function ZoomPan({ children, className, id, maxScale = 6, panPadding = 0, onTransform }: ZoomPanProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
@@ -45,17 +46,19 @@ export default function ZoomPan({ children, className, id, maxScale = 6, onTrans
   function clampTransform(next: Transform, containerW: number, containerH: number, contentW: number, contentH: number) {
     const sw = contentW * next.scale;
     const sh = contentH * next.scale;
-    let minX = containerW - sw;
-    let maxX = 0;
-    let minY = containerH - sh;
-    let maxY = 0;
+    let minX = containerW - sw - panPadding;
+    let maxX = panPadding;
+    let minY = containerH - sh - panPadding;
+    let maxY = panPadding;
 
-    // If content fits, lock to center
+    // If content fits, allow limited panning slack.
     if (sw <= containerW) {
-      minX = maxX = 0;
+      minX = -panPadding;
+      maxX = panPadding;
     }
     if (sh <= containerH) {
-      minY = maxY = 0;
+      minY = -panPadding;
+      maxY = panPadding;
     }
 
     return {
