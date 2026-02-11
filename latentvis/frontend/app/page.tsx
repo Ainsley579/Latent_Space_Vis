@@ -243,6 +243,12 @@ export default function Home() {
     );
   }, [topkData, selectedNode]);
 
+  const topkNearestRows = useMemo(() => {
+    return topkData
+      .filter((d) => d.model_type === selectedModel && d.layer_name === selectedLayer)
+      .sort((a, b) => a.cluster_id - b.cluster_id);
+  }, [topkData, selectedModel, selectedLayer]);
+
   const substructureEntry = useMemo(() => {
     if (!selectedNode) return null;
     const matches = substructures.filter(
@@ -407,7 +413,61 @@ export default function Home() {
             <div
               id="instanceview"
               className="w-full h-full border border-zinc-400 bg-white"
-            />
+            >
+              <div className="w-full h-full p-2 box-border overflow-auto">
+                {topkNearestRows.length === 0 && (
+                  <div className="text-sm text-zinc-500">
+                    No top-k nearest data for {selectedModel} / {selectedLayer}.
+                  </div>
+                )}
+                {topkNearestRows.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <div className="text-sm font-semibold text-zinc-700">Top-k Nearest by Cluster</div>
+                    {topkNearestRows.map((row) => (
+                      <div key={`nearest-row-${row.cluster_id}`} className="flex items-start gap-2 min-w-max">
+                        <div
+                          className="shrink-0 text-xs font-semibold text-white px-1.5 py-0.5 rounded-[2px] mt-0.5"
+                          style={{ backgroundColor: clusterBadgeColor(row.cluster_id) }}
+                        >
+                          {row.cluster_id}
+                        </div>
+                        <div className="flex flex-nowrap gap-1 min-w-max">
+                          {row.top_k_closest_real_ids.map((id) => (
+                            <div key={`nearest-${row.cluster_id}-${id}`} className="relative w-32 h-32 shrink-0">
+                              <img
+                                src={resolveImageSrc(id, "ligand")}
+                                alt={`ligand ${id}`}
+                                className={
+                                  `w-32 h-32 object-contain bg-white border ` +
+                                  (selectedNode && selectedNode.cluster === row.cluster_id ? "border-black" : "border-zinc-200")
+                                }
+                              onLoad={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.style.display = "block";
+                              }}
+                                onError={(e) => {
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  target.style.display = "none";
+                                }}
+                              />
+                              <div
+                                className={
+                                  `absolute top-0.5 left-0.5 text-[10px] px-1 rounded bg-white/85 cursor-pointer ` +
+                                  (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
+                                }
+                                onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
+                              >
+                                {id}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           <div className="w-[60%] h-[25%] p-1 box-border">
             <div
