@@ -19,6 +19,8 @@ type ScatterPlotProps = {
   modelKey?: string;
   layerKey?: string;
   onPointSelect?: (sel: { model?: string; layer?: string; cluster: number; real_id: string }) => void;
+  onPointHoverIdChange?: (id: string | null) => void;
+  onClusterSelect?: (sel: { model?: string; layer?: string; cluster: number; real_ids: string[] }) => void;
   onClearSelection?: () => void;
 };
 
@@ -30,10 +32,13 @@ export default function ScatterPlot({
   modelKey,
   layerKey,
   onPointSelect,
+  onPointHoverIdChange,
+  onClusterSelect,
   onClearSelection,
 }: ScatterPlotProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [legendClusters, setLegendClusters] = useState<number[]>([]);
+  const [legendClusterIds, setLegendClusterIds] = useState<Record<number, string[]>>({});
 
   useEffect(() => {
     const container = containerRef.current;
@@ -120,6 +125,7 @@ export default function ScatterPlot({
         .style("cursor", "pointer")
         .on("mouseover", (event, d) => {
           const imgSrc = `/molecule_images/${String(d.real_id)}_ligand.png`;
+          onPointHoverIdChange?.(String(d.real_id));
           tooltipImg.style("display", "block").attr("src", imgSrc);
           tooltip.style("display", "block");
           positionTooltip(event.clientX, event.clientY);
@@ -128,6 +134,7 @@ export default function ScatterPlot({
           positionTooltip(event.clientX, event.clientY);
         })
         .on("mouseout", () => {
+          onPointHoverIdChange?.(null);
           tooltip.style("display", "none");
         })
         .on("click", (event, d) => {
@@ -205,7 +212,18 @@ export default function ScatterPlot({
       .then((json: ScatterPoint[]) => {
         lastRows = json;
         const clusterIds = Array.from(new Set(json.map((d) => d.cluster_id))).sort((a, b) => a - b);
+        const idsByCluster: Record<number, string[]> = {};
+        json.forEach((d) => {
+          const cid = d.cluster_id;
+          if (!idsByCluster[cid]) idsByCluster[cid] = [];
+          idsByCluster[cid].push(String(d.real_id));
+        });
+        Object.keys(idsByCluster).forEach((k) => {
+          const cid = Number(k);
+          idsByCluster[cid] = Array.from(new Set(idsByCluster[cid]));
+        });
         setLegendClusters(clusterIds);
+        setLegendClusterIds(idsByCluster);
         draw();
       })
       .catch((err) => {
@@ -217,7 +235,17 @@ export default function ScatterPlot({
       tooltip.remove();
       ro.disconnect();
     };
-  }, [dataPath, activeCluster, activeIds, highlightId, modelKey, layerKey, onPointSelect, onClearSelection]);
+  }, [
+    dataPath,
+    activeCluster,
+    activeIds,
+    highlightId,
+    modelKey,
+    layerKey,
+    onPointSelect,
+    onPointHoverIdChange,
+    onClearSelection,
+  ]);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -225,7 +253,19 @@ export default function ScatterPlot({
       <div className="shrink-0 border-t border-zinc-200 bg-white/90 px-2 py-1 overflow-x-auto overflow-y-hidden">
         <div className="flex flex-nowrap gap-x-3 gap-y-1 min-w-max">
           {legendClusters.map((clusterId) => (
-            <div key={clusterId} className="flex items-center gap-1">
+            <button
+              key={clusterId}
+              type="button"
+              className="flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0 m-0"
+              onClick={() =>
+                onClusterSelect?.({
+                  model: modelKey,
+                  layer: layerKey,
+                  cluster: clusterId,
+                  real_ids: legendClusterIds[clusterId] ?? [],
+                })
+              }
+            >
               <span
                 className="inline-block w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: CLUSTER_COLORS[clusterId % CLUSTER_COLORS.length] }}
@@ -235,7 +275,7 @@ export default function ScatterPlot({
               >
                 {clusterId}
               </span>
-            </div>
+            </button>
           ))}
         </div>
       </div>

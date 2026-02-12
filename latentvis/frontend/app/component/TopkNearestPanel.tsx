@@ -17,6 +17,8 @@ type TopkNearestPanelProps = {
   selectedCluster: number | null;
   hoveredId: string | null;
   onToggleHoverId: (id: string) => void;
+  onSelectHoverId: (id: string) => void;
+  onHoverIdChange: (id: string | null) => void;
   resolveImageSrc: (realId: string | number, imageType: string) => string;
   resolveSubstructureImage: (model: string, layer: string, cluster: number, group: "knn" | "kfn") => string;
   substructureByCluster: Record<number, ClusterSubstructureFlags>;
@@ -30,6 +32,8 @@ export default function TopkNearestPanel({
   selectedCluster,
   hoveredId,
   onToggleHoverId,
+  onSelectHoverId,
+  onHoverIdChange,
   resolveImageSrc,
   resolveSubstructureImage,
   substructureByCluster,
@@ -104,7 +108,13 @@ export default function TopkNearestPanel({
                   <div className="w-px h-32 bg-zinc-300 shrink-0 mx-1" />
 
                   {row.top_k_closest_real_ids.map((id) => (
-                    <div key={`nearest-${row.cluster_id}-${id}`} className="relative w-32 h-32 shrink-0">
+                    <div
+                      key={`nearest-${row.cluster_id}-${id}`}
+                      className="relative w-32 h-32 shrink-0"
+                      onMouseEnter={() => onHoverIdChange(String(id))}
+                      onMouseLeave={() => onHoverIdChange(null)}
+                      onClick={() => onSelectHoverId(String(id))}
+                    >
                       <img
                         src={resolveImageSrc(id, "ligand")}
                         alt={`ligand ${id}`}
@@ -126,6 +136,8 @@ export default function TopkNearestPanel({
                           `absolute top-0.5 left-0.5 text-[10px] px-1 rounded bg-white/85 cursor-pointer ` +
                           (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
                         }
+                        onMouseEnter={() => onHoverIdChange(String(id))}
+                        onMouseLeave={() => onHoverIdChange(null)}
                         onClick={() => onToggleHoverId(String(id))}
                       >
                         {id}

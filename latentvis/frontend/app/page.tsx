@@ -28,6 +28,7 @@ export default function Home() {
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [hoverLock, setHoverLock] = useState(false);
   const [imageMap, setImageMap] = useState<Record<string, Record<string, string>> | null>(null);
   const [substructures, setSubstructures] = useState<
     {
@@ -75,6 +76,7 @@ export default function Home() {
   }, []);
 
   function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }) {
+    setHoverLock(false);
     if (
       selectedNode &&
       selectedNode.model === sel.model &&
@@ -90,6 +92,11 @@ export default function Home() {
     setSelectedNode(sel);
     setSelectedIds(sel.ids ?? null);
     setSuppressScatterCluster(false);
+  }
+
+  function setHoverFromMouse(id: string | null) {
+    if (hoverLock) return;
+    setHoveredId(id);
   }
 
   useEffect(() => {
@@ -193,6 +200,7 @@ export default function Home() {
       setCellSelected(true);
       setSuppressScatterCluster(false);
       setHoveredId(null);
+      setHoverLock(false);
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -416,6 +424,11 @@ export default function Home() {
                 selectedCluster={selectedNode?.cluster ?? null}
                 hoveredId={hoveredId}
                 onToggleHoverId={(id) => setHoveredId((prev) => (prev === id ? null : id))}
+                onSelectHoverId={(id) => {
+                  setHoveredId(id);
+                  setHoverLock(true);
+                }}
+                onHoverIdChange={(id) => setHoverFromMouse(id)}
                 resolveImageSrc={resolveImageSrc}
                 resolveSubstructureImage={resolveSubstructureImage}
                 substructureByCluster={substructureByCluster}
@@ -473,12 +486,30 @@ export default function Home() {
                 highlightId={hoveredId}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
+                onPointHoverIdChange={(id) => setHoverFromMouse(id)}
                 onPointSelect={(sel) => {
                   if (!sel.model || !sel.layer) return;
                   setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
                   setSelectedIds([sel.real_id]);
-                  setHoveredId((prev) => (prev === String(sel.real_id) ? null : String(sel.real_id)));
+                  setHoveredId(String(sel.real_id));
+                  setHoverLock(true);
                   setSuppressScatterCluster(true);
+                  setSelectedModel(sel.model);
+                  setSelectedLayer(sel.layer);
+                  if (sel.model === "dimenet_noaug") {
+                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                  } else if (sel.model === "dimenet10conf") {
+                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                  }
+                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                }}
+                onClusterSelect={(sel) => {
+                  if (!sel.model || !sel.layer) return;
+                  setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
+                  setSelectedIds(sel.real_ids);
+                  setHoveredId(null);
+                  setHoverLock(false);
+                  setSuppressScatterCluster(false);
                   setSelectedModel(sel.model);
                   setSelectedLayer(sel.layer);
                   if (sel.model === "dimenet_noaug") {
@@ -492,6 +523,7 @@ export default function Home() {
                   setSelectedNode(null);
                   setSelectedIds(null);
                   setHoveredId(null);
+                  setHoverLock(false);
                   setSuppressScatterCluster(false);
                 }}
               />
@@ -519,7 +551,16 @@ export default function Home() {
                     {clusterInstanceIds.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {clusterInstanceIds.map((id) => (
-                          <div key={`instance-${id}`} className="relative w-32 h-32">
+                          <div
+                            key={`instance-${id}`}
+                            className="relative w-32 h-32"
+                            onMouseEnter={() => setHoverFromMouse(String(id))}
+                            onMouseLeave={() => setHoverFromMouse(null)}
+                            onClick={() => {
+                              setHoveredId(String(id));
+                              setHoverLock(true);
+                            }}
+                          >
                             <img
                               src={resolveImageSrc(id, "ligand")}
                               alt={`ligand ${id}`}
@@ -546,6 +587,8 @@ export default function Home() {
                                 `absolute top-0.5 left-0.5 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
                                 (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
                               }
+                              onMouseEnter={() => setHoverFromMouse(String(id))}
+                              onMouseLeave={() => setHoverFromMouse(null)}
                               onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
                             >
                               {id}
