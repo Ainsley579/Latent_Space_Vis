@@ -6,6 +6,7 @@ import SankeyVertical from "./component/SankeyVertical";
 import ScatterPlot from "./component/ScatterPlot";
 import AicBicChart from "./component/AicBicChart";
 import TopkNearestPanel from "./component/TopkNearestPanel";
+import StructureEditorPanel from "./component/StructureEditorPanel";
 import { CLUSTER_COLORS } from "./theme/colors";
 
 type SankeySampleRow = {
@@ -607,9 +608,7 @@ export default function Home() {
               id="bottomPanel2"
               className="w-full h-full border border-zinc-400 bg-white"
             >
-              <div className="w-full h-full p-2 box-border overflow-auto">
-                {/* BottomPanel2 content moved to app/component/BottomPanel2Content.tsx and temporarily hidden */}
-              </div>
+              <StructureEditorPanel />
             </div>
           </div>
         </div>
