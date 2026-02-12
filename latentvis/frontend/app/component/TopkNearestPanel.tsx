@@ -132,6 +132,12 @@ export default function TopkNearestPanel({
                         }}
                       />
                       <div
+                        className="absolute top-0.5 right-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
+                        style={{ backgroundColor: clusterBadgeColor(row.cluster_id) }}
+                      >
+                        {row.cluster_id}
+                      </div>
+                      <div
                         className={
                           `absolute top-0.5 left-0.5 text-[10px] px-1 rounded bg-white/85 cursor-pointer ` +
                           (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")

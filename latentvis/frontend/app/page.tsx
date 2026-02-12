@@ -100,6 +100,16 @@ export default function Home() {
     setHoveredId(id);
   }
 
+  function toggleLockedHighlight(id: string) {
+    if (hoverLock && hoveredId === id) {
+      setHoveredId(null);
+      setHoverLock(false);
+      return;
+    }
+    setHoveredId(id);
+    setHoverLock(true);
+  }
+
   useEffect(() => {
     setScatterPath(`/data/scatterplot/${selectedModel}_${selectedLayer}.json`);
   }, [selectedModel, selectedLayer]);
@@ -425,10 +435,7 @@ export default function Home() {
                 selectedCluster={selectedNode?.cluster ?? null}
                 hoveredId={hoveredId}
                 onToggleHoverId={(id) => setHoveredId((prev) => (prev === id ? null : id))}
-                onSelectHoverId={(id) => {
-                  setHoveredId(id);
-                  setHoverLock(true);
-                }}
+                onSelectHoverId={(id) => toggleLockedHighlight(id)}
                 onHoverIdChange={(id) => setHoverFromMouse(id)}
                 resolveImageSrc={resolveImageSrc}
                 resolveSubstructureImage={resolveSubstructureImage}
@@ -557,10 +564,7 @@ export default function Home() {
                             className="relative w-32 h-32"
                             onMouseEnter={() => setHoverFromMouse(String(id))}
                             onMouseLeave={() => setHoverFromMouse(null)}
-                            onClick={() => {
-                              setHoveredId(String(id));
-                              setHoverLock(true);
-                            }}
+                            onClick={() => toggleLockedHighlight(String(id))}
                           >
                             <img
                               src={resolveImageSrc(id, "ligand")}
