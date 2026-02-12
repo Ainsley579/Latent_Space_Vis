@@ -5,6 +5,7 @@ import SankeyHorizontal from "./component/SankeyHorizontal";
 import SankeyVertical from "./component/SankeyVertical";
 import ScatterPlot from "./component/ScatterPlot";
 import AicBicChart from "./component/AicBicChart";
+import TopkNearestPanel from "./component/TopkNearestPanel";
 import { CLUSTER_COLORS } from "./theme/colors";
 
 type SankeySampleRow = {
@@ -231,37 +232,28 @@ export default function Home() {
       });
   }, []);
 
-  const topkEntry = useMemo(() => {
-    if (!selectedNode) return null;
-    return (
-      topkData.find(
-        (d) =>
-          d.model_type === selectedNode.model &&
-          d.layer_name === selectedNode.layer &&
-          d.cluster_id === selectedNode.cluster,
-      ) ?? null
-    );
-  }, [topkData, selectedNode]);
-
   const topkNearestRows = useMemo(() => {
     return topkData
       .filter((d) => d.model_type === selectedModel && d.layer_name === selectedLayer)
       .sort((a, b) => a.cluster_id - b.cluster_id);
   }, [topkData, selectedModel, selectedLayer]);
 
-  const substructureEntry = useMemo(() => {
-    if (!selectedNode) return null;
-    const matches = substructures.filter(
-      (d) =>
-        d.model_type === selectedNode.model &&
-        d.layer_name === selectedNode.layer &&
-        d.cluster_id === selectedNode.cluster,
+
+  const substructureByCluster = useMemo(() => {
+    const rows = substructures.filter(
+      (d) => d.model_type === selectedModel && d.layer_name === selectedLayer,
     );
-    if (!matches.length) return null;
-    const knn = matches.find((d) => d.group === "knn") ?? null;
-    const kfn = matches.find((d) => d.group === "kfn") ?? null;
-    return { knn, kfn };
-  }, [substructures, selectedNode]);
+    const map: Record<number, { knn: boolean; kfn: boolean }> = {};
+
+    rows.forEach((d) => {
+      if (!map[d.cluster_id]) map[d.cluster_id] = { knn: false, kfn: false };
+      const hasData = d.mcs_smiles != null || d.mcs_smarts != null;
+      if (d.group === "knn") map[d.cluster_id].knn = hasData;
+      if (d.group === "kfn") map[d.cluster_id].kfn = hasData;
+    });
+
+    return map;
+  }, [substructures, selectedModel, selectedLayer]);
 
   const clusterInstanceIds = useMemo(() => {
     if (!selectedNode) return [];
@@ -318,8 +310,11 @@ export default function Home() {
   return (
     <div className="flex min-h-screen w-full">
       <main className="flex min-h-screen w-full">
-        <div className="h-screen w-full flex flex-wrap">
-          <div className="w-[60%] h-[50%] p-1 box-border">
+        <div
+          className="h-screen w-full grid"
+          style={{ gridTemplateColumns: "60% 15% 25%", gridTemplateRows: "50% 25% 25%" }}
+        >
+          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "1 / 2" }}>
             <div
               id="sankey2d"
               className="w-full h-full border border-zinc-400"
@@ -360,7 +355,7 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="w-[15%] h-[50%] p-1 flex flex-col gap-1">
+          <div className="p-1 flex flex-col gap-1" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
             <div
               id="aicbic"
               className="w-full flex-[2] border border-zinc-400"
@@ -408,68 +403,27 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="w-[25%] h-[50%] p-1 box-border">
+          <div className="p-1 box-border" style={{ gridColumn: "3 / 4", gridRow: "1 / 3" }}>
           
             <div
               id="instanceview"
               className="w-full h-full border border-zinc-400 bg-white"
             >
-              <div className="w-full h-full p-2 box-border overflow-auto">
-                {topkNearestRows.length === 0 && (
-                  <div className="text-sm text-zinc-500">
-                    No top-k nearest data for {selectedModel} / {selectedLayer}.
-                  </div>
-                )}
-                {topkNearestRows.length > 0 && (
-                  <div className="flex flex-col gap-2">
-                    <div className="text-sm font-semibold text-zinc-700">Top-k Nearest by Cluster</div>
-                    {topkNearestRows.map((row) => (
-                      <div key={`nearest-row-${row.cluster_id}`} className="flex items-start gap-2 min-w-max">
-                        <div
-                          className="shrink-0 text-xs font-semibold text-white px-1.5 py-0.5 rounded-[2px] mt-0.5"
-                          style={{ backgroundColor: clusterBadgeColor(row.cluster_id) }}
-                        >
-                          {row.cluster_id}
-                        </div>
-                        <div className="flex flex-nowrap gap-1 min-w-max">
-                          {row.top_k_closest_real_ids.map((id) => (
-                            <div key={`nearest-${row.cluster_id}-${id}`} className="relative w-32 h-32 shrink-0">
-                              <img
-                                src={resolveImageSrc(id, "ligand")}
-                                alt={`ligand ${id}`}
-                                className={
-                                  `w-32 h-32 object-contain bg-white border ` +
-                                  (selectedNode && selectedNode.cluster === row.cluster_id ? "border-black" : "border-zinc-200")
-                                }
-                              onLoad={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
-                                target.style.display = "block";
-                              }}
-                                onError={(e) => {
-                                  const target = e.currentTarget as HTMLImageElement;
-                                  target.style.display = "none";
-                                }}
-                              />
-                              <div
-                                className={
-                                  `absolute top-0.5 left-0.5 text-[10px] px-1 rounded bg-white/85 cursor-pointer ` +
-                                  (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
-                                }
-                                onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
-                              >
-                                {id}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <TopkNearestPanel
+                rows={topkNearestRows}
+                selectedModel={selectedModel}
+                selectedLayer={selectedLayer}
+                selectedCluster={selectedNode?.cluster ?? null}
+                hoveredId={hoveredId}
+                onToggleHoverId={(id) => setHoveredId((prev) => (prev === id ? null : id))}
+                resolveImageSrc={resolveImageSrc}
+                resolveSubstructureImage={resolveSubstructureImage}
+                substructureByCluster={substructureByCluster}
+                clusterBadgeColor={clusterBadgeColor}
+              />
             </div>
           </div>
-          <div className="w-[60%] h-[25%] p-1 box-border">
+          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "2 / 3" }}>
             <div
               id="sankeyHorizontal"
               className="w-full h-full border border-zinc-400 relative"
@@ -507,7 +461,7 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="w-[15%] h-[25%] p-1 box-border">
+          <div className="p-1 box-border" style={{ gridColumn: "2 / 3", gridRow: "2 / 3" }}>
             <div
               id="scatterplot"
               className="w-full h-full border border-zinc-400 relative"
@@ -543,80 +497,7 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="w-[25%] h-[25%] p-1 box-border">
-            <div
-              id="patternview"
-              className="w-full h-full border border-zinc-400 bg-white"
-            >
-              <div className="w-full h-full p-2 box-border overflow-auto">
-                {!selectedNode && (
-                  <div className="text-sm text-zinc-500">Select a cluster to view substructures.</div>
-                )}
-                {selectedNode && !substructureEntry && (
-                  <div className="text-sm text-zinc-500">
-                    No substructure data for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
-                  </div>
-                )}
-                {selectedNode && substructureEntry && (
-                  <div className="flex flex-col gap-3">
-                    {(["knn", "kfn"] as const).map((group) => {
-                      const entry = group === "knn" ? substructureEntry.knn : substructureEntry.kfn;
-                      return (
-                        <div key={group} className="flex flex-col gap-1">
-                          <div className="text-sm font-semibold text-zinc-700">
-                            {group === "knn" ? "KNN Substructure" : "KFN Substructure"}
-                          </div>
-                          {!entry && (
-                            <div className="text-xs text-zinc-500">No entry for this group.</div>
-                          )}
-                          {entry && (
-                            <div className="flex flex-col gap-1">
-                              <div className="relative w-full">
-                                <img
-                                  key={`${selectedNode.model}-${selectedNode.layer}-${selectedNode.cluster}-${group}`}
-                                  src={resolveSubstructureImage(selectedNode.model, selectedNode.layer, selectedNode.cluster, group)}
-                                  alt={`${group} substructure`}
-                                  className="w-full max-h-36 object-contain border border-zinc-200 bg-white"
-                                  onLoad={(e) => {
-                                    const target = e.currentTarget as HTMLImageElement;
-                                    target.style.display = "block";
-                                  }}
-                                  onError={(e) => {
-                                    const target = e.currentTarget as HTMLImageElement;
-                                    target.style.display = "none";
-                                  }}
-                                />
-                                {group !== "knn" && (
-                                  <div
-                                    className="absolute top-1 right-1 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
-                                    style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
-                                  >
-                                    {selectedNode.cluster}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="text-xs text-zinc-600">
-                                <span className="font-semibold">SMILES:</span>{" "}
-                                {entry.mcs_smiles ?? "null"}
-                              </div>
-                              <div className="text-xs text-zinc-600 break-all">
-                                <span className="font-semibold">SMARTS:</span>{" "}
-                                {entry.mcs_smarts ?? "null"}
-                              </div>
-                              <div className="text-xs text-zinc-500">
-                                Valid molecules: {entry.valid_molecules} / K={entry.k}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="w-[60%] h-[25%] p-1 box-border">
+          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "3 / 4" }}>
             <div
               id="bottomPanel1"
               className="w-full h-full border border-zinc-400 bg-white"
@@ -678,98 +559,13 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="w-[40%] h-[25%] p-1 box-border">
+          <div className="p-1 box-border" style={{ gridColumn: "2 / 4", gridRow: "3 / 4" }}>
             <div
               id="bottomPanel2"
               className="w-full h-full border border-zinc-400 bg-white"
             >
               <div className="w-full h-full p-2 box-border overflow-auto">
-                {!selectedNode && (
-                  <div className="text-sm text-zinc-500">Select a cluster to view top-k closest/farthest.</div>
-                )}
-                {selectedNode && !topkEntry && (
-                  <div className="text-sm text-zinc-500">
-                    No top-k data for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
-                  </div>
-                )}
-                {selectedNode && topkEntry && (
-                  <div className="flex flex-col gap-2">
-                    <div className="text-sm font-semibold text-zinc-700">Top-k Closest</div>
-                    <div className="flex flex-wrap gap-1">
-                      {topkEntry.top_k_closest_real_ids.map((id) => (
-                        <div key={`close-${id}`} className="relative w-32 h-32">
-                          <img
-                            src={resolveImageSrc(id, "ligand")}
-                            alt={`ligand ${id}`}
-                            className="w-32 h-32 object-contain bg-white border border-zinc-200"
-                            onLoad={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.style.display = "block";
-                            }}
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.style.display = "none";
-                            }}
-                          />
-                          {selectedNode && (
-                            <div
-                              className="absolute top-1 right-1 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
-                              style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
-                            >
-                              {selectedNode.cluster}
-                            </div>
-                          )}
-                          <div
-                            className={
-                              `absolute top-1 left-1 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
-                              (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
-                            }
-                            onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
-                          >
-                            {id}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="text-sm font-semibold text-zinc-700">Top-k Farthest</div>
-                    <div className="flex flex-wrap gap-1">
-                      {topkEntry.top_k_farthest_real_ids.map((id) => (
-                        <div key={`far-${id}`} className="relative w-32 h-32">
-                          <img
-                            src={resolveImageSrc(id, "ligand")}
-                            alt={`ligand ${id}`}
-                            className="w-32 h-32 object-contain bg-white border border-zinc-200"
-                            onLoad={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.style.display = "block";
-                            }}
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.style.display = "none";
-                            }}
-                          />
-                          {selectedNode && (
-                            <div
-                              className="absolute top-1 right-1 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
-                              style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
-                            >
-                              {selectedNode.cluster}
-                            </div>
-                          )}
-                          <div
-                            className={
-                              `absolute top-1 left-1 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
-                              (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
-                            }
-                            onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
-                          >
-                            {id}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* BottomPanel2 content moved to app/component/BottomPanel2Content.tsx and temporarily hidden */}
               </div>
             </div>
           </div>
