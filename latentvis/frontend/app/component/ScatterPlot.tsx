@@ -37,8 +37,23 @@ export default function ScatterPlot({
   onClearSelection,
 }: ScatterPlotProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const onPointSelectRef = useRef(onPointSelect);
+  const onPointHoverIdChangeRef = useRef(onPointHoverIdChange);
+  const onClearSelectionRef = useRef(onClearSelection);
   const [legendClusters, setLegendClusters] = useState<number[]>([]);
   const [legendClusterIds, setLegendClusterIds] = useState<Record<number, string[]>>({});
+
+  useEffect(() => {
+    onPointSelectRef.current = onPointSelect;
+  }, [onPointSelect]);
+
+  useEffect(() => {
+    onPointHoverIdChangeRef.current = onPointHoverIdChange;
+  }, [onPointHoverIdChange]);
+
+  useEffect(() => {
+    onClearSelectionRef.current = onClearSelection;
+  }, [onClearSelection]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -125,7 +140,7 @@ export default function ScatterPlot({
         .style("cursor", "pointer")
         .on("mouseover", (event, d) => {
           const imgSrc = `/molecule_images/${String(d.real_id)}_ligand.png`;
-          onPointHoverIdChange?.(String(d.real_id));
+          onPointHoverIdChangeRef.current?.(String(d.real_id));
           tooltipImg.style("display", "block").attr("src", imgSrc);
           tooltip.style("display", "block");
           positionTooltip(event.clientX, event.clientY);
@@ -134,12 +149,12 @@ export default function ScatterPlot({
           positionTooltip(event.clientX, event.clientY);
         })
         .on("mouseout", () => {
-          onPointHoverIdChange?.(null);
+          onPointHoverIdChangeRef.current?.(null);
           tooltip.style("display", "none");
         })
         .on("click", (event, d) => {
           event.stopPropagation();
-          onPointSelect?.({
+          onPointSelectRef.current?.({
             model: modelKey,
             layer: layerKey,
             cluster: d.cluster_id,
@@ -181,7 +196,7 @@ export default function ScatterPlot({
       svg.call(zoom.transform, d3.zoomIdentity.translate(margin.left, margin.top));
 
       svg.on("click", () => {
-        onClearSelection?.();
+        onClearSelectionRef.current?.();
       });
 
       function positionTooltip(clientX: number, clientY: number) {
@@ -242,9 +257,6 @@ export default function ScatterPlot({
     highlightId,
     modelKey,
     layerKey,
-    onPointSelect,
-    onPointHoverIdChange,
-    onClearSelection,
   ]);
 
   return (

@@ -55,10 +55,14 @@ export default function SankeyHorizontal({
   onNodeSelect,
 }: SankeyHorizontalProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const nodeSamplesRef = useRef<Map<string, Set<string>>>(new Map());
+  const draggingRef = useRef(false);
+  const dragStartRef = useRef<{ x: number; panX: number }>({ x: 0, panX: 0 });
   const CELL_W = 120;
   const SYNC_BASE_OFFSET = 1 * CELL_W;
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [zoomX, setZoomX] = useState(1);
+  const [panX, setPanX] = useState(0);
   const displayActiveNode = activeNodeKey ?? activeNode;
 
   useEffect(() => {
@@ -160,19 +164,19 @@ export default function SankeyHorizontal({
       const layerIndex = new Map(layers.map((l, i) => [l, i]));
       const centerOffset = CELL_MARGIN_LEFT + INNER_W / 2;
       const isSynced = !!syncTransform;
-      const scaleX = isSynced ? 1 : zoomX;
+      const scaleX = 1;
       const unsyncedStep = (() => {
         if (isSynced) return CELL_W;
         if (layers.length <= 1) return 0;
         return Math.max(40, (width - UNSYNC_LEFT_PAD - UNSYNC_RIGHT_PAD) / (layers.length - 1));
       })();
       const offsetX = isSynced ? 0 : UNSYNC_SHIFT_X;
-      const spacing = (isSynced ? CELL_W : unsyncedStep) * scaleX;
+      const spacing = isSynced ? CELL_W : unsyncedStep;
       const totalWidth = isSynced
         ? width
         : Math.max(
             width,
-            scaleX * (MARGIN_LEFT + centerOffset + (layers.length - 0.5) * unsyncedStep) + offsetX + NODE_W / 2 + 10
+            MARGIN_LEFT + centerOffset + (layers.length - 0.5) * unsyncedStep + offsetX + NODE_W / 2 + 10
           );
 
       // re-create svg with expanded width if needed
@@ -187,7 +191,7 @@ export default function SankeyHorizontal({
         const baseX = isSynced
           ? MARGIN_LEFT + centerOffset + (idx + 0.5) * CELL_W
           : (layers.length <= 1 ? width / 2 : UNSYNC_LEFT_PAD + idx * unsyncedStep);
-        const centerX = scaleX * baseX + offsetX;
+        const centerX = baseX + offsetX;
         node.x0 = centerX - NODE_W / 2;
         node.x1 = node.x0 + NODE_W;
       });
@@ -245,6 +249,7 @@ export default function SankeyHorizontal({
         nodeSamples.get(srcName)!.add(id);
         nodeSamples.get(tgtName)!.add(id);
       });
+      nodeSamplesRef.current = nodeSamples;
 
       const sampleNodeYMap = new Map<string, Map<string, number>>();
       (sankeyGraph.nodes as SankeyNode<any, any>[]).forEach((node: any) => {
@@ -296,7 +301,8 @@ export default function SankeyHorizontal({
         .attr("stroke", SANKEY_LINK_COLOR)
         .attr("stroke-width", 1.2)
         .attr("opacity", 0)
-        .attr("class", (d) => `sample-${d.id}`);
+        .attr("class", (d) => `sample-${d.id}`)
+        .attr("data-id", (d) => d.id);
 
       const nodeSel = nodeGroup
         .selectAll("rect")
@@ -385,14 +391,16 @@ export default function SankeyHorizontal({
         .attr("stroke", (d) => (highlightId && d.id === highlightId ? HIGHLIGHT_RED : SANKEY_LINK_COLOR))
         .attr("stroke-width", (d) => (highlightId && d.id === highlightId ? 2.2 : 1.2));
 
-      // Ensure synced transform is applied immediately after a redraw when sync is ON.
+      // Re-apply current transform right after redraw so viewport state is preserved.
+      const groups = svg.selectAll("g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels");
       if (syncTransform) {
         const scale = syncTransform.scale;
         const offsetX = syncTransform.x - SYNC_BASE_OFFSET * scale;
-        const transformAttr = `translate(${offsetX},0) scale(${scale},1)`;
-        svg
-          .selectAll("g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels")
-          .attr("transform", transformAttr);
+        groups.attr("transform", `translate(${offsetX},0) scale(${scale},1)`);
+      } else if (panX !== 0 || zoomX !== 1) {
+        groups.attr("transform", `translate(${panX},0) scale(${zoomX},1)`);
+      } else {
+        groups.attr("transform", null);
       }
     }
 
@@ -413,8 +421,10 @@ export default function SankeyHorizontal({
     function onWheel(e: WheelEvent) {
       if (syncTransform) return;
       e.preventDefault();
-      const next = Math.max(0.5, Math.min(4, zoomX * (1 + -e.deltaY * 0.002)));
-      if (next !== zoomX) setZoomX(next);
+      setZoomX((prev) => {
+        const next = Math.max(1, Math.min(4, prev * (1 + -e.deltaY * 0.002)));
+        return next === prev ? prev : next;
+      });
     }
 
     container.addEventListener("wheel", onWheel, { passive: false });
@@ -424,7 +434,85 @@ export default function SankeyHorizontal({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, activeNode, activeNodeKey, highlightId, zoomX, !!syncTransform]);
+  }, [dataPath, mode, modelKey, layerKey, !!syncTransform]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const svg = container.querySelector("svg");
+    if (!svg) return;
+
+    const activeName = displayActiveNode;
+    const activeLayer = activeName ? activeName.slice(0, Math.max(0, activeName.lastIndexOf("_"))) : null;
+
+    const rects = Array.from(svg.querySelectorAll("g.noaug-nodes rect[data-name]")) as SVGRectElement[];
+    rects.forEach((rect) => {
+      const name = rect.getAttribute("data-name") || "";
+      const idx = name.lastIndexOf("_");
+      const layer = idx === -1 ? name : name.slice(0, idx);
+      const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
+
+      if (activeLayer && layer === activeLayer && Number.isFinite(cluster)) {
+        rect.setAttribute("fill", CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length]);
+      } else {
+        rect.setAttribute("fill", SANKEY_NODE_COLOR);
+      }
+
+      if (activeName && name === activeName) {
+        rect.setAttribute("stroke", HIGHLIGHT_RED);
+        rect.setAttribute("stroke-width", "2");
+      } else {
+        rect.setAttribute("stroke", "none");
+        rect.setAttribute("stroke-width", "0");
+      }
+    });
+
+    const samplesForActive = activeName ? nodeSamplesRef.current.get(activeName) || new Set<string>() : new Set<string>();
+    const lines = Array.from(svg.querySelectorAll("g.sample-trajectories line[data-id]")) as SVGLineElement[];
+    lines.forEach((line) => {
+      const id = line.getAttribute("data-id") || "";
+      const isHighlight = !!highlightId && id === highlightId;
+      const opacity = isHighlight ? 1 : activeName ? (samplesForActive.has(id) ? 0.8 : 0) : 0;
+      line.setAttribute("opacity", String(opacity));
+      line.setAttribute("stroke", isHighlight ? HIGHLIGHT_RED : SANKEY_LINK_COLOR);
+      line.setAttribute("stroke-width", isHighlight ? "2.2" : "1.2");
+    });
+
+    const svgSel = d3.select(svg);
+    svgSel.selectAll("g.cluster-number-labels").remove();
+    if (activeLayer) {
+      const labels = rects
+        .map((rect) => {
+          const name = rect.getAttribute("data-name") || "";
+          const idx = name.lastIndexOf("_");
+          const layer = idx === -1 ? name : name.slice(0, idx);
+          const cluster = Number(idx === -1 ? NaN : name.slice(idx + 1));
+          if (layer !== activeLayer || !Number.isFinite(cluster)) return null;
+          const x = Number(rect.getAttribute("x") || 0);
+          const y = Number(rect.getAttribute("y") || 0);
+          const w = Number(rect.getAttribute("width") || 0);
+          const h = Number(rect.getAttribute("height") || 0);
+          return { cluster, isActive: name === activeName, x, y, w, h };
+        })
+        .filter((d): d is { cluster: number; isActive: boolean; x: number; y: number; w: number; h: number } => !!d);
+
+      const labelGroup = svgSel.append("g").attr("class", "cluster-number-labels").style("pointer-events", "none");
+      labelGroup
+        .selectAll("text")
+        .data(labels)
+        .enter()
+        .append("text")
+        .attr("x", (d) => d.x + d.w + 6)
+        .attr("y", (d) => d.y + d.h / 2 + 4)
+        .attr("font-size", 11)
+        .attr("font-weight", (d) => (d.isActive ? 800 : 700))
+        .attr("fill", (d) => (d.isActive ? HIGHLIGHT_RED : "#1f2937"))
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 2.4)
+        .attr("paint-order", "stroke")
+        .text((d) => String(d.cluster));
+    }
+  }, [displayActiveNode, highlightId]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -432,20 +520,47 @@ export default function SankeyHorizontal({
     const svg = container.querySelector("svg");
     if (!svg) return;
     const groups = svg.querySelectorAll("g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels");
-    if (!syncTransform) {
-      groups.forEach((el) => {
-        (el as SVGGElement).removeAttribute("transform");
-      });
-      return;
+    let transformAttr = "";
+    if (syncTransform) {
+      const scale = syncTransform.scale;
+      const offsetX = syncTransform.x - SYNC_BASE_OFFSET * scale;
+      transformAttr = `translate(${offsetX},0) scale(${scale},1)`;
+    } else if (panX !== 0 || zoomX !== 1) {
+      transformAttr = `translate(${panX},0) scale(${zoomX},1)`;
     }
 
-    const scale = syncTransform.scale;
-    const offsetX = syncTransform.x - SYNC_BASE_OFFSET * scale;
-    const transformAttr = `translate(${offsetX},0) scale(${scale},1)`;
     groups.forEach((el) => {
-      (el as SVGGElement).setAttribute("transform", transformAttr);
+      if (transformAttr) (el as SVGGElement).setAttribute("transform", transformAttr);
+      else (el as SVGGElement).removeAttribute("transform");
     });
-  }, [syncTransform]);
+  }, [syncTransform, panX, zoomX]);
 
-  return <div ref={containerRef} className="w-full h-full" style={{ overflowX: "auto", overflowY: "hidden" }} />;
+  function onMouseDown(e: React.MouseEvent<HTMLDivElement>) {
+    if (syncTransform) return;
+    if (e.button !== 0) return;
+    draggingRef.current = true;
+    dragStartRef.current = { x: e.clientX, panX };
+  }
+
+  function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (!draggingRef.current) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    setPanX(dragStartRef.current.panX + dx);
+  }
+
+  function onMouseUp() {
+    draggingRef.current = false;
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="w-full h-full"
+      style={{ overflowX: "auto", overflowY: "hidden", cursor: syncTransform ? "default" : draggingRef.current ? "grabbing" : "grab" }}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+    />
+  );
 }

@@ -4,9 +4,9 @@ import SankeyView from "./component/SankeyView";
 import SankeyHorizontal from "./component/SankeyHorizontal";
 import SankeyVertical from "./component/SankeyVertical";
 import ScatterPlot from "./component/ScatterPlot";
-import AicBicChart from "./component/AicBicChart";
 import TopkNearestPanel from "./component/TopkNearestPanel";
 import StructureEditorPanel from "./component/StructureEditorPanel";
+import SyncControlPanel from "./component/SyncControlPanel";
 import { CLUSTER_COLORS } from "./theme/colors";
 
 type SankeySampleRow = {
@@ -64,22 +64,6 @@ export default function Home() {
   const syncRafRef = useRef<number | null>(null);
   const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
   const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
-  const allAicBicPaths = useMemo(() => {
-    const models = ["dimenet_noaug", "dimenet10conf"];
-    const layers = [
-      "emb",
-      "output_block_0",
-      "output_block_1",
-      "output_block_2",
-      "output_block_3",
-      "output_block_4",
-      "u_mlp_input",
-      "u_mlp_l1",
-      "u_mlp_l2",
-    ];
-    return models.flatMap((m) => layers.map((l) => `/data/bic_aic/${m}_${l}.json`));
-  }, []);
-
   function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }) {
     setHoverLock(false);
     if (
@@ -427,8 +411,6 @@ export default function Home() {
                 selectedNode={selectedNode}
                 onCellSelect={(active) => setCellSelected(active)}
                 onSwapAxes={(swap) => setSwapAxes(swap)}
-                syncLinkedViews={syncLinkedSankeyViews}
-                onToggleSyncLinkedViews={toggleSyncLinkedViews}
                 onTransform={(t) => handleSankeyTransformSync(t)}
               />
             </div>
@@ -438,11 +420,7 @@ export default function Home() {
               id="aicbic"
               className="w-full flex-[2] border border-zinc-400"
             >
-              <AicBicChart
-                dataPath={`/data/bic_aic/${selectedModel}_${selectedLayer}.json`}
-                isSelected={cellSelected}
-                allDataPaths={allAicBicPaths}
-              />
+              <SyncControlPanel syncOn={syncLinkedSankeyViews} onToggleSync={toggleSyncLinkedViews} />
             </div>
             <div
               id="sankeyVertical"
