@@ -11,6 +11,7 @@ const SHOW_FMI_CSPA = false;
 type SankeyViewProps = {
   onModelSelect?: (modelKey: string) => void;
   onTransform?: (t: { x: number; y: number; scale: number }) => void;
+  externalTransform?: { x: number; y: number; scale: number };
   onLayerSelect?: (layerKey: string) => void;
   onNodeSelect?: (sel: { model: string; layer: string; cluster: number }) => void;
   selectedNode?: { model: string; layer: string; cluster: number } | null;
@@ -21,6 +22,7 @@ type SankeyViewProps = {
 export default function SankeyView({
   onModelSelect,
   onTransform,
+  externalTransform,
   onLayerSelect,
   onNodeSelect,
   selectedNode,
@@ -1082,6 +1084,7 @@ export default function SankeyView({
             <ZoomPan
               className="w-full h-full"
               panPadding={220}
+              externalTransform={externalTransform}
               onTransform={(t) => {
                 setTransform(t);
                 onTransform?.(t);

@@ -18,6 +18,7 @@ type SampleRow = {
 type SankeyHorizontalProps = {
   dataPath?: string;
   syncTransform?: { x: number; scale: number };
+  onSyncTransform?: (t: { x: number; y: number; scale: number }) => void;
   mode?: "layer" | "model";
   modelKey?: string;
   layerKey?: string;
@@ -47,6 +48,7 @@ const UNSYNC_RIGHT_PAD = 20;
 export default function SankeyHorizontal({
   dataPath = "/data/sankey/noaug_sankey_samples.json",
   syncTransform,
+  onSyncTransform,
   mode = "layer",
   modelKey,
   layerKey,
@@ -431,12 +433,20 @@ export default function SankeyHorizontal({
       });
 
     function onWheel(e: WheelEvent) {
-      if (syncTransform) return;
       e.preventDefault();
-      setZoomX((prev) => {
-        const next = Math.max(1, Math.min(4, prev * (1 + -e.deltaY * 0.002)));
-        return next === prev ? prev : next;
-      });
+      if (syncTransform) {
+        const prevScale = syncTransform.scale;
+        const nextScale = Math.max(1, Math.min(4, prevScale * (1 + -e.deltaY * 0.002)));
+        if (nextScale === prevScale) return;
+        const currOffset = syncTransform.x - SYNC_BASE_OFFSET * prevScale;
+        const nextX = currOffset + SYNC_BASE_OFFSET * nextScale;
+        onSyncTransform?.({ x: nextX, y: 0, scale: nextScale });
+      } else {
+        setZoomX((prev) => {
+          const next = Math.max(1, Math.min(4, prev * (1 + -e.deltaY * 0.002)));
+          return next === prev ? prev : next;
+        });
+      }
     }
 
     container.addEventListener("wheel", onWheel, { passive: false });
@@ -549,16 +559,21 @@ export default function SankeyHorizontal({
   }, [syncTransform, panX, zoomX]);
 
   function onMouseDown(e: React.MouseEvent<HTMLDivElement>) {
-    if (syncTransform) return;
     if (e.button !== 0) return;
     draggingRef.current = true;
-    dragStartRef.current = { x: e.clientX, panX };
+    const startPanX = syncTransform ? syncTransform.x - SYNC_BASE_OFFSET * syncTransform.scale : panX;
+    dragStartRef.current = { x: e.clientX, panX: startPanX };
   }
 
   function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
     if (!draggingRef.current) return;
     const dx = e.clientX - dragStartRef.current.x;
-    setPanX(dragStartRef.current.panX + dx);
+    const nextPanX = dragStartRef.current.panX + dx;
+    if (syncTransform) {
+      onSyncTransform?.({ x: nextPanX + SYNC_BASE_OFFSET * syncTransform.scale, y: 0, scale: syncTransform.scale });
+    } else {
+      setPanX(nextPanX);
+    }
   }
 
   function onMouseUp() {

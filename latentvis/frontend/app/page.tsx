@@ -420,6 +420,7 @@ export default function Home() {
                   }
                 }}
                 onSwapAxes={(swap) => setSwapAxes(swap)}
+                externalTransform={syncLinkedSankeyViews ? sankeyTransform : undefined}
                 onTransform={(t) => handleSankeyTransformSync(t)}
               />
             </div>
@@ -444,6 +445,10 @@ export default function Home() {
                 layerKey={selectedLayer}
                 modelKey={selectedModel}
                 syncTransform={syncLinkedSankeyViews ? syncTransformVertical : undefined}
+                onSyncTransform={(t) => {
+                  if (!syncLinkedSankeyViews) return;
+                  handleSankeyTransformSync({ x: sankeyTransform.x, y: t.y, scale: t.scale });
+                }}
                 activeNodeKey={
                   selectedNode
                     ? swapAxes
@@ -504,6 +509,10 @@ export default function Home() {
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
                 syncTransform={syncLinkedSankeyViews ? syncTransformHorizontal : undefined}
+                onSyncTransform={(t) => {
+                  if (!syncLinkedSankeyViews) return;
+                  handleSankeyTransformSync({ x: t.x, y: sankeyTransform.y, scale: t.scale });
+                }}
                 activeNodeKey={
                   selectedNode
                     ? swapAxes

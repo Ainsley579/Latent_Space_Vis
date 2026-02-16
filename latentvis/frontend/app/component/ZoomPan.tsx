@@ -9,6 +9,7 @@ type ZoomPanProps = {
   maxScale?: number;
   panPadding?: number;
   onTransform?: (t: { x: number; y: number; scale: number }) => void;
+  externalTransform?: { x: number; y: number; scale: number };
 };
 
 type Transform = {
@@ -21,7 +22,15 @@ function clamp(val: number, min: number, max: number) {
   return Math.min(max, Math.max(min, val));
 }
 
-export default function ZoomPan({ children, className, id, maxScale = 6, panPadding = 0, onTransform }: ZoomPanProps) {
+export default function ZoomPan({
+  children,
+  className,
+  id,
+  maxScale = 6,
+  panPadding = 0,
+  onTransform,
+  externalTransform,
+}: ZoomPanProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
@@ -42,6 +51,16 @@ export default function ZoomPan({ children, className, id, maxScale = 6, panPadd
     transformRef.current = transform;
     onTransform?.(transform);
   }, [transform]);
+
+  useEffect(() => {
+    if (!externalTransform) return;
+    const curr = transformRef.current;
+    const dx = Math.abs(curr.x - externalTransform.x);
+    const dy = Math.abs(curr.y - externalTransform.y);
+    const ds = Math.abs(curr.scale - externalTransform.scale);
+    if (dx < 0.5 && dy < 0.5 && ds < 0.001) return;
+    setTransform(externalTransform);
+  }, [externalTransform]);
 
   function clampTransform(next: Transform, containerW: number, containerH: number, contentW: number, contentH: number) {
     const sw = contentW * next.scale;
