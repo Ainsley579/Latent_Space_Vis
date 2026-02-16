@@ -56,6 +56,9 @@ export default function SankeyVertical({
 }: SankeyVerticalProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const nodeSamplesRef = useRef<Map<string, Set<string>>>(new Map());
+  const onNodeSelectRef = useRef(onNodeSelect);
+  const activeNodeKeyRef = useRef(activeNodeKey);
+  const displayActiveNodeRef = useRef<string | null>(null);
   const draggingRef = useRef(false);
   const dragStartRef = useRef<{ y: number; panY: number }>({ y: 0, panY: 0 });
   const CELL_H = 150;
@@ -64,6 +67,18 @@ export default function SankeyVertical({
   const [zoomX, setZoomX] = useState(1);
   const [panY, setPanY] = useState(0);
   const displayActiveNode = activeNodeKey ?? activeNode;
+
+  useEffect(() => {
+    onNodeSelectRef.current = onNodeSelect;
+  }, [onNodeSelect]);
+
+  useEffect(() => {
+    activeNodeKeyRef.current = activeNodeKey;
+  }, [activeNodeKey]);
+
+  useEffect(() => {
+    displayActiveNodeRef.current = displayActiveNode;
+  }, [displayActiveNode]);
 
   useEffect(() => {
     if (activeNodeKey == null) {
@@ -199,6 +214,7 @@ export default function SankeyVertical({
         const idx = displayActiveNode.lastIndexOf("_");
         activeModel = idx === -1 ? displayActiveNode : displayActiveNode.slice(0, idx);
       }
+      const focusGroup = activeModel ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
 
       const clusterValues: number[] = [];
       nodes.forEach((n) => {
@@ -342,7 +358,7 @@ export default function SankeyVertical({
         .attr("width", NODE_W)
         .attr("height", (d) => Math.max(1, d.h))
         .attr("fill", (d) => {
-          if (displayActiveNode && activeModel && d.model === activeModel) {
+          if (focusGroup && d.model === focusGroup) {
             const idx = d.key.lastIndexOf("_");
             const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
             if (Number.isFinite(cluster)) return color(Math.max(0, cluster));
@@ -355,8 +371,9 @@ export default function SankeyVertical({
         .style("cursor", "pointer")
         .on("click", (event, d) => {
           event.stopPropagation();
-          const next = displayActiveNode === d.key ? null : d.key;
-          if (activeNodeKey == null) {
+          const currentDisplay = displayActiveNodeRef.current;
+          const next = currentDisplay === d.key ? null : d.key;
+          if (activeNodeKeyRef.current == null) {
             setActiveNode(next);
           }
           const idx = d.key.lastIndexOf("_");
@@ -364,9 +381,9 @@ export default function SankeyVertical({
           const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
           const ids = Array.from(nodeSamples.get(d.key) || []);
           if (mode === "model") {
-            onNodeSelect?.({ model: keyName, layer: layerKey, cluster, ids });
+            onNodeSelectRef.current?.({ model: keyName, layer: layerKey, cluster, ids });
           } else {
-            onNodeSelect?.({ model: modelKey, layer: keyName, cluster, ids });
+            onNodeSelectRef.current?.({ model: modelKey, layer: keyName, cluster, ids });
           }
         });
 
@@ -439,6 +456,7 @@ export default function SankeyVertical({
 
     const activeName = displayActiveNode;
     const activeModel = activeName ? activeName.slice(0, Math.max(0, activeName.lastIndexOf("_"))) : null;
+    const focusGroup = activeModel ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
 
     const rects = Array.from(svg.querySelectorAll("g.nodes rect[data-key]")) as SVGRectElement[];
     rects.forEach((rect) => {
@@ -447,7 +465,7 @@ export default function SankeyVertical({
       const model = idx === -1 ? key : key.slice(0, idx);
       const cluster = Number(idx === -1 ? 0 : key.slice(idx + 1));
 
-      if (activeModel && model === activeModel && Number.isFinite(cluster)) {
+      if (focusGroup && model === focusGroup && Number.isFinite(cluster)) {
         rect.setAttribute("fill", CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length]);
       } else {
         rect.setAttribute("fill", SANKEY_NODE_COLOR);
@@ -472,7 +490,7 @@ export default function SankeyVertical({
       line.setAttribute("stroke", isHighlight ? HIGHLIGHT_RED : SANKEY_LINK_COLOR);
       line.setAttribute("stroke-width", isHighlight ? "2" : "1.1");
     });
-  }, [displayActiveNode, highlightId]);
+  }, [displayActiveNode, highlightId, mode, modelKey, layerKey]);
 
   useEffect(() => {
     const container = containerRef.current;

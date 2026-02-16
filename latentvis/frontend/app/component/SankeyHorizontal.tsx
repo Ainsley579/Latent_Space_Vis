@@ -56,6 +56,9 @@ export default function SankeyHorizontal({
 }: SankeyHorizontalProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const nodeSamplesRef = useRef<Map<string, Set<string>>>(new Map());
+  const onNodeSelectRef = useRef(onNodeSelect);
+  const activeNodeKeyRef = useRef(activeNodeKey);
+  const displayActiveNodeRef = useRef<string | null>(null);
   const draggingRef = useRef(false);
   const dragStartRef = useRef<{ x: number; panX: number }>({ x: 0, panX: 0 });
   const CELL_W = 120;
@@ -64,6 +67,18 @@ export default function SankeyHorizontal({
   const [zoomX, setZoomX] = useState(1);
   const [panX, setPanX] = useState(0);
   const displayActiveNode = activeNodeKey ?? activeNode;
+
+  useEffect(() => {
+    onNodeSelectRef.current = onNodeSelect;
+  }, [onNodeSelect]);
+
+  useEffect(() => {
+    activeNodeKeyRef.current = activeNodeKey;
+  }, [activeNodeKey]);
+
+  useEffect(() => {
+    displayActiveNodeRef.current = displayActiveNode;
+  }, [displayActiveNode]);
 
   useEffect(() => {
     if (activeNodeKey == null) {
@@ -206,6 +221,7 @@ export default function SankeyHorizontal({
         const idx = displayActiveNode.lastIndexOf("_");
         activeLayer = idx === -1 ? displayActiveNode : displayActiveNode.slice(0, idx);
       }
+      const focusGroup = activeLayer ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
       const clusterValues: number[] = [];
       (sankeyGraph.nodes as SankeyNode<any, any>[]).forEach((n: any) => {
         const name = String(n.name || "");
@@ -314,12 +330,12 @@ export default function SankeyHorizontal({
         .attr("width", (d: any) => d.x1 - d.x0)
         .attr("height", (d: any) => Math.max(1, d.y1 - d.y0))
         .attr("fill", (d: any) => {
-          if (displayActiveNode && activeLayer) {
+          if (focusGroup) {
             const name = String(d.name || "");
             const idx = name.lastIndexOf("_");
             const layer = idx === -1 ? name : name.slice(0, idx);
             const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
-            if (layer === activeLayer && Number.isFinite(cluster)) return color(Math.max(0, cluster));
+            if (layer === focusGroup && Number.isFinite(cluster)) return color(Math.max(0, cluster));
           }
           return SANKEY_NODE_COLOR;
         })
@@ -330,8 +346,9 @@ export default function SankeyHorizontal({
         .on("click", (event: any, d: any) => {
           event.stopPropagation();
           const name = String(d.name || "");
-          const next = displayActiveNode === name ? null : name;
-          if (activeNodeKey == null) {
+          const currentDisplay = displayActiveNodeRef.current;
+          const next = currentDisplay === name ? null : name;
+          if (activeNodeKeyRef.current == null) {
             setActiveNode(next);
           }
           const idx = name.lastIndexOf("_");
@@ -339,9 +356,9 @@ export default function SankeyHorizontal({
           const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
           const ids = Array.from(nodeSamples.get(name) || []);
           if (mode === "model") {
-            onNodeSelect?.({ model: keyName, layer: layerKey, cluster, ids });
+            onNodeSelectRef.current?.({ model: keyName, layer: layerKey, cluster, ids });
           } else {
-            onNodeSelect?.({ model: modelKey, layer: keyName, cluster, ids });
+            onNodeSelectRef.current?.({ model: modelKey, layer: keyName, cluster, ids });
           }
         });
 
@@ -444,6 +461,7 @@ export default function SankeyHorizontal({
 
     const activeName = displayActiveNode;
     const activeLayer = activeName ? activeName.slice(0, Math.max(0, activeName.lastIndexOf("_"))) : null;
+    const focusGroup = activeLayer ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
 
     const rects = Array.from(svg.querySelectorAll("g.noaug-nodes rect[data-name]")) as SVGRectElement[];
     rects.forEach((rect) => {
@@ -452,7 +470,7 @@ export default function SankeyHorizontal({
       const layer = idx === -1 ? name : name.slice(0, idx);
       const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
 
-      if (activeLayer && layer === activeLayer && Number.isFinite(cluster)) {
+      if (focusGroup && layer === focusGroup && Number.isFinite(cluster)) {
         rect.setAttribute("fill", CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length]);
       } else {
         rect.setAttribute("fill", SANKEY_NODE_COLOR);
@@ -512,7 +530,7 @@ export default function SankeyHorizontal({
         .attr("paint-order", "stroke")
         .text((d) => String(d.cluster));
     }
-  }, [displayActiveNode, highlightId]);
+  }, [displayActiveNode, highlightId, mode, modelKey, layerKey]);
 
   useEffect(() => {
     const container = containerRef.current;
