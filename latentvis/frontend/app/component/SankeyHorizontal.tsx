@@ -39,6 +39,10 @@ const LAYER_ORDER = [
 ];
 
 const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
+// Unsynced layout tweak: negative moves left, positive moves right.
+const UNSYNC_SHIFT_X = 0;
+const UNSYNC_LEFT_PAD = 20;
+const UNSYNC_RIGHT_PAD = 20;
 
 export default function SankeyHorizontal({
   dataPath = "/data/sankey/noaug_sankey_samples.json",
@@ -51,6 +55,8 @@ export default function SankeyHorizontal({
   onNodeSelect,
 }: SankeyHorizontalProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const CELL_W = 120;
+  const SYNC_BASE_OFFSET = 1 * CELL_W;
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [zoomX, setZoomX] = useState(1);
   const displayActiveNode = activeNodeKey ?? activeNode;
@@ -153,13 +159,21 @@ export default function SankeyHorizontal({
       const layers = order.filter((l) => presentLayers.has(l));
       const layerIndex = new Map(layers.map((l, i) => [l, i]));
       const centerOffset = CELL_MARGIN_LEFT + INNER_W / 2;
-      const scaleX = syncTransform?.scale ?? zoomX;
-      const offsetX = (syncTransform?.x ?? 0) - 1 * CELL_W * scaleX;
-      const spacing = CELL_W * scaleX;
-      const totalWidth = Math.max(
-        width,
-        scaleX * (MARGIN_LEFT + centerOffset + (layers.length - 0.5) * CELL_W) + offsetX + NODE_W / 2 + 10
-      );
+      const isSynced = !!syncTransform;
+      const scaleX = isSynced ? 1 : zoomX;
+      const unsyncedStep = (() => {
+        if (isSynced) return CELL_W;
+        if (layers.length <= 1) return 0;
+        return Math.max(40, (width - UNSYNC_LEFT_PAD - UNSYNC_RIGHT_PAD) / (layers.length - 1));
+      })();
+      const offsetX = isSynced ? 0 : UNSYNC_SHIFT_X;
+      const spacing = (isSynced ? CELL_W : unsyncedStep) * scaleX;
+      const totalWidth = isSynced
+        ? width
+        : Math.max(
+            width,
+            scaleX * (MARGIN_LEFT + centerOffset + (layers.length - 0.5) * unsyncedStep) + offsetX + NODE_W / 2 + 10
+          );
 
       // re-create svg with expanded width if needed
       svg.attr("width", totalWidth);
@@ -170,7 +184,9 @@ export default function SankeyHorizontal({
         const layer = idxC === -1 ? name : name.slice(0, idxC);
         const idx = layerIndex.get(layer);
         if (idx == null) return;
-        const baseX = MARGIN_LEFT + centerOffset + (idx + 0.5) * CELL_W;
+        const baseX = isSynced
+          ? MARGIN_LEFT + centerOffset + (idx + 0.5) * CELL_W
+          : (layers.length <= 1 ? width / 2 : UNSYNC_LEFT_PAD + idx * unsyncedStep);
         const centerX = scaleX * baseX + offsetX;
         node.x0 = centerX - NODE_W / 2;
         node.x1 = node.x0 + NODE_W;
@@ -368,6 +384,16 @@ export default function SankeyHorizontal({
         .attr("opacity", (d) => (highlightId && d.id === highlightId ? 1 : baseOpacity(d)))
         .attr("stroke", (d) => (highlightId && d.id === highlightId ? HIGHLIGHT_RED : SANKEY_LINK_COLOR))
         .attr("stroke-width", (d) => (highlightId && d.id === highlightId ? 2.2 : 1.2));
+
+      // Ensure synced transform is applied immediately after a redraw when sync is ON.
+      if (syncTransform) {
+        const scale = syncTransform.scale;
+        const offsetX = syncTransform.x - SYNC_BASE_OFFSET * scale;
+        const transformAttr = `translate(${offsetX},0) scale(${scale},1)`;
+        svg
+          .selectAll("g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels")
+          .attr("transform", transformAttr);
+      }
     }
 
     fetch(dataPath)
@@ -398,7 +424,28 @@ export default function SankeyHorizontal({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, activeNode, activeNodeKey, highlightId, zoomX, syncTransform]);
+  }, [dataPath, activeNode, activeNodeKey, highlightId, zoomX, !!syncTransform]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const svg = container.querySelector("svg");
+    if (!svg) return;
+    const groups = svg.querySelectorAll("g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels");
+    if (!syncTransform) {
+      groups.forEach((el) => {
+        (el as SVGGElement).removeAttribute("transform");
+      });
+      return;
+    }
+
+    const scale = syncTransform.scale;
+    const offsetX = syncTransform.x - SYNC_BASE_OFFSET * scale;
+    const transformAttr = `translate(${offsetX},0) scale(${scale},1)`;
+    groups.forEach((el) => {
+      (el as SVGGElement).setAttribute("transform", transformAttr);
+    });
+  }, [syncTransform]);
 
   return <div ref={containerRef} className="w-full h-full" style={{ overflowX: "auto", overflowY: "hidden" }} />;
 }

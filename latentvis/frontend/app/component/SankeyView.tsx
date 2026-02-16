@@ -16,6 +16,8 @@ type SankeyViewProps = {
   selectedNode?: { model: string; layer: string; cluster: number } | null;
   onCellSelect?: (active: boolean) => void;
   onSwapAxes?: (swap: boolean) => void;
+  syncLinkedViews?: boolean;
+  onToggleSyncLinkedViews?: () => void;
 };
 
 export default function SankeyView({
@@ -26,6 +28,8 @@ export default function SankeyView({
   selectedNode,
   onCellSelect,
   onSwapAxes,
+  syncLinkedViews = true,
+  onToggleSyncLinkedViews,
 }: SankeyViewProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const fmiRef = useRef<HTMLDivElement | null>(null);
@@ -1079,6 +1083,9 @@ export default function SankeyView({
           <button id="btnColumn">Column</button>
           <button id="btnRow">Row</button>
           <button id="btnSwap">Swap X/Y</button>
+          <button onClick={onToggleSyncLinkedViews}>
+            Sync H/V: {syncLinkedViews ? "ON" : "OFF"}
+          </button>
         </div>
       </div>
       {/* FMI/CSPA panel is temporarily hidden, keep code for future use.

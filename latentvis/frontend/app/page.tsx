@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import SankeyView from "./component/SankeyView";
 import SankeyHorizontal from "./component/SankeyHorizontal";
 import SankeyVertical from "./component/SankeyVertical";
@@ -60,6 +60,10 @@ export default function Home() {
       k: number;
     }[]
   >([]);
+  const [syncLinkedSankeyViews, setSyncLinkedSankeyViews] = useState(false);
+  const syncRafRef = useRef<number | null>(null);
+  const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
+  const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
   const allAicBicPaths = useMemo(() => {
     const models = ["dimenet_noaug", "dimenet10conf"];
     const layers = [
@@ -99,6 +103,59 @@ export default function Home() {
     if (hoverLock) return;
     setHoveredId(id);
   }
+
+  function handleSankeyTransformSync(next: { x: number; y: number; scale: number }) {
+    pendingTransformRef.current = next;
+    if (syncRafRef.current != null) return;
+
+    syncRafRef.current = window.requestAnimationFrame(() => {
+      syncRafRef.current = null;
+      const t = pendingTransformRef.current;
+      if (!t) return;
+
+      const prev = lastSyncedTransformRef.current;
+      const dx = Math.abs(t.x - prev.x);
+      const dy = Math.abs(t.y - prev.y);
+      const ds = Math.abs(t.scale - prev.scale);
+
+      // Skip sub-pixel / tiny zoom jitter to reduce redraw flicker in linked Sankey views.
+      if (dx < 0.8 && dy < 0.8 && ds < 0.002) return;
+
+      lastSyncedTransformRef.current = t;
+      setSankeyTransform(t);
+    });
+  }
+
+  function toggleSyncLinkedViews() {
+    setSyncLinkedSankeyViews((prev) => {
+      const nextEnabled = !prev;
+      if (nextEnabled) {
+        const latest = pendingTransformRef.current ?? lastSyncedTransformRef.current;
+        lastSyncedTransformRef.current = latest;
+        setSankeyTransform(latest);
+      }
+      return nextEnabled;
+    });
+  }
+
+  useEffect(() => {
+    return () => {
+      if (syncRafRef.current != null) {
+        window.cancelAnimationFrame(syncRafRef.current);
+        syncRafRef.current = null;
+      }
+    };
+  }, []);
+
+  const syncTransformVertical = useMemo(
+    () => ({ x: sankeyTransform.x, y: sankeyTransform.y, scale: sankeyTransform.scale }),
+    [sankeyTransform.x, sankeyTransform.y, sankeyTransform.scale]
+  );
+
+  const syncTransformHorizontal = useMemo(
+    () => ({ x: sankeyTransform.x, scale: sankeyTransform.scale }),
+    [sankeyTransform.x, sankeyTransform.scale]
+  );
 
   function toggleLockedHighlight(id: string) {
     if (hoverLock && hoveredId === id) {
@@ -370,7 +427,9 @@ export default function Home() {
                 selectedNode={selectedNode}
                 onCellSelect={(active) => setCellSelected(active)}
                 onSwapAxes={(swap) => setSwapAxes(swap)}
-                onTransform={(t) => setSankeyTransform(t)}
+                syncLinkedViews={syncLinkedSankeyViews}
+                onToggleSyncLinkedViews={toggleSyncLinkedViews}
+                onTransform={(t) => handleSankeyTransformSync(t)}
               />
             </div>
           </div>
@@ -397,7 +456,7 @@ export default function Home() {
                 mode={swapAxes ? "layer" : "model"}
                 layerKey={selectedLayer}
                 modelKey={selectedModel}
-                syncTransform={{ x: sankeyTransform.x, y: sankeyTransform.y, scale: sankeyTransform.scale }}
+                syncTransform={syncLinkedSankeyViews ? syncTransformVertical : undefined}
                 activeNodeKey={
                   selectedNode
                     ? swapAxes
@@ -457,7 +516,7 @@ export default function Home() {
                 mode={swapAxes ? "model" : "layer"}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
-                syncTransform={{ x: sankeyTransform.x, scale: sankeyTransform.scale }}
+                syncTransform={syncLinkedSankeyViews ? syncTransformHorizontal : undefined}
                 activeNodeKey={
                   selectedNode
                     ? swapAxes
