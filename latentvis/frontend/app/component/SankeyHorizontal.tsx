@@ -58,6 +58,7 @@ export default function SankeyHorizontal({
   const nodeSamplesRef = useRef<Map<string, Set<string>>>(new Map());
   const onNodeSelectRef = useRef(onNodeSelect);
   const activeNodeKeyRef = useRef(activeNodeKey);
+  const isControlledRef = useRef(activeNodeKey !== undefined);
   const displayActiveNodeRef = useRef<string | null>(null);
   const draggingRef = useRef(false);
   const dragStartRef = useRef<{ x: number; panX: number }>({ x: 0, panX: 0 });
@@ -66,7 +67,8 @@ export default function SankeyHorizontal({
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [zoomX, setZoomX] = useState(1);
   const [panX, setPanX] = useState(0);
-  const displayActiveNode = activeNodeKey ?? activeNode;
+  const isControlled = activeNodeKey !== undefined;
+  const displayActiveNode = isControlled ? (activeNodeKey ?? null) : activeNode;
 
   useEffect(() => {
     onNodeSelectRef.current = onNodeSelect;
@@ -74,6 +76,10 @@ export default function SankeyHorizontal({
 
   useEffect(() => {
     activeNodeKeyRef.current = activeNodeKey;
+  }, [activeNodeKey]);
+
+  useEffect(() => {
+    isControlledRef.current = activeNodeKey !== undefined;
   }, [activeNodeKey]);
 
   useEffect(() => {
@@ -222,19 +228,8 @@ export default function SankeyHorizontal({
         activeLayer = idx === -1 ? displayActiveNode : displayActiveNode.slice(0, idx);
       }
       const focusGroup = activeLayer ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
-      const clusterValues: number[] = [];
-      (sankeyGraph.nodes as SankeyNode<any, any>[]).forEach((n: any) => {
-        const name = String(n.name || "");
-        const idx = name.lastIndexOf("_");
-        const layer = idx === -1 ? name : name.slice(0, idx);
-        const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
-        if (activeLayer && layer === activeLayer && Number.isFinite(cluster)) clusterValues.push(cluster);
-      });
-      const maxCluster = clusterValues.length ? Math.max(...clusterValues) : 0;
-      const color = d3
-        .scaleOrdinal<number, string>()
-        .domain(d3.range(maxCluster + 1))
-        .range(CLUSTER_COLORS);
+      const clusterColor = (cluster: number) =>
+        CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length];
 
       const linkGroup = svg.append("g").attr("class", "noaug-links");
       const sampleGroup = svg.append("g").attr("class", "sample-trajectories");
@@ -335,7 +330,7 @@ export default function SankeyHorizontal({
             const idx = name.lastIndexOf("_");
             const layer = idx === -1 ? name : name.slice(0, idx);
             const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
-            if (layer === focusGroup && Number.isFinite(cluster)) return color(Math.max(0, cluster));
+            if (layer === focusGroup && Number.isFinite(cluster)) return clusterColor(cluster);
           }
           return SANKEY_NODE_COLOR;
         })
@@ -348,7 +343,7 @@ export default function SankeyHorizontal({
           const name = String(d.name || "");
           const currentDisplay = displayActiveNodeRef.current;
           const next = currentDisplay === name ? null : name;
-          if (activeNodeKeyRef.current == null) {
+          if (!isControlledRef.current) {
             setActiveNode(next);
           }
           const idx = name.lastIndexOf("_");

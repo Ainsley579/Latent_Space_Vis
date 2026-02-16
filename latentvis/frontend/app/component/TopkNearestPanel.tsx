@@ -52,15 +52,13 @@ export default function TopkNearestPanel({
             <div className="shrink-0 w-6" />
             <div className="flex flex-nowrap items-center gap-1 min-w-max">
               <div className="w-18 text-xs font-semibold text-zinc-700 text-center">KNN</div>
-              <div className="w-25 text-xs font-semibold text-zinc-700 text-center">KFN</div>
               <div className="text-sm font-semibold text-zinc-700 pl-1">Top-k Nearest by Cluster</div>
             </div>
           </div>
           {rows.map((row) => {
             const subFlags = substructureByCluster[row.cluster_id] ?? { knn: false, kfn: false };
-            const subCards: Array<{ group: "knn" | "kfn"; label: string; hasData: boolean }> = [
+            const subCards: Array<{ group: "knn"; label: string; hasData: boolean }> = [
               { group: "knn", label: "KNN", hasData: subFlags.knn },
-              { group: "kfn", label: "KFN", hasData: subFlags.kfn },
             ];
 
             return (

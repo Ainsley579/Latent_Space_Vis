@@ -409,7 +409,16 @@ export default function Home() {
                   setCellSelected(true);
                 }}
                 selectedNode={selectedNode}
-                onCellSelect={(active) => setCellSelected(active)}
+                onCellSelect={(active) => {
+                  setCellSelected(active);
+                  if (active) {
+                    // Entering 2D-cell focus should clear cluster-level selection and recolor by new cell.
+                    setSelectedNode(null);
+                    setSelectedIds(null);
+                    setHoverLock(false);
+                    setSuppressScatterCluster(false);
+                  }
+                }}
                 onSwapAxes={(swap) => setSwapAxes(swap)}
                 onTransform={(t) => handleSankeyTransformSync(t)}
               />

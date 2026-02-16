@@ -58,6 +58,7 @@ export default function SankeyVertical({
   const nodeSamplesRef = useRef<Map<string, Set<string>>>(new Map());
   const onNodeSelectRef = useRef(onNodeSelect);
   const activeNodeKeyRef = useRef(activeNodeKey);
+  const isControlledRef = useRef(activeNodeKey !== undefined);
   const displayActiveNodeRef = useRef<string | null>(null);
   const draggingRef = useRef(false);
   const dragStartRef = useRef<{ y: number; panY: number }>({ y: 0, panY: 0 });
@@ -66,7 +67,8 @@ export default function SankeyVertical({
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [zoomX, setZoomX] = useState(1);
   const [panY, setPanY] = useState(0);
-  const displayActiveNode = activeNodeKey ?? activeNode;
+  const isControlled = activeNodeKey !== undefined;
+  const displayActiveNode = isControlled ? (activeNodeKey ?? null) : activeNode;
 
   useEffect(() => {
     onNodeSelectRef.current = onNodeSelect;
@@ -74,6 +76,10 @@ export default function SankeyVertical({
 
   useEffect(() => {
     activeNodeKeyRef.current = activeNodeKey;
+  }, [activeNodeKey]);
+
+  useEffect(() => {
+    isControlledRef.current = activeNodeKey !== undefined;
   }, [activeNodeKey]);
 
   useEffect(() => {
@@ -373,7 +379,7 @@ export default function SankeyVertical({
           event.stopPropagation();
           const currentDisplay = displayActiveNodeRef.current;
           const next = currentDisplay === d.key ? null : d.key;
-          if (activeNodeKeyRef.current == null) {
+          if (!isControlledRef.current) {
             setActiveNode(next);
           }
           const idx = d.key.lastIndexOf("_");

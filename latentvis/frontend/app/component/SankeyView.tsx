@@ -157,16 +157,9 @@ export default function SankeyView({
                 setCellHighlight(datum.rowName, datum.columnName, false);
               })
               .on("click", (_event: any, datum: any) => {
-                if (lockedCell && lockedCell.rowName === datum.rowName && lockedCell.columnName === datum.columnName) {
-                  lockedCell = null;
-                  setCellHighlight(datum.rowName, datum.columnName, false);
-                  onCellSelect?.(false);
-                  return;
-                }
-
+                // Always activate clicked cell on first click to avoid click-deadzone feeling.
                 lockedCell = { rowName: datum.rowName, columnName: datum.columnName };
                 setCellHighlight(datum.rowName, datum.columnName, true);
-                onCellSelect?.(true);
 
                 const modelCandidate = MODEL_SET.has(datum.rowName)
                   ? datum.rowName
@@ -184,6 +177,8 @@ export default function SankeyView({
                 if (layerCandidate) {
                   onLayerSelect?.(layerCandidate);
                 }
+                // Fire after model/layer updates so linked Sankey highlights follow the new cell immediately.
+                onCellSelect?.(true);
               });
           });
         });
@@ -696,14 +691,7 @@ export default function SankeyView({
     if (!selectedNode) {
       sel.attr("fill", "#aaa");
       sel.classed("node-highlight", false).classed("node-dimmed", false);
-      d3.select(container)
-        .selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar')
-        .classed("cell-dimmed", false)
-        .classed("cell-highlight", false);
-      d3.select(container)
-        .selectAll("path.link-path")
-        .classed("link-dimmed", false)
-        .classed("link-highlight", false);
+      // Keep current cell/link highlight state (e.g., locked 2D cell focus) when cluster selection is cleared.
       return;
     }
     const clusterValues: number[] = [];
