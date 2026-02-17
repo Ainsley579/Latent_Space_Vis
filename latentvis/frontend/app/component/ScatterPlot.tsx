@@ -82,8 +82,8 @@ export default function ScatterPlot({
       .append("img")
       .attr("alt", "ligand")
       .style("display", "block")
-      .style("width", "140px")
-      .style("height", "140px")
+      .style("width", "300px")
+      .style("height", "300px")
       .style("object-fit", "contain")
       .on("error", function () {
         d3.select(this).style("display", "none");

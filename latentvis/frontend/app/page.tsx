@@ -30,6 +30,7 @@ export default function Home() {
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [hoverLock, setHoverLock] = useState(false);
+  const [hoverPreview, setHoverPreview] = useState<{ src: string; left: number; top: number } | null>(null);
   const [imageMap, setImageMap] = useState<Record<string, Record<string, string>> | null>(null);
   const [substructures, setSubstructures] = useState<
     {
@@ -414,6 +415,21 @@ export default function Home() {
     return CLUSTER_COLORS[idx];
   }
 
+  function showHoverPreviewAt(src: string, anchor?: DOMRect) {
+    const W = 320;
+    const H = 320;
+    const PAD = 8;
+    if (!anchor) {
+      setHoverPreview({ src, left: window.innerWidth - W - 16, top: window.innerHeight - H - 16 });
+      return;
+    }
+    let left = anchor.left + (anchor.width - W) / 2;
+    let top = anchor.top + (anchor.height - H) / 2;
+    left = Math.max(PAD, Math.min(left, window.innerWidth - W - PAD));
+    top = Math.max(PAD, Math.min(top, window.innerHeight - H - PAD));
+    setHoverPreview({ src, left, top });
+  }
+
   const LEFT_COL_RATIO_IN_WORKSPACE = 45 / 55;
   const MID_COL_RATIO_IN_WORKSPACE = 10 / 55;
   const TOP_ROW_RATIO_IN_WORKSPACE = 40 / 60;
@@ -578,6 +594,16 @@ export default function Home() {
                 resolveSubstructureImage={resolveSubstructureImage}
                 substructureByCluster={substructureByCluster}
                 clusterBadgeColor={clusterBadgeColor}
+                onClusterSelect={(cluster) => {
+                  setSelectedNode({ model: selectedModel, layer: selectedLayer, cluster });
+                  setSelectedIds(null);
+                  setHoveredId(null);
+                  setHoverLock(false);
+                  setSuppressScatterCluster(false);
+                  setCellSelected(true);
+                }}
+                onImagePreviewStart={(src, anchor) => showHoverPreviewAt(src, anchor)}
+                onImagePreviewEnd={() => setHoverPreview(null)}
               />
             </div>
           </div>
@@ -739,8 +765,17 @@ export default function Home() {
                                   <div
                                     key={`instance-${id}`}
                                     className="relative w-32 h-32"
-                                    onMouseEnter={() => setHoverFromMouse(String(id))}
-                                    onMouseLeave={() => setHoverFromMouse(null)}
+                                    onMouseEnter={(e) => {
+                                      setHoverFromMouse(String(id));
+                                      showHoverPreviewAt(
+                                        resolveImageSrc(id, "ligand"),
+                                        (e.currentTarget as HTMLDivElement).getBoundingClientRect(),
+                                      );
+                                    }}
+                                    onMouseLeave={() => {
+                                      setHoverFromMouse(null);
+                                      setHoverPreview(null);
+                                    }}
                                     onClick={() => toggleLockedHighlight(String(id))}
                                   >
                                     <img
@@ -795,6 +830,18 @@ export default function Home() {
             title="Resize Sankey Workspace"
           />
         </div>
+        {hoverPreview && (
+          <div
+            className="fixed z-[10000] pointer-events-none bg-white/95 border border-zinc-300 rounded shadow-xl p-2"
+            style={{ left: hoverPreview.left, top: hoverPreview.top }}
+          >
+            <img
+              src={hoverPreview.src}
+              alt="large preview"
+              className="w-[320px] h-[320px] object-contain bg-white"
+            />
+          </div>
+        )}
         
       </main>
     </div>

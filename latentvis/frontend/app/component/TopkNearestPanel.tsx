@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
 
 type TopkNearestRow = {
   cluster_id: number;
@@ -24,6 +24,9 @@ type TopkNearestPanelProps = {
   resolveSubstructureImage: (model: string, layer: string, cluster: number, group: "knn" | "kfn") => string;
   substructureByCluster: Record<number, ClusterSubstructureFlags>;
   clusterBadgeColor: (cluster: number) => string;
+  onClusterSelect?: (cluster: number) => void;
+  onImagePreviewStart?: (src: string, anchor?: DOMRect) => void;
+  onImagePreviewEnd?: () => void;
 };
 
 export default function TopkNearestPanel({
@@ -39,6 +42,9 @@ export default function TopkNearestPanel({
   resolveSubstructureImage,
   substructureByCluster,
   clusterBadgeColor,
+  onClusterSelect,
+  onImagePreviewStart,
+  onImagePreviewEnd,
 }: TopkNearestPanelProps) {
   const PAGE_SIZE = 5;
   const [pageByCluster, setPageByCluster] = useState<Record<number, number>>({});
@@ -86,15 +92,33 @@ export default function TopkNearestPanel({
             return (
               <div key={`nearest-row-${row.cluster_id}`} className="flex items-start gap-2 w-full min-w-0">
                 <div
-                  className="shrink-0 text-xs font-semibold text-white px-1.5 py-0.5 rounded-[2px] mt-0.5"
+                  className={
+                    "shrink-0 text-xs font-semibold text-white px-1.5 py-0.5 rounded-[2px] mt-0.5 cursor-pointer " +
+                    (selectedCluster === row.cluster_id ? "ring-2 ring-red-500" : "")
+                  }
                   style={{ backgroundColor: clusterBadgeColor(row.cluster_id) }}
+                  onClick={() => onClusterSelect?.(row.cluster_id)}
+                  title={`Select cluster ${row.cluster_id}`}
                 >
                   {row.cluster_id}
                 </div>
 
                 <div className="flex items-start gap-1 w-full min-w-0">
                   {subCards.map((sub) => (
-                    <div key={`${row.cluster_id}-${sub.group}`} className="relative w-16 h-16 shrink-0">
+                    <div
+                      key={`${row.cluster_id}-${sub.group}`}
+                      className="relative w-16 h-16 shrink-0"
+                      onMouseEnter={
+                        sub.hasData
+                          ? (e: ReactMouseEvent<HTMLDivElement>) =>
+                              onImagePreviewStart?.(
+                                resolveSubstructureImage(selectedModel, selectedLayer, row.cluster_id, sub.group),
+                                (e.currentTarget as HTMLDivElement).getBoundingClientRect(),
+                              )
+                          : undefined
+                      }
+                      onMouseLeave={sub.hasData ? () => onImagePreviewEnd?.() : undefined}
+                    >
                       {sub.hasData ? (
                         <img
                           src={resolveSubstructureImage(selectedModel, selectedLayer, row.cluster_id, sub.group)}
@@ -148,6 +172,16 @@ export default function TopkNearestPanel({
                             </div>
                           ) : (
                             <>
+                              <div
+                                className="absolute inset-0 z-[1]"
+                                onMouseEnter={(e: ReactMouseEvent<HTMLDivElement>) =>
+                                  onImagePreviewStart?.(
+                                    resolveImageSrc(id, "ligand"),
+                                    (e.currentTarget as HTMLDivElement).getBoundingClientRect(),
+                                  )
+                                }
+                                onMouseLeave={() => onImagePreviewEnd?.()}
+                              />
                               <img
                                 src={resolveImageSrc(id, "ligand")}
                                 alt={`ligand ${id}`}
