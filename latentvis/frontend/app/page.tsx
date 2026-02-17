@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import SankeyView from "./component/SankeyView";
 import SankeyHorizontal from "./component/SankeyHorizontal";
 import SankeyVertical from "./component/SankeyVertical";
@@ -63,7 +63,10 @@ export default function Home() {
   const [syncLinkedSankeyViews, setSyncLinkedSankeyViews] = useState(false);
   const [clusterPage, setClusterPage] = useState(0);
   const [clusterPageSize, setClusterPageSize] = useState(1);
+  const [workspaceWidthPct, setWorkspaceWidthPct] = useState(55);
+  const [workspaceHeightPct, setWorkspaceHeightPct] = useState(60);
   const clusterGridRef = useRef<HTMLDivElement | null>(null);
+  const layoutGridRef = useRef<HTMLDivElement | null>(null);
   const syncRafRef = useRef<number | null>(null);
   const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
   const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
@@ -410,12 +413,52 @@ export default function Home() {
     const idx = ((cluster % len) + len) % len;
     return CLUSTER_COLORS[idx];
   }
+
+  const LEFT_COL_RATIO_IN_WORKSPACE = 45 / 55;
+  const MID_COL_RATIO_IN_WORKSPACE = 10 / 55;
+  const TOP_ROW_RATIO_IN_WORKSPACE = 40 / 60;
+  const MID_ROW_RATIO_IN_WORKSPACE = 20 / 60;
+
+  const leftColPct = workspaceWidthPct * LEFT_COL_RATIO_IN_WORKSPACE;
+  const midColPct = workspaceWidthPct * MID_COL_RATIO_IN_WORKSPACE;
+  const rightColPct = 100 - workspaceWidthPct;
+  const topRowPct = workspaceHeightPct * TOP_ROW_RATIO_IN_WORKSPACE;
+  const midRowPct = workspaceHeightPct * MID_ROW_RATIO_IN_WORKSPACE;
+  const bottomRowPct = 100 - workspaceHeightPct;
+
+  function onWorkspaceResizeStart(event: ReactMouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const onMove = (ev: MouseEvent) => {
+      const host = layoutGridRef.current;
+      if (!host) return;
+      const rect = host.getBoundingClientRect();
+      const relX = ((ev.clientX - rect.left) / rect.width) * 100;
+      const relY = ((ev.clientY - rect.top) / rect.height) * 100;
+      const nextW = Math.min(80, Math.max(40, relX));
+      const nextH = Math.min(85, Math.max(45, relY));
+      setWorkspaceWidthPct(nextW);
+      setWorkspaceHeightPct(nextH);
+    };
+
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
   return (
     <div className="flex min-h-screen w-full">
       <main className="flex min-h-screen w-full">
         <div
-          className="h-screen w-full grid"
-          style={{ gridTemplateColumns: "60% 15% 25%", gridTemplateRows: "50% 25% 25%" }}
+          ref={layoutGridRef}
+          className="h-screen w-full grid relative"
+          style={{
+            gridTemplateColumns: `${leftColPct}% ${midColPct}% ${rightColPct}%`,
+            gridTemplateRows: `${topRowPct}% ${midRowPct}% ${bottomRowPct}%`,
+          }}
         >
           <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "1 / 2" }}>
             <div
@@ -516,7 +559,7 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="p-1 box-border" style={{ gridColumn: "3 / 4", gridRow: "1 / 3" }}>
+          <div className="p-1 box-border" style={{ gridColumn: "3 / 4", gridRow: "1 / 4" }}>
           
             <div
               id="instanceview"
@@ -588,159 +631,169 @@ export default function Home() {
               <StructureEditorPanel />
             </div>
           </div>
-          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "3 / 4" }}>
-            <div
-              id="bottomPanel1"
-              className="w-full h-full border border-zinc-400 bg-white"
-            >
-              <div className="w-full h-full p-2 box-border overflow-hidden">
-                {!selectedNode && (
-                  <div className="text-sm text-zinc-500">Select a cluster to view all instances.</div>
-                )}
-                {selectedNode && (
-                  <div className="h-full min-h-0 flex flex-col gap-2">
-                    <div className="text-sm font-semibold text-zinc-700">
-                      Cluster Instances ({clusterInstanceIds.length})
-                    </div>
-                    {clusterInstanceIds.length === 0 && (
-                      <div className="text-sm text-zinc-500">
-                        No instances found for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
+
+          <div className="p-1 box-border" style={{ gridColumn: "1 / 3", gridRow: "3 / 4" }}>
+            <div className="w-full h-full flex gap-2">
+              <div className="w-[45%] h-full min-w-0">
+                <div
+                  id="scatterplot"
+                  className="w-full h-full border border-zinc-400 bg-white"
+                >
+                  <ScatterPlot
+                    dataPath={scatterPath}
+                    activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
+                    activeIds={selectedIds}
+                    highlightId={hoveredId}
+                    modelKey={selectedModel}
+                    layerKey={selectedLayer}
+                    onPointHoverIdChange={(id) => setHoverFromMouse(id)}
+                    onPointSelect={(sel) => {
+                      if (!sel.model || !sel.layer) return;
+                      setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
+                      setSelectedIds([sel.real_id]);
+                      setHoveredId(String(sel.real_id));
+                      setHoverLock(true);
+                      setSuppressScatterCluster(true);
+                      setSelectedModel(sel.model);
+                      setSelectedLayer(sel.layer);
+                      if (sel.model === "dimenet_noaug") {
+                        setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                      } else if (sel.model === "dimenet10conf") {
+                        setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                      }
+                      setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                    }}
+                    onClusterSelect={(sel) => {
+                      if (!sel.model || !sel.layer) return;
+                      setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
+                      setSelectedIds(sel.real_ids);
+                      setHoveredId(null);
+                      setHoverLock(false);
+                      setSuppressScatterCluster(false);
+                      setSelectedModel(sel.model);
+                      setSelectedLayer(sel.layer);
+                      if (sel.model === "dimenet_noaug") {
+                        setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                      } else if (sel.model === "dimenet10conf") {
+                        setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                      }
+                      setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                    }}
+                    onClearSelection={() => {
+                      setSelectedNode(null);
+                      setSelectedIds(null);
+                      setHoveredId(null);
+                      setHoverLock(false);
+                      setSuppressScatterCluster(false);
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="w-[75%] h-full min-w-0">
+                <div
+                  id="bottomPanel1"
+                  className="w-full h-full border border-zinc-400 bg-white"
+                >
+                  <div className="w-full h-full p-2 box-border overflow-hidden">
+                    {!selectedNode && (
+                      <div className="text-sm text-zinc-500">Select a cluster to view all instances.</div>
+                    )}
+                    {selectedNode && (
+                      <div className="h-full min-h-0 flex flex-col gap-2">
+                        <div className="text-sm font-semibold text-zinc-700">
+                          Cluster Instances ({clusterInstanceIds.length})
+                        </div>
+                        {clusterInstanceIds.length === 0 && (
+                          <div className="text-sm text-zinc-500">
+                            No instances found for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
+                          </div>
+                        )}
+                        {clusterInstanceIds.length > 0 && (
+                          <>
+                            <div className="flex items-center justify-between text-xs text-zinc-600">
+                              <div>
+                                Page {clusterPage + 1} / {clusterTotalPages}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
+                                  disabled={clusterPage <= 0}
+                                  onClick={() => setClusterPage((p) => Math.max(0, p - 1))}
+                                >
+                                  Prev
+                                </button>
+                                <button
+                                  type="button"
+                                  className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
+                                  disabled={clusterPage >= clusterTotalPages - 1}
+                                  onClick={() => setClusterPage((p) => Math.min(clusterTotalPages - 1, p + 1))}
+                                >
+                                  Next
+                                </button>
+                              </div>
+                            </div>
+                            <div ref={clusterGridRef} className="flex-1 min-h-0 overflow-hidden">
+                              <div className="flex flex-wrap gap-1">
+                                {clusterPagedIds.map((id) => (
+                                  <div
+                                    key={`instance-${id}`}
+                                    className="relative w-32 h-32"
+                                    onMouseEnter={() => setHoverFromMouse(String(id))}
+                                    onMouseLeave={() => setHoverFromMouse(null)}
+                                    onClick={() => toggleLockedHighlight(String(id))}
+                                  >
+                                    <img
+                                      src={resolveImageSrc(id, "ligand")}
+                                      alt={`ligand ${id}`}
+                                      className="w-32 h-32 object-contain bg-white border border-zinc-200"
+                                      onLoad={(e) => {
+                                        const target = e.currentTarget as HTMLImageElement;
+                                        target.style.display = "block";
+                                      }}
+                                      onError={(e) => {
+                                        const target = e.currentTarget as HTMLImageElement;
+                                        target.style.display = "none";
+                                      }}
+                                    />
+                                    {selectedNode && (
+                                      <div
+                                        className="absolute top-0.5 right-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
+                                        style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
+                                      >
+                                        {selectedNode.cluster}
+                                      </div>
+                                    )}
+                                    <div
+                                      className={
+                                        `absolute top-0.5 left-0.5 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
+                                        (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
+                                      }
+                                      onMouseEnter={() => setHoverFromMouse(String(id))}
+                                      onMouseLeave={() => setHoverFromMouse(null)}
+                                      onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
+                                    >
+                                      {id}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
-                    {clusterInstanceIds.length > 0 && (
-                      <>
-                        <div className="flex items-center justify-between text-xs text-zinc-600">
-                          <div>
-                            Page {clusterPage + 1} / {clusterTotalPages}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
-                              disabled={clusterPage <= 0}
-                              onClick={() => setClusterPage((p) => Math.max(0, p - 1))}
-                            >
-                              Prev
-                            </button>
-                            <button
-                              type="button"
-                              className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
-                              disabled={clusterPage >= clusterTotalPages - 1}
-                              onClick={() => setClusterPage((p) => Math.min(clusterTotalPages - 1, p + 1))}
-                            >
-                              Next
-                            </button>
-                          </div>
-                        </div>
-                        <div ref={clusterGridRef} className="flex-1 min-h-0 overflow-hidden">
-                          <div className="flex flex-wrap gap-1">
-                            {clusterPagedIds.map((id) => (
-                          <div
-                            key={`instance-${id}`}
-                            className="relative w-32 h-32"
-                            onMouseEnter={() => setHoverFromMouse(String(id))}
-                            onMouseLeave={() => setHoverFromMouse(null)}
-                            onClick={() => toggleLockedHighlight(String(id))}
-                          >
-                            <img
-                              src={resolveImageSrc(id, "ligand")}
-                              alt={`ligand ${id}`}
-                              className="w-32 h-32 object-contain bg-white border border-zinc-200"
-                              onLoad={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
-                                target.style.display = "block";
-                              }}
-                              onError={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
-                                target.style.display = "none";
-                              }}
-                            />
-                            {selectedNode && (
-                              <div
-                                className="absolute top-0.5 right-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
-                                style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
-                              >
-                                {selectedNode.cluster}
-                              </div>
-                            )}
-                            <div
-                              className={
-                                `absolute top-0.5 left-0.5 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
-                                (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
-                              }
-                              onMouseEnter={() => setHoverFromMouse(String(id))}
-                              onMouseLeave={() => setHoverFromMouse(null)}
-                              onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
-                            >
-                              {id}
-                            </div>
-                          </div>
-                            ))}
-                          </div>
-                        </div>
-                      </>
-                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
-          <div className="p-1 box-border" style={{ gridColumn: "2 / 4", gridRow: "3 / 4" }}>
-            <div
-              id="scatterplot"
-              className="w-full h-full border border-zinc-400 bg-white"
-            >
-              
-              <ScatterPlot
-                dataPath={scatterPath}
-                activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
-                activeIds={selectedIds}
-                highlightId={hoveredId}
-                modelKey={selectedModel}
-                layerKey={selectedLayer}
-                onPointHoverIdChange={(id) => setHoverFromMouse(id)}
-                onPointSelect={(sel) => {
-                  if (!sel.model || !sel.layer) return;
-                  setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
-                  setSelectedIds([sel.real_id]);
-                  setHoveredId(String(sel.real_id));
-                  setHoverLock(true);
-                  setSuppressScatterCluster(true);
-                  setSelectedModel(sel.model);
-                  setSelectedLayer(sel.layer);
-                  if (sel.model === "dimenet_noaug") {
-                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
-                  } else if (sel.model === "dimenet10conf") {
-                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
-                  }
-                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
-                }}
-                onClusterSelect={(sel) => {
-                  if (!sel.model || !sel.layer) return;
-                  setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
-                  setSelectedIds(sel.real_ids);
-                  setHoveredId(null);
-                  setHoverLock(false);
-                  setSuppressScatterCluster(false);
-                  setSelectedModel(sel.model);
-                  setSelectedLayer(sel.layer);
-                  if (sel.model === "dimenet_noaug") {
-                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
-                  } else if (sel.model === "dimenet10conf") {
-                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
-                  }
-                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
-                }}
-                onClearSelection={() => {
-                  setSelectedNode(null);
-                  setSelectedIds(null);
-                  setHoveredId(null);
-                  setHoverLock(false);
-                  setSuppressScatterCluster(false);
-                }}
-              />
-            </div>
-          </div>
+          <div
+            className="absolute z-30 w-4 h-4 rounded-sm bg-zinc-500/75 hover:bg-zinc-700 cursor-se-resize"
+            style={{ left: `calc(${workspaceWidthPct}% - 8px)`, top: `calc(${workspaceHeightPct}% - 8px)` }}
+            onMouseDown={onWorkspaceResizeStart}
+            title="Resize Sankey Workspace"
+          />
         </div>
         
       </main>

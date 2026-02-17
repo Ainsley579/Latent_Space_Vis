@@ -95,7 +95,7 @@ export default function SankeyView({
           return { col, row, x: col * cellW, y: row * cellH };
         }
 
-        const margin = { top: 20, left: 30, right: 0, bottom: 20 };
+        const margin = { top: 20, left: 0, right: 0, bottom: 20 };
         const CELL_W = 120;
         const CELL_H = 150;
 
@@ -822,7 +822,7 @@ export default function SankeyView({
       container.innerHTML = "";
       const width = Math.max(1, container.clientWidth);
       const height = Math.max(30, container.clientHeight || 40);
-      const margin = { top: 6, right: 8, bottom: 6, left: 35 };
+      const margin = { top: 6, right: 8, bottom: 6, left: 0 };
       const innerH = Math.max(1, height - margin.top - margin.bottom);
 
       const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
@@ -1080,7 +1080,7 @@ export default function SankeyView({
           {/* FMI/CSPA row metric strip is temporarily hidden, keep code for future use.
           <div id="rowMetricChart" ref={rowMetricRef} className="shrink-0 w-10 h-full pointer-events-none" />
           */}
-          <div className="relative flex-1 min-w-0">
+          <div className="relative flex-1 min-w-0 pl-8">
             <ZoomPan
               className="w-full h-full"
               panPadding={220}
@@ -1111,7 +1111,7 @@ export default function SankeyView({
                     );
                   })}
                 </div>
-                <div className="absolute left-0 top-0 bottom-0 w-5 pointer-events-none bg-white/90 z-10">
+                <div className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none bg-white/90 z-10">
                   {layout.rowNames.map((name, i) => {
                     const y =
                       transform.y +
@@ -1120,7 +1120,14 @@ export default function SankeyView({
                       <div
                         key={name}
                         className="absolute text-sm text-zinc-700"
-                        style={{ transform: `translate(-27px, ${y}px) translateY(-50%) rotate(-90deg)` }}
+                        style={{
+                          left: 2,
+                          top: y,
+                          transform: "translateY(-50%)",
+                          writingMode: "vertical-lr",
+                          textOrientation: "mixed",
+                          whiteSpace: "nowrap",
+                        }}
                       >
                         {name}
                       </div>
@@ -1156,7 +1163,7 @@ export default function SankeyView({
         #chart {
           width: fit-content;
           max-width: 100%;
-          margin: 16px auto 10px;
+          margin: 16px 0 10px;
         }
 
         input[type="range"] {

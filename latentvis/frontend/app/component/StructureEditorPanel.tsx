@@ -36,6 +36,7 @@ export default function StructureEditorPanel() {
     let detachedErrorHandler: ((this: HTMLScriptElement, ev: Event | string) => void) | null = null;
     const onReady = () => {
       if (cancelled) return;
+      if (!window.JSApplet?.JSME) return;
       setScriptReady(true);
       setError(null);
     };
@@ -46,7 +47,11 @@ export default function StructureEditorPanel() {
         onReady();
         return;
       }
-      detachedLoadHandler = () => onReady();
+      detachedLoadHandler = () => {
+        // Some JSME builds fire script "load" before JSApplet is fully initialized.
+        // Only mark ready if constructor is already present; otherwise wait for jsmeOnLoad.
+        if (window.JSApplet?.JSME) onReady();
+      };
       detachedErrorHandler = () => {
         if (cancelled) return;
         setError("Failed to load JSME script. Put JSME dist files under public/jsme.");
@@ -72,7 +77,10 @@ export default function StructureEditorPanel() {
     script.id = JSME_SCRIPT_ID;
     script.async = true;
     script.src = LOCAL_JSME_SCRIPT_SRC;
-    script.onload = () => onReady();
+    script.onload = () => {
+      // Keep this as a fallback only when JSApplet is already available at onload time.
+      if (window.JSApplet?.JSME) onReady();
+    };
     script.onerror = () => {
       if (cancelled) return;
       setError("Failed to load local JSME script from /jsme/jsme.nocache.js.");
