@@ -64,10 +64,12 @@ export default function Home() {
   const [syncLinkedSankeyViews, setSyncLinkedSankeyViews] = useState(false);
   const [clusterPage, setClusterPage] = useState(0);
   const [clusterPageSize, setClusterPageSize] = useState(1);
+  const [bottomSplitPct, setBottomSplitPct] = useState(45);
   const [workspaceWidthPct, setWorkspaceWidthPct] = useState(55);
   const [workspaceHeightPct, setWorkspaceHeightPct] = useState(60);
   const clusterGridRef = useRef<HTMLDivElement | null>(null);
   const layoutGridRef = useRef<HTMLDivElement | null>(null);
+  const bottomSplitHostRef = useRef<HTMLDivElement | null>(null);
   const syncRafRef = useRef<number | null>(null);
   const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
   const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
@@ -465,6 +467,26 @@ export default function Home() {
     window.addEventListener("mouseup", onUp);
   }
 
+  function onBottomSplitResizeStart(event: ReactMouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const onMove = (ev: MouseEvent) => {
+      const host = bottomSplitHostRef.current;
+      if (!host) return;
+      const rect = host.getBoundingClientRect();
+      const relX = ((ev.clientX - rect.left) / rect.width) * 100;
+      const next = Math.min(80, Math.max(20, relX));
+      setBottomSplitPct(next);
+    };
+
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
   return (
     <div className="flex min-h-screen w-full">
       <main className="flex min-h-screen w-full">
@@ -659,8 +681,8 @@ export default function Home() {
           </div>
 
           <div className="p-1 box-border" style={{ gridColumn: "1 / 3", gridRow: "3 / 4" }}>
-            <div className="w-full h-full flex gap-2">
-              <div className="w-[45%] h-full min-w-0">
+            <div ref={bottomSplitHostRef} className="w-full h-full flex min-w-0">
+              <div className="h-full min-w-0" style={{ width: `${bottomSplitPct}%` }}>
                 <div
                   id="scatterplot"
                   className="w-full h-full border border-zinc-400 bg-white"
@@ -715,7 +737,12 @@ export default function Home() {
                   />
                 </div>
               </div>
-              <div className="w-[75%] h-full min-w-0">
+              <div
+                className="w-2 shrink-0 cursor-col-resize bg-zinc-300/70 hover:bg-zinc-500/70"
+                onMouseDown={onBottomSplitResizeStart}
+                title="Resize Scatterplot / Cluster Instances"
+              />
+              <div className="h-full min-w-0 flex-1">
                 <div
                   id="bottomPanel1"
                   className="w-full h-full border border-zinc-400 bg-white"
