@@ -20,7 +20,11 @@ export default function SyncControlPanel({ syncOn, onToggleSync }: SyncControlPa
   }, [minValue]);
 
   return (
-    <div className="w-full h-full bg-white px-2 py-2 flex flex-col gap-2 overflow-hidden">
+    <div className="w-full h-full bg-white flex flex-col overflow-hidden">
+      <div className="shrink-0 px-2 py-1 text-sm font-semibold text-zinc-700 border-b border-zinc-200">
+        Control Panel
+      </div>
+      <div className="flex-1 min-h-0 px-2 py-2 flex flex-col gap-2">
       <div className="flex items-center justify-start gap-2 min-w-0 mb-2">
         <span className="text-[10px] text-zinc-700">SYNC</span>
         <button
@@ -88,6 +92,7 @@ export default function SyncControlPanel({ syncOn, onToggleSync }: SyncControlPa
         >
           Generate
         </button>
+      </div>
       </div>
     </div>
   );

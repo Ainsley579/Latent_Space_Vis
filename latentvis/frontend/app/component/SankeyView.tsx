@@ -1055,15 +1055,23 @@ export default function SankeyView({
   return (
     <div className="timeline-root h-full flex flex-col" style={{ marginLeft: 0 }}>
       <div id="controls" className="shrink-0">
-        <label style={{ marginRight: 8, marginLeft: 5 }}>Value range:</label>
+        <span style={{ display: "inline-flex", alignItems: "center", marginLeft: 5, marginRight: 8, gap: 6 }}>
+          <label>Value range:</label>
+          <span
+            className="value-range-help"
+            data-tooltip="Value range is a link-value filter for the 2D Sankey view. It controls which path segments are visible: only links with values between the selected minimum and maximum are displayed, and links outside that range are hidden."
+            aria-label="Value range help"
+          >
+            ?
+          </span>
+        </span>
+        <span id="minValue" style={{ marginRight: 8 }}>0</span>
         <div className="range-slider" id="rangeSlider">
           <div className="range-track" id="rangeTrack"></div>
           <input id="minRange" className="range-min" type="range" min={0} max={maxInstanceValue} step={1} defaultValue={0} />
           <input id="maxRange" className="range-max" type="range" min={0} max={maxInstanceValue} step={1} defaultValue={maxInstanceValue} />
         </div>
-        <span id="minValue" style={{ marginLeft: 12 }}>0</span>
-        <span id="sep" style={{ marginLeft: 6, marginRight: 6 }}>—</span>
-        <span id="maxValue">{maxInstanceValue}</span>
+        <span id="maxValue" style={{ marginLeft: 8 }}>{maxInstanceValue}</span>
         <div id="controlButtons" style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center" }}>
           <button id="btnDefault">Default</button>
           <button id="btnColumn">Column</button>
@@ -1193,7 +1201,7 @@ export default function SankeyView({
           left: 0;
           top: 12px;
           width: 100%;
-          pointer-events: none;
+          pointer-events: auto;
           -webkit-appearance: none;
           background: transparent;
         }
@@ -1217,6 +1225,67 @@ export default function SankeyView({
           width: 100%;
           background: linear-gradient(to right, #ddd 0%, #ddd 100%);
           border-radius: 3px;
+        }
+
+        .value-range-help {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 14px;
+          height: 14px;
+          border-radius: 999px;
+          border: 1px solid #9ca3af;
+          color: #4b5563;
+          font-size: 10px;
+          line-height: 1;
+          cursor: default;
+          user-select: none;
+          position: relative;
+        }
+
+        .value-range-help::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          left: 6px;
+          top: calc(100% + 14px);
+          transform: none;
+          width: 280px;
+          max-width: min(280px, calc(100vw - 24px));
+          padding: 8px 10px;
+          border-radius: 6px;
+          background: rgba(17, 24, 39, 0.95);
+          color: #fff;
+          font-size: 11px;
+          line-height: 1.35;
+          white-space: normal;
+          text-align: left;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          transition: opacity 0.12s ease;
+          z-index: 30;
+        }
+
+        .value-range-help::before {
+          content: "";
+          position: absolute;
+          left: 8px;
+          top: calc(100% + 9px);
+          transform: none;
+          border: 5px solid transparent;
+          border-bottom-color: rgba(17, 24, 39, 0.95);
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          transition: opacity 0.12s ease;
+          z-index: 30;
+        }
+
+        .value-range-help:hover::after,
+        .value-range-help:hover::before {
+          opacity: 1;
+          visibility: visible;
         }
 
         :global(.cell-dimmed) {
