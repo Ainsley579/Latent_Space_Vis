@@ -584,7 +584,7 @@ export default function SankeyHorizontal({
     <div
       ref={containerRef}
       className="w-full h-full"
-      style={{ overflowX: "auto", overflowY: "hidden", cursor: syncTransform ? "default" : draggingRef.current ? "grabbing" : "grab" }}
+      style={{ overflowX: "hidden", overflowY: "hidden", cursor: syncTransform ? "default" : draggingRef.current ? "grabbing" : "grab" }}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}

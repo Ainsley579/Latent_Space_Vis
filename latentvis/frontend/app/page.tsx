@@ -61,6 +61,9 @@ export default function Home() {
     }[]
   >([]);
   const [syncLinkedSankeyViews, setSyncLinkedSankeyViews] = useState(false);
+  const [clusterPage, setClusterPage] = useState(0);
+  const [clusterPageSize, setClusterPageSize] = useState(1);
+  const clusterGridRef = useRef<HTMLDivElement | null>(null);
   const syncRafRef = useRef<number | null>(null);
   const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
   const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
@@ -346,6 +349,46 @@ export default function Home() {
     });
   }, [activeSankeyRows, selectedNode]);
 
+  const clusterTotalPages = useMemo(() => {
+    if (clusterInstanceIds.length === 0) return 1;
+    return Math.max(1, Math.ceil(clusterInstanceIds.length / Math.max(1, clusterPageSize)));
+  }, [clusterInstanceIds.length, clusterPageSize]);
+
+  const clusterPagedIds = useMemo(() => {
+    const size = Math.max(1, clusterPageSize);
+    const start = clusterPage * size;
+    return clusterInstanceIds.slice(start, start + size);
+  }, [clusterInstanceIds, clusterPage, clusterPageSize]);
+
+  useEffect(() => {
+    setClusterPage(0);
+  }, [selectedNode?.model, selectedNode?.layer, selectedNode?.cluster]);
+
+  useEffect(() => {
+    setClusterPage((prev) => Math.min(prev, Math.max(0, clusterTotalPages - 1)));
+  }, [clusterTotalPages]);
+
+  useEffect(() => {
+    const el = clusterGridRef.current;
+    if (!el) return;
+
+    const CARD = 128;
+    const GAP = 4;
+
+    const recalc = () => {
+      const w = Math.max(1, el.clientWidth);
+      const h = Math.max(1, el.clientHeight);
+      const cols = Math.max(1, Math.floor((w + GAP) / (CARD + GAP)));
+      const rows = Math.max(1, Math.floor((h + GAP) / (CARD + GAP)));
+      setClusterPageSize(Math.max(1, cols * rows));
+    };
+
+    recalc();
+    const ro = new ResizeObserver(recalc);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [selectedNode?.model, selectedNode?.layer, selectedNode?.cluster]);
+
   function resolveImageSrc(realId: string | number, imageType: string) {
     const key = String(realId);
     return `/molecule_images/${key}_${imageType}.png`;
@@ -539,9 +582,115 @@ export default function Home() {
           </div>
           <div className="p-1 box-border" style={{ gridColumn: "2 / 3", gridRow: "2 / 3" }}>
             <div
-              id="scatterplot"
+              id="editor"
               className="w-full h-full border border-zinc-400 relative"
             >
+              <StructureEditorPanel />
+            </div>
+          </div>
+          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "3 / 4" }}>
+            <div
+              id="bottomPanel1"
+              className="w-full h-full border border-zinc-400 bg-white"
+            >
+              <div className="w-full h-full p-2 box-border overflow-hidden">
+                {!selectedNode && (
+                  <div className="text-sm text-zinc-500">Select a cluster to view all instances.</div>
+                )}
+                {selectedNode && (
+                  <div className="h-full min-h-0 flex flex-col gap-2">
+                    <div className="text-sm font-semibold text-zinc-700">
+                      Cluster Instances ({clusterInstanceIds.length})
+                    </div>
+                    {clusterInstanceIds.length === 0 && (
+                      <div className="text-sm text-zinc-500">
+                        No instances found for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
+                      </div>
+                    )}
+                    {clusterInstanceIds.length > 0 && (
+                      <>
+                        <div className="flex items-center justify-between text-xs text-zinc-600">
+                          <div>
+                            Page {clusterPage + 1} / {clusterTotalPages}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
+                              disabled={clusterPage <= 0}
+                              onClick={() => setClusterPage((p) => Math.max(0, p - 1))}
+                            >
+                              Prev
+                            </button>
+                            <button
+                              type="button"
+                              className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
+                              disabled={clusterPage >= clusterTotalPages - 1}
+                              onClick={() => setClusterPage((p) => Math.min(clusterTotalPages - 1, p + 1))}
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                        <div ref={clusterGridRef} className="flex-1 min-h-0 overflow-hidden">
+                          <div className="flex flex-wrap gap-1">
+                            {clusterPagedIds.map((id) => (
+                          <div
+                            key={`instance-${id}`}
+                            className="relative w-32 h-32"
+                            onMouseEnter={() => setHoverFromMouse(String(id))}
+                            onMouseLeave={() => setHoverFromMouse(null)}
+                            onClick={() => toggleLockedHighlight(String(id))}
+                          >
+                            <img
+                              src={resolveImageSrc(id, "ligand")}
+                              alt={`ligand ${id}`}
+                              className="w-32 h-32 object-contain bg-white border border-zinc-200"
+                              onLoad={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.style.display = "block";
+                              }}
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.style.display = "none";
+                              }}
+                            />
+                            {selectedNode && (
+                              <div
+                                className="absolute top-0.5 right-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
+                                style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
+                              >
+                                {selectedNode.cluster}
+                              </div>
+                            )}
+                            <div
+                              className={
+                                `absolute top-0.5 left-0.5 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
+                                (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
+                              }
+                              onMouseEnter={() => setHoverFromMouse(String(id))}
+                              onMouseLeave={() => setHoverFromMouse(null)}
+                              onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
+                            >
+                              {id}
+                            </div>
+                          </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="p-1 box-border" style={{ gridColumn: "2 / 4", gridRow: "3 / 4" }}>
+            <div
+              id="scatterplot"
+              className="w-full h-full border border-zinc-400 bg-white"
+            >
+              
               <ScatterPlot
                 dataPath={scatterPath}
                 activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
@@ -590,84 +739,6 @@ export default function Home() {
                   setSuppressScatterCluster(false);
                 }}
               />
-            </div>
-          </div>
-          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "3 / 4" }}>
-            <div
-              id="bottomPanel1"
-              className="w-full h-full border border-zinc-400 bg-white"
-            >
-              <div className="w-full h-full p-2 box-border overflow-auto">
-                {!selectedNode && (
-                  <div className="text-sm text-zinc-500">Select a cluster to view all instances.</div>
-                )}
-                {selectedNode && (
-                  <div className="flex flex-col gap-2">
-                    <div className="text-sm font-semibold text-zinc-700">
-                      Cluster Instances ({clusterInstanceIds.length})
-                    </div>
-                    {clusterInstanceIds.length === 0 && (
-                      <div className="text-sm text-zinc-500">
-                        No instances found for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
-                      </div>
-                    )}
-                    {clusterInstanceIds.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {clusterInstanceIds.map((id) => (
-                          <div
-                            key={`instance-${id}`}
-                            className="relative w-32 h-32"
-                            onMouseEnter={() => setHoverFromMouse(String(id))}
-                            onMouseLeave={() => setHoverFromMouse(null)}
-                            onClick={() => toggleLockedHighlight(String(id))}
-                          >
-                            <img
-                              src={resolveImageSrc(id, "ligand")}
-                              alt={`ligand ${id}`}
-                              className="w-32 h-32 object-contain bg-white border border-zinc-200"
-                              onLoad={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
-                                target.style.display = "block";
-                              }}
-                              onError={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
-                                target.style.display = "none";
-                              }}
-                            />
-                            {selectedNode && (
-                              <div
-                                className="absolute top-0.5 right-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
-                                style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
-                              >
-                                {selectedNode.cluster}
-                              </div>
-                            )}
-                            <div
-                              className={
-                                `absolute top-0.5 left-0.5 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
-                                (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
-                              }
-                              onMouseEnter={() => setHoverFromMouse(String(id))}
-                              onMouseLeave={() => setHoverFromMouse(null)}
-                              onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
-                            >
-                              {id}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="p-1 box-border" style={{ gridColumn: "2 / 4", gridRow: "3 / 4" }}>
-            <div
-              id="bottomPanel2"
-              className="w-full h-full border border-zinc-400 bg-white"
-            >
-              <StructureEditorPanel />
             </div>
           </div>
         </div>
