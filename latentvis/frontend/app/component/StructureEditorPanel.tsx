@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -14,6 +14,9 @@ declare global {
 type JsmeInstance = {
   jmeFile?: () => string;
   readMolecule?: (input: string) => void;
+  svg?: () => string;
+  toSVG?: () => string;
+  svgFile?: () => string;
 };
 
 const JSME_SCRIPT_ID = "jsme-editor-script";
@@ -21,13 +24,11 @@ const LOCAL_JSME_SCRIPT_SRC = "/jsme/jsme.nocache.js";
 
 export default function StructureEditorPanel() {
   const reactId = useId();
-  const hostIdRef = useRef(`jsme_modal_host_${reactId.replace(/:/g, "_")}`);
-  const previewHostIdRef = useRef(`jsme_preview_host_${reactId.replace(/:/g, "_")}`);
-  const previewEditorRef = useRef<JsmeInstance | null>(null);
+  const hostId = useMemo(() => `jsme_modal_host_${reactId.replace(/:/g, "_")}`, [reactId]);
   const modalEditorRef = useRef<JsmeInstance | null>(null);
-  const previewInitedRef = useRef(false);
   const [isOpen, setIsOpen] = useState(false);
   const [scriptReady, setScriptReady] = useState(false);
+  const [currentJme, setCurrentJme] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -98,58 +99,29 @@ export default function StructureEditorPanel() {
   }, []);
 
   useEffect(() => {
-    if (!scriptReady || previewInitedRef.current) return;
-    const previewHost = document.getElementById(previewHostIdRef.current);
-    if (!previewHost) return;
-    previewHost.innerHTML = "";
-
-    if (!window.JSApplet?.JSME) {
-      setError("JSME failed to initialize.");
-      return;
-    }
-
-    try {
-      previewEditorRef.current = new window.JSApplet.JSME(
-        previewHostIdRef.current,
-        "100%",
-        "100%",
-      ) as JsmeInstance;
-      previewInitedRef.current = true;
-    } catch (e) {
-      console.error(e);
-      setError("Unable to load JSME preview.");
-    }
-  }, [scriptReady]);
-
-  useEffect(() => {
     if (!isOpen || !scriptReady) return;
-    const host = document.getElementById(hostIdRef.current);
+    const host = document.getElementById(hostId);
     if (!host) return;
     host.innerHTML = "";
 
     if (!window.JSApplet?.JSME) {
-      setError("JSME failed to initialize.");
       return;
     }
 
     try {
-      setError(null);
-      modalEditorRef.current = new window.JSApplet.JSME(hostIdRef.current, "100%", "100%") as JsmeInstance;
-      const previewJme = previewEditorRef.current?.jmeFile?.();
-      if (previewJme && modalEditorRef.current?.readMolecule) {
-        modalEditorRef.current.readMolecule(previewJme);
+      modalEditorRef.current = new window.JSApplet.JSME(hostId, "100%", "100%") as JsmeInstance;
+      if (currentJme && modalEditorRef.current?.readMolecule) {
+        modalEditorRef.current.readMolecule(currentJme);
       }
     } catch (e) {
       console.error(e);
-      setError("Unable to load JSME editor.");
+      window.setTimeout(() => setError("Unable to load JSME editor."), 0);
     }
-  }, [isOpen, scriptReady]);
+  }, [isOpen, scriptReady, currentJme, hostId]);
 
   function closeModalAndSync() {
     const modalJme = modalEditorRef.current?.jmeFile?.();
-    if (modalJme && previewEditorRef.current?.readMolecule) {
-      previewEditorRef.current.readMolecule(modalJme);
-    }
+    if (modalJme) setCurrentJme(modalJme);
     setIsOpen(false);
   }
 
@@ -158,27 +130,16 @@ export default function StructureEditorPanel() {
       <div className="shrink-0 px-2 py-1 text-sm font-semibold text-zinc-700 border-b border-zinc-200">
         Structure Editor
       </div>
-      <div className="flex-1 min-h-0 p-2">
+      <div className="flex-1 min-h-0 p-3 flex items-center justify-center">
         <button
           type="button"
-          className="w-full h-full rounded border border-zinc-300 bg-white text-left overflow-hidden"
+          className="px-4 py-2 rounded border border-zinc-300 bg-white text-sm text-zinc-700 hover:bg-zinc-50"
           onClick={() => setIsOpen(true)}
         >
-          <div className="h-full min-h-0 flex flex-col">
-            <div className="shrink-0 px-2 py-1 text-[11px] text-zinc-600 border-b border-zinc-200 flex items-center justify-between">
-              <span>Preview</span>
-              <span className="text-zinc-500">Click to edit</span>
-            </div>
-            <div className="flex-1 min-h-0 p-1 relative">
-              <div
-                id={previewHostIdRef.current}
-                className="w-full h-full border border-zinc-200 rounded bg-white pointer-events-none"
-              />
-            </div>
-          </div>
+          {currentJme ? "Open JSME (Edit)" : "Open JSME"}
         </button>
         {error && (
-          <div className="mt-1 text-xs text-amber-700">
+          <div className="mt-2 text-xs text-amber-700">
             {error}
           </div>
         )}
@@ -197,7 +158,7 @@ export default function StructureEditorPanel() {
               </button>
             </div>
             <div className="flex-1 min-h-0 p-2">
-              <div id={hostIdRef.current} className="w-full h-full border border-zinc-200 rounded bg-white" />
+              <div id={hostId} className="w-full h-full border border-zinc-200 rounded bg-white" />
             </div>
           </div>
         </div>

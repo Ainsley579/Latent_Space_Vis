@@ -20,9 +20,30 @@ export default function SyncControlPanel({ syncOn, onToggleSync }: SyncControlPa
   }, [minValue]);
 
   return (
-    <div className="w-full h-full bg-white px-1.5 py-1 flex flex-col gap-1 overflow-hidden">
-      <div className="flex items-center flex-wrap gap-1 min-w-0">
-        <label className="text-[10px] text-zinc-600">Min</label>
+    <div className="w-full h-full bg-white px-2 py-2 flex flex-col gap-2 overflow-hidden">
+      <div className="flex items-center justify-start gap-2 min-w-0 mb-2">
+        <span className="text-[10px] text-zinc-700">SYNC</span>
+        <button
+          type="button"
+          onClick={onToggleSync}
+          className={
+            "relative inline-flex h-5 w-10 items-center rounded-full transition-colors " +
+            (syncOn ? "bg-emerald-500" : "bg-zinc-300")
+          }
+          aria-pressed={syncOn}
+          title={syncOn ? "Sync ON" : "Sync OFF"}
+        >
+          <span
+            className={
+              "inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform " +
+              (syncOn ? "translate-x-6" : "translate-x-1")
+            }
+          />
+        </button>
+      </div>
+
+      <div className="flex items-center justify-center gap-3 min-w-0">
+        <label className="text-[10px] text-zinc-600 shrink-0">Min</label>
         <select
           className="h-5 w-12 px-1 text-[10px] border border-zinc-300 rounded bg-white shrink-0"
           value={minValue}
@@ -39,7 +60,10 @@ export default function SyncControlPanel({ syncOn, onToggleSync }: SyncControlPa
           ))}
         </select>
 
-        <label className="text-[10px] text-zinc-600">Max</label>
+      </div>
+
+      <div className="flex items-center justify-center gap-3 min-w-0">
+        <label className="text-[10px] text-zinc-600 shrink-0">Max</label>
         <select
           className="h-5 w-12 px-1 text-[10px] border border-zinc-300 rounded bg-white shrink-0"
           value={maxValue}
@@ -57,33 +81,13 @@ export default function SyncControlPanel({ syncOn, onToggleSync }: SyncControlPa
         </select>
       </div>
 
-      <div className="flex items-center justify-between gap-1 min-w-0">
+      <div className="flex items-center justify-center min-w-0">
         <button
           type="button"
           className="h-5 px-2 rounded border border-zinc-300 bg-zinc-50 text-[10px] text-zinc-700 hover:bg-zinc-100 shrink-0"
         >
           Generate
         </button>
-        <div className="flex items-center gap-1 shrink-0">
-          <span className="text-[9px] text-zinc-700">SYNC</span>
-          <button
-            type="button"
-            onClick={onToggleSync}
-            className={
-              "relative inline-flex h-5 w-10 items-center rounded-full transition-colors " +
-              (syncOn ? "bg-emerald-500" : "bg-zinc-300")
-            }
-            aria-pressed={syncOn}
-            title={syncOn ? "Sync ON" : "Sync OFF"}
-          >
-            <span
-              className={
-                "inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform " +
-                (syncOn ? "translate-x-6" : "translate-x-1")
-              }
-            />
-          </button>
-        </div>
       </div>
     </div>
   );

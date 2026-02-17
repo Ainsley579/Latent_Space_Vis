@@ -554,7 +554,7 @@ export default function Home() {
               id="aicbic"
               className="w-full flex-[2] border border-zinc-400"
             >
-              <SyncControlPanel syncOn={syncLinkedSankeyViews} onToggleSync={toggleSyncLinkedViews} />
+              <StructureEditorPanel />
             </div>
             <div
               id="sankeyVertical"
@@ -676,7 +676,7 @@ export default function Home() {
               id="editor"
               className="w-full h-full border border-zinc-400 relative"
             >
-              <StructureEditorPanel />
+              <SyncControlPanel syncOn={syncLinkedSankeyViews} onToggleSync={toggleSyncLinkedViews} />
             </div>
           </div>
 
