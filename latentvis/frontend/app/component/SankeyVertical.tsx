@@ -18,6 +18,7 @@ type SampleRow = {
 type SankeyVerticalProps = {
   dataPath?: string;
   syncTransform?: { x: number; y: number; scale: number };
+  onSyncTransform?: (t: { x: number; y: number; scale: number }) => void;
   mode?: "layer" | "model";
   layerKey?: string;
   modelKey?: string;
@@ -39,10 +40,15 @@ const LAYER_ORDER = [
 ];
 
 const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
+// Unsynced layout tweak: negative moves up, positive moves down (after rotated render).
+const UNSYNC_SHIFT_Y = 0;
+const UNSYNC_TOP_PAD = 14;
+const UNSYNC_BOTTOM_PAD = 14;
 
 export default function SankeyVertical({
   dataPath = "/data/sankey/noaug_sankey_samples.json",
   syncTransform,
+  onSyncTransform,
   mode = "model",
   layerKey,
   modelKey,
@@ -51,9 +57,36 @@ export default function SankeyVertical({
   onNodeSelect,
 }: SankeyVerticalProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const nodeSamplesRef = useRef<Map<string, Set<string>>>(new Map());
+  const onNodeSelectRef = useRef(onNodeSelect);
+  const activeNodeKeyRef = useRef(activeNodeKey);
+  const isControlledRef = useRef(activeNodeKey !== undefined);
+  const displayActiveNodeRef = useRef<string | null>(null);
+  const draggingRef = useRef(false);
+  const dragStartRef = useRef<{ y: number; panY: number }>({ y: 0, panY: 0 });
+  const CELL_H = 150;
+  const SYNC_BASE_OFFSET = 1.6 * CELL_H;
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [zoomX, setZoomX] = useState(1);
-  const displayActiveNode = activeNodeKey ?? activeNode;
+  const [panY, setPanY] = useState(0);
+  const isControlled = activeNodeKey !== undefined;
+  const displayActiveNode = isControlled ? (activeNodeKey ?? null) : activeNode;
+
+  useEffect(() => {
+    onNodeSelectRef.current = onNodeSelect;
+  }, [onNodeSelect]);
+
+  useEffect(() => {
+    activeNodeKeyRef.current = activeNodeKey;
+  }, [activeNodeKey]);
+
+  useEffect(() => {
+    isControlledRef.current = activeNodeKey !== undefined;
+  }, [activeNodeKey]);
+
+  useEffect(() => {
+    displayActiveNodeRef.current = displayActiveNode;
+  }, [displayActiveNode]);
 
   useEffect(() => {
     if (activeNodeKey == null) {
@@ -125,14 +158,9 @@ export default function SankeyVertical({
       const NODE_W = 12;
       const NODE_PAD = 4;
       const BOTTOM = 10;
-      const CELL_H = 150;
       const TOP = 10;
       const MARGIN_LEFT = CELL_H * 2 + 10;
       const bandH = Math.max(1, drawH - TOP - BOTTOM);
-      // model spacing should match cell height
-      const MODEL_GAP = CELL_H;
-      const scale = syncTransform?.scale ?? zoomX;
-      const offsetY = (syncTransform?.y ?? 0) - 1.6 * CELL_H * scale;
 
       const nodeValue = new Map<string, number>();
       rows.forEach((r) => {
@@ -153,9 +181,27 @@ export default function SankeyVertical({
         nodesByModel.get(model)!.push({ key, cluster, value });
       });
 
-      const nodes: Array<{ key: string; model: string; value: number; x: number; y: number; h: number }> = [];
+      const isSynced = !!syncTransform;
       const order = mode === "model" ? MODEL_ORDER : LAYER_ORDER;
-      order.forEach((model, i) => {
+      const presentOrder = order.filter((m) => (nodesByModel.get(m)?.length ?? 0) > 0);
+      const renderOrder = presentOrder.length > 0 ? presentOrder : order;
+
+      // In rotated rendering, x-axis maps to screen Y (vertical direction).
+      const unsyncedLeftPad = UNSYNC_TOP_PAD;
+      const unsyncedRightPad = UNSYNC_BOTTOM_PAD;
+      const unsyncedGap =
+        renderOrder.length <= 1
+          ? 0
+          : Math.max(40, (drawW - unsyncedLeftPad - unsyncedRightPad - NODE_W) / (renderOrder.length - 1));
+
+      // Synced mode keeps alignment with 2D; unsynced mode fills available width.
+      const MODEL_GAP = isSynced ? CELL_H : unsyncedGap;
+      const baseLeft = isSynced ? MARGIN_LEFT : unsyncedLeftPad;
+      const scale = 1;
+      const offsetY = isSynced ? 0 : UNSYNC_SHIFT_Y;
+
+      const nodes: Array<{ key: string; model: string; value: number; x: number; y: number; h: number }> = [];
+      renderOrder.forEach((model, i) => {
         const list = nodesByModel.get(model) || [];
         list.sort((a, b) => a.cluster - b.cluster);
         const total = list.reduce((s, n) => s + n.value, 0) || 1;
@@ -164,8 +210,8 @@ export default function SankeyVertical({
         let cur = TOP;
         list.forEach((n) => {
           const h = (n.value / total) * availH;
-          const baseX = MARGIN_LEFT + i * MODEL_GAP;
-          const x = baseX * scale + offsetY;
+          const baseX = baseLeft + i * MODEL_GAP;
+          const x = baseX + offsetY;
           nodes.push({ key: n.key, model, value: n.value, x, y: cur, h });
           cur += h + NODE_PAD;
         });
@@ -176,6 +222,7 @@ export default function SankeyVertical({
         const idx = displayActiveNode.lastIndexOf("_");
         activeModel = idx === -1 ? displayActiveNode : displayActiveNode.slice(0, idx);
       }
+      const focusGroup = activeModel ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
 
       const clusterValues: number[] = [];
       nodes.forEach((n) => {
@@ -265,6 +312,7 @@ export default function SankeyVertical({
         nodeSamples.get(src)!.add(id);
         nodeSamples.get(tgt)!.add(id);
       });
+      nodeSamplesRef.current = nodeSamples;
 
       const sampleNodeY = new Map<string, Map<string, number>>();
       nodes.forEach((node) => {
@@ -305,7 +353,8 @@ export default function SankeyVertical({
         .attr("stroke", SANKEY_LINK_COLOR)
         .attr("stroke-width", 1.1)
         .attr("opacity", 0)
-        .attr("class", (d) => `sample-${d.id}`);
+        .attr("class", (d) => `sample-${d.id}`)
+        .attr("data-id", (d) => d.id);
 
       const nodeSel = nodeGroup
         .selectAll("rect")
@@ -317,7 +366,7 @@ export default function SankeyVertical({
         .attr("width", NODE_W)
         .attr("height", (d) => Math.max(1, d.h))
         .attr("fill", (d) => {
-          if (displayActiveNode && activeModel && d.model === activeModel) {
+          if (focusGroup && d.model === focusGroup) {
             const idx = d.key.lastIndexOf("_");
             const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
             if (Number.isFinite(cluster)) return color(Math.max(0, cluster));
@@ -326,11 +375,13 @@ export default function SankeyVertical({
         })
         .attr("stroke", (d) => (displayActiveNode && d.key === displayActiveNode ? HIGHLIGHT_RED : "none"))
         .attr("stroke-width", (d) => (displayActiveNode && d.key === displayActiveNode ? 2 : 0))
+        .attr("data-key", (d) => d.key)
         .style("cursor", "pointer")
         .on("click", (event, d) => {
           event.stopPropagation();
-          const next = displayActiveNode === d.key ? null : d.key;
-          if (activeNodeKey == null) {
+          const currentDisplay = displayActiveNodeRef.current;
+          const next = currentDisplay === d.key ? null : d.key;
+          if (!isControlledRef.current) {
             setActiveNode(next);
           }
           const idx = d.key.lastIndexOf("_");
@@ -338,9 +389,9 @@ export default function SankeyVertical({
           const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
           const ids = Array.from(nodeSamples.get(d.key) || []);
           if (mode === "model") {
-            onNodeSelect?.({ model: keyName, layer: layerKey, cluster, ids });
+            onNodeSelectRef.current?.({ model: keyName, layer: layerKey, cluster, ids });
           } else {
-            onNodeSelect?.({ model: modelKey, layer: keyName, cluster, ids });
+            onNodeSelectRef.current?.({ model: modelKey, layer: keyName, cluster, ids });
           }
         });
 
@@ -359,6 +410,18 @@ export default function SankeyVertical({
         .attr("opacity", (d) => (highlightId && d.id === highlightId ? 1 : baseOpacity(d)))
         .attr("stroke", (d) => (highlightId && d.id === highlightId ? HIGHLIGHT_RED : SANKEY_LINK_COLOR))
         .attr("stroke-width", (d) => (highlightId && d.id === highlightId ? 2 : 1.1));
+
+      // Re-apply current transform right after redraw so viewport state is preserved.
+      const groups = svg.selectAll("g.links, g.sample-trajectories, g.nodes");
+      if (syncTransform) {
+        const scale = syncTransform.scale;
+        const offsetX = syncTransform.y - SYNC_BASE_OFFSET * scale;
+        groups.attr("transform", `translate(${offsetX},0) scale(${scale},1)`);
+      } else if (panY !== 0 || zoomX !== 1) {
+        groups.attr("transform", `translate(${panY},0) scale(${zoomX},1)`);
+      } else {
+        groups.attr("transform", null);
+      }
     }
 
     fetch(dataPath)
@@ -376,10 +439,20 @@ export default function SankeyVertical({
       });
 
     function onWheel(e: WheelEvent) {
-      if (syncTransform) return;
       e.preventDefault();
-      const next = Math.max(0.5, Math.min(4, zoomX * (1 + -e.deltaY * 0.002)));
-      if (next !== zoomX) setZoomX(next);
+      if (syncTransform) {
+        const prevScale = syncTransform.scale;
+        const nextScale = Math.max(1, Math.min(4, prevScale * (1 + -e.deltaY * 0.002)));
+        if (nextScale === prevScale) return;
+        const currOffset = syncTransform.y - SYNC_BASE_OFFSET * prevScale;
+        const nextY = currOffset + SYNC_BASE_OFFSET * nextScale;
+        onSyncTransform?.({ x: 0, y: nextY, scale: nextScale });
+      } else {
+        setZoomX((prev) => {
+          const next = Math.max(1, Math.min(4, prev * (1 + -e.deltaY * 0.002)));
+          return next === prev ? prev : next;
+        });
+      }
     }
 
     container.addEventListener("wheel", onWheel, { passive: false });
@@ -389,7 +462,105 @@ export default function SankeyVertical({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, activeNode, activeNodeKey, highlightId, zoomX, syncTransform]);
+  }, [dataPath, mode, modelKey, layerKey, !!syncTransform]);
 
-  return <div ref={containerRef} className="w-full h-full" style={{ overflowX: "auto", overflowY: "hidden" }} />;
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const svg = container.querySelector("svg");
+    if (!svg) return;
+
+    const activeName = displayActiveNode;
+    const activeModel = activeName ? activeName.slice(0, Math.max(0, activeName.lastIndexOf("_"))) : null;
+    const focusGroup = activeModel ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
+
+    const rects = Array.from(svg.querySelectorAll("g.nodes rect[data-key]")) as SVGRectElement[];
+    rects.forEach((rect) => {
+      const key = rect.getAttribute("data-key") || "";
+      const idx = key.lastIndexOf("_");
+      const model = idx === -1 ? key : key.slice(0, idx);
+      const cluster = Number(idx === -1 ? 0 : key.slice(idx + 1));
+
+      if (focusGroup && model === focusGroup && Number.isFinite(cluster)) {
+        rect.setAttribute("fill", CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length]);
+      } else {
+        rect.setAttribute("fill", SANKEY_NODE_COLOR);
+      }
+
+      if (activeName && key === activeName) {
+        rect.setAttribute("stroke", HIGHLIGHT_RED);
+        rect.setAttribute("stroke-width", "2");
+      } else {
+        rect.setAttribute("stroke", "none");
+        rect.setAttribute("stroke-width", "0");
+      }
+    });
+
+    const samplesForActive = activeName ? nodeSamplesRef.current.get(activeName) || new Set<string>() : new Set<string>();
+    const lines = Array.from(svg.querySelectorAll("g.sample-trajectories line[data-id]")) as SVGLineElement[];
+    lines.forEach((line) => {
+      const id = line.getAttribute("data-id") || "";
+      const isHighlight = !!highlightId && id === highlightId;
+      const opacity = isHighlight ? 1 : activeName ? (samplesForActive.has(id) ? 0.8 : 0) : 0;
+      line.setAttribute("opacity", String(opacity));
+      line.setAttribute("stroke", isHighlight ? HIGHLIGHT_RED : SANKEY_LINK_COLOR);
+      line.setAttribute("stroke-width", isHighlight ? "2" : "1.1");
+    });
+  }, [displayActiveNode, highlightId, mode, modelKey, layerKey]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const svg = container.querySelector("svg");
+    if (!svg) return;
+    const groups = svg.querySelectorAll("g.links, g.sample-trajectories, g.nodes");
+    let transformAttr = "";
+    if (syncTransform) {
+      const scale = syncTransform.scale;
+      const offsetX = syncTransform.y - SYNC_BASE_OFFSET * scale;
+      transformAttr = `translate(${offsetX},0) scale(${scale},1)`;
+    } else if (panY !== 0 || zoomX !== 1) {
+      // In rotated space, x-translate maps to on-screen vertical movement.
+      transformAttr = `translate(${panY},0) scale(${zoomX},1)`;
+    }
+
+    groups.forEach((el) => {
+      if (transformAttr) (el as SVGGElement).setAttribute("transform", transformAttr);
+      else (el as SVGGElement).removeAttribute("transform");
+    });
+  }, [syncTransform, panY, zoomX]);
+
+  function onMouseDown(e: React.MouseEvent<HTMLDivElement>) {
+    if (e.button !== 0) return;
+    draggingRef.current = true;
+    const startPanY = syncTransform ? syncTransform.y - SYNC_BASE_OFFSET * syncTransform.scale : panY;
+    dragStartRef.current = { y: e.clientY, panY: startPanY };
+  }
+
+  function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (!draggingRef.current) return;
+    const dy = e.clientY - dragStartRef.current.y;
+    const nextPanY = dragStartRef.current.panY + dy;
+    if (syncTransform) {
+      onSyncTransform?.({ x: 0, y: nextPanY + SYNC_BASE_OFFSET * syncTransform.scale, scale: syncTransform.scale });
+    } else {
+      setPanY(nextPanY);
+    }
+  }
+
+  function onMouseUp() {
+    draggingRef.current = false;
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="w-full h-full"
+      style={{ overflowX: "auto", overflowY: "hidden", cursor: syncTransform ? "default" : draggingRef.current ? "grabbing" : "grab" }}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+    />
+  );
 }

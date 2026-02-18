@@ -1,10 +1,23 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import SankeyView from "./component/SankeyView";
 import SankeyHorizontal from "./component/SankeyHorizontal";
 import SankeyVertical from "./component/SankeyVertical";
 import ScatterPlot from "./component/ScatterPlot";
-import AicBicChart from "./component/AicBicChart";
+import TopkNearestPanel from "./component/TopkNearestPanel";
+import StructureEditorPanel from "./component/StructureEditorPanel";
+import SyncControlPanel from "./component/SyncControlPanel";
+import { CLUSTER_COLORS } from "./theme/colors";
+
+type SankeySampleRow = {
+  real_id: string | number;
+  from_layer: string;
+  to_layer: string;
+  from_model?: string;
+  to_model?: string;
+  from_cluster: number;
+  to_cluster: number;
+};
 
 export default function Home() {
   const [sankeyPath, setSankeyPath] = useState("/data/sankey/noaug_sankey_samples.json");
@@ -16,6 +29,8 @@ export default function Home() {
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [hoverLock, setHoverLock] = useState(false);
+  const [hoverPreview, setHoverPreview] = useState<{ src: string; left: number; top: number } | null>(null);
   const [imageMap, setImageMap] = useState<Record<string, Record<string, string>> | null>(null);
   const [substructures, setSubstructures] = useState<
     {
@@ -35,6 +50,7 @@ export default function Home() {
   const [cellSelected, setCellSelected] = useState(false);
   const [swapAxes, setSwapAxes] = useState(false);
   const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
+  const [activeSankeyRows, setActiveSankeyRows] = useState<SankeySampleRow[]>([]);
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -45,23 +61,20 @@ export default function Home() {
       k: number;
     }[]
   >([]);
-  const allAicBicPaths = useMemo(() => {
-    const models = ["dimenet_noaug", "dimenet10conf"];
-    const layers = [
-      "emb",
-      "output_block_0",
-      "output_block_1",
-      "output_block_2",
-      "output_block_3",
-      "output_block_4",
-      "u_mlp_input",
-      "u_mlp_l1",
-      "u_mlp_l2",
-    ];
-    return models.flatMap((m) => layers.map((l) => `/data/bic_aic/${m}_${l}.json`));
-  }, []);
-
+  const [syncLinkedSankeyViews, setSyncLinkedSankeyViews] = useState(false);
+  const [clusterPage, setClusterPage] = useState(0);
+  const [clusterPageSize, setClusterPageSize] = useState(1);
+  const [bottomSplitPct, setBottomSplitPct] = useState(45);
+  const [workspaceWidthPct, setWorkspaceWidthPct] = useState(55);
+  const [workspaceHeightPct, setWorkspaceHeightPct] = useState(60);
+  const clusterGridRef = useRef<HTMLDivElement | null>(null);
+  const layoutGridRef = useRef<HTMLDivElement | null>(null);
+  const bottomSplitHostRef = useRef<HTMLDivElement | null>(null);
+  const syncRafRef = useRef<number | null>(null);
+  const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
+  const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
   function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }) {
+    setHoverLock(false);
     if (
       selectedNode &&
       selectedNode.model === sel.model &&
@@ -79,6 +92,74 @@ export default function Home() {
     setSuppressScatterCluster(false);
   }
 
+  function setHoverFromMouse(id: string | null) {
+    if (hoverLock) return;
+    setHoveredId(id);
+  }
+
+  function handleSankeyTransformSync(next: { x: number; y: number; scale: number }) {
+    pendingTransformRef.current = next;
+    if (syncRafRef.current != null) return;
+
+    syncRafRef.current = window.requestAnimationFrame(() => {
+      syncRafRef.current = null;
+      const t = pendingTransformRef.current;
+      if (!t) return;
+
+      const prev = lastSyncedTransformRef.current;
+      const dx = Math.abs(t.x - prev.x);
+      const dy = Math.abs(t.y - prev.y);
+      const ds = Math.abs(t.scale - prev.scale);
+
+      // Skip sub-pixel / tiny zoom jitter to reduce redraw flicker in linked Sankey views.
+      if (dx < 0.8 && dy < 0.8 && ds < 0.002) return;
+
+      lastSyncedTransformRef.current = t;
+      setSankeyTransform(t);
+    });
+  }
+
+  function toggleSyncLinkedViews() {
+    setSyncLinkedSankeyViews((prev) => {
+      const nextEnabled = !prev;
+      if (nextEnabled) {
+        const latest = pendingTransformRef.current ?? lastSyncedTransformRef.current;
+        lastSyncedTransformRef.current = latest;
+        setSankeyTransform(latest);
+      }
+      return nextEnabled;
+    });
+  }
+
+  useEffect(() => {
+    return () => {
+      if (syncRafRef.current != null) {
+        window.cancelAnimationFrame(syncRafRef.current);
+        syncRafRef.current = null;
+      }
+    };
+  }, []);
+
+  const syncTransformVertical = useMemo(
+    () => ({ x: sankeyTransform.x, y: sankeyTransform.y, scale: sankeyTransform.scale }),
+    [sankeyTransform.x, sankeyTransform.y, sankeyTransform.scale]
+  );
+
+  const syncTransformHorizontal = useMemo(
+    () => ({ x: sankeyTransform.x, scale: sankeyTransform.scale }),
+    [sankeyTransform.x, sankeyTransform.scale]
+  );
+
+  function toggleLockedHighlight(id: string) {
+    if (hoverLock && hoveredId === id) {
+      setHoveredId(null);
+      setHoverLock(false);
+      return;
+    }
+    setHoveredId(id);
+    setHoverLock(true);
+  }
+
   useEffect(() => {
     setScatterPath(`/data/scatterplot/${selectedModel}_${selectedLayer}.json`);
   }, [selectedModel, selectedLayer]);
@@ -93,6 +174,101 @@ export default function Home() {
       setCellSelected(false);
     }
   }, [selectedNode]);
+
+  const activeSankeyPath = useMemo(() => {
+    return swapAxes ? sankeyPathVertical : sankeyPath;
+  }, [swapAxes, sankeyPath, sankeyPathVertical]);
+
+  useEffect(() => {
+    fetch(activeSankeyPath)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load active sankey rows");
+        return res.json();
+      })
+      .then((json: SankeySampleRow[]) => {
+        setActiveSankeyRows(Array.isArray(json) ? json : []);
+      })
+      .catch((err) => {
+        console.error(err);
+        setActiveSankeyRows([]);
+      });
+  }, [activeSankeyPath]);
+
+  const tabCycleData = useMemo(() => {
+    if (!selectedNode) return null;
+
+    const clusterSet = new Set<number>();
+    const idsByCluster = new Map<number, Set<string>>();
+
+    const add = (cluster: number, id: string | number) => {
+      if (!Number.isFinite(cluster)) return;
+      clusterSet.add(cluster);
+      if (!idsByCluster.has(cluster)) idsByCluster.set(cluster, new Set());
+      idsByCluster.get(cluster)?.add(String(id));
+    };
+
+    activeSankeyRows.forEach((r) => {
+      if (swapAxes) {
+        const fromModel = r.from_model ?? r.from_layer;
+        const toModel = r.to_model ?? r.to_layer;
+        if (fromModel === selectedNode.model) add(r.from_cluster, r.real_id);
+        if (toModel === selectedNode.model) add(r.to_cluster, r.real_id);
+      } else {
+        if (r.from_layer === selectedNode.layer) add(r.from_cluster, r.real_id);
+        if (r.to_layer === selectedNode.layer) add(r.to_cluster, r.real_id);
+      }
+    });
+
+    const clusters = Array.from(clusterSet).sort((a, b) => a - b);
+    return { clusters, idsByCluster };
+  }, [activeSankeyRows, selectedNode, swapAxes]);
+
+  useEffect(() => {
+    function isInteractiveTarget(target: EventTarget | null) {
+      const el = target as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName?.toLowerCase();
+      return (
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select" ||
+        el.isContentEditable
+      );
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Tab") return;
+      if (!selectedNode || !tabCycleData || tabCycleData.clusters.length === 0) return;
+      if (isInteractiveTarget(event.target)) return;
+
+      event.preventDefault();
+
+      const { clusters, idsByCluster } = tabCycleData;
+      const currIdx = clusters.indexOf(selectedNode.cluster);
+      const nextIdx = event.shiftKey
+        ? (currIdx <= 0 ? clusters.length - 1 : currIdx - 1)
+        : (currIdx === -1 ? 0 : (currIdx + 1) % clusters.length);
+      const nextCluster = clusters[nextIdx];
+
+      setSelectedNode({
+        model: selectedNode.model,
+        layer: selectedNode.layer,
+        cluster: nextCluster,
+      });
+      setSelectedIds(Array.from(idsByCluster.get(nextCluster) ?? []));
+      setSelectedModel(selectedNode.model);
+      setSelectedLayer(selectedNode.layer);
+      setCellSelected(true);
+      setSuppressScatterCluster(false);
+      setHoveredId(null);
+      setHoverLock(false);
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [selectedNode, tabCycleData]);
 
   useEffect(() => {
     fetch("/data/topk/cluster_representatives.json")
@@ -125,31 +301,99 @@ export default function Home() {
       });
   }, []);
 
-  const topkEntry = useMemo(() => {
-    if (!selectedNode) return null;
-    return (
-      topkData.find(
-        (d) =>
-          d.model_type === selectedNode.model &&
-          d.layer_name === selectedNode.layer &&
-          d.cluster_id === selectedNode.cluster,
-      ) ?? null
-    );
-  }, [topkData, selectedNode]);
+  const topkNearestRows = useMemo(() => {
+    return topkData
+      .filter((d) => d.model_type === selectedModel && d.layer_name === selectedLayer)
+      .sort((a, b) => a.cluster_id - b.cluster_id);
+  }, [topkData, selectedModel, selectedLayer]);
 
-  const substructureEntry = useMemo(() => {
-    if (!selectedNode) return null;
-    const matches = substructures.filter(
-      (d) =>
-        d.model_type === selectedNode.model &&
-        d.layer_name === selectedNode.layer &&
-        d.cluster_id === selectedNode.cluster,
+
+  const substructureByCluster = useMemo(() => {
+    const rows = substructures.filter(
+      (d) => d.model_type === selectedModel && d.layer_name === selectedLayer,
     );
-    if (!matches.length) return null;
-    const knn = matches.find((d) => d.group === "knn") ?? null;
-    const kfn = matches.find((d) => d.group === "kfn") ?? null;
-    return { knn, kfn };
-  }, [substructures, selectedNode]);
+    const map: Record<number, { knn: boolean; kfn: boolean }> = {};
+
+    rows.forEach((d) => {
+      if (!map[d.cluster_id]) map[d.cluster_id] = { knn: false, kfn: false };
+      const hasData = d.mcs_smiles != null || d.mcs_smarts != null;
+      if (d.group === "knn") map[d.cluster_id].knn = hasData;
+      if (d.group === "kfn") map[d.cluster_id].kfn = hasData;
+    });
+
+    return map;
+  }, [substructures, selectedModel, selectedLayer]);
+
+  const clusterInstanceIds = useMemo(() => {
+    if (!selectedNode) return [];
+
+    const ids = new Set<string>();
+    activeSankeyRows.forEach((r) => {
+      const fromModel = r.from_model ?? null;
+      const toModel = r.to_model ?? null;
+
+      const fromMatch =
+        r.from_cluster === selectedNode.cluster &&
+        r.from_layer === selectedNode.layer &&
+        (fromModel == null || fromModel === selectedNode.model);
+
+      const toMatch =
+        r.to_cluster === selectedNode.cluster &&
+        r.to_layer === selectedNode.layer &&
+        (toModel == null || toModel === selectedNode.model);
+
+      if (fromMatch || toMatch) {
+        ids.add(String(r.real_id));
+      }
+    });
+
+    return Array.from(ids).sort((a, b) => {
+      const na = Number(a);
+      const nb = Number(b);
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+  }, [activeSankeyRows, selectedNode]);
+
+  const clusterTotalPages = useMemo(() => {
+    if (clusterInstanceIds.length === 0) return 1;
+    return Math.max(1, Math.ceil(clusterInstanceIds.length / Math.max(1, clusterPageSize)));
+  }, [clusterInstanceIds.length, clusterPageSize]);
+
+  const clusterPagedIds = useMemo(() => {
+    const size = Math.max(1, clusterPageSize);
+    const start = clusterPage * size;
+    return clusterInstanceIds.slice(start, start + size);
+  }, [clusterInstanceIds, clusterPage, clusterPageSize]);
+
+  useEffect(() => {
+    setClusterPage(0);
+  }, [selectedNode?.model, selectedNode?.layer, selectedNode?.cluster]);
+
+  useEffect(() => {
+    setClusterPage((prev) => Math.min(prev, Math.max(0, clusterTotalPages - 1)));
+  }, [clusterTotalPages]);
+
+  useEffect(() => {
+    const el = clusterGridRef.current;
+    if (!el) return;
+
+    const CARD = 128;
+    const GAP = 4;
+
+    const recalc = () => {
+      const w = Math.max(1, el.clientWidth);
+      const h = Math.max(1, el.clientHeight);
+      const cols = Math.max(1, Math.floor((w + GAP) / (CARD + GAP)));
+      const rows = Math.max(1, Math.floor((h + GAP) / (CARD + GAP)));
+      setClusterPageSize(Math.max(1, cols * rows));
+    };
+
+    recalc();
+    const ro = new ResizeObserver(recalc);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [selectedNode?.model, selectedNode?.layer, selectedNode?.cluster]);
 
   function resolveImageSrc(realId: string | number, imageType: string) {
     const key = String(realId);
@@ -166,11 +410,95 @@ export default function Home() {
     const safeLayer = layer.replace(/[^a-zA-Z0-9_-]/g, "_");
     return `/data/substructures/images/${safeModel}_${safeLayer}_cluster${cluster}_${group}.png`;
   }
+
+  function clusterBadgeColor(cluster: number) {
+    const len = CLUSTER_COLORS.length || 1;
+    const idx = ((cluster % len) + len) % len;
+    return CLUSTER_COLORS[idx];
+  }
+
+  function showHoverPreviewAt(src: string, anchor?: DOMRect) {
+    const W = 320;
+    const H = 320;
+    const PAD = 8;
+    if (!anchor) {
+      setHoverPreview({ src, left: window.innerWidth - W - 16, top: window.innerHeight - H - 16 });
+      return;
+    }
+    let left = anchor.left + (anchor.width - W) / 2;
+    let top = anchor.top + (anchor.height - H) / 2;
+    left = Math.max(PAD, Math.min(left, window.innerWidth - W - PAD));
+    top = Math.max(PAD, Math.min(top, window.innerHeight - H - PAD));
+    setHoverPreview({ src, left, top });
+  }
+
+  const LEFT_COL_RATIO_IN_WORKSPACE = 45 / 55;
+  const MID_COL_RATIO_IN_WORKSPACE = 10 / 55;
+  const TOP_ROW_RATIO_IN_WORKSPACE = 40 / 60;
+  const MID_ROW_RATIO_IN_WORKSPACE = 20 / 60;
+
+  const leftColPct = workspaceWidthPct * LEFT_COL_RATIO_IN_WORKSPACE;
+  const midColPct = workspaceWidthPct * MID_COL_RATIO_IN_WORKSPACE;
+  const rightColPct = 100 - workspaceWidthPct;
+  const topRowPct = workspaceHeightPct * TOP_ROW_RATIO_IN_WORKSPACE;
+  const midRowPct = workspaceHeightPct * MID_ROW_RATIO_IN_WORKSPACE;
+  const bottomRowPct = 100 - workspaceHeightPct;
+
+  function onWorkspaceResizeStart(event: ReactMouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const onMove = (ev: MouseEvent) => {
+      const host = layoutGridRef.current;
+      if (!host) return;
+      const rect = host.getBoundingClientRect();
+      const relX = ((ev.clientX - rect.left) / rect.width) * 100;
+      const relY = ((ev.clientY - rect.top) / rect.height) * 100;
+      const nextW = Math.min(80, Math.max(40, relX));
+      const nextH = Math.min(85, Math.max(45, relY));
+      setWorkspaceWidthPct(nextW);
+      setWorkspaceHeightPct(nextH);
+    };
+
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
+  function onBottomSplitResizeStart(event: ReactMouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const onMove = (ev: MouseEvent) => {
+      const host = bottomSplitHostRef.current;
+      if (!host) return;
+      const rect = host.getBoundingClientRect();
+      const relX = ((ev.clientX - rect.left) / rect.width) * 100;
+      const next = Math.min(80, Math.max(20, relX));
+      setBottomSplitPct(next);
+    };
+
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
   return (
-    <div className="flex min-h-screen">
-      <main className="flex min-h-screen">
-        <div className="h-[850px] w-[1480px] flex  flex-wrap">
-          <div className="w-[60%] h-[65%] p-1 box-border">
+    <div className="flex min-h-screen w-full">
+      <main className="flex min-h-screen w-full">
+        <div
+          ref={layoutGridRef}
+          className="h-screen w-full grid relative"
+          style={{
+            gridTemplateColumns: `${leftColPct}% ${midColPct}% ${rightColPct}%`,
+            gridTemplateRows: `${topRowPct}% ${midRowPct}% ${bottomRowPct}%`,
+          }}
+        >
+          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "1 / 2" }}>
             <div
               id="sankey2d"
               className="w-full h-full border border-zinc-400"
@@ -205,29 +533,34 @@ export default function Home() {
                   setCellSelected(true);
                 }}
                 selectedNode={selectedNode}
-                onCellSelect={(active) => setCellSelected(active)}
+                onCellSelect={(active) => {
+                  setCellSelected(active);
+                  if (active) {
+                    // Entering 2D-cell focus should clear cluster-level selection and recolor by new cell.
+                    setSelectedNode(null);
+                    setSelectedIds(null);
+                    setHoverLock(false);
+                    setSuppressScatterCluster(false);
+                  }
+                }}
                 onSwapAxes={(swap) => setSwapAxes(swap)}
-                onTransform={(t) => setSankeyTransform(t)}
+                externalTransform={syncLinkedSankeyViews ? sankeyTransform : undefined}
+                onTransform={(t) => handleSankeyTransformSync(t)}
               />
             </div>
           </div>
-          <div className="w-[20%] h-[65%] p-1 flex flex-col gap-1">
+          <div className="p-1 flex flex-col gap-1" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
             <div
               id="aicbic"
-              className="w-full flex-[1] border border-zinc-400"
+              className="w-full flex-[2] border border-zinc-400"
             >
-              <AicBicChart
-                dataPath={`/data/bic_aic/${selectedModel}_${selectedLayer}.json`}
-                title={`${selectedModel} / ${selectedLayer}`}
-                isSelected={cellSelected}
-                allDataPaths={allAicBicPaths}
-              />
+              <StructureEditorPanel />
             </div>
             <div
               id="sankeyVertical"
-              className="w-full flex-[3] border border-zinc-400 min-h-0 relative"
+              className="w-full flex-[9] border border-zinc-400 min-h-0 relative"
             >
-              <div className="absolute top-1 right-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
+              <div className="absolute top-1 right-2 text-xs text-zinc-600 bg-white/80 px-1 rounded">
                 {swapAxes ? selectedModel : selectedLayer}
               </div>
               <SankeyVertical
@@ -235,7 +568,11 @@ export default function Home() {
                 mode={swapAxes ? "layer" : "model"}
                 layerKey={selectedLayer}
                 modelKey={selectedModel}
-                syncTransform={{ x: sankeyTransform.x, y: sankeyTransform.y, scale: sankeyTransform.scale }}
+                syncTransform={syncLinkedSankeyViews ? syncTransformVertical : undefined}
+                onSyncTransform={(t) => {
+                  if (!syncLinkedSankeyViews) return;
+                  handleSankeyTransformSync({ x: sankeyTransform.x, y: t.y, scale: t.scale });
+                }}
                 activeNodeKey={
                   selectedNode
                     ? swapAxes
@@ -260,84 +597,44 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="w-[20%] h-[65%] p-1 box-border">
+          <div className="p-1 box-border" style={{ gridColumn: "3 / 4", gridRow: "1 / 4" }}>
           
             <div
               id="instanceview"
               className="w-full h-full border border-zinc-400 bg-white"
             >
-              <div className="w-full h-full p-2 box-border overflow-auto">
-                {!selectedNode && (
-                  <div className="text-xs text-zinc-500">Select a cluster to view top-k closest/farthest.</div>
-                )}
-                {selectedNode && !topkEntry && (
-                  <div className="text-xs text-zinc-500">
-                    No top-k data for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
-                  </div>
-                )}
-                {selectedNode && topkEntry && (
-                  <div className="flex flex-col gap-2">
-                    <div className="text-xs font-semibold text-zinc-700">Top-k Closest</div>
-                    <div className="flex flex-wrap gap-2">
-                      {topkEntry.top_k_closest_real_ids.map((id) => (
-                        <div key={`close-${id}`} className="flex flex-col items-center gap-1">
-                          <img
-                            src={resolveImageSrc(id, "ligand")}
-                            alt={`ligand ${id}`}
-                            className="w-20 h-20 object-contain bg-white border border-zinc-200"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.style.display = "none";
-                            }}
-                          />
-                          <div
-                            className={
-                              `text-[11px] cursor-pointer ` +
-                              (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-600")
-                            }
-                            onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
-                          >
-                            {id}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="text-xs font-semibold text-zinc-700">Top-k Farthest</div>
-                    <div className="flex flex-wrap gap-2">
-                      {topkEntry.top_k_farthest_real_ids.map((id) => (
-                        <div key={`far-${id}`} className="flex flex-col items-center gap-1">
-                          <img
-                            src={resolveImageSrc(id, "ligand")}
-                            alt={`ligand ${id}`}
-                            className="w-20 h-20 object-contain bg-white border border-zinc-200"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.style.display = "none";
-                            }}
-                          />
-                          <div
-                            className={
-                              `text-[11px] cursor-pointer ` +
-                              (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-600")
-                            }
-                            onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
-                          >
-                            {id}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <TopkNearestPanel
+                rows={topkNearestRows}
+                selectedModel={selectedModel}
+                selectedLayer={selectedLayer}
+                selectedCluster={selectedNode?.cluster ?? null}
+                hoveredId={hoveredId}
+                onToggleHoverId={(id) => setHoveredId((prev) => (prev === id ? null : id))}
+                onSelectHoverId={(id) => toggleLockedHighlight(id)}
+                onHoverIdChange={(id) => setHoverFromMouse(id)}
+                resolveImageSrc={resolveImageSrc}
+                resolveSubstructureImage={resolveSubstructureImage}
+                substructureByCluster={substructureByCluster}
+                clusterBadgeColor={clusterBadgeColor}
+                onClusterSelect={(cluster) => {
+                  setSelectedNode({ model: selectedModel, layer: selectedLayer, cluster });
+                  setSelectedIds(null);
+                  setHoveredId(null);
+                  setHoverLock(false);
+                  setSuppressScatterCluster(false);
+                  setCellSelected(true);
+                }}
+                onImagePreviewStart={(src, anchor) => showHoverPreviewAt(src, anchor)}
+                onImagePreviewEnd={() => setHoverPreview(null)}
+              />
             </div>
           </div>
-          <div className="w-[60%] h-[35%] p-1 box-border">
+          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "2 / 3" }}>
             <div
               id="sankeyHorizontal"
               className="w-full h-full border border-zinc-400 relative"
             >
-              <div className="absolute top-1 left-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
+              <div className="absolute top-1 left-2 text-xs text-zinc-600 bg-white/80 px-1 rounded">
                 {swapAxes ? selectedLayer : selectedModel}
               </div>
               <SankeyHorizontal
@@ -345,7 +642,11 @@ export default function Home() {
                 mode={swapAxes ? "model" : "layer"}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
-                syncTransform={{ x: sankeyTransform.x, scale: sankeyTransform.scale }}
+                syncTransform={syncLinkedSankeyViews ? syncTransformHorizontal : undefined}
+                onSyncTransform={(t) => {
+                  if (!syncLinkedSankeyViews) return;
+                  handleSankeyTransformSync({ x: t.x, y: sankeyTransform.y, scale: t.scale });
+                }}
                 activeNodeKey={
                   selectedNode
                     ? swapAxes
@@ -370,104 +671,204 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="w-[20%] h-[35%] p-1 box-border">
+          <div className="p-1 box-border" style={{ gridColumn: "2 / 3", gridRow: "2 / 3" }}>
             <div
-              id="scatterplot"
+              id="editor"
               className="w-full h-full border border-zinc-400 relative"
             >
-              <div className="absolute top-1 right-2 text-[10px] text-zinc-600 bg-white/80 px-1 rounded">
-                {selectedModel} / {selectedLayer}
-              </div>
-              <ScatterPlot
-                dataPath={scatterPath}
-                activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
-                activeIds={selectedIds}
-                highlightId={hoveredId}
-                modelKey={selectedModel}
-                layerKey={selectedLayer}
-                onPointSelect={(sel) => {
-                  if (!sel.model || !sel.layer) return;
-                  setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
-                  setSelectedIds([sel.real_id]);
-                  setHoveredId((prev) => (prev === String(sel.real_id) ? null : String(sel.real_id)));
-                  setSuppressScatterCluster(true);
-                  setSelectedModel(sel.model);
-                  setSelectedLayer(sel.layer);
-                  if (sel.model === "dimenet_noaug") {
-                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
-                  } else if (sel.model === "dimenet10conf") {
-                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
-                  }
-                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
-                }}
-                onClearSelection={() => {
-                  setSelectedNode(null);
-                  setSelectedIds(null);
-                  setHoveredId(null);
-                  setSuppressScatterCluster(false);
-                }}
-              />
+              <SyncControlPanel syncOn={syncLinkedSankeyViews} onToggleSync={toggleSyncLinkedViews} />
             </div>
           </div>
-          <div className="w-[20%] h-[35%] p-1 box-border">
-            <div
-              id="patternview"
-              className="w-full h-full border border-zinc-400 bg-white"
-            >
-              <div className="w-full h-full p-2 box-border overflow-auto">
-                {!selectedNode && (
-                  <div className="text-xs text-zinc-500">Select a cluster to view substructures.</div>
-                )}
-                {selectedNode && !substructureEntry && (
-                  <div className="text-xs text-zinc-500">
-                    No substructure data for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
-                  </div>
-                )}
-                {selectedNode && substructureEntry && (
-                  <div className="flex flex-col gap-3">
-                    {(["knn", "kfn"] as const).map((group) => {
-                      const entry = group === "knn" ? substructureEntry.knn : substructureEntry.kfn;
-                      return (
-                        <div key={group} className="flex flex-col gap-1">
-                          <div className="text-xs font-semibold text-zinc-700">
-                            {group === "knn" ? "KNN Substructure" : "KFN Substructure"}
+
+          <div className="p-1 box-border" style={{ gridColumn: "1 / 3", gridRow: "3 / 4" }}>
+            <div ref={bottomSplitHostRef} className="w-full h-full flex min-w-0">
+              <div className="h-full min-w-0" style={{ width: `${bottomSplitPct}%` }}>
+                <div
+                  id="scatterplot"
+                  className="w-full h-full border border-zinc-400 bg-white"
+                >
+                  <ScatterPlot
+                    dataPath={scatterPath}
+                    activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
+                    activeIds={selectedIds}
+                    highlightId={hoveredId}
+                    modelKey={selectedModel}
+                    layerKey={selectedLayer}
+                    onPointHoverIdChange={(id) => setHoverFromMouse(id)}
+                    onPointSelect={(sel) => {
+                      if (!sel.model || !sel.layer) return;
+                      setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
+                      setSelectedIds([sel.real_id]);
+                      setHoveredId(String(sel.real_id));
+                      setHoverLock(true);
+                      setSuppressScatterCluster(true);
+                      setSelectedModel(sel.model);
+                      setSelectedLayer(sel.layer);
+                      if (sel.model === "dimenet_noaug") {
+                        setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                      } else if (sel.model === "dimenet10conf") {
+                        setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                      }
+                      setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                    }}
+                    onClusterSelect={(sel) => {
+                      if (!sel.model || !sel.layer) return;
+                      setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
+                      setSelectedIds(sel.real_ids);
+                      setHoveredId(null);
+                      setHoverLock(false);
+                      setSuppressScatterCluster(false);
+                      setSelectedModel(sel.model);
+                      setSelectedLayer(sel.layer);
+                      if (sel.model === "dimenet_noaug") {
+                        setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                      } else if (sel.model === "dimenet10conf") {
+                        setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                      }
+                      setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                    }}
+                    onClearSelection={() => {
+                      setSelectedNode(null);
+                      setSelectedIds(null);
+                      setHoveredId(null);
+                      setHoverLock(false);
+                      setSuppressScatterCluster(false);
+                    }}
+                  />
+                </div>
+              </div>
+              <div
+                className="w-2 shrink-0 cursor-col-resize bg-zinc-300/70 hover:bg-zinc-500/70"
+                onMouseDown={onBottomSplitResizeStart}
+                title="Resize Scatterplot / Cluster Instances"
+              />
+              <div className="h-full min-w-0 flex-1">
+                <div
+                  id="bottomPanel1"
+                  className="w-full h-full border border-zinc-400 bg-white"
+                >
+                  <div className="w-full h-full p-2 box-border overflow-hidden">
+                    {!selectedNode && (
+                      <div className="text-sm text-zinc-500">Select a cluster to view all instances.</div>
+                    )}
+                    {selectedNode && (
+                      <div className="h-full min-h-0 flex flex-col gap-2">
+                        <div className="text-sm font-semibold text-zinc-700">
+                          Cluster Instances ({clusterInstanceIds.length})
+                        </div>
+                        {clusterInstanceIds.length === 0 && (
+                          <div className="text-sm text-zinc-500">
+                            No instances found for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
                           </div>
-                          {!entry && (
-                            <div className="text-[11px] text-zinc-500">No entry for this group.</div>
-                          )}
-                          {entry && (
-                            <div className="flex flex-col gap-1">
-                              <img
-                                src={resolveSubstructureImage(selectedNode.model, selectedNode.layer, selectedNode.cluster, group)}
-                                alt={`${group} substructure`}
-                                className="w-full max-h-36 object-contain border border-zinc-200 bg-white"
-                                onError={(e) => {
-                                  const target = e.currentTarget as HTMLImageElement;
-                                  target.style.display = "none";
-                                }}
-                              />
-                              <div className="text-[11px] text-zinc-600">
-                                <span className="font-semibold">SMILES:</span>{" "}
-                                {entry.mcs_smiles ?? "null"}
+                        )}
+                        {clusterInstanceIds.length > 0 && (
+                          <>
+                            <div className="flex items-center justify-between text-xs text-zinc-600">
+                              <div>
+                                Page {clusterPage + 1} / {clusterTotalPages}
                               </div>
-                              <div className="text-[11px] text-zinc-600 break-all">
-                                <span className="font-semibold">SMARTS:</span>{" "}
-                                {entry.mcs_smarts ?? "null"}
-                              </div>
-                              <div className="text-[11px] text-zinc-500">
-                                Valid molecules: {entry.valid_molecules} / K={entry.k}
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
+                                  disabled={clusterPage <= 0}
+                                  onClick={() => setClusterPage((p) => Math.max(0, p - 1))}
+                                >
+                                  Prev
+                                </button>
+                                <button
+                                  type="button"
+                                  className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
+                                  disabled={clusterPage >= clusterTotalPages - 1}
+                                  onClick={() => setClusterPage((p) => Math.min(clusterTotalPages - 1, p + 1))}
+                                >
+                                  Next
+                                </button>
                               </div>
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                            <div ref={clusterGridRef} className="flex-1 min-h-0 overflow-hidden">
+                              <div className="flex flex-wrap gap-1">
+                                {clusterPagedIds.map((id) => (
+                                  <div
+                                    key={`instance-${id}`}
+                                    className="relative w-32 h-32"
+                                    onMouseEnter={(e) => {
+                                      setHoverFromMouse(String(id));
+                                      showHoverPreviewAt(
+                                        resolveImageSrc(id, "ligand"),
+                                        (e.currentTarget as HTMLDivElement).getBoundingClientRect(),
+                                      );
+                                    }}
+                                    onMouseLeave={() => {
+                                      setHoverFromMouse(null);
+                                      setHoverPreview(null);
+                                    }}
+                                    onClick={() => toggleLockedHighlight(String(id))}
+                                  >
+                                    <img
+                                      src={resolveImageSrc(id, "ligand")}
+                                      alt={`ligand ${id}`}
+                                      className="w-32 h-32 object-contain bg-white border border-zinc-200"
+                                      onLoad={(e) => {
+                                        const target = e.currentTarget as HTMLImageElement;
+                                        target.style.display = "block";
+                                      }}
+                                      onError={(e) => {
+                                        const target = e.currentTarget as HTMLImageElement;
+                                        target.style.display = "none";
+                                      }}
+                                    />
+                                    {selectedNode && (
+                                      <div
+                                        className="absolute top-0.5 right-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
+                                        style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
+                                      >
+                                        {selectedNode.cluster}
+                                      </div>
+                                    )}
+                                    <div
+                                      className={
+                                        `absolute top-0.5 left-0.5 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
+                                        (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
+                                      }
+                                      onMouseEnter={() => setHoverFromMouse(String(id))}
+                                      onMouseLeave={() => setHoverFromMouse(null)}
+                                      onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
+                                    >
+                                      {id}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
+          <div
+            className="absolute z-30 w-4 h-4 rounded-sm bg-zinc-500/75 hover:bg-zinc-700 cursor-se-resize"
+            style={{ left: `calc(${workspaceWidthPct}% - 8px)`, top: `calc(${workspaceHeightPct}% - 8px)` }}
+            onMouseDown={onWorkspaceResizeStart}
+            title="Resize Sankey Workspace"
+          />
         </div>
+        {hoverPreview && (
+          <div
+            className="fixed z-[10000] pointer-events-none bg-white/95 border border-zinc-300 rounded shadow-xl p-2"
+            style={{ left: hoverPreview.left, top: hoverPreview.top }}
+          >
+            <img
+              src={hoverPreview.src}
+              alt="large preview"
+              className="w-[320px] h-[320px] object-contain bg-white"
+            />
+          </div>
+        )}
         
       </main>
     </div>

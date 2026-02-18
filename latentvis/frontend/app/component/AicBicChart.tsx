@@ -14,12 +14,11 @@ type AicBicData = {
 type AicBicChartProps = {
   dataPath: string;
   allDataPaths?: string[];
-  title?: string;
   isSelected?: boolean;
 };
 
-export default function AicBicChart({ dataPath, allDataPaths, title, isSelected }: AicBicChartProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+export default function AicBicChart({ dataPath, allDataPaths, isSelected }: AicBicChartProps) {
+  const chartRef = useRef<HTMLDivElement | null>(null);
   const [activeMetric, setActiveMetric] = useState<"aic" | "bic" | "both">("both");
   const [kMin, setKMin] = useState(0);
   const [kMax, setKMax] = useState(1);
@@ -27,7 +26,7 @@ export default function AicBicChart({ dataPath, allDataPaths, title, isSelected 
   const [rangeMax, setRangeMax] = useState(1);
 
   useEffect(() => {
-    const container = containerRef.current;
+    const container = chartRef.current;
     if (!container) return;
     container.innerHTML = "";
     container.style.position = "relative";
@@ -44,7 +43,7 @@ export default function AicBicChart({ dataPath, allDataPaths, title, isSelected 
       const width = Math.max(1, container.clientWidth);
       const height = Math.max(1, container.clientHeight);
 
-      const margin = { top: 18, right: 36, bottom: 22, left: 36 };
+      const margin = { top: 10, right: 22, bottom: 16, left: 22 };
       const innerW = Math.max(1, width - margin.left - margin.right);
       const innerH = Math.max(1, height - margin.top - margin.bottom);
 
@@ -77,20 +76,19 @@ export default function AicBicChart({ dataPath, allDataPaths, title, isSelected 
       const bicColor = "#B5BF4F";
       const showAic = activeMetric === "aic" || activeMetric === "both";
       const showBic = activeMetric === "bic" || activeMetric === "both";
-
       g.append("g")
         .attr("transform", `translate(0,${innerH})`)
-        .call(d3.axisBottom(x).ticks(Math.min(6, kValues.length)).tickSizeOuter(0))
-        .call((sel) => sel.selectAll("text").attr("font-size", 10));
+        .call(d3.axisBottom(x).ticks(Math.min(4, kValues.length)).tickSizeOuter(0))
+        .call((sel) => sel.selectAll("text").attr("font-size", 9));
 
       g.append("g")
-        .call(d3.axisLeft(yAic).ticks(4).tickSizeOuter(0))
-        .call((sel) => sel.selectAll("text").attr("font-size", 10).attr("fill", aicColor));
+        .call(d3.axisLeft(yAic).ticks(2).tickSizeOuter(0))
+        .call((sel) => sel.selectAll("text").attr("font-size", 9).attr("fill", aicColor));
 
       g.append("g")
         .attr("transform", `translate(${innerW},0)`)
-        .call(d3.axisRight(yBic).ticks(4).tickSizeOuter(0))
-        .call((sel) => sel.selectAll("text").attr("font-size", 10).attr("fill", bicColor));
+        .call(d3.axisRight(yBic).ticks(2).tickSizeOuter(0))
+        .call((sel) => sel.selectAll("text").attr("font-size", 9).attr("fill", bicColor));
 
       const aicLine = d3
         .line<number>()
@@ -104,8 +102,8 @@ export default function AicBicChart({ dataPath, allDataPaths, title, isSelected 
         .y((d) => yBic(d))
         .curve(d3.curveMonotoneX);
 
-      const baseOpacity = isSelected ? 0.2 : 0.6;
-      const baseWidth = isSelected ? 2.2 : 1.6;
+      const baseOpacity = isSelected ? 0.35 : 0.8;
+      const baseWidth = isSelected ? 2.6 : 2.1;
 
       dataToRender.forEach((d) => {
         if (!d.k_values?.length || !d.aic?.length || !d.bic?.length) return;
@@ -114,8 +112,8 @@ export default function AicBicChart({ dataPath, allDataPaths, title, isSelected 
         const width = isSelected ? (isActive ? 2.6 : baseWidth) : baseWidth;
         const aicOpacity = showAic ? opacity : 0.08;
         const bicOpacity = showBic ? opacity : 0.08;
-        const aicWidth = showAic ? width : Math.max(0.8, width - 0.6);
-        const bicWidth = showBic ? width : Math.max(0.8, width - 0.6);
+        const aicWidth = showAic ? width : Math.max(0.9, width - 0.7);
+        const bicWidth = showBic ? width : Math.max(0.9, width - 0.7);
         const aicMin = d3.min(d.aic) ?? 0;
         const aicMax = d3.max(d.aic) ?? 1;
         const aicNorm = d.aic.map((v) => (aicMax === aicMin ? 0.5 : (v - aicMin) / (aicMax - aicMin)));
@@ -139,47 +137,6 @@ export default function AicBicChart({ dataPath, allDataPaths, title, isSelected 
           .attr("stroke-width", bicWidth)
           .attr("stroke-opacity", bicOpacity);
       });
-
-      const legend = g.append("g").attr("transform", `translate(0,${-6})`);
-      legend
-        .append("text")
-        .text("AIC")
-        .attr("x", 0)
-        .attr("y", -7)
-        .attr("fill", aicColor)
-        .attr("font-size", 10)
-        .attr("font-weight", activeMetric === "aic" ? 700 : 400)
-        .attr("opacity", activeMetric === "bic" ? 0.4 : 1)
-        .attr("cursor", "pointer")
-        .attr("dominant-baseline", "hanging")
-        .on("click", () => {
-          setActiveMetric((prev) => (prev === "aic" ? "both" : "aic"));
-        });
-      legend
-        .append("text")
-        .text("BIC")
-        .attr("x", 36)
-        .attr("y", -7)
-        .attr("fill", bicColor)
-        .attr("font-size", 10)
-        .attr("font-weight", activeMetric === "bic" ? 700 : 400)
-        .attr("opacity", activeMetric === "aic" ? 0.4 : 1)
-        .attr("cursor", "pointer")
-        .attr("dominant-baseline", "hanging")
-        .on("click", () => {
-          setActiveMetric((prev) => (prev === "bic" ? "both" : "bic"));
-        });
-
-      if (title) {
-        svg
-          .append("text")
-          .attr("x", width - 6)
-          .attr("y", 12)
-          .attr("text-anchor", "end")
-          .attr("font-size", 10)
-          .attr("fill", "#6b7280")
-          .text(title);
-      }
 
       const brush = d3
         .brushX()
@@ -249,7 +206,29 @@ export default function AicBicChart({ dataPath, allDataPaths, title, isSelected 
     return () => {
       ro.disconnect();
     };
-  }, [dataPath, allDataPaths, title, isSelected, activeMetric, rangeMin, rangeMax]);
+  }, [dataPath, allDataPaths, isSelected, activeMetric, rangeMin, rangeMax]);
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  return (
+    <div className="w-full h-full flex">
+      <div ref={chartRef} className="h-full flex-1 min-w-0" />
+      <div className="w-8 shrink-0 border-l border-zinc-200 flex flex-col items-start justify-start pt-2 pl-2 gap-2">
+        <button
+          type="button"
+          className="text-[10px] font-semibold leading-none cursor-pointer"
+          style={{ color: "#7A83BF", opacity: activeMetric === "bic" ? 0.45 : 1 }}
+          onClick={() => setActiveMetric((prev) => (prev === "aic" ? "both" : "aic"))}
+        >
+          AIC
+        </button>
+        <button
+          type="button"
+          className="text-[10px] font-semibold leading-none cursor-pointer"
+          style={{ color: "#B5BF4F", opacity: activeMetric === "aic" ? 0.45 : 1 }}
+          onClick={() => setActiveMetric((prev) => (prev === "bic" ? "both" : "bic"))}
+        >
+          BIC
+        </button>
+      </div>
+    </div>
+  );
 }

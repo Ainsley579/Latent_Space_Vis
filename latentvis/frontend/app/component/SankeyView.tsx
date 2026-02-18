@@ -6,10 +6,12 @@ import { CLUSTER_COLORS } from "../theme/colors";
 
 const DATA_PATH = "/data/sankey/all_sankey.json";
 const DEFAULT_MAX_INSTANCE = 158;
+const SHOW_FMI_CSPA = false;
 
 type SankeyViewProps = {
   onModelSelect?: (modelKey: string) => void;
   onTransform?: (t: { x: number; y: number; scale: number }) => void;
+  externalTransform?: { x: number; y: number; scale: number };
   onLayerSelect?: (layerKey: string) => void;
   onNodeSelect?: (sel: { model: string; layer: string; cluster: number }) => void;
   selectedNode?: { model: string; layer: string; cluster: number } | null;
@@ -20,6 +22,7 @@ type SankeyViewProps = {
 export default function SankeyView({
   onModelSelect,
   onTransform,
+  externalTransform,
   onLayerSelect,
   onNodeSelect,
   selectedNode,
@@ -92,7 +95,7 @@ export default function SankeyView({
           return { col, row, x: col * cellW, y: row * cellH };
         }
 
-        const margin = { top: 20, left: 30, right: 0, bottom: 20 };
+        const margin = { top: 20, left: 0, right: 0, bottom: 20 };
         const CELL_W = 120;
         const CELL_H = 150;
 
@@ -156,16 +159,9 @@ export default function SankeyView({
                 setCellHighlight(datum.rowName, datum.columnName, false);
               })
               .on("click", (_event: any, datum: any) => {
-                if (lockedCell && lockedCell.rowName === datum.rowName && lockedCell.columnName === datum.columnName) {
-                  lockedCell = null;
-                  setCellHighlight(datum.rowName, datum.columnName, false);
-                  onCellSelect?.(false);
-                  return;
-                }
-
+                // Always activate clicked cell on first click to avoid click-deadzone feeling.
                 lockedCell = { rowName: datum.rowName, columnName: datum.columnName };
                 setCellHighlight(datum.rowName, datum.columnName, true);
-                onCellSelect?.(true);
 
                 const modelCandidate = MODEL_SET.has(datum.rowName)
                   ? datum.rowName
@@ -183,6 +179,8 @@ export default function SankeyView({
                 if (layerCandidate) {
                   onLayerSelect?.(layerCandidate);
                 }
+                // Fire after model/layer updates so linked Sankey highlights follow the new cell immediately.
+                onCellSelect?.(true);
               });
           });
         });
@@ -695,14 +693,7 @@ export default function SankeyView({
     if (!selectedNode) {
       sel.attr("fill", "#aaa");
       sel.classed("node-highlight", false).classed("node-dimmed", false);
-      d3.select(container)
-        .selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar')
-        .classed("cell-dimmed", false)
-        .classed("cell-highlight", false);
-      d3.select(container)
-        .selectAll("path.link-path")
-        .classed("link-dimmed", false)
-        .classed("link-highlight", false);
+      // Keep current cell/link highlight state (e.g., locked 2D cell focus) when cluster selection is cleared.
       return;
     }
     const clusterValues: number[] = [];
@@ -779,6 +770,7 @@ export default function SankeyView({
   }, [selectedNode]);
 
   useEffect(() => {
+    if (!SHOW_FMI_CSPA) return;
     fetch("/data/bic_aic/avg_fmi_cspa_by_layer.json")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load avg fmi/cspa metrics");
@@ -810,6 +802,11 @@ export default function SankeyView({
   }, []);
 
   useEffect(() => {
+    if (!SHOW_FMI_CSPA) {
+      const container = fmiRef.current;
+      if (container) container.innerHTML = "";
+      return;
+    }
     const container = fmiRef.current;
     if (!container) return;
     if (!layout || !fmiData.length) {
@@ -825,7 +822,7 @@ export default function SankeyView({
       container.innerHTML = "";
       const width = Math.max(1, container.clientWidth);
       const height = Math.max(30, container.clientHeight || 40);
-      const margin = { top: 6, right: 8, bottom: 6, left: 35 };
+      const margin = { top: 6, right: 8, bottom: 6, left: 0 };
       const innerH = Math.max(1, height - margin.top - margin.bottom);
 
       const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
@@ -871,14 +868,14 @@ export default function SankeyView({
         .attr("x", -8 + 30)
         .attr("y", fmiY + rowHeight / 2 + 2)
         .attr("text-anchor", "end")
-        .attr("font-size", 9)
+        .attr("font-size", 11)
         .attr("fill", "#64748b")
         .text("FMI");
       g.append("text")
         .attr("x", -8 + 30)
         .attr("y", cspaY + rowHeight / 2 + 2)
         .attr("text-anchor", "end")
-        .attr("font-size", 9)
+        .attr("font-size", 11)
         .attr("fill", "#64748b")
         .text("CSPA");
 
@@ -902,7 +899,7 @@ export default function SankeyView({
         .attr("x", (d) => d.x - margin.left + 40)
         .attr("y", fmiY + rowHeight / 2 + 3)
         .attr("text-anchor", "middle")
-        .attr("font-size", 9)
+        .attr("font-size", 11)
         .attr("fill", "#0f172a")
         .text((d) => d.fmi.toFixed(3));
 
@@ -926,7 +923,7 @@ export default function SankeyView({
         .attr("x", (d) => d.x - margin.left + 40)
         .attr("y", cspaY + rowHeight / 2 + 3)
         .attr("text-anchor", "middle")
-        .attr("font-size", 9)
+        .attr("font-size", 11)
         .attr("fill", "#0f172a")
         .text((d) => d.cspa.toFixed(3));
     }
@@ -936,6 +933,11 @@ export default function SankeyView({
   }, [layout, transform, fmiData]);
 
   useEffect(() => {
+    if (!SHOW_FMI_CSPA) {
+      const container = rowMetricRef.current;
+      if (container) container.innerHTML = "";
+      return;
+    }
     const container = rowMetricRef.current;
     if (!container) return;
     if (!layout || !rowMetricData.length) {
@@ -1012,7 +1014,7 @@ export default function SankeyView({
           .attr("x", fmiX + blockW / 2)
           .attr("y", yTop + blockH / 2 + 2)
           .attr("text-anchor", "middle")
-          .attr("font-size", 7)
+          .attr("font-size", 9)
           .attr("fill", "#111827")
           .attr("transform", `rotate(-90, ${fmiX + blockW / 2}, ${yTop + blockH / 2})`)
           .text(fmi.toFixed(3));
@@ -1021,7 +1023,7 @@ export default function SankeyView({
           .attr("x", cspaX + blockW / 2)
           .attr("y", yTop + blockH / 2 + 2)
           .attr("text-anchor", "middle")
-          .attr("font-size", 7)
+          .attr("font-size", 9)
           .attr("fill", "#111827")
           .attr("transform", `rotate(-90, ${cspaX + blockW / 2}, ${yTop + blockH / 2})`)
           .text(cspa.toFixed(3));
@@ -1031,7 +1033,7 @@ export default function SankeyView({
         .attr("x", fmiX + blockW / 2 + 5)
         .attr("y", labelY + 2)
         .attr("text-anchor", "middle")
-        .attr("font-size", 8)
+        .attr("font-size", 10)
         .attr("fill", "#6b7280")
         .attr("transform", `rotate(-90, ${fmiX + blockW / 2}, ${labelY})`)
         .text("FMI");
@@ -1040,7 +1042,7 @@ export default function SankeyView({
         .attr("x", cspaX + blockW / 2 + 5)
         .attr("y", labelY+2)
         .attr("text-anchor", "middle")
-        .attr("font-size", 6)
+        .attr("font-size", 8)
         .attr("fill", "#6b7280")
         .attr("transform", `rotate(-90, ${cspaX + blockW / 2}, ${labelY})`)
         .text("CSPA");
@@ -1051,17 +1053,25 @@ export default function SankeyView({
   }, [layout, transform, rowMetricData]);
 
   return (
-    <div className="timeline-root h-full flex flex-col" style={{ marginLeft: -12 }}>
+    <div className="timeline-root h-full flex flex-col" style={{ marginLeft: 0 }}>
       <div id="controls" className="shrink-0">
-        <label style={{ marginRight: 8, marginLeft: 5 }}>Value range:</label>
+        <span style={{ display: "inline-flex", alignItems: "center", marginLeft: 5, marginRight: 8, gap: 6 }}>
+          <label>Value range:</label>
+          <span
+            className="value-range-help"
+            data-tooltip="Value range is a link-value filter for the 2D Sankey view. It controls which path segments are visible: only links with values between the selected minimum and maximum are displayed, and links outside that range are hidden."
+            aria-label="Value range help"
+          >
+            ?
+          </span>
+        </span>
+        <span id="minValue" style={{ marginRight: 8 }}>0</span>
         <div className="range-slider" id="rangeSlider">
           <div className="range-track" id="rangeTrack"></div>
           <input id="minRange" className="range-min" type="range" min={0} max={maxInstanceValue} step={1} defaultValue={0} />
           <input id="maxRange" className="range-max" type="range" min={0} max={maxInstanceValue} step={1} defaultValue={maxInstanceValue} />
         </div>
-        <span id="minValue" style={{ marginLeft: 12 }}>0</span>
-        <span id="sep" style={{ marginLeft: 6, marginRight: 6 }}>—</span>
-        <span id="maxValue">{maxInstanceValue}</span>
+        <span id="maxValue" style={{ marginLeft: 8 }}>{maxInstanceValue}</span>
         <div id="controlButtons" style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center" }}>
           <button id="btnDefault">Default</button>
           <button id="btnColumn">Column</button>
@@ -1069,14 +1079,20 @@ export default function SankeyView({
           <button id="btnSwap">Swap X/Y</button>
         </div>
       </div>
+      {/* FMI/CSPA panel is temporarily hidden, keep code for future use.
       <div id="fmiChart" ref={fmiRef} style={{ width: "100%", height: 78, marginTop: 4, marginBottom: 6, marginLeft: 0 }} />
+      */}
 
       <div className="w-full flex-1 min-h-0 overflow-hidden">
         <div className="h-full flex">
+          {/* FMI/CSPA row metric strip is temporarily hidden, keep code for future use.
           <div id="rowMetricChart" ref={rowMetricRef} className="shrink-0 w-10 h-full pointer-events-none" />
-          <div className="relative flex-1 min-w-0">
+          */}
+          <div className="relative flex-1 min-w-0 pl-8">
             <ZoomPan
               className="w-full h-full"
+              panPadding={220}
+              externalTransform={externalTransform}
               onTransform={(t) => {
                 setTransform(t);
                 onTransform?.(t);
@@ -1095,7 +1111,7 @@ export default function SankeyView({
                     return (
                       <div
                         key={name}
-                        className="absolute text-xs text-zinc-700"
+                        className="absolute text-sm text-zinc-700"
                         style={{ transform: `translate(${x}px, 0px) translateX(-50%)` }}
                       >
                         {name}
@@ -1103,7 +1119,7 @@ export default function SankeyView({
                     );
                   })}
                 </div>
-                <div className="absolute left-0 top-0 bottom-0 w-5 pointer-events-none bg-white/90 z-10">
+                <div className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none bg-white/90 z-10">
                   {layout.rowNames.map((name, i) => {
                     const y =
                       transform.y +
@@ -1111,8 +1127,15 @@ export default function SankeyView({
                     return (
                       <div
                         key={name}
-                        className="absolute text-xs text-zinc-700"
-                        style={{ transform: `translate(-27px, ${y}px) translateY(-50%) rotate(-90deg)` }}
+                        className="absolute text-sm text-zinc-700"
+                        style={{
+                          left: 2,
+                          top: y,
+                          transform: "translateY(-50%)",
+                          writingMode: "vertical-lr",
+                          textOrientation: "mixed",
+                          whiteSpace: "nowrap",
+                        }}
                       >
                         {name}
                       </div>
@@ -1139,7 +1162,7 @@ export default function SankeyView({
           display: flex;
           align-items: center;
           gap: 12px;
-          font-size: 14px;
+          font-size: 16px;
           flex-wrap: wrap;
           position: relative;
           padding-right: 260px;
@@ -1148,7 +1171,7 @@ export default function SankeyView({
         #chart {
           width: fit-content;
           max-width: 100%;
-          margin: 10px auto;
+          margin: 16px 0 10px;
         }
 
         input[type="range"] {
@@ -1178,7 +1201,7 @@ export default function SankeyView({
           left: 0;
           top: 12px;
           width: 100%;
-          pointer-events: none;
+          pointer-events: auto;
           -webkit-appearance: none;
           background: transparent;
         }
@@ -1202,6 +1225,67 @@ export default function SankeyView({
           width: 100%;
           background: linear-gradient(to right, #ddd 0%, #ddd 100%);
           border-radius: 3px;
+        }
+
+        .value-range-help {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 14px;
+          height: 14px;
+          border-radius: 999px;
+          border: 1px solid #9ca3af;
+          color: #4b5563;
+          font-size: 10px;
+          line-height: 1;
+          cursor: default;
+          user-select: none;
+          position: relative;
+        }
+
+        .value-range-help::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          left: 6px;
+          top: calc(100% + 14px);
+          transform: none;
+          width: 280px;
+          max-width: min(280px, calc(100vw - 24px));
+          padding: 8px 10px;
+          border-radius: 6px;
+          background: rgba(17, 24, 39, 0.95);
+          color: #fff;
+          font-size: 11px;
+          line-height: 1.35;
+          white-space: normal;
+          text-align: left;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          transition: opacity 0.12s ease;
+          z-index: 30;
+        }
+
+        .value-range-help::before {
+          content: "";
+          position: absolute;
+          left: 8px;
+          top: calc(100% + 9px);
+          transform: none;
+          border: 5px solid transparent;
+          border-bottom-color: rgba(17, 24, 39, 0.95);
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          transition: opacity 0.12s ease;
+          z-index: 30;
+        }
+
+        .value-range-help:hover::after,
+        .value-range-help:hover::before {
+          opacity: 1;
+          visibility: visible;
         }
 
         :global(.cell-dimmed) {
