@@ -1212,13 +1212,31 @@ export default function SankeyView({
           left: 0;
           top: 12px;
           width: 100%;
-          pointer-events: auto;
+          pointer-events: none;
           -webkit-appearance: none;
           background: transparent;
         }
 
+        .range-slider input.range-min {
+          z-index: 3;
+        }
+
+        .range-slider input.range-max {
+          z-index: 2;
+        }
+
         .range-slider input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
+          pointer-events: auto;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #fff;
+          border: 2px solid #666;
+          box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .range-slider input[type="range"]::-moz-range-thumb {
           pointer-events: auto;
           width: 14px;
           height: 14px;

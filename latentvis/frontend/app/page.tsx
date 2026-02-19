@@ -722,10 +722,22 @@ export default function Home() {
                 </div>
               </div>
               <div
-                className="w-2 shrink-0 cursor-col-resize bg-zinc-300/70 hover:bg-zinc-500/70"
+                className="w-4 shrink-0 cursor-col-resize group flex items-center justify-center bg-zinc-200/70 hover:bg-zinc-400/70 transition-colors"
                 onMouseDown={onBottomSplitResizeStart}
                 title="Resize Scatterplot / Cluster Instances"
-              />
+              >
+                <div className="h-16 w-3 rounded bg-white/85 border border-zinc-300 shadow-sm flex flex-col items-center justify-center gap-0.5">
+                  <svg width="10" height="10" viewBox="0 0 16 16" aria-hidden="true" className="text-zinc-500 group-hover:text-zinc-700">
+                    <path d="M6 3L3 8l3 5M10 3l3 5-3 5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <div className="grid grid-cols-2 gap-[2px]">
+                    <span className="w-[2px] h-[2px] bg-zinc-500 rounded-full" />
+                    <span className="w-[2px] h-[2px] bg-zinc-500 rounded-full" />
+                    <span className="w-[2px] h-[2px] bg-zinc-500 rounded-full" />
+                    <span className="w-[2px] h-[2px] bg-zinc-500 rounded-full" />
+                  </div>
+                </div>
+              </div>
               <div className="h-full min-w-0 flex-1">
                 <div
                   id="bottomPanel1"
@@ -850,12 +862,18 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div
-            className="absolute z-30 w-4 h-4 rounded-sm bg-zinc-500/75 hover:bg-zinc-700 cursor-se-resize"
-            style={{ left: `calc(${effectiveWorkspaceWidthPct}% - 8px)`, top: `calc(${workspaceHeightPct}% - 8px)` }}
+          <button
+            type="button"
+            className="absolute z-30 w-6 h-6 rounded-md border border-zinc-400 bg-white/95 hover:bg-zinc-100 shadow cursor-se-resize flex items-center justify-center"
+            style={{ left: `calc(${effectiveWorkspaceWidthPct}% - 12px)`, top: `calc(${workspaceHeightPct}% - 12px)` }}
             onMouseDown={onWorkspaceResizeStart}
             title="Resize Sankey Workspace"
-          />
+            aria-label="Resize Sankey Workspace"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M6 2H2v4M10 14h4v-4M2 6l4-4M14 10l-4 4" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+            </svg>
+          </button>
           <div
             className="absolute left-0 top-0 bottom-0 z-30 flex items-start"
             onMouseEnter={() => setIsControlPanelOpen(true)}
