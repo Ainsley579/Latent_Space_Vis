@@ -62,12 +62,14 @@ export default function Home() {
     }[]
   >([]);
   const [syncLinkedSankeyViews, setSyncLinkedSankeyViews] = useState(false);
+  const [showLargeHoverPreview, setShowLargeHoverPreview] = useState(true);
+  const [largeHoverPreviewSize, setLargeHoverPreviewSize] = useState(320);
+  const [isControlPanelOpen, setIsControlPanelOpen] = useState(false);
   const [clusterPage, setClusterPage] = useState(0);
-  const [clusterPageSize, setClusterPageSize] = useState(1);
-  const [bottomSplitPct, setBottomSplitPct] = useState(45);
-  const [workspaceWidthPct, setWorkspaceWidthPct] = useState(55);
-  const [workspaceHeightPct, setWorkspaceHeightPct] = useState(60);
-  const clusterGridRef = useRef<HTMLDivElement | null>(null);
+  const [clusterPageSize, setClusterPageSize] = useState(10);
+  const [bottomSplitPct, setBottomSplitPct] = useState(35);
+  const [workspaceWidthPct, setWorkspaceWidthPct] = useState(80);
+  const [workspaceHeightPct, setWorkspaceHeightPct] = useState(70);
   const layoutGridRef = useRef<HTMLDivElement | null>(null);
   const bottomSplitHostRef = useRef<HTMLDivElement | null>(null);
   const syncRafRef = useRef<number | null>(null);
@@ -139,6 +141,12 @@ export default function Home() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!showLargeHoverPreview) {
+      setHoverPreview(null);
+    }
+  }, [showLargeHoverPreview]);
 
   const syncTransformVertical = useMemo(
     () => ({ x: sankeyTransform.x, y: sankeyTransform.y, scale: sankeyTransform.scale }),
@@ -374,27 +382,6 @@ export default function Home() {
     setClusterPage((prev) => Math.min(prev, Math.max(0, clusterTotalPages - 1)));
   }, [clusterTotalPages]);
 
-  useEffect(() => {
-    const el = clusterGridRef.current;
-    if (!el) return;
-
-    const CARD = 128;
-    const GAP = 4;
-
-    const recalc = () => {
-      const w = Math.max(1, el.clientWidth);
-      const h = Math.max(1, el.clientHeight);
-      const cols = Math.max(1, Math.floor((w + GAP) / (CARD + GAP)));
-      const rows = Math.max(1, Math.floor((h + GAP) / (CARD + GAP)));
-      setClusterPageSize(Math.max(1, cols * rows));
-    };
-
-    recalc();
-    const ro = new ResizeObserver(recalc);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [selectedNode?.model, selectedNode?.layer, selectedNode?.cluster]);
-
   function resolveImageSrc(realId: string | number, imageType: string) {
     const key = String(realId);
     return `/molecule_images/${key}_${imageType}.png`;
@@ -418,8 +405,9 @@ export default function Home() {
   }
 
   function showHoverPreviewAt(src: string, anchor?: DOMRect) {
-    const W = 320;
-    const H = 320;
+    if (!showLargeHoverPreview) return;
+    const W = largeHoverPreviewSize;
+    const H = largeHoverPreviewSize;
     const PAD = 8;
     if (!anchor) {
       setHoverPreview({ src, left: window.innerWidth - W - 16, top: window.innerHeight - H - 16 });
@@ -436,10 +424,10 @@ export default function Home() {
   const MID_COL_RATIO_IN_WORKSPACE = 10 / 55;
   const TOP_ROW_RATIO_IN_WORKSPACE = 40 / 60;
   const MID_ROW_RATIO_IN_WORKSPACE = 20 / 60;
-
-  const leftColPct = workspaceWidthPct * LEFT_COL_RATIO_IN_WORKSPACE;
-  const midColPct = workspaceWidthPct * MID_COL_RATIO_IN_WORKSPACE;
-  const rightColPct = 100 - workspaceWidthPct;
+  const effectiveWorkspaceWidthPct = workspaceWidthPct;
+  const leftColPct = effectiveWorkspaceWidthPct * LEFT_COL_RATIO_IN_WORKSPACE;
+  const midColPct = effectiveWorkspaceWidthPct * MID_COL_RATIO_IN_WORKSPACE;
+  const rightColPct = 100 - effectiveWorkspaceWidthPct;
   const topRowPct = workspaceHeightPct * TOP_ROW_RATIO_IN_WORKSPACE;
   const midRowPct = workspaceHeightPct * MID_ROW_RATIO_IN_WORKSPACE;
   const bottomRowPct = 100 - workspaceHeightPct;
@@ -454,8 +442,8 @@ export default function Home() {
       const relY = ((ev.clientY - rect.top) / rect.height) * 100;
       const nextW = Math.min(80, Math.max(40, relX));
       const nextH = Math.min(85, Math.max(45, relY));
-      setWorkspaceWidthPct(nextW);
-      setWorkspaceHeightPct(nextH);
+      setWorkspaceWidthPct((prev) => (Math.abs(prev - nextW) < 0.1 ? prev : nextW));
+      setWorkspaceHeightPct((prev) => (Math.abs(prev - nextH) < 0.1 ? prev : nextH));
     };
 
     const onUp = () => {
@@ -492,7 +480,7 @@ export default function Home() {
       <main className="flex min-h-screen w-full">
         <div
           ref={layoutGridRef}
-          className="h-screen w-full grid relative"
+          className="h-screen w-full grid relative transition-all duration-300 ease-out"
           style={{
             gridTemplateColumns: `${leftColPct}% ${midColPct}% ${rightColPct}%`,
             gridTemplateRows: `${topRowPct}% ${midRowPct}% ${bottomRowPct}%`,
@@ -533,6 +521,7 @@ export default function Home() {
                   setCellSelected(true);
                 }}
                 selectedNode={selectedNode}
+                activeCell={cellSelected ? { model: selectedModel, layer: selectedLayer } : null}
                 onCellSelect={(active) => {
                   setCellSelected(active);
                   if (active) {
@@ -549,16 +538,10 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="p-1 flex flex-col gap-1" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
-            <div
-              id="aicbic"
-              className="w-full flex-[2] border border-zinc-400"
-            >
-              <StructureEditorPanel />
-            </div>
+          <div className="p-1 box-border" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
             <div
               id="sankeyVertical"
-              className="w-full flex-[9] border border-zinc-400 min-h-0 relative"
+              className="w-full h-full border border-zinc-400 min-h-0 relative"
             >
               <div className="absolute top-1 right-2 text-xs text-zinc-600 bg-white/80 px-1 rounded">
                 {swapAxes ? selectedModel : selectedLayer}
@@ -626,6 +609,7 @@ export default function Home() {
                 }}
                 onImagePreviewStart={(src, anchor) => showHoverPreviewAt(src, anchor)}
                 onImagePreviewEnd={() => setHoverPreview(null)}
+                hideTopk={workspaceWidthPct >= 79.5}
               />
             </div>
           </div>
@@ -676,7 +660,7 @@ export default function Home() {
               id="editor"
               className="w-full h-full border border-zinc-400 relative"
             >
-              <SyncControlPanel syncOn={syncLinkedSankeyViews} onToggleSync={toggleSyncLinkedViews} />
+              <StructureEditorPanel />
             </div>
           </div>
 
@@ -753,9 +737,7 @@ export default function Home() {
                     )}
                     {selectedNode && (
                       <div className="h-full min-h-0 flex flex-col gap-2">
-                        <div className="text-sm font-semibold text-zinc-700">
-                          Cluster Instances ({clusterInstanceIds.length})
-                        </div>
+                        <div className="text-sm font-semibold text-zinc-700">Cluster Members ({clusterInstanceIds.length})</div>
                         {clusterInstanceIds.length === 0 && (
                           <div className="text-sm text-zinc-500">
                             No instances found for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
@@ -767,7 +749,25 @@ export default function Home() {
                               <div>
                                 Page {clusterPage + 1} / {clusterTotalPages}
                               </div>
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                  <label htmlFor="cluster-page-size">Per page</label>
+                                  <select
+                                    id="cluster-page-size"
+                                    className="px-1.5 py-0.5 border border-zinc-300 rounded bg-white"
+                                    value={clusterPageSize}
+                                    onChange={(e) => {
+                                      setClusterPage(0);
+                                      setClusterPageSize(Number(e.target.value));
+                                    }}
+                                  >
+                                    {[1, 5, 10, 20, 50].map((size) => (
+                                      <option key={`cluster-size-${size}`} value={size}>
+                                        {size}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
                                 <button
                                   type="button"
                                   className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
@@ -786,12 +786,12 @@ export default function Home() {
                                 </button>
                               </div>
                             </div>
-                            <div ref={clusterGridRef} className="flex-1 min-h-0 overflow-hidden">
-                              <div className="flex flex-wrap gap-1">
+                            <div className="flex-1 min-h-0 overflow-auto pr-1">
+                              <div className="grid grid-cols-5 gap-1">
                                 {clusterPagedIds.map((id) => (
                                   <div
                                     key={`instance-${id}`}
-                                    className="relative w-32 h-32"
+                                    className="relative w-full max-w-[180px] aspect-square mx-auto"
                                     onMouseEnter={(e) => {
                                       setHoverFromMouse(String(id));
                                       showHoverPreviewAt(
@@ -808,7 +808,7 @@ export default function Home() {
                                     <img
                                       src={resolveImageSrc(id, "ligand")}
                                       alt={`ligand ${id}`}
-                                      className="w-32 h-32 object-contain bg-white border border-zinc-200"
+                                      className="w-full h-full object-contain bg-white border border-zinc-200"
                                       onLoad={(e) => {
                                         const target = e.currentTarget as HTMLImageElement;
                                         target.style.display = "block";
@@ -852,10 +852,44 @@ export default function Home() {
           </div>
           <div
             className="absolute z-30 w-4 h-4 rounded-sm bg-zinc-500/75 hover:bg-zinc-700 cursor-se-resize"
-            style={{ left: `calc(${workspaceWidthPct}% - 8px)`, top: `calc(${workspaceHeightPct}% - 8px)` }}
+            style={{ left: `calc(${effectiveWorkspaceWidthPct}% - 8px)`, top: `calc(${workspaceHeightPct}% - 8px)` }}
             onMouseDown={onWorkspaceResizeStart}
             title="Resize Sankey Workspace"
           />
+          <div
+            className="absolute left-0 top-0 bottom-0 z-30 flex items-start"
+            onMouseEnter={() => setIsControlPanelOpen(true)}
+            onMouseLeave={() => setIsControlPanelOpen(false)}
+          >
+            <button
+              type="button"
+              className="mt-3 h-9 w-6 rounded-r border border-l-0 border-zinc-400 bg-white text-xs text-zinc-600 shadow pointer-events-auto"
+              onClick={() => setIsControlPanelOpen((prev) => !prev)}
+              title={isControlPanelOpen ? "Hide control panel" : "Show control panel"}
+              aria-label={isControlPanelOpen ? "Hide control panel" : "Show control panel"}
+            >
+              {isControlPanelOpen ? "<" : ">"}
+            </button>
+            <div
+              className={
+                "mt-3 h-[280px] bg-white pointer-events-auto overflow-hidden transition-all duration-300 ease-out " +
+                (isControlPanelOpen
+                  ? "w-56 opacity-100 translate-x-0 border border-zinc-400 shadow-lg"
+                  : "w-0 opacity-0 -translate-x-2 border border-transparent shadow-none")
+              }
+            >
+              <div className={"w-56 h-full transition-opacity duration-200 " + (isControlPanelOpen ? "opacity-100" : "opacity-0")}>
+                <SyncControlPanel
+                  syncOn={syncLinkedSankeyViews}
+                  onToggleSync={toggleSyncLinkedViews}
+                  largePreviewOn={showLargeHoverPreview}
+                  onToggleLargePreview={() => setShowLargeHoverPreview((prev) => !prev)}
+                  largePreviewSize={largeHoverPreviewSize}
+                  onLargePreviewSizeChange={setLargeHoverPreviewSize}
+                />
+              </div>
+            </div>
+          </div>
         </div>
         {hoverPreview && (
           <div
@@ -865,7 +899,8 @@ export default function Home() {
             <img
               src={hoverPreview.src}
               alt="large preview"
-              className="w-[320px] h-[320px] object-contain bg-white"
+              style={{ width: `${largeHoverPreviewSize}px`, height: `${largeHoverPreviewSize}px` }}
+              className="object-contain bg-white"
             />
           </div>
         )}
