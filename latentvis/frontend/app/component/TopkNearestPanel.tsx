@@ -28,6 +28,7 @@ type TopkNearestPanelProps = {
   onImagePreviewStart?: (src: string, anchor?: DOMRect) => void;
   onImagePreviewEnd?: () => void;
   hideTopk?: boolean;
+  largePreviewOn?: boolean;
 };
 
 export default function TopkNearestPanel({
@@ -47,6 +48,7 @@ export default function TopkNearestPanel({
   onImagePreviewStart,
   onImagePreviewEnd,
   hideTopk = false,
+  largePreviewOn = true,
 }: TopkNearestPanelProps) {
   const PAGE_SIZE = 5;
   const [pageByCluster, setPageByCluster] = useState<Record<number, number>>({});
@@ -183,7 +185,11 @@ export default function TopkNearestPanel({
                               alt={`ligand ${id}`}
                               className={
                                 `w-full h-full object-contain bg-white border ` +
-                                (selectedCluster === row.cluster_id ? "border-black" : "border-zinc-200")
+                                (!largePreviewOn && hoveredId === String(id)
+                                  ? "border-red-500 border-2"
+                                  : selectedCluster === row.cluster_id
+                                    ? "border-black"
+                                    : "border-zinc-200")
                               }
                               onLoad={(e) => {
                                 const target = e.currentTarget as HTMLImageElement;

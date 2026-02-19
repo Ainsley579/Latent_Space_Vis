@@ -432,7 +432,7 @@ export default function Home() {
   const midRowPct = workspaceHeightPct * MID_ROW_RATIO_IN_WORKSPACE;
   const bottomRowPct = 100 - workspaceHeightPct;
 
-  function onWorkspaceResizeStart(event: ReactMouseEvent<HTMLDivElement>) {
+  function onWorkspaceResizeStart(event: ReactMouseEvent<HTMLElement>) {
     event.preventDefault();
     const onMove = (ev: MouseEvent) => {
       const host = layoutGridRef.current;
@@ -455,7 +455,7 @@ export default function Home() {
     window.addEventListener("mouseup", onUp);
   }
 
-  function onBottomSplitResizeStart(event: ReactMouseEvent<HTMLDivElement>) {
+  function onBottomSplitResizeStart(event: ReactMouseEvent<HTMLElement>) {
     event.preventDefault();
     const onMove = (ev: MouseEvent) => {
       const host = bottomSplitHostRef.current;
@@ -610,6 +610,7 @@ export default function Home() {
                 onImagePreviewStart={(src, anchor) => showHoverPreviewAt(src, anchor)}
                 onImagePreviewEnd={() => setHoverPreview(null)}
                 hideTopk={workspaceWidthPct >= 79.5}
+                largePreviewOn={showLargeHoverPreview}
               />
             </div>
           </div>
@@ -820,7 +821,12 @@ export default function Home() {
                                     <img
                                       src={resolveImageSrc(id, "ligand")}
                                       alt={`ligand ${id}`}
-                                      className="w-full h-full object-contain bg-white border border-zinc-200"
+                                      className={
+                                        "w-full h-full object-contain bg-white border " +
+                                        (!showLargeHoverPreview && hoveredId === String(id)
+                                          ? "border-red-500 border-2"
+                                          : "border-zinc-200")
+                                      }
                                       onLoad={(e) => {
                                         const target = e.currentTarget as HTMLImageElement;
                                         target.style.display = "block";
