@@ -161,7 +161,18 @@ export default function SankeyView({
                 setCellHighlight(datum.rowName, datum.columnName, false);
               })
               .on("click", (_event: any, datum: any) => {
-                // Always activate clicked cell on first click to avoid click-deadzone feeling.
+                const isSameLocked =
+                  lockedCell?.rowName === datum.rowName &&
+                  lockedCell?.columnName === datum.columnName;
+
+                // Toggle off when clicking the same locked cell.
+                if (isSameLocked) {
+                  lockedCell = null;
+                  setCellHighlight(datum.rowName, datum.columnName, false);
+                  onCellSelect?.(false);
+                  return;
+                }
+
                 lockedCell = { rowName: datum.rowName, columnName: datum.columnName };
                 setCellHighlight(datum.rowName, datum.columnName, true);
 
