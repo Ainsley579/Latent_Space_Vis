@@ -95,9 +95,9 @@ export default function SyncControlPanel({
       </div>
 
       <div className="flex items-center justify-center gap-3 min-w-0">
-        <label className="text-[10px] text-zinc-600 shrink-0">Min</label>
+        <label className="text-xs text-zinc-600 shrink-0">Min</label>
         <select
-          className="h-5 w-12 px-1 text-[10px] border border-zinc-300 rounded bg-white shrink-0"
+          className="h-6 w-14 px-1 text-xs border border-zinc-300 rounded bg-white shrink-0"
           value={minValue}
           onChange={(e) => {
             const next = Number(e.target.value);
@@ -115,9 +115,9 @@ export default function SyncControlPanel({
       </div>
 
       <div className="flex items-center justify-center gap-3 min-w-0">
-        <label className="text-[10px] text-zinc-600 shrink-0">Max</label>
+        <label className="text-xs text-zinc-600 shrink-0">Max</label>
         <select
-          className="h-5 w-12 px-1 text-[10px] border border-zinc-300 rounded bg-white shrink-0"
+          className="h-6 w-14 px-1 text-xs border border-zinc-300 rounded bg-white shrink-0"
           value={maxValue}
           onChange={(e) => {
             const next = Number(e.target.value);
@@ -136,7 +136,7 @@ export default function SyncControlPanel({
       <div className="flex items-center justify-center min-w-0">
         <button
           type="button"
-          className="h-5 px-2 rounded border border-zinc-300 bg-zinc-50 text-[10px] text-zinc-700 hover:bg-zinc-100 shrink-0"
+          className="h-6 px-3 rounded border border-zinc-300 bg-zinc-50 text-xs text-zinc-700 hover:bg-zinc-100 shrink-0"
         >
           Generate
         </button>
