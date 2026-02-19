@@ -817,19 +817,20 @@ export default function Home() {
                                   <div
                                     key={`instance-${id}`}
                                     className="relative w-full max-w-[180px] aspect-square mx-auto"
-                                    onMouseEnter={(e) => {
-                                      setHoverFromMouse(String(id));
-                                      showHoverPreviewAt(
-                                        resolveImageSrc(id, "ligand"),
-                                        (e.currentTarget as HTMLDivElement).getBoundingClientRect(),
-                                      );
-                                    }}
-                                    onMouseLeave={() => {
-                                      setHoverFromMouse(null);
-                                      setHoverPreview(null);
-                                    }}
+                                    onMouseEnter={() => setHoverFromMouse(String(id))}
+                                    onMouseLeave={() => setHoverFromMouse(null)}
                                     onClick={() => toggleLockedHighlight(String(id))}
                                   >
+                                    <div
+                                      className="absolute inset-0 z-[1]"
+                                      onMouseEnter={(e: ReactMouseEvent<HTMLDivElement>) =>
+                                        showHoverPreviewAt(
+                                          resolveImageSrc(id, "ligand"),
+                                          (e.currentTarget as HTMLDivElement).getBoundingClientRect(),
+                                        )
+                                      }
+                                      onMouseLeave={() => setHoverPreview(null)}
+                                    />
                                     <img
                                       src={resolveImageSrc(id, "ligand")}
                                       alt={`ligand ${id}`}
