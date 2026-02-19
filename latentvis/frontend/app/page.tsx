@@ -67,6 +67,7 @@ export default function Home() {
   const [isControlPanelOpen, setIsControlPanelOpen] = useState(false);
   const [clusterPage, setClusterPage] = useState(0);
   const [clusterPageSize, setClusterPageSize] = useState(10);
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [bottomSplitPct, setBottomSplitPct] = useState(35);
   const [workspaceWidthPct, setWorkspaceWidthPct] = useState(80);
   const [workspaceHeightPct, setWorkspaceHeightPct] = useState(70);
@@ -166,6 +167,15 @@ export default function Home() {
     }
     setHoveredId(id);
     setHoverLock(true);
+  }
+
+  function toggleBookmark(id: string) {
+    setBookmarkedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   useEffect(() => {
@@ -611,6 +621,8 @@ export default function Home() {
                 onImagePreviewEnd={() => setHoverPreview(null)}
                 hideTopk={workspaceWidthPct >= 79.5}
                 largePreviewOn={showLargeHoverPreview}
+                bookmarkedIds={bookmarkedIds}
+                onToggleBookmark={toggleBookmark}
               />
             </div>
           </div>
@@ -838,15 +850,40 @@ export default function Home() {
                                     />
                                     {selectedNode && (
                                       <div
-                                        className="absolute top-0.5 right-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
+                                        className="absolute top-0.5 left-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
                                         style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
                                       >
                                         {selectedNode.cluster}
                                       </div>
                                     )}
+                                    <button
+                                      type="button"
+                                      className={
+                                        "absolute top-0.5 right-0.5 z-[2] h-5 w-5 rounded bg-white/85 border shadow-sm flex items-center justify-center " +
+                                        (bookmarkedIds.has(String(id))
+                                          ? "border-amber-500 text-amber-500"
+                                          : "border-zinc-300 text-zinc-500")
+                                      }
+                                      title={bookmarkedIds.has(String(id)) ? "Remove bookmark" : "Add bookmark"}
+                                      aria-label={bookmarkedIds.has(String(id)) ? "Remove bookmark" : "Add bookmark"}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleBookmark(String(id));
+                                      }}
+                                    >
+                                      <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                          d="M7 4h10a1 1 0 0 1 1 1v15l-6-3-6 3V5a1 1 0 0 1 1-1z"
+                                          fill={bookmarkedIds.has(String(id)) ? "currentColor" : "none"}
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinejoin="round"
+                                        />
+                                      </svg>
+                                    </button>
                                     <div
                                       className={
-                                        `absolute top-0.5 left-0.5 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
+                                        `absolute bottom-0.5 left-0.5 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
                                         (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
                                       }
                                       onMouseEnter={() => setHoverFromMouse(String(id))}

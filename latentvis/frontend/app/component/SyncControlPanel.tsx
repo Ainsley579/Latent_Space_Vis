@@ -133,12 +133,18 @@ export default function SyncControlPanel({
         </select>
       </div>
 
-      <div className="flex items-center justify-center min-w-0">
+      <div className="flex items-center justify-center gap-2 min-w-0">
         <button
           type="button"
           className="h-6 px-3 rounded border border-zinc-300 bg-zinc-50 text-xs text-zinc-700 hover:bg-zinc-100 shrink-0"
         >
           Generate
+        </button>
+        <button
+          type="button"
+          className="h-6 px-3 rounded border border-zinc-300 bg-zinc-50 text-xs text-zinc-700 hover:bg-zinc-100 shrink-0"
+        >
+          Export
         </button>
       </div>
       </div>

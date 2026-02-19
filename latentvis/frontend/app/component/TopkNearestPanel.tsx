@@ -29,6 +29,8 @@ type TopkNearestPanelProps = {
   onImagePreviewEnd?: () => void;
   hideTopk?: boolean;
   largePreviewOn?: boolean;
+  bookmarkedIds: Set<string>;
+  onToggleBookmark: (id: string) => void;
 };
 
 export default function TopkNearestPanel({
@@ -49,6 +51,8 @@ export default function TopkNearestPanel({
   onImagePreviewEnd,
   hideTopk = false,
   largePreviewOn = true,
+  bookmarkedIds,
+  onToggleBookmark,
 }: TopkNearestPanelProps) {
   const PAGE_SIZE = 5;
   const [pageByCluster, setPageByCluster] = useState<Record<number, number>>({});
@@ -201,14 +205,37 @@ export default function TopkNearestPanel({
                               }}
                             />
                             <div
-                              className="absolute top-0.5 right-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
+                              className="absolute top-0.5 left-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
                               style={{ backgroundColor: clusterBadgeColor(row.cluster_id) }}
                             >
                               {row.cluster_id}
                             </div>
+                            <button
+                              type="button"
+                              className={
+                                "absolute top-0.5 right-0.5 z-[2] h-5 w-5 rounded bg-white/85 border shadow-sm flex items-center justify-center " +
+                                (bookmarkedIds.has(String(id)) ? "border-amber-500 text-amber-500" : "border-zinc-300 text-zinc-500")
+                              }
+                              title={bookmarkedIds.has(String(id)) ? "Remove bookmark" : "Add bookmark"}
+                              aria-label={bookmarkedIds.has(String(id)) ? "Remove bookmark" : "Add bookmark"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleBookmark(String(id));
+                              }}
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+                                <path
+                                  d="M7 4h10a1 1 0 0 1 1 1v15l-6-3-6 3V5a1 1 0 0 1 1-1z"
+                                  fill={bookmarkedIds.has(String(id)) ? "currentColor" : "none"}
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </button>
                             <div
                               className={
-                                `absolute top-0.5 left-0.5 text-[10px] px-1 rounded bg-white/85 cursor-pointer ` +
+                                `absolute bottom-0.5 left-0.5 text-[10px] px-1 rounded bg-white/85 cursor-pointer ` +
                                 (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
                               }
                               onMouseEnter={() => onHoverIdChange(String(id))}
