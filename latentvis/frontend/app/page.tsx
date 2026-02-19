@@ -879,18 +879,9 @@ export default function Home() {
             onMouseEnter={() => setIsControlPanelOpen(true)}
             onMouseLeave={() => setIsControlPanelOpen(false)}
           >
-            <button
-              type="button"
-              className="mt-3 h-9 w-6 rounded-r border border-l-0 border-zinc-400 bg-white text-xs text-zinc-600 shadow pointer-events-auto"
-              onClick={() => setIsControlPanelOpen((prev) => !prev)}
-              title={isControlPanelOpen ? "Hide control panel" : "Show control panel"}
-              aria-label={isControlPanelOpen ? "Hide control panel" : "Show control panel"}
-            >
-              {isControlPanelOpen ? "<" : ">"}
-            </button>
             <div
               className={
-                "mt-3 h-[280px] bg-white pointer-events-auto overflow-hidden transition-all duration-300 ease-out " +
+                "mt-12 h-[280px] bg-white pointer-events-auto overflow-hidden transition-all duration-300 ease-out " +
                 (isControlPanelOpen
                   ? "w-56 opacity-100 translate-x-0 border border-zinc-400 shadow-lg"
                   : "w-0 opacity-0 -translate-x-2 border border-transparent shadow-none")
@@ -907,6 +898,15 @@ export default function Home() {
                 />
               </div>
             </div>
+            <button
+              type="button"
+              className="mt-12 h-9 w-6 rounded-r border border-l-0 border-zinc-400 bg-white text-xs text-zinc-600 shadow pointer-events-auto"
+              onClick={() => setIsControlPanelOpen((prev) => !prev)}
+              title={isControlPanelOpen ? "Hide control panel" : "Show control panel"}
+              aria-label={isControlPanelOpen ? "Hide control panel" : "Show control panel"}
+            >
+              {isControlPanelOpen ? "<" : ">"}
+            </button>
           </div>
         </div>
         {hoverPreview && (
