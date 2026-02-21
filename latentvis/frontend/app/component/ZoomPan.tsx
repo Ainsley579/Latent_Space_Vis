@@ -33,18 +33,21 @@ export default function ZoomPan({
 }: ZoomPanProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const spacerRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
   const transformRef = useRef<Transform>({ x: 0, y: 0, scale: 1 });
+  const [contentSize, setContentSize] = useState({ width: 1, height: 1 });
+  const [showZoomControls, setShowZoomControls] = useState(false);
   const minScaleRef = useRef(1);
-  const draggingRef = useRef(false);
-  const dragStartRef = useRef<{ x: number; y: number; tx: number; ty: number }>({ x: 0, y: 0, tx: 0, ty: 0 });
+  const didInitialFitRef = useRef(false);
+  const userInteractedRef = useRef(false);
 
   const transformStyle = useMemo(
     () => ({
-      transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+      transform: `scale(${transform.scale})`,
       transformOrigin: "0 0",
     }),
-    [transform]
+    [transform.scale]
   );
 
   useEffect(() => {
@@ -54,38 +57,25 @@ export default function ZoomPan({
 
   useEffect(() => {
     if (!externalTransform) return;
+    const container = containerRef.current;
+    if (!container) return;
     const curr = transformRef.current;
+    const ds = Math.abs(curr.scale - externalTransform.scale);
     const dx = Math.abs(curr.x - externalTransform.x);
     const dy = Math.abs(curr.y - externalTransform.y);
-    const ds = Math.abs(curr.scale - externalTransform.scale);
     if (dx < 0.5 && dy < 0.5 && ds < 0.001) return;
-    setTransform(externalTransform);
+
+    const nextScale = clamp(externalTransform.scale, minScaleRef.current, maxScale);
+    setTransform((prev) => ({ ...prev, scale: nextScale }));
+    window.requestAnimationFrame(() => {
+      const maxLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+      const maxTop = Math.max(0, container.scrollHeight - container.clientHeight);
+      const nextLeft = clamp(panPadding - externalTransform.x, 0, maxLeft);
+      const nextTop = clamp(panPadding - externalTransform.y, 0, maxTop);
+      container.scrollLeft = nextLeft;
+      container.scrollTop = nextTop;
+    });
   }, [externalTransform]);
-
-  function clampTransform(next: Transform, containerW: number, containerH: number, contentW: number, contentH: number) {
-    const sw = contentW * next.scale;
-    const sh = contentH * next.scale;
-    let minX = containerW - sw - panPadding;
-    let maxX = panPadding;
-    let minY = containerH - sh - panPadding;
-    let maxY = panPadding;
-
-    // If content fits, allow limited panning slack.
-    if (sw <= containerW) {
-      minX = -panPadding;
-      maxX = panPadding;
-    }
-    if (sh <= containerH) {
-      minY = -panPadding;
-      maxY = panPadding;
-    }
-
-    return {
-      ...next,
-      x: clamp(next.x, minX, maxX),
-      y: clamp(next.y, minY, maxY),
-    };
-  }
 
   function recomputeMinScale() {
     const container = containerRef.current;
@@ -94,52 +84,41 @@ export default function ZoomPan({
     const cRect = container.getBoundingClientRect();
     const baseW = content.offsetWidth || 1;
     const baseH = content.offsetHeight || 1;
-    if (baseW <= 0 || baseH <= 0) return;
+    // Guard against transient "not yet rendered" sizes that can cause oversized initial fit.
+    if (baseW < 2 || baseH < 2) return;
+    setContentSize({ width: baseW, height: baseH });
 
     const scaleToFitWidth = cRect.width / baseW;
-    const minScale = Math.max(0.1, Math.min(1, scaleToFitWidth));
+    // Keep the previous behavior: viewport-width fit can be >1 when the canvas is wider.
+    const minScale = Math.max(0.1, Math.min(maxScale, scaleToFitWidth));
     minScaleRef.current = minScale;
 
-    const next = clampTransform(
-      { ...transform, scale: minScale },
-      cRect.width,
-      cRect.height,
-      baseW,
-      baseH
-    );
-    setTransform(next);
+    const currentScale = transformRef.current.scale;
+    const nextScale =
+      !didInitialFitRef.current || !userInteractedRef.current
+        ? minScale
+        : Math.max(currentScale, minScale);
+    if (Math.abs(nextScale - currentScale) > 0.0001) {
+      setTransform((prev) => ({ ...prev, scale: nextScale }));
+    }
+
+    if (!didInitialFitRef.current || !userInteractedRef.current) {
+      didInitialFitRef.current = true;
+      window.requestAnimationFrame(() => {
+        container.scrollLeft = panPadding;
+        container.scrollTop = panPadding;
+      });
+    }
   }
 
-  function handleWheelEvent(e: WheelEvent) {
-    e.preventDefault();
-    e.stopPropagation();
+  function emitTransformFromScroll(scale: number) {
     const container = containerRef.current;
-    const content = contentRef.current;
-    if (!container || !content) return;
-    const cRect = container.getBoundingClientRect();
-    const iRect = content.getBoundingClientRect();
-    const minScale = minScaleRef.current;
-
-    const delta = -e.deltaY;
-    const zoomFactor = 1 + delta * 0.0025;
-    const current = transformRef.current;
-    const nextScale = clamp(current.scale * zoomFactor, minScale, maxScale);
-    if (nextScale === current.scale) return;
-
-    const cx = e.clientX - cRect.left;
-    const cy = e.clientY - cRect.top;
-    const scaleRatio = nextScale / current.scale;
-    const nextX = cx - (cx - current.x) * scaleRatio;
-    const nextY = cy - (cy - current.y) * scaleRatio;
-
-    const next = clampTransform(
-      { x: nextX, y: nextY, scale: nextScale },
-      cRect.width,
-      cRect.height,
-      iRect.width,
-      iRect.height
-    );
-    setTransform(next);
+    if (!container) return;
+    setTransform({
+      x: panPadding - container.scrollLeft,
+      y: panPadding - container.scrollTop,
+      scale,
+    });
   }
 
   useEffect(() => {
@@ -147,67 +126,164 @@ export default function ZoomPan({
     const container = containerRef.current;
     const content = contentRef.current;
     if (!container || !content) return;
-
-    const wheelListener = (evt: WheelEvent) => handleWheelEvent(evt);
-    container.addEventListener("wheel", wheelListener, { passive: false });
+    const onScroll = () => emitTransformFromScroll(transformRef.current.scale);
+    container.addEventListener("scroll", onScroll, { passive: true });
 
     const ro = new ResizeObserver(() => recomputeMinScale());
     ro.observe(container);
     ro.observe(content);
     return () => {
-      container.removeEventListener("wheel", wheelListener as EventListener);
+      container.removeEventListener("scroll", onScroll as EventListener);
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function onMouseDown(e: React.MouseEvent) {
-    if (e.button !== 0) return;
-    draggingRef.current = true;
-    dragStartRef.current = { x: e.clientX, y: e.clientY, tx: transform.x, ty: transform.y };
-  }
-
-  function onMouseMove(e: React.MouseEvent) {
-    if (!draggingRef.current) return;
+  function stepZoom(direction: 1 | -1) {
+    userInteractedRef.current = true;
     const container = containerRef.current;
-    const content = contentRef.current;
-    if (!container || !content) return;
-    const cRect = container.getBoundingClientRect();
-    const iRect = content.getBoundingClientRect();
-    const dx = e.clientX - dragStartRef.current.x;
-    const dy = e.clientY - dragStartRef.current.y;
-    const next = clampTransform(
-      { x: dragStartRef.current.tx + dx, y: dragStartRef.current.ty + dy, scale: transform.scale },
-      cRect.width,
-      cRect.height,
-      iRect.width,
-      iRect.height
-    );
-    setTransform(next);
+    if (!container) return;
+    const current = transformRef.current.scale;
+    const nextScale = clamp(current * (direction > 0 ? 1.2 : 1 / 1.2), minScaleRef.current, maxScale);
+    if (Math.abs(nextScale - current) < 0.0001) return;
+
+    const cx = container.clientWidth / 2;
+    const cy = container.clientHeight / 2;
+    const contentX = (cx + container.scrollLeft - panPadding) / current;
+    const contentY = (cy + container.scrollTop - panPadding) / current;
+    const nextLeft = panPadding + contentX * nextScale - cx;
+    const nextTop = panPadding + contentY * nextScale - cy;
+
+    setTransform((prev) => ({ ...prev, scale: nextScale }));
+    window.requestAnimationFrame(() => {
+      const maxLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+      const maxTop = Math.max(0, container.scrollHeight - container.clientHeight);
+      container.scrollLeft = clamp(nextLeft, 0, maxLeft);
+      container.scrollTop = clamp(nextTop, 0, maxTop);
+      emitTransformFromScroll(nextScale);
+    });
   }
 
-  function onMouseUp() {
-    draggingRef.current = false;
-  }
+  const zoomBtnBaseStyle: React.CSSProperties = {
+    width: 34,
+    height: 34,
+    border: "none",
+    background: "rgba(255,255,255,0.96)",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#111827",
+    cursor: "pointer",
+    transition: "background 0.12s ease, transform 0.12s ease",
+  };
 
   return (
     <div
-      ref={containerRef}
       id={id}
       className={className}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseLeave={onMouseUp}
-      onMouseUp={onMouseUp}
-      style={{
-        overflow: "hidden",
-        position: "relative",
-        cursor: draggingRef.current ? "grabbing" : "grab",
-        touchAction: "none",
-      }}
+      style={{ position: "relative", width: "100%", height: "100%" }}
+      onMouseEnter={() => setShowZoomControls(true)}
+      onMouseLeave={() => setShowZoomControls(false)}
     >
-      <div ref={contentRef} style={{ display: "inline-block", ...transformStyle }}>
-        {children}
+      <div
+        ref={containerRef}
+        style={{
+          overflow: "auto",
+          position: "relative",
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        <div
+          ref={spacerRef}
+          style={{
+            width: `${contentSize.width * transform.scale + panPadding * 2}px`,
+            height: `${contentSize.height * transform.scale + panPadding * 2}px`,
+            position: "relative",
+          }}
+        >
+          <div
+            ref={contentRef}
+            style={{
+              display: "inline-block",
+              position: "absolute",
+              left: `${panPadding}px`,
+              top: `${panPadding}px`,
+              ...transformStyle,
+            }}
+          >
+            {children}
+          </div>
+        </div>
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          right: 8,
+          bottom: 8,
+          display: "flex",
+          gap: 0,
+          zIndex: 30,
+          pointerEvents: showZoomControls ? "auto" : "none",
+          opacity: showZoomControls ? 1 : 0,
+          transition: "opacity 0.15s ease",
+          border: "1px solid #d4d4d8",
+          borderRadius: 8,
+          overflow: "hidden",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+          background: "rgba(255,255,255,0.9)",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => stepZoom(1)}
+          title="Zoom in"
+          aria-label="Zoom in"
+          style={{ ...zoomBtnBaseStyle, borderRight: "1px solid #e4e4e7" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#f4f4f5";
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.96)";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => stepZoom(-1)}
+          title="Zoom out"
+          aria-label="Zoom out"
+          style={zoomBtnBaseStyle}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#f4f4f5";
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.96)";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
       </div>
     </div>
   );

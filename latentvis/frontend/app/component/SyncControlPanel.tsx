@@ -5,9 +5,20 @@ import { useMemo, useState } from "react";
 type SyncControlPanelProps = {
   syncOn: boolean;
   onToggleSync: () => void;
+  largePreviewOn: boolean;
+  onToggleLargePreview: () => void;
+  largePreviewSize: number;
+  onLargePreviewSizeChange: (size: number) => void;
 };
 
-export default function SyncControlPanel({ syncOn, onToggleSync }: SyncControlPanelProps) {
+export default function SyncControlPanel({
+  syncOn,
+  onToggleSync,
+  largePreviewOn,
+  onToggleLargePreview,
+  largePreviewSize,
+  onLargePreviewSizeChange,
+}: SyncControlPanelProps) {
   const [minValue, setMinValue] = useState(1);
   const [maxValue, setMaxValue] = useState(20);
 
@@ -46,10 +57,47 @@ export default function SyncControlPanel({ syncOn, onToggleSync }: SyncControlPa
         </button>
       </div>
 
+      <div className="flex items-center justify-start gap-2 min-w-0 mb-2">
+        <span className="text-[10px] text-zinc-700">LARGE IMAGE</span>
+        <button
+          type="button"
+          onClick={onToggleLargePreview}
+          className={
+            "relative inline-flex h-5 w-10 items-center rounded-full transition-colors " +
+            (largePreviewOn ? "bg-emerald-500" : "bg-zinc-300")
+          }
+          aria-pressed={largePreviewOn}
+          title={largePreviewOn ? "Large preview ON" : "Large preview OFF"}
+        >
+          <span
+            className={
+              "inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform " +
+              (largePreviewOn ? "translate-x-6" : "translate-x-1")
+            }
+          />
+        </button>
+      </div>
+      <div className={"mb-2 " + (largePreviewOn ? "opacity-100" : "opacity-40")}>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-[10px] text-zinc-700">SIZE</label>
+          <span className="text-[10px] text-zinc-500">{largePreviewSize}px</span>
+        </div>
+        <input
+          type="range"
+          min={220}
+          max={520}
+          step={20}
+          value={largePreviewSize}
+          disabled={!largePreviewOn}
+          onChange={(e) => onLargePreviewSizeChange(Number(e.target.value))}
+          className="w-full h-1.5 accent-emerald-500 disabled:cursor-not-allowed"
+        />
+      </div>
+
       <div className="flex items-center justify-center gap-3 min-w-0">
-        <label className="text-[10px] text-zinc-600 shrink-0">Min</label>
+        <label className="text-xs text-zinc-600 shrink-0">Min</label>
         <select
-          className="h-5 w-12 px-1 text-[10px] border border-zinc-300 rounded bg-white shrink-0"
+          className="h-6 w-14 px-1 text-xs border border-zinc-300 rounded bg-white shrink-0"
           value={minValue}
           onChange={(e) => {
             const next = Number(e.target.value);
@@ -67,9 +115,9 @@ export default function SyncControlPanel({ syncOn, onToggleSync }: SyncControlPa
       </div>
 
       <div className="flex items-center justify-center gap-3 min-w-0">
-        <label className="text-[10px] text-zinc-600 shrink-0">Max</label>
+        <label className="text-xs text-zinc-600 shrink-0">Max</label>
         <select
-          className="h-5 w-12 px-1 text-[10px] border border-zinc-300 rounded bg-white shrink-0"
+          className="h-6 w-14 px-1 text-xs border border-zinc-300 rounded bg-white shrink-0"
           value={maxValue}
           onChange={(e) => {
             const next = Number(e.target.value);
@@ -85,12 +133,18 @@ export default function SyncControlPanel({ syncOn, onToggleSync }: SyncControlPa
         </select>
       </div>
 
-      <div className="flex items-center justify-center min-w-0">
+      <div className="flex items-center justify-center gap-2 min-w-0">
         <button
           type="button"
-          className="h-5 px-2 rounded border border-zinc-300 bg-zinc-50 text-[10px] text-zinc-700 hover:bg-zinc-100 shrink-0"
+          className="h-6 px-3 rounded border border-zinc-300 bg-zinc-50 text-xs text-zinc-700 hover:bg-zinc-100 shrink-0"
         >
           Generate
+        </button>
+        <button
+          type="button"
+          className="h-6 px-3 rounded border border-zinc-300 bg-zinc-50 text-xs text-zinc-700 hover:bg-zinc-100 shrink-0"
+        >
+          Export
         </button>
       </div>
       </div>

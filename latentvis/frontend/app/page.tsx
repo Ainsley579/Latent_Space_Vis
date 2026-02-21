@@ -62,12 +62,15 @@ export default function Home() {
     }[]
   >([]);
   const [syncLinkedSankeyViews, setSyncLinkedSankeyViews] = useState(false);
+  const [showLargeHoverPreview, setShowLargeHoverPreview] = useState(true);
+  const [largeHoverPreviewSize, setLargeHoverPreviewSize] = useState(320);
+  const [isControlPanelOpen, setIsControlPanelOpen] = useState(false);
   const [clusterPage, setClusterPage] = useState(0);
-  const [clusterPageSize, setClusterPageSize] = useState(1);
-  const [bottomSplitPct, setBottomSplitPct] = useState(45);
-  const [workspaceWidthPct, setWorkspaceWidthPct] = useState(55);
-  const [workspaceHeightPct, setWorkspaceHeightPct] = useState(60);
-  const clusterGridRef = useRef<HTMLDivElement | null>(null);
+  const [clusterPageSize, setClusterPageSize] = useState(10);
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
+  const [bottomSplitPct, setBottomSplitPct] = useState(35);
+  const [workspaceWidthPct, setWorkspaceWidthPct] = useState(80);
+  const [workspaceHeightPct, setWorkspaceHeightPct] = useState(70);
   const layoutGridRef = useRef<HTMLDivElement | null>(null);
   const bottomSplitHostRef = useRef<HTMLDivElement | null>(null);
   const syncRafRef = useRef<number | null>(null);
@@ -140,6 +143,12 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!showLargeHoverPreview) {
+      setHoverPreview(null);
+    }
+  }, [showLargeHoverPreview]);
+
   const syncTransformVertical = useMemo(
     () => ({ x: sankeyTransform.x, y: sankeyTransform.y, scale: sankeyTransform.scale }),
     [sankeyTransform.x, sankeyTransform.y, sankeyTransform.scale]
@@ -158,6 +167,15 @@ export default function Home() {
     }
     setHoveredId(id);
     setHoverLock(true);
+  }
+
+  function toggleBookmark(id: string) {
+    setBookmarkedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   useEffect(() => {
@@ -374,27 +392,6 @@ export default function Home() {
     setClusterPage((prev) => Math.min(prev, Math.max(0, clusterTotalPages - 1)));
   }, [clusterTotalPages]);
 
-  useEffect(() => {
-    const el = clusterGridRef.current;
-    if (!el) return;
-
-    const CARD = 128;
-    const GAP = 4;
-
-    const recalc = () => {
-      const w = Math.max(1, el.clientWidth);
-      const h = Math.max(1, el.clientHeight);
-      const cols = Math.max(1, Math.floor((w + GAP) / (CARD + GAP)));
-      const rows = Math.max(1, Math.floor((h + GAP) / (CARD + GAP)));
-      setClusterPageSize(Math.max(1, cols * rows));
-    };
-
-    recalc();
-    const ro = new ResizeObserver(recalc);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [selectedNode?.model, selectedNode?.layer, selectedNode?.cluster]);
-
   function resolveImageSrc(realId: string | number, imageType: string) {
     const key = String(realId);
     return `/molecule_images/${key}_${imageType}.png`;
@@ -418,8 +415,9 @@ export default function Home() {
   }
 
   function showHoverPreviewAt(src: string, anchor?: DOMRect) {
-    const W = 320;
-    const H = 320;
+    if (!showLargeHoverPreview) return;
+    const W = largeHoverPreviewSize;
+    const H = largeHoverPreviewSize;
     const PAD = 8;
     if (!anchor) {
       setHoverPreview({ src, left: window.innerWidth - W - 16, top: window.innerHeight - H - 16 });
@@ -436,15 +434,15 @@ export default function Home() {
   const MID_COL_RATIO_IN_WORKSPACE = 10 / 55;
   const TOP_ROW_RATIO_IN_WORKSPACE = 40 / 60;
   const MID_ROW_RATIO_IN_WORKSPACE = 20 / 60;
-
-  const leftColPct = workspaceWidthPct * LEFT_COL_RATIO_IN_WORKSPACE;
-  const midColPct = workspaceWidthPct * MID_COL_RATIO_IN_WORKSPACE;
-  const rightColPct = 100 - workspaceWidthPct;
+  const effectiveWorkspaceWidthPct = workspaceWidthPct;
+  const leftColPct = effectiveWorkspaceWidthPct * LEFT_COL_RATIO_IN_WORKSPACE;
+  const midColPct = effectiveWorkspaceWidthPct * MID_COL_RATIO_IN_WORKSPACE;
+  const rightColPct = 100 - effectiveWorkspaceWidthPct;
   const topRowPct = workspaceHeightPct * TOP_ROW_RATIO_IN_WORKSPACE;
   const midRowPct = workspaceHeightPct * MID_ROW_RATIO_IN_WORKSPACE;
   const bottomRowPct = 100 - workspaceHeightPct;
 
-  function onWorkspaceResizeStart(event: ReactMouseEvent<HTMLDivElement>) {
+  function onWorkspaceResizeStart(event: ReactMouseEvent<HTMLElement>) {
     event.preventDefault();
     const onMove = (ev: MouseEvent) => {
       const host = layoutGridRef.current;
@@ -454,8 +452,8 @@ export default function Home() {
       const relY = ((ev.clientY - rect.top) / rect.height) * 100;
       const nextW = Math.min(80, Math.max(40, relX));
       const nextH = Math.min(85, Math.max(45, relY));
-      setWorkspaceWidthPct(nextW);
-      setWorkspaceHeightPct(nextH);
+      setWorkspaceWidthPct((prev) => (Math.abs(prev - nextW) < 0.1 ? prev : nextW));
+      setWorkspaceHeightPct((prev) => (Math.abs(prev - nextH) < 0.1 ? prev : nextH));
     };
 
     const onUp = () => {
@@ -467,7 +465,7 @@ export default function Home() {
     window.addEventListener("mouseup", onUp);
   }
 
-  function onBottomSplitResizeStart(event: ReactMouseEvent<HTMLDivElement>) {
+  function onBottomSplitResizeStart(event: ReactMouseEvent<HTMLElement>) {
     event.preventDefault();
     const onMove = (ev: MouseEvent) => {
       const host = bottomSplitHostRef.current;
@@ -492,7 +490,7 @@ export default function Home() {
       <main className="flex min-h-screen w-full">
         <div
           ref={layoutGridRef}
-          className="h-screen w-full grid relative"
+          className="h-screen w-full grid relative transition-all duration-300 ease-out"
           style={{
             gridTemplateColumns: `${leftColPct}% ${midColPct}% ${rightColPct}%`,
             gridTemplateRows: `${topRowPct}% ${midRowPct}% ${bottomRowPct}%`,
@@ -533,6 +531,7 @@ export default function Home() {
                   setCellSelected(true);
                 }}
                 selectedNode={selectedNode}
+                activeCell={cellSelected ? { model: selectedModel, layer: selectedLayer } : null}
                 onCellSelect={(active) => {
                   setCellSelected(active);
                   if (active) {
@@ -549,16 +548,10 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="p-1 flex flex-col gap-1" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
-            <div
-              id="aicbic"
-              className="w-full flex-[2] border border-zinc-400"
-            >
-              <StructureEditorPanel />
-            </div>
+          <div className="p-1 box-border" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
             <div
               id="sankeyVertical"
-              className="w-full flex-[9] border border-zinc-400 min-h-0 relative"
+              className="w-full h-full border border-zinc-400 min-h-0 relative"
             >
               <div className="absolute top-1 right-2 text-xs text-zinc-600 bg-white/80 px-1 rounded">
                 {swapAxes ? selectedModel : selectedLayer}
@@ -626,6 +619,10 @@ export default function Home() {
                 }}
                 onImagePreviewStart={(src, anchor) => showHoverPreviewAt(src, anchor)}
                 onImagePreviewEnd={() => setHoverPreview(null)}
+                hideTopk={workspaceWidthPct >= 79.5}
+                largePreviewOn={showLargeHoverPreview}
+                bookmarkedIds={bookmarkedIds}
+                onToggleBookmark={toggleBookmark}
               />
             </div>
           </div>
@@ -676,7 +673,7 @@ export default function Home() {
               id="editor"
               className="w-full h-full border border-zinc-400 relative"
             >
-              <SyncControlPanel syncOn={syncLinkedSankeyViews} onToggleSync={toggleSyncLinkedViews} />
+              <StructureEditorPanel />
             </div>
           </div>
 
@@ -738,10 +735,22 @@ export default function Home() {
                 </div>
               </div>
               <div
-                className="w-2 shrink-0 cursor-col-resize bg-zinc-300/70 hover:bg-zinc-500/70"
+                className="w-4 shrink-0 cursor-col-resize group flex items-center justify-center bg-zinc-200/70 hover:bg-zinc-400/70 transition-colors"
                 onMouseDown={onBottomSplitResizeStart}
                 title="Resize Scatterplot / Cluster Instances"
-              />
+              >
+                <div className="h-16 w-3 rounded bg-white/85 border border-zinc-300 shadow-sm flex flex-col items-center justify-center gap-0.5">
+                  <svg width="10" height="10" viewBox="0 0 16 16" aria-hidden="true" className="text-zinc-500 group-hover:text-zinc-700">
+                    <path d="M6 3L3 8l3 5M10 3l3 5-3 5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <div className="grid grid-cols-2 gap-[2px]">
+                    <span className="w-[2px] h-[2px] bg-zinc-500 rounded-full" />
+                    <span className="w-[2px] h-[2px] bg-zinc-500 rounded-full" />
+                    <span className="w-[2px] h-[2px] bg-zinc-500 rounded-full" />
+                    <span className="w-[2px] h-[2px] bg-zinc-500 rounded-full" />
+                  </div>
+                </div>
+              </div>
               <div className="h-full min-w-0 flex-1">
                 <div
                   id="bottomPanel1"
@@ -753,9 +762,7 @@ export default function Home() {
                     )}
                     {selectedNode && (
                       <div className="h-full min-h-0 flex flex-col gap-2">
-                        <div className="text-sm font-semibold text-zinc-700">
-                          Cluster Instances ({clusterInstanceIds.length})
-                        </div>
+                        <div className="text-sm font-semibold text-zinc-700">Cluster Members ({clusterInstanceIds.length})</div>
                         {clusterInstanceIds.length === 0 && (
                           <div className="text-sm text-zinc-500">
                             No instances found for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
@@ -767,7 +774,25 @@ export default function Home() {
                               <div>
                                 Page {clusterPage + 1} / {clusterTotalPages}
                               </div>
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                  <label htmlFor="cluster-page-size">Per page</label>
+                                  <select
+                                    id="cluster-page-size"
+                                    className="px-1.5 py-0.5 border border-zinc-300 rounded bg-white"
+                                    value={clusterPageSize}
+                                    onChange={(e) => {
+                                      setClusterPage(0);
+                                      setClusterPageSize(Number(e.target.value));
+                                    }}
+                                  >
+                                    {[1, 5, 10, 20, 50].map((size) => (
+                                      <option key={`cluster-size-${size}`} value={size}>
+                                        {size}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
                                 <button
                                   type="button"
                                   className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
@@ -786,29 +811,35 @@ export default function Home() {
                                 </button>
                               </div>
                             </div>
-                            <div ref={clusterGridRef} className="flex-1 min-h-0 overflow-hidden">
-                              <div className="flex flex-wrap gap-1">
+                            <div className="flex-1 min-h-0 overflow-auto pr-1">
+                              <div className="grid grid-cols-5 gap-1">
                                 {clusterPagedIds.map((id) => (
                                   <div
                                     key={`instance-${id}`}
-                                    className="relative w-32 h-32"
-                                    onMouseEnter={(e) => {
-                                      setHoverFromMouse(String(id));
-                                      showHoverPreviewAt(
-                                        resolveImageSrc(id, "ligand"),
-                                        (e.currentTarget as HTMLDivElement).getBoundingClientRect(),
-                                      );
-                                    }}
-                                    onMouseLeave={() => {
-                                      setHoverFromMouse(null);
-                                      setHoverPreview(null);
-                                    }}
+                                    className="relative w-full max-w-[180px] aspect-square mx-auto"
+                                    onMouseEnter={() => setHoverFromMouse(String(id))}
+                                    onMouseLeave={() => setHoverFromMouse(null)}
                                     onClick={() => toggleLockedHighlight(String(id))}
                                   >
+                                    <div
+                                      className="absolute inset-0 z-[1]"
+                                      onMouseEnter={(e: ReactMouseEvent<HTMLDivElement>) =>
+                                        showHoverPreviewAt(
+                                          resolveImageSrc(id, "ligand"),
+                                          (e.currentTarget as HTMLDivElement).getBoundingClientRect(),
+                                        )
+                                      }
+                                      onMouseLeave={() => setHoverPreview(null)}
+                                    />
                                     <img
                                       src={resolveImageSrc(id, "ligand")}
                                       alt={`ligand ${id}`}
-                                      className="w-32 h-32 object-contain bg-white border border-zinc-200"
+                                      className={
+                                        "w-full h-full object-contain bg-white border " +
+                                        (!showLargeHoverPreview && hoveredId === String(id)
+                                          ? "border-red-500 border-2"
+                                          : "border-zinc-200")
+                                      }
                                       onLoad={(e) => {
                                         const target = e.currentTarget as HTMLImageElement;
                                         target.style.display = "block";
@@ -820,15 +851,40 @@ export default function Home() {
                                     />
                                     {selectedNode && (
                                       <div
-                                        className="absolute top-0.5 right-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
+                                        className="absolute top-0.5 left-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
                                         style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}
                                       >
                                         {selectedNode.cluster}
                                       </div>
                                     )}
+                                    <button
+                                      type="button"
+                                      className={
+                                        "absolute top-0.5 right-0.5 z-[2] h-5 w-5 rounded bg-white/85 border shadow-sm flex items-center justify-center " +
+                                        (bookmarkedIds.has(String(id))
+                                          ? "border-amber-500 text-amber-500"
+                                          : "border-zinc-300 text-zinc-500")
+                                      }
+                                      title={bookmarkedIds.has(String(id)) ? "Remove bookmark" : "Add bookmark"}
+                                      aria-label={bookmarkedIds.has(String(id)) ? "Remove bookmark" : "Add bookmark"}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleBookmark(String(id));
+                                      }}
+                                    >
+                                      <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                          d="M7 4h10a1 1 0 0 1 1 1v15l-6-3-6 3V5a1 1 0 0 1 1-1z"
+                                          fill={bookmarkedIds.has(String(id)) ? "currentColor" : "none"}
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinejoin="round"
+                                        />
+                                      </svg>
+                                    </button>
                                     <div
                                       className={
-                                        `absolute top-0.5 left-0.5 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
+                                        `absolute bottom-0.5 left-0.5 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
                                         (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
                                       }
                                       onMouseEnter={() => setHoverFromMouse(String(id))}
@@ -850,12 +906,52 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div
-            className="absolute z-30 w-4 h-4 rounded-sm bg-zinc-500/75 hover:bg-zinc-700 cursor-se-resize"
-            style={{ left: `calc(${workspaceWidthPct}% - 8px)`, top: `calc(${workspaceHeightPct}% - 8px)` }}
+          <button
+            type="button"
+            className="absolute z-30 w-6 h-6 rounded-md border border-zinc-400 bg-white/95 hover:bg-zinc-100 shadow cursor-se-resize flex items-center justify-center"
+            style={{ left: `calc(${effectiveWorkspaceWidthPct}% - 12px)`, top: `calc(${workspaceHeightPct}% - 12px)` }}
             onMouseDown={onWorkspaceResizeStart}
             title="Resize Sankey Workspace"
-          />
+            aria-label="Resize Sankey Workspace"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M6 2H2v4M10 14h4v-4M2 6l4-4M14 10l-4 4" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+            </svg>
+          </button>
+          <div
+            className="absolute left-0 top-0 bottom-0 z-30 flex items-start"
+            onMouseEnter={() => setIsControlPanelOpen(true)}
+            onMouseLeave={() => setIsControlPanelOpen(false)}
+          >
+            <div
+              className={
+                "mt-12 h-[280px] bg-white pointer-events-auto overflow-hidden transition-all duration-300 ease-out " +
+                (isControlPanelOpen
+                  ? "w-56 opacity-100 translate-x-0 border border-zinc-400 shadow-lg"
+                  : "w-0 opacity-0 -translate-x-2 border border-transparent shadow-none")
+              }
+            >
+              <div className={"w-56 h-full transition-opacity duration-200 " + (isControlPanelOpen ? "opacity-100" : "opacity-0")}>
+                <SyncControlPanel
+                  syncOn={syncLinkedSankeyViews}
+                  onToggleSync={toggleSyncLinkedViews}
+                  largePreviewOn={showLargeHoverPreview}
+                  onToggleLargePreview={() => setShowLargeHoverPreview((prev) => !prev)}
+                  largePreviewSize={largeHoverPreviewSize}
+                  onLargePreviewSizeChange={setLargeHoverPreviewSize}
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              className="mt-12 h-9 w-6 rounded-r border border-l-0 border-zinc-400 bg-white text-xs text-zinc-600 shadow pointer-events-auto"
+              onClick={() => setIsControlPanelOpen((prev) => !prev)}
+              title={isControlPanelOpen ? "Hide control panel" : "Show control panel"}
+              aria-label={isControlPanelOpen ? "Hide control panel" : "Show control panel"}
+            >
+              {isControlPanelOpen ? "<" : ">"}
+            </button>
+          </div>
         </div>
         {hoverPreview && (
           <div
@@ -865,7 +961,8 @@ export default function Home() {
             <img
               src={hoverPreview.src}
               alt="large preview"
-              className="w-[320px] h-[320px] object-contain bg-white"
+              style={{ width: `${largeHoverPreviewSize}px`, height: `${largeHoverPreviewSize}px` }}
+              className="object-contain bg-white"
             />
           </div>
         )}

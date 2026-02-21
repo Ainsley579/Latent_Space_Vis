@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import ZoomPan from "./ZoomPan";
-import { CLUSTER_COLORS } from "../theme/colors";
+import { CLUSTER_COLORS, SANKEY_2D_COLUMN_LINK_COLOR, SANKEY_2D_ROW_LINK_COLOR } from "../theme/colors";
 
 const DATA_PATH = "/data/sankey/all_sankey.json";
 const DEFAULT_MAX_INSTANCE = 158;
@@ -15,6 +15,7 @@ type SankeyViewProps = {
   onLayerSelect?: (layerKey: string) => void;
   onNodeSelect?: (sel: { model: string; layer: string; cluster: number }) => void;
   selectedNode?: { model: string; layer: string; cluster: number } | null;
+  activeCell?: { model: string; layer: string } | null;
   onCellSelect?: (active: boolean) => void;
   onSwapAxes?: (swap: boolean) => void;
 };
@@ -26,6 +27,7 @@ export default function SankeyView({
   onLayerSelect,
   onNodeSelect,
   selectedNode,
+  activeCell,
   onCellSelect,
   onSwapAxes,
 }: SankeyViewProps) {
@@ -159,7 +161,18 @@ export default function SankeyView({
                 setCellHighlight(datum.rowName, datum.columnName, false);
               })
               .on("click", (_event: any, datum: any) => {
-                // Always activate clicked cell on first click to avoid click-deadzone feeling.
+                const isSameLocked =
+                  lockedCell?.rowName === datum.rowName &&
+                  lockedCell?.columnName === datum.columnName;
+
+                // Toggle off when clicking the same locked cell.
+                if (isSameLocked) {
+                  lockedCell = null;
+                  setCellHighlight(datum.rowName, datum.columnName, false);
+                  onCellSelect?.(false);
+                  return;
+                }
+
                 lockedCell = { rowName: datum.rowName, columnName: datum.columnName };
                 setCellHighlight(datum.rowName, datum.columnName, true);
 
@@ -340,7 +353,7 @@ export default function SankeyView({
                        ${tgtCenterX},${tgtCenterY}`;
             }
 
-            const p = appendLinkPath(linkGroup as any, pathD, edge.value, strokeW, "#86A69D", 0.3);
+            const p = appendLinkPath(linkGroup as any, pathD, edge.value, strokeW, SANKEY_2D_COLUMN_LINK_COLOR, 0.3);
             p.attr("data-column", columnKey);
           });
         });
@@ -405,7 +418,7 @@ export default function SankeyView({
                        ${tgtCenterX},${tgtCenterY}`;
             }
 
-            const p2 = appendLinkPath(linkGroup2 as any, pathD, edge.value, strokeW, "#F28585", 0.2);
+            const p2 = appendLinkPath(linkGroup2 as any, pathD, edge.value, strokeW, SANKEY_2D_ROW_LINK_COLOR, 0.2);
             p2.attr("data-row", rowKey);
           });
         });
@@ -690,7 +703,9 @@ export default function SankeyView({
     const container = chartRef.current;
     if (!container) return;
     const sel = d3.select(container).selectAll<SVGRectElement, any>("rect.bar");
-    if (!selectedNode) {
+    const focusModel = selectedNode?.model ?? activeCell?.model ?? null;
+    const focusLayer = selectedNode?.layer ?? activeCell?.layer ?? null;
+    if (!focusModel || !focusLayer) {
       sel.attr("fill", "#aaa");
       sel.classed("node-highlight", false).classed("node-dimmed", false);
       // Keep current cell/link highlight state (e.g., locked 2D cell focus) when cluster selection is cleared.
@@ -701,7 +716,7 @@ export default function SankeyView({
       const el = d3.select(this);
       const row = el.attr("data-row");
       const col = el.attr("data-column");
-      if (row !== selectedNode.model || col !== selectedNode.layer) return;
+      if (row !== focusModel || col !== focusLayer) return;
       const cluster = Number(el.attr("data-cluster"));
       if (Number.isFinite(cluster)) clusterValues.push(cluster);
     });
@@ -715,10 +730,15 @@ export default function SankeyView({
       const row = el.attr("data-row");
       const col = el.attr("data-column");
       const cluster = Number(el.attr("data-cluster"));
-      if (row === selectedNode.model && col === selectedNode.layer && Number.isFinite(cluster)) {
+      if (row === focusModel && col === focusLayer && Number.isFinite(cluster)) {
         el.attr("fill", color(Math.max(0, cluster)));
       } else {
         el.attr("fill", "#aaa");
+      }
+      if (!selectedNode) {
+        el.classed("node-highlight", false);
+        el.classed("node-dimmed", false);
+        return;
       }
       const isMatch =
         row === selectedNode.model &&
@@ -728,6 +748,8 @@ export default function SankeyView({
       el.classed("node-highlight", isMatch);
       el.classed("node-dimmed", false);
     });
+
+    if (!selectedNode) return;
 
     const rowKey = selectedNode.model;
     const colKey = selectedNode.layer;
@@ -767,7 +789,7 @@ export default function SankeyView({
         const el = d3.select(this);
         if (el.attr("data-column") === colKey) el.classed("link-dimmed", false).classed("link-highlight", true);
       });
-  }, [selectedNode]);
+  }, [selectedNode, activeCell]);
 
   useEffect(() => {
     if (!SHOW_FMI_CSPA) return;
@@ -1201,13 +1223,31 @@ export default function SankeyView({
           left: 0;
           top: 12px;
           width: 100%;
-          pointer-events: auto;
+          pointer-events: none;
           -webkit-appearance: none;
           background: transparent;
         }
 
+        .range-slider input.range-min {
+          z-index: 3;
+        }
+
+        .range-slider input.range-max {
+          z-index: 2;
+        }
+
         .range-slider input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
+          pointer-events: auto;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #fff;
+          border: 2px solid #666;
+          box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .range-slider input[type="range"]::-moz-range-thumb {
           pointer-events: auto;
           width: 14px;
           height: 14px;
