@@ -11,16 +11,24 @@ It outputs a JSON list with one entry per (cluster, group) where group in {knn, 
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import pandas as pd
 
+# Allow importing backend mcs_common when run from scripts/
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_BACKEND = _SCRIPT_DIR.parent
+if str(_BACKEND) not in sys.path:
+    sys.path.insert(0, str(_BACKEND))
+
 try:
     from rdkit import Chem
-    from rdkit.Chem import rdFMCS
+    from mcs_common import common_substructure_smarts_smiles
     RDKIT_AVAILABLE = True
 except Exception:
     RDKIT_AVAILABLE = False
+    common_substructure_smarts_smiles = None
 
 
 def _load_smiles_map(csv_path, id_column, smiles_column):
@@ -48,6 +56,7 @@ def _ids_to_mols(ids, smiles_map):
     mols = []
     missing = []
     invalid = []
+    seen_canonical = set()
     for rid in ids:
         smiles = smiles_map.get(int(rid))
         if not smiles:
@@ -57,31 +66,12 @@ def _ids_to_mols(ids, smiles_map):
         if mol is None:
             invalid.append(int(rid))
             continue
+        canonical = Chem.MolToSmiles(mol, canonical=True)
+        if canonical in seen_canonical:
+            continue
+        seen_canonical.add(canonical)
         mols.append(mol)
     return mols, missing, invalid
-
-
-def _compute_mcs(mols, timeout, ring_only, complete_rings):
-    if len(mols) < 2:
-        return None, None
-    res = rdFMCS.FindMCS(
-        mols,
-        timeout=int(timeout),
-        ringMatchesRingOnly=bool(ring_only),
-        completeRingsOnly=bool(complete_rings),
-        atomCompare=rdFMCS.AtomCompare.CompareElements,
-        bondCompare=rdFMCS.BondCompare.CompareOrderExact,
-    )
-    smarts = res.smartsString if res and res.smartsString else None
-    smiles = None
-    if smarts:
-        try:
-            smi_mol = Chem.MolFromSmarts(smarts)
-            if smi_mol:
-                smiles = Chem.MolToSmiles(smi_mol)
-        except Exception:
-            smiles = None
-    return smarts, smiles
 
 
 def main():
@@ -107,8 +97,8 @@ def main():
     parser.add_argument(
         "--smiles-column",
         type=str,
-        default="product_smiles",
-        help="Column name for SMILES in the CSV",
+        default="smiles",
+        help="Column name for SMILES in the CSV (default: smiles for generic case studies)",
     )
     parser.add_argument(
         "--out",
@@ -132,6 +122,25 @@ def main():
         action="store_true",
         help="Require complete rings in MCS",
     )
+    parser.add_argument(
+        "--no-match-valences",
+        action="store_false",
+        dest="match_valences",
+        default=True,
+        help="Do not match atom valence in MCS (default: match valences)",
+    )
+    parser.add_argument(
+        "--atom-compare",
+        choices=["elements", "isotopes", "any"],
+        default="elements",
+        help="RDKit atom compare strategy for MCS",
+    )
+    parser.add_argument(
+        "--bond-compare",
+        choices=["order", "any"],
+        default="order",
+        help="RDKit bond compare strategy for MCS",
+    )
     args = parser.parse_args()
 
     if not RDKIT_AVAILABLE:
@@ -140,7 +149,11 @@ def main():
     topk = json.loads(args.topk_json.read_text())
     smiles_map = _load_smiles_map(args.smiles_csv, args.id_column, args.smiles_column)
 
+    total_expected = len(topk) * 2  # each entry has knn + kfn
+    print("MCS substructures: processing {} cluster entries ({} knn+kfn pairs)...".format(len(topk), total_expected), flush=True)
+
     out_entries = []
+    done = 0
     for entry in topk:
         layer = entry.get("layer_name")
         model = entry.get("model_type")
@@ -150,7 +163,20 @@ def main():
         for group_name, id_key in [("knn", "top_k_closest_real_ids"), ("kfn", "top_k_farthest_real_ids")]:
             ids = entry.get(id_key, [])
             mols, missing, invalid = _ids_to_mols(ids, smiles_map)
-            smarts, smiles = _compute_mcs(mols, args.timeout, args.ring_only, args.complete_rings)
+            # Use chemistry-expert MCS (mcs_common) to avoid overlapping/ambiguous substructure display
+            smiles_list = [Chem.MolToSmiles(m, canonical=True) for m in mols]
+            if common_substructure_smarts_smiles:
+                smarts, smiles = common_substructure_smarts_smiles(
+                    smiles_list,
+                    timeout_s=args.timeout,
+                    ring_matches_ring_only=args.ring_only,
+                    complete_rings_only=args.complete_rings,
+                    match_valences=args.match_valences,
+                    atom_compare=args.atom_compare,
+                    bond_compare=args.bond_compare,
+                )
+            else:
+                smarts, smiles = None, None
             out_entries.append(
                 {
                     "layer_name": layer,
@@ -166,10 +192,13 @@ def main():
                     "mcs_smiles": smiles,
                 }
             )
+            done += 1
+            if done % 20 == 0 or done == total_expected:
+                print("  progress: {}/{}".format(done, total_expected), flush=True)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(out_entries, indent=2), encoding="utf-8")
-    print("Wrote {} entries to {}".format(len(out_entries), args.out))
+    print("Wrote {} entries to {}".format(len(out_entries), args.out), flush=True)
 
 
 if __name__ == "__main__":

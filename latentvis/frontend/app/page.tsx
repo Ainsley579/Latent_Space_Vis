@@ -25,6 +25,7 @@ export default function Home() {
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [selectedLayer, setSelectedLayer] = useState("emb");
   const [selectedModel, setSelectedModel] = useState("dimenet_noaug");
+  const [scatterProjection, setScatterProjection] = useState<"default" | "pca" | "mds" | "umap" | "tsne">("default");
   const [scatterPath, setScatterPath] = useState("/data/scatterplot/dimenet_noaug_emb.json");
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
@@ -179,8 +180,10 @@ export default function Home() {
   }
 
   useEffect(() => {
-    setScatterPath(`/data/scatterplot/${selectedModel}_${selectedLayer}.json`);
-  }, [selectedModel, selectedLayer]);
+    const base = `${selectedModel}_${selectedLayer}`;
+    const file = scatterProjection === "default" ? `${base}.json` : `${base}_${scatterProjection}.json`;
+    setScatterPath(`/data/scatterplot/${file}`);
+  }, [selectedModel, selectedLayer, scatterProjection]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -679,10 +682,24 @@ export default function Home() {
 
           <div className="p-1 box-border" style={{ gridColumn: "1 / 3", gridRow: "3 / 4" }}>
             <div ref={bottomSplitHostRef} className="w-full h-full flex min-w-0">
-              <div className="h-full min-w-0" style={{ width: `${bottomSplitPct}%` }}>
+              <div className="h-full min-w-0 flex flex-col border border-zinc-400" style={{ width: `${bottomSplitPct}%` }}>
+                <div className="flex items-center gap-2 py-1 px-1 border-b border-zinc-200 bg-zinc-50 shrink-0">
+                  <span className="text-xs font-medium text-zinc-600">Projection:</span>
+                  <select
+                    value={scatterProjection}
+                    onChange={(e) => setScatterProjection(e.target.value as typeof scatterProjection)}
+                    className="text-xs border border-zinc-300 rounded px-2 py-1 bg-white text-zinc-800"
+                  >
+                    <option value="default">Default (MDS)</option>
+                    <option value="pca">PCA</option>
+                    <option value="mds">MDS</option>
+                    <option value="umap">UMAP</option>
+                    <option value="tsne">t-SNE</option>
+                  </select>
+                </div>
                 <div
                   id="scatterplot"
-                  className="w-full h-full border border-zinc-400 bg-white"
+                  className="flex-1 min-h-0 w-full bg-white"
                 >
                   <ScatterPlot
                     dataPath={scatterPath}

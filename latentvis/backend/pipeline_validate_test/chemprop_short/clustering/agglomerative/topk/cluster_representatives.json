@@ -1,0 +1,482 @@
+[
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2-Isopropyltoluene",
+      "p-Toluenesulfonamide ",
+      "1,3,5-Trimethylbenzene ",
+      "3,4-Dimethylphenol",
+      "2,3,6-Trichlorophenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,3,3',4,4'6-PCB",
+      "P,P'-DDD",
+      "2-Methylphenanthrene",
+      "2,2',3,4,5-PCB",
+      "Anthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "RTI 13",
+      "Chlorthalidone",
+      "Permethrin",
+      "Chlorimuron-ethyl (ph 7)",
+      "Tetrafluthrin"
+    ],
+    "top_k_farthest_real_ids": [
+      "norbormide",
+      "Raffinose",
+      "Fluvalinate",
+      "chloralose",
+      "Flucythrinate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "1,3,5-Trimethylbenzene ",
+      "1,2,4-Trichlorobenzene",
+      "3,4-Dimethylphenol",
+      "3,4-Dichlorophenol",
+      "2,4-Dichlorophenol "
+    ],
+    "top_k_farthest_real_ids": [
+      "2-Methylphenanthrene",
+      "Anthracene",
+      "Pyrazon",
+      "Acenapthylene",
+      "Dioxacarb"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Chlorthalidone",
+      "RTI 12",
+      "RTI 13",
+      "RTI 19",
+      "Trifluralin"
+    ],
+    "top_k_farthest_real_ids": [
+      "norbormide",
+      "Fluvalinate",
+      "Raffinose",
+      "probarbital",
+      "Flucythrinate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-Toluenesulfonamide ",
+      "2-Isopropyltoluene",
+      "p-Fluoroacetanilide",
+      "2,3,6-Trichlorophenol",
+      "nifuroxime"
+    ],
+    "top_k_farthest_real_ids": [
+      "Santonin",
+      "2,3,3',4,4'6-PCB",
+      "norflurazon",
+      "Inosine",
+      "cycloheximide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Permethrin",
+      "3-Butanoyloxymethylphenytoin",
+      "RTI 13",
+      "Cypermethrin",
+      "Chlorimuron-ethyl (ph 7)"
+    ],
+    "top_k_farthest_real_ids": [
+      "norbormide",
+      "hexacosane",
+      "Raffinose",
+      "Fluvalinate",
+      "Trichlomethiazide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-Toluenesulfonamide ",
+      "2-Isopropyltoluene",
+      "p-Fluoroacetanilide",
+      "2,3,6-Trichlorophenol",
+      "nifuroxime"
+    ],
+    "top_k_farthest_real_ids": [
+      "Santonin",
+      "2,3,3',4,4'6-PCB",
+      "norflurazon",
+      "Inosine",
+      "cycloheximide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Permethrin",
+      "3-Butanoyloxymethylphenytoin",
+      "RTI 13",
+      "Cypermethrin",
+      "Chlorimuron-ethyl (ph 7)"
+    ],
+    "top_k_farthest_real_ids": [
+      "norbormide",
+      "hexacosane",
+      "Raffinose",
+      "Fluvalinate",
+      "Trichlomethiazide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Trifluralin",
+      "norflurazon",
+      "Inosine",
+      "Dienestrol",
+      "2,3,3',4,4'6-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "norbormide",
+      "Fluvalinate",
+      "Raffinose",
+      "Flucythrinate",
+      "deoxycorticosterone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "hydantoin",
+      "Acephate",
+      "Bromobenzene",
+      "Phenol",
+      "Benzylchloride"
+    ],
+    "top_k_farthest_real_ids": [
+      "piperonal",
+      "5,6,7,8-tetrahydro-2-naphthol",
+      "2-methylpteridine",
+      "1,2-Dibromoethane",
+      "Chlorodibromethane"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Santonin",
+      "Trifluralin",
+      "Dienestrol",
+      "2,3,3',4,4'6-PCB",
+      "RTI 19"
+    ],
+    "top_k_farthest_real_ids": [
+      "norbormide",
+      "Fluvalinate",
+      "Flucythrinate",
+      "Raffinose",
+      "deoxycorticosterone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Acephate",
+      "Phenol",
+      "Bromobenzene",
+      "5-Nonanone",
+      "Benzylchloride"
+    ],
+    "top_k_farthest_real_ids": [
+      "Atratone",
+      "Monolinuron",
+      "1,2-Dibromoethane",
+      "Chlorodibromethane",
+      "Trichloromethane"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Chlorthalidone",
+      "Trifluralin",
+      "Inosine",
+      "norflurazon",
+      "Trichlomethiazide"
+    ],
+    "top_k_farthest_real_ids": [
+      "norbormide",
+      "Raffinose",
+      "Acephate",
+      "Fluvalinate",
+      "hexacosane"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-Isopropyltoluene",
+      "3,4-Dimethylphenol",
+      "1,3,5-Trimethylbenzene ",
+      "3,4-Dichlorophenol",
+      "2,4-Dichlorophenol "
+    ],
+    "top_k_farthest_real_ids": [
+      "2,3,3',4,4'6-PCB",
+      "2-Methylphenanthrene",
+      "2,2',3,4,5-PCB",
+      "Anthracene",
+      "Pyrazon"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-Toluenesulfonamide ",
+      "2-Isopropyltoluene",
+      "Metronidazole",
+      "p-Fluoroacetanilide",
+      "1,2,3,4-Tetrahydronapthalene"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,3,3',4,4'6-PCB",
+      "cycloheximide",
+      "Santonin",
+      "Inosine",
+      "2-Methylphenanthrene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Permethrin",
+      "3-Butanoyloxymethylphenytoin",
+      "Chlorimuron-ethyl (ph 7)",
+      "RTI 13",
+      "Cypermethrin"
+    ],
+    "top_k_farthest_real_ids": [
+      "norbormide",
+      "Raffinose",
+      "hexacosane",
+      "deoxycorticosterone acetate",
+      "Fluvalinate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-Toluenesulfonamide ",
+      "Metronidazole",
+      "2-Isopropyltoluene",
+      "p-Fluoroacetanilide",
+      "1,2,3,4-Tetrahydronapthalene"
+    ],
+    "top_k_farthest_real_ids": [
+      "RTI 12",
+      "RTI 19",
+      "Dienestrol",
+      "2,3,3',4,4'6-PCB",
+      "Santonin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Permethrin",
+      "3-Butanoyloxymethylphenytoin",
+      "Cypermethrin",
+      "Chlorimuron-ethyl (ph 7)",
+      "RTI 13"
+    ],
+    "top_k_farthest_real_ids": [
+      "norbormide",
+      "Raffinose",
+      "hexacosane",
+      "deoxycorticosterone acetate",
+      "Fluvalinate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-Toluenesulfonamide ",
+      "Metronidazole",
+      "2-Isopropyltoluene",
+      "p-Fluoroacetanilide",
+      "1,2,3,4-Tetrahydronapthalene"
+    ],
+    "top_k_farthest_real_ids": [
+      "RTI 12",
+      "RTI 19",
+      "Dienestrol",
+      "2,3,3',4,4'6-PCB",
+      "Santonin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Permethrin",
+      "3-Butanoyloxymethylphenytoin",
+      "Cypermethrin",
+      "Chlorimuron-ethyl (ph 7)",
+      "RTI 13"
+    ],
+    "top_k_farthest_real_ids": [
+      "norbormide",
+      "Raffinose",
+      "hexacosane",
+      "deoxycorticosterone acetate",
+      "Fluvalinate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "norflurazon",
+      "osthole",
+      "Trichlomethiazide",
+      "Inosine",
+      "5-Ethyl-5-phenylbarbital"
+    ],
+    "top_k_farthest_real_ids": [
+      "norbormide",
+      "Raffinose",
+      "Fluvalinate",
+      "Flucythrinate",
+      "deoxycorticosterone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "hydantoin",
+      "2-pyrrolidone",
+      "Ethyl pentanoate",
+      "Benzylchloride",
+      "Isopentyl formate"
+    ],
+    "top_k_farthest_real_ids": [
+      "2-methylpteridine",
+      "piperonal",
+      "5,6,7,8-tetrahydro-2-naphthol",
+      "Trichloromethane",
+      "Chlorodibromethane"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,3,3',4,4'6-PCB",
+      "Inosine",
+      "norflurazon",
+      "Santonin",
+      "Trichlomethiazide"
+    ],
+    "top_k_farthest_real_ids": [
+      "norbormide",
+      "Fluvalinate",
+      "Flucythrinate",
+      "Raffinose",
+      "deoxycorticosterone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "1-Nonanol",
+      "hydantoin",
+      "2,2,5-Trimethylhexane",
+      "Bromobenzene",
+      "5-Nonanone"
+    ],
+    "top_k_farthest_real_ids": [
+      "vamidothion",
+      "Trichloromethane",
+      "1,2-Dibromoethane",
+      "Chlorodibromethane",
+      "1,2,3,4-Tetrahydronapthalene"
+    ],
+    "k": 5
+  }
+]

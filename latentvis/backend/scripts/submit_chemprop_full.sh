@@ -1,0 +1,29 @@
+#!/bin/bash
+# Submit chemprop full pipeline job. Runs validation first to confirm code works.
+#
+# Usage:
+#   ./submit_chemprop_full.sh              # validate then submit
+#   ./submit_chemprop_full.sh --skip-validate   # submit without validation
+
+set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$BACKEND_DIR"
+
+SKIP_VALIDATE=false
+[[ "${1:-}" == "--skip-validate" ]] && SKIP_VALIDATE=true
+
+if [[ "$SKIP_VALIDATE" != true ]]; then
+  echo "=== 1/2 Running validation (tiny + short chemprop) ==="
+  if ! "$SCRIPT_DIR/validate_chemprop_pipeline.sh"; then
+    echo "Validation failed. Fix code before submitting. Use --skip-validate to bypass."
+    exit 1
+  fi
+  echo ""
+  echo "Validation passed."
+  echo ""
+fi
+
+echo "=== Submitting SLURM job (2hr, single CPU, exclusive node, auto-resubmit) ==="
+mkdir -p "$BACKEND_DIR/logs/slurm"
+sbatch "$SCRIPT_DIR/submit_chemprop_full.slurm"

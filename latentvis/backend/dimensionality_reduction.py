@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""
+Dimensionality reduction for latent space visualization.
+Supports PCA, MDS, UMAP, and t-SNE. All return (n_samples, 2) arrays.
+"""
+
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from typing import Tuple, Optional
+
+_RANDOM_STATE = 42
+
+
+def _standardize(X: np.ndarray) -> np.ndarray:
+    return StandardScaler().fit_transform(X)
+
+
+def reduce_pca(
+    X: np.ndarray,
+    n_components: int = 2,
+    standardize: bool = True,
+    random_state: int = _RANDOM_STATE,
+) -> np.ndarray:
+    from sklearn.decomposition import PCA
+    if standardize:
+        X = _standardize(X)
+    if X.shape[1] > 50:
+        pca50 = PCA(n_components=50, random_state=random_state)
+        X = pca50.fit_transform(X)
+    pca = PCA(n_components=n_components, random_state=random_state)
+    return pca.fit_transform(X)
+
+
+def reduce_mds(
+    X: np.ndarray,
+    n_components: int = 2,
+    standardize: bool = True,
+    random_state: int = _RANDOM_STATE,
+    n_jobs: int = 1,
+    max_iter: int = 300,
+) -> np.ndarray:
+    from sklearn.manifold import MDS
+    if standardize:
+        X = _standardize(X)
+    if X.shape[1] > 50:
+        from sklearn.decomposition import PCA
+        X = PCA(n_components=50, random_state=random_state).fit_transform(X)
+    mds = MDS(
+        n_components=n_components,
+        random_state=random_state,
+        dissimilarity="euclidean",
+        n_jobs=n_jobs,
+        max_iter=max_iter,
+    )
+    return mds.fit_transform(X)
+
+
+def reduce_umap(
+    X: np.ndarray,
+    n_components: int = 2,
+    standardize: bool = True,
+    random_state: int = _RANDOM_STATE,
+    n_neighbors: int = 15,
+    min_dist: float = 0.1,
+) -> np.ndarray:
+    try:
+        import umap
+    except ImportError:
+        raise ImportError("umap-learn is required for UMAP. Install with: pip install umap-learn")
+    if standardize:
+        X = _standardize(X)
+    reducer = umap.UMAP(
+        n_components=n_components,
+        random_state=random_state,
+        n_neighbors=n_neighbors,
+        min_dist=min_dist,
+        verbose=False,
+    )
+    return reducer.fit_transform(X)
+
+
+def reduce_tsne(
+    X: np.ndarray,
+    n_components: int = 2,
+    standardize: bool = True,
+    random_state: int = _RANDOM_STATE,
+    perplexity: float = 30.0,
+    n_iter: int = 500,
+) -> np.ndarray:
+    from sklearn.manifold import TSNE
+    if standardize:
+        X = _standardize(X)
+    if X.shape[1] > 50:
+        from sklearn.decomposition import PCA
+        X = PCA(n_components=50, random_state=random_state).fit_transform(X)
+    n = X.shape[0]
+    perp = min(perplexity, max(5, n // 4))
+    iters = min(n_iter, max(250, n * 5))  # at least 250 (sklearn requirement), cap for speed
+    tsne = TSNE(
+        n_components=n_components,
+        random_state=random_state,
+        perplexity=perp,
+        n_iter=iters,
+        init="pca",
+    )
+    return tsne.fit_transform(X)
+
+
+def reduce_embedding(
+    X: np.ndarray,
+    method: str = "mds",
+    random_state: int = _RANDOM_STATE,
+    **kwargs,
+) -> np.ndarray:
+    """
+    Single entry for 2D reduction. method in ('pca', 'mds', 'umap', 'tsne').
+    """
+    n_samples, n_features = X.shape[0], X.shape[1]
+    if n_samples < 2 or n_features < 2:
+        # Return trivial 2D so pipeline can continue (e.g. single-feature or single-sample cell)
+        out = np.zeros((n_samples, 2), dtype=np.float64)
+        if n_features >= 1:
+            out[:, 0] = X[:, 0]
+        return out
+    method = method.lower()
+    if method == "pca":
+        return reduce_pca(X, random_state=random_state, **kwargs)
+    if method == "mds":
+        return reduce_mds(X, random_state=random_state, **kwargs)
+    if method == "umap":
+        return reduce_umap(X, random_state=random_state, **kwargs)
+    if method == "tsne":
+        return reduce_tsne(X, random_state=random_state, **kwargs)
+    raise ValueError(f"Unknown method: {method}")
