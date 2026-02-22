@@ -50,6 +50,11 @@ def _json_default(obj):
     raise TypeError("Object of type {} is not JSON serializable".format(type(obj).__name__))
 
 
+def _epoch_sort_key(value):
+    s = str(value)
+    return (0, int(s), s) if s.isdigit() else (1, s)
+
+
 def _flatten_embeddings(emb):
     if emb.ndim > 2:
         return emb.reshape(emb.shape[0], -1)
@@ -212,8 +217,10 @@ def run_pipeline(
     if real_ids is None:
         real_ids = list(range(n_samples))
 
+    epoch_keys_sorted = sorted(dict.fromkeys(epoch_keys), key=_epoch_sort_key)
+    epoch_keys = epoch_keys_sorted
+
     if max_epochs is not None and max_epochs > 0:
-        epoch_keys_sorted = sorted(epoch_keys, key=lambda x: (int(x) if str(x).isdigit() else 0, x))
         keep_epochs = set(epoch_keys_sorted[: max_epochs])
         cells = {(ek, lk): v for (ek, lk), v in cells.items() if ek in keep_epochs}
         epoch_keys = [e for e in epoch_keys_sorted if e in keep_epochs]

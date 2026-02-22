@@ -183,7 +183,14 @@ export default function SankeyHorizontal({
         presentLayers.add(toKey);
       });
       const order = mode === "model" ? MODEL_ORDER : LAYER_ORDER;
-      const layers = order.filter((l) => presentLayers.has(l));
+      const fallbackOrder = Array.from(presentLayers).sort((a, b) => {
+        const na = Number(a);
+        const nb = Number(b);
+        if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+        return a.localeCompare(b);
+      });
+      const baseOrder = order.filter((l) => presentLayers.has(l));
+      const layers = baseOrder.length > 0 ? baseOrder : fallbackOrder;
       const layerIndex = new Map(layers.map((l, i) => [l, i]));
       const centerOffset = CELL_MARGIN_LEFT + INNER_W / 2;
       const isSynced = !!syncTransform;
@@ -436,14 +443,14 @@ export default function SankeyHorizontal({
       e.preventDefault();
       if (syncTransform) {
         const prevScale = syncTransform.scale;
-        const nextScale = Math.max(1, Math.min(4, prevScale * (1 + -e.deltaY * 0.002)));
+        const nextScale = Math.max(0.01, Math.min(4, prevScale * (1 + -e.deltaY * 0.002)));
         if (nextScale === prevScale) return;
         const currOffset = syncTransform.x - SYNC_BASE_OFFSET * prevScale;
         const nextX = currOffset + SYNC_BASE_OFFSET * nextScale;
         onSyncTransform?.({ x: nextX, y: 0, scale: nextScale });
       } else {
         setZoomX((prev) => {
-          const next = Math.max(1, Math.min(4, prev * (1 + -e.deltaY * 0.002)));
+          const next = Math.max(0.01, Math.min(4, prev * (1 + -e.deltaY * 0.002)));
           return next === prev ? prev : next;
         });
       }

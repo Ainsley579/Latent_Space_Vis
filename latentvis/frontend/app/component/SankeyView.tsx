@@ -4,7 +4,6 @@ import * as d3 from "d3";
 import ZoomPan from "./ZoomPan";
 import { CLUSTER_COLORS, SANKEY_2D_COLUMN_LINK_COLOR, SANKEY_2D_ROW_LINK_COLOR } from "../theme/colors";
 
-const DATA_PATH = "/data/dimenet/sankey/all_sankey.json";
 const DEFAULT_MAX_INSTANCE = 158;
 const SHOW_FMI_CSPA = false;
 
@@ -100,7 +99,22 @@ function normalizeSankeyData(raw: any): any {
   return data;
 }
 
+function sortRowKeys(keys: string[]): string[] {
+  return [...keys].sort((a, b) => {
+    const na = Number(a);
+    const nb = Number(b);
+    const aNum = !Number.isNaN(na) && String(na) === String(a);
+    const bNum = !Number.isNaN(nb) && String(nb) === String(b);
+    if (aNum && bNum) return na - nb;
+    if (aNum) return -1;
+    if (bNum) return 1;
+    return a.localeCompare(b);
+  });
+}
+
 type SankeyViewProps = {
+  dataPath?: string;
+  metricsPath?: string;
   onModelSelect?: (modelKey: string) => void;
   onTransform?: (t: { x: number; y: number; scale: number }) => void;
   externalTransform?: { x: number; y: number; scale: number };
@@ -113,6 +127,8 @@ type SankeyViewProps = {
 };
 
 export default function SankeyView({
+  dataPath = "/data/dimenet/sankey/all_sankey.json",
+  metricsPath = "/data/dimenet/bic_aic/avg_fmi_cspa_by_layer.json",
   onModelSelect,
   onTransform,
   externalTransform,
@@ -166,14 +182,14 @@ export default function SankeyView({
       window.location.href = next;
     }
 
-    fetch(DATA_PATH)
+    fetch(dataPath)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch all_sankey.json");
         return res.json();
       })
       .then((rawData) => {
         const data = normalizeSankeyData(rawData);
-        const ROW_NAMES: string[] = Object.keys(data?.epoch || {});
+        const ROW_NAMES: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
         const COLUMN_NAMES: string[] = Object.keys(data?.layer || {});
         const MODEL_SET = new Set(ROW_NAMES);
         const LAYER_SET = new Set(COLUMN_NAMES);
@@ -417,6 +433,9 @@ export default function SankeyView({
 
             const srcO = cellOrigin(sourceInfo.rowName, columnKey, cellW, cellH);
             const tgtO = cellOrigin(targetInfo.rowName, columnKey, cellW, cellH);
+            const srcRowIdx = ROW_INDEX.get(sourceInfo.rowName);
+            const tgtRowIdx = ROW_INDEX.get(targetInfo.rowName);
+            if (srcRowIdx == null || tgtRowIdx == null || Math.abs(srcRowIdx - tgtRowIdx) !== 1) return;
 
             const srcIdx = sourceInfo.idx;
             const tgtIdx = targetInfo.idx;
@@ -803,7 +822,7 @@ export default function SankeyView({
         console.error("Failed to build chart:", err);
         container.innerHTML = "<div style='color: red'>Failed to load visualization data.</div>";
       });
-  }, []);
+  }, [dataPath]);
 
   useEffect(() => {
     const container = chartRef.current;
@@ -899,7 +918,7 @@ export default function SankeyView({
 
   useEffect(() => {
     if (!SHOW_FMI_CSPA) return;
-    fetch("/data/dimenet/bic_aic/avg_fmi_cspa_by_layer.json")
+    fetch(metricsPath)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load avg fmi/cspa metrics");
         return res.json();
@@ -927,7 +946,7 @@ export default function SankeyView({
       .catch((err) => {
         console.error(err);
       });
-  }, []);
+  }, [metricsPath]);
 
   useEffect(() => {
     if (!SHOW_FMI_CSPA) {

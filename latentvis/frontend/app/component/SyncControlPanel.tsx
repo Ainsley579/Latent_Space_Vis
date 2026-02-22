@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 
 type SyncControlPanelProps = {
+  dataset: string;
+  onDatasetChange: (dataset: string) => void;
+  datasetOptions: string[];
   syncOn: boolean;
   onToggleSync: () => void;
   largePreviewOn: boolean;
@@ -12,6 +15,9 @@ type SyncControlPanelProps = {
 };
 
 export default function SyncControlPanel({
+  dataset,
+  onDatasetChange,
+  datasetOptions,
   syncOn,
   onToggleSync,
   largePreviewOn,
@@ -36,6 +42,20 @@ export default function SyncControlPanel({
         Control Panel
       </div>
       <div className="flex-1 min-h-0 px-2 py-2 flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
+        <label className="text-[10px] text-zinc-700 shrink-0">DATASET</label>
+        <select
+          className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
+          value={dataset}
+          onChange={(e) => onDatasetChange(e.target.value)}
+        >
+          {datasetOptions.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="flex items-center justify-start gap-2 min-w-0 mb-2">
         <span className="text-[10px] text-zinc-700">SYNC</span>
         <button

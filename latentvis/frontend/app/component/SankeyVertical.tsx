@@ -184,7 +184,13 @@ export default function SankeyVertical({
       const isSynced = !!syncTransform;
       const order = mode === "model" ? MODEL_ORDER : LAYER_ORDER;
       const presentOrder = order.filter((m) => (nodesByModel.get(m)?.length ?? 0) > 0);
-      const renderOrder = presentOrder.length > 0 ? presentOrder : order;
+      const fallbackOrder = Array.from(nodesByModel.keys()).sort((a, b) => {
+        const na = Number(a);
+        const nb = Number(b);
+        if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+        return a.localeCompare(b);
+      });
+      const renderOrder = presentOrder.length > 0 ? presentOrder : fallbackOrder;
 
       // In rotated rendering, x-axis maps to screen Y (vertical direction).
       const unsyncedLeftPad = UNSYNC_TOP_PAD;
@@ -442,14 +448,14 @@ export default function SankeyVertical({
       e.preventDefault();
       if (syncTransform) {
         const prevScale = syncTransform.scale;
-        const nextScale = Math.max(1, Math.min(4, prevScale * (1 + -e.deltaY * 0.002)));
+        const nextScale = Math.max(0.01, Math.min(4, prevScale * (1 + -e.deltaY * 0.002)));
         if (nextScale === prevScale) return;
         const currOffset = syncTransform.y - SYNC_BASE_OFFSET * prevScale;
         const nextY = currOffset + SYNC_BASE_OFFSET * nextScale;
         onSyncTransform?.({ x: 0, y: nextY, scale: nextScale });
       } else {
         setZoomX((prev) => {
-          const next = Math.max(1, Math.min(4, prev * (1 + -e.deltaY * 0.002)));
+          const next = Math.max(0.01, Math.min(4, prev * (1 + -e.deltaY * 0.002)));
           return next === prev ? prev : next;
         });
       }

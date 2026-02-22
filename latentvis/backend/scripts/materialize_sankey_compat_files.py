@@ -64,15 +64,23 @@ def ordered_models(models: Iterable[str]) -> List[str]:
             unique.append(m)
             seen.add(m)
 
-    def rank(name: str) -> Tuple[int, str]:
+    def rank(name: str) -> Tuple[int, object]:
         n = name.lower()
+        # Numeric epochs (e.g. 0..99) should keep numeric order.
+        if re.fullmatch(r"\d+", n):
+            return (0, int(n))
         if "10conf" in n:
-            return (0, n)
-        if "noaug" in n:
             return (1, n)
-        return (2, n)
+        if "noaug" in n:
+            return (2, n)
+        return (3, n)
 
     return sorted(unique, key=rank)
+
+
+def cluster_id_from_label(label: str) -> int:
+    m = re.search(r"_C(\d+)$", label)
+    return int(m.group(1)) if m else 0
 
 
 def load_csv(csv_path: Path) -> Tuple[List[str], List[Dict[str, str]]]:
@@ -113,7 +121,7 @@ def build_model_sankey_rows(
     return out
 
 
-def build_vertical_rows(
+def build_vertical_rows_for_pair(
     rows: Sequence[Dict[str, str]], layers: Sequence[str], source_model: str, target_model: str
 ) -> Tuple[List[Dict[str, object]], Dict[str, List[Dict[str, object]]]]:
     by_real_and_model: Dict[Tuple[str, str], Dict[str, str]] = {}
@@ -153,6 +161,120 @@ def build_vertical_rows(
     return all_rows, per_layer
 
 
+def build_vertical_rows_all_pairs(
+    rows: Sequence[Dict[str, str]], layers: Sequence[str], ordered: Sequence[str]
+) -> Tuple[List[Dict[str, object]], Dict[str, List[Dict[str, object]]]]:
+    all_rows: List[Dict[str, object]] = []
+    per_layer: Dict[str, List[Dict[str, object]]] = defaultdict(list)
+
+    for i in range(len(ordered) - 1):
+        src_model = ordered[i]
+        tgt_model = ordered[i + 1]
+        pair_rows, pair_per_layer = build_vertical_rows_for_pair(rows, layers, src_model, tgt_model)
+        all_rows.extend(pair_rows)
+        for layer, items in pair_per_layer.items():
+            per_layer[layer].extend(items)
+
+    return all_rows, per_layer
+
+
+def build_edges_from_cluster_pairs(
+    pairs: Sequence[Tuple[int, int]], source_group: str, target_group: str
+) -> List[Dict[str, object]]:
+    counts: Dict[Tuple[int, int], int] = defaultdict(int)
+    source_totals: Dict[int, int] = defaultdict(int)
+    for c1, c2 in pairs:
+        counts[(c1, c2)] += 1
+        source_totals[c1] += 1
+
+    if not counts:
+        return []
+
+    labels = set()
+    for c1, c2 in counts.keys():
+        labels.add(f"{source_group}_C{c1}")
+        labels.add(f"{target_group}_C{c2}")
+    ordered_labels = sorted(
+        labels,
+        key=lambda s: (s[: s.rfind("_C")] if "_C" in s else s, cluster_id_from_label(s)),
+    )
+    label_to_id = {label: idx for idx, label in enumerate(ordered_labels)}
+
+    edges: List[Dict[str, object]] = []
+    for (c1, c2), value in sorted(counts.items(), key=lambda kv: (kv[0][0], kv[0][1])):
+        src = f"{source_group}_C{c1}"
+        tgt = f"{target_group}_C{c2}"
+        total = source_totals.get(c1, 0)
+        pct = round((100.0 * value / total), 4) if total > 0 else 0.0
+        edges.append(
+            {
+                "source_node_id": label_to_id[src],
+                "target_node_id": label_to_id[tgt],
+                "source_label": src,
+                "target_label": tgt,
+                "value": value,
+                "pct_of_source": pct,
+            }
+        )
+    return edges
+
+
+def build_all_sankey(
+    rows: Sequence[Dict[str, str]], layers: Sequence[str], models: Sequence[str]
+) -> Dict[str, Dict[str, Dict[str, object]]]:
+    by_real_and_model: Dict[Tuple[str, str], Dict[str, str]] = {}
+    rows_by_model: Dict[str, List[Dict[str, str]]] = defaultdict(list)
+    for row in rows:
+        model = (row.get("epoch") or row.get("model_type") or "").strip()
+        real_id = row.get("real_id")
+        if not model or real_id is None:
+            continue
+        rows_by_model[model].append(row)
+        by_real_and_model[(str(real_id), model)] = row
+
+    real_ids = sorted({rid for rid, _m in by_real_and_model.keys()}, key=lambda x: int(x) if x.isdigit() else x)
+    out: Dict[str, Dict[str, Dict[str, object]]] = {"epoch": {}, "layer": {}}
+
+    for model in models:
+        model_rows = rows_by_model.get(model, [])
+        edges: List[Dict[str, object]] = []
+        for i in range(len(layers) - 1):
+            l1 = layers[i]
+            l2 = layers[i + 1]
+            pairs: List[Tuple[int, int]] = []
+            for row in model_rows:
+                c1 = parse_int(row.get(f"{l1}_cluster", ""))
+                c2 = parse_int(row.get(f"{l2}_cluster", ""))
+                if c1 is None or c2 is None:
+                    continue
+                pairs.append((c1, c2))
+            edges.extend(build_edges_from_cluster_pairs(pairs, l1, l2))
+        if edges:
+            out["epoch"][model] = {"type": "spatial_epoch", "epoch": model, "edges": edges}
+
+    for layer in layers:
+        edges = []
+        for i in range(len(models) - 1):
+            src_model = models[i]
+            tgt_model = models[i + 1]
+            pairs: List[Tuple[int, int]] = []
+            for rid in real_ids:
+                src = by_real_and_model.get((rid, src_model))
+                tgt = by_real_and_model.get((rid, tgt_model))
+                if src is None or tgt is None:
+                    continue
+                c1 = parse_int(src.get(f"{layer}_cluster", ""))
+                c2 = parse_int(tgt.get(f"{layer}_cluster", ""))
+                if c1 is None or c2 is None:
+                    continue
+                pairs.append((c1, c2))
+            edges.extend(build_edges_from_cluster_pairs(pairs, src_model, tgt_model))
+        if edges:
+            out["layer"][layer] = {"type": "spatial_layer", "layer": layer, "edges": edges}
+
+    return out
+
+
 def write_json(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -185,6 +307,12 @@ def main() -> None:
         type=str,
         default=None,
         help="Target model for vertical_model_samples_*.json (default: auto pick)",
+    )
+    parser.add_argument(
+        "--vertical-mode",
+        choices=["auto", "adjacent"],
+        default="auto",
+        help="auto: explicit source/target if provided else first two; adjacent: generate transitions for all adjacent model pairs",
     )
     args = parser.parse_args()
 
@@ -220,10 +348,30 @@ def main() -> None:
             write_json(full_path, model_rows.get(model, []))
             written.append(full_path)
 
-    src_model = args.vertical_source_model or (models[0] if len(models) >= 1 else "")
-    tgt_model = args.vertical_target_model or (models[1] if len(models) >= 2 else "")
-    if src_model and tgt_model and src_model != tgt_model:
-        all_vertical, per_layer = build_vertical_rows(rows, layers, src_model, tgt_model)
+    all_sankey = build_all_sankey(rows, layers, models)
+    all_sankey_path = sankey_dir / "all_sankey.json"
+    write_json(all_sankey_path, all_sankey)
+    written.append(all_sankey_path)
+
+    sankey_samples: List[Dict[str, object]] = []
+    for model in models:
+        sankey_samples.extend(model_rows.get(model, []))
+    sankey_samples_path = sankey_dir / "sankey_samples.json"
+    write_json(sankey_samples_path, sankey_samples)
+    written.append(sankey_samples_path)
+
+    all_vertical: List[Dict[str, object]] = []
+    per_layer: Dict[str, List[Dict[str, object]]] = defaultdict(list)
+
+    if args.vertical_mode == "adjacent":
+        all_vertical, per_layer = build_vertical_rows_all_pairs(rows, layers, models)
+    else:
+        src_model = args.vertical_source_model or (models[0] if len(models) >= 1 else "")
+        tgt_model = args.vertical_target_model or (models[1] if len(models) >= 2 else "")
+        if src_model and tgt_model and src_model != tgt_model:
+            all_vertical, per_layer = build_vertical_rows_for_pair(rows, layers, src_model, tgt_model)
+
+    if all_vertical:
         all_path = sankey_dir / "vertical_model_samples.json"
         write_json(all_path, all_vertical)
         written.append(all_path)
