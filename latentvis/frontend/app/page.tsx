@@ -20,13 +20,13 @@ type SankeySampleRow = {
 };
 
 export default function Home() {
-  const [sankeyPath, setSankeyPath] = useState("/data/sankey/noaug_sankey_samples.json");
-  const [sankeyPathVertical, setSankeyPathVertical] = useState("/data/sankey/vertical_model_samples_emb.json");
+  const [sankeyPath, setSankeyPath] = useState("/data/dimenet/sankey/noaug_sankey_samples.json");
+  const [sankeyPathVertical, setSankeyPathVertical] = useState("/data/dimenet/sankey/vertical_model_samples_emb.json");
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [selectedLayer, setSelectedLayer] = useState("emb");
   const [selectedModel, setSelectedModel] = useState("dimenet_noaug");
   const [scatterProjection, setScatterProjection] = useState<"default" | "pca" | "mds" | "umap" | "tsne">("default");
-  const [scatterPath, setScatterPath] = useState("/data/scatterplot/dimenet_noaug_emb.json");
+  const [scatterPath, setScatterPath] = useState("/data/dimenet/scatterplot/dimenet_noaug_emb.json");
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -182,7 +182,7 @@ export default function Home() {
   useEffect(() => {
     const base = `${selectedModel}_${selectedLayer}`;
     const file = scatterProjection === "default" ? `${base}.json` : `${base}_${scatterProjection}.json`;
-    setScatterPath(`/data/scatterplot/${file}`);
+    setScatterPath(`/data/dimenet/scatterplot/${file}`);
   }, [selectedModel, selectedLayer, scatterProjection]);
 
   useEffect(() => {
@@ -292,7 +292,7 @@ export default function Home() {
   }, [selectedNode, tabCycleData]);
 
   useEffect(() => {
-    fetch("/data/topk/cluster_representatives.json")
+    fetch("/data/dimenet/topk/cluster_representatives.json")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load topk data");
         return res.json();
@@ -308,7 +308,7 @@ export default function Home() {
 
 
   useEffect(() => {
-    fetch("/data/substructures/cluster_substructures.json")
+    fetch("/data/dimenet/substructures/cluster_substructures.json")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load substructure data");
         return res.json();
@@ -408,7 +408,7 @@ export default function Home() {
   ) {
     const safeModel = model.replace(/[^a-zA-Z0-9_-]/g, "_");
     const safeLayer = layer.replace(/[^a-zA-Z0-9_-]/g, "_");
-    return `/data/substructures/images/${safeModel}_${safeLayer}_cluster${cluster}_${group}.png`;
+    return `/data/dimenet/substructures/images/${safeModel}_${safeLayer}_cluster${cluster}_${group}.png`;
   }
 
   function clusterBadgeColor(cluster: number) {
@@ -507,9 +507,9 @@ export default function Home() {
               <SankeyView
                 onModelSelect={(model) => {
                   if (model === "dimenet_noaug") {
-                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                    setSankeyPath("/data/dimenet/sankey/noaug_sankey_samples.json");
                   } else if (model === "dimenet10conf") {
-                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                    setSankeyPath("/data/dimenet/sankey/10conf_sankey_samples.json");
                   }
                   setSelectedModel(model);
                   setSelectedNode(null);
@@ -517,7 +517,7 @@ export default function Home() {
                 }}
                 onLayerSelect={(layer) => {
                   setSelectedLayer(layer);
-                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${layer}.json`);
+                  setSankeyPathVertical(`/data/dimenet/sankey/vertical_model_samples_${layer}.json`);
                   setSelectedNode(null);
                   setSelectedIds(null);
                 }}
@@ -526,11 +526,11 @@ export default function Home() {
                   setSelectedModel(sel.model);
                   setSelectedLayer(sel.layer);
                   if (sel.model === "dimenet_noaug") {
-                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                    setSankeyPath("/data/dimenet/sankey/noaug_sankey_samples.json");
                   } else if (sel.model === "dimenet10conf") {
-                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                    setSankeyPath("/data/dimenet/sankey/10conf_sankey_samples.json");
                   }
-                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                  setSankeyPathVertical(`/data/dimenet/sankey/vertical_model_samples_${sel.layer}.json`);
                   setCellSelected(true);
                 }}
                 selectedNode={selectedNode}
@@ -583,11 +583,11 @@ export default function Home() {
                   setSelectedModel(sel.model);
                   setSelectedLayer(sel.layer ?? selectedLayer);
                   if (sel.model === "dimenet_noaug") {
-                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                    setSankeyPath("/data/dimenet/sankey/noaug_sankey_samples.json");
                   } else if (sel.model === "dimenet10conf") {
-                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                    setSankeyPath("/data/dimenet/sankey/10conf_sankey_samples.json");
                   }
-                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer ?? selectedLayer}.json`);
+                  setSankeyPathVertical(`/data/dimenet/sankey/vertical_model_samples_${sel.layer ?? selectedLayer}.json`);
                   setCellSelected(true);
                 }}
               />
@@ -661,11 +661,11 @@ export default function Home() {
                   setSelectedModel(sel.model);
                   setSelectedLayer(sel.layer);
                   if (sel.model === "dimenet_noaug") {
-                    setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                    setSankeyPath("/data/dimenet/sankey/noaug_sankey_samples.json");
                   } else if (sel.model === "dimenet10conf") {
-                    setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                    setSankeyPath("/data/dimenet/sankey/10conf_sankey_samples.json");
                   }
-                  setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                  setSankeyPathVertical(`/data/dimenet/sankey/vertical_model_samples_${sel.layer}.json`);
                   setCellSelected(true);
                 }}
               />
@@ -719,11 +719,11 @@ export default function Home() {
                       setSelectedModel(sel.model);
                       setSelectedLayer(sel.layer);
                       if (sel.model === "dimenet_noaug") {
-                        setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                        setSankeyPath("/data/dimenet/sankey/noaug_sankey_samples.json");
                       } else if (sel.model === "dimenet10conf") {
-                        setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                        setSankeyPath("/data/dimenet/sankey/10conf_sankey_samples.json");
                       }
-                      setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                      setSankeyPathVertical(`/data/dimenet/sankey/vertical_model_samples_${sel.layer}.json`);
                     }}
                     onClusterSelect={(sel) => {
                       if (!sel.model || !sel.layer) return;
@@ -735,11 +735,11 @@ export default function Home() {
                       setSelectedModel(sel.model);
                       setSelectedLayer(sel.layer);
                       if (sel.model === "dimenet_noaug") {
-                        setSankeyPath("/data/sankey/noaug_sankey_samples.json");
+                        setSankeyPath("/data/dimenet/sankey/noaug_sankey_samples.json");
                       } else if (sel.model === "dimenet10conf") {
-                        setSankeyPath("/data/sankey/10conf_sankey_samples.json");
+                        setSankeyPath("/data/dimenet/sankey/10conf_sankey_samples.json");
                       }
-                      setSankeyPathVertical(`/data/sankey/vertical_model_samples_${sel.layer}.json`);
+                      setSankeyPathVertical(`/data/dimenet/sankey/vertical_model_samples_${sel.layer}.json`);
                     }}
                     onClearSelection={() => {
                       setSelectedNode(null);

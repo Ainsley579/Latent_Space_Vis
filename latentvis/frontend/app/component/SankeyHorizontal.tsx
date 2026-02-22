@@ -46,7 +46,7 @@ const UNSYNC_LEFT_PAD = 20;
 const UNSYNC_RIGHT_PAD = 20;
 
 export default function SankeyHorizontal({
-  dataPath = "/data/sankey/noaug_sankey_samples.json",
+  dataPath = "/data/dimenet/sankey/sankey_samples.json",
   syncTransform,
   onSyncTransform,
   mode = "layer",

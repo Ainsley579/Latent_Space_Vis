@@ -4,9 +4,101 @@ import * as d3 from "d3";
 import ZoomPan from "./ZoomPan";
 import { CLUSTER_COLORS, SANKEY_2D_COLUMN_LINK_COLOR, SANKEY_2D_ROW_LINK_COLOR } from "../theme/colors";
 
-const DATA_PATH = "/data/sankey/all_sankey.json";
+const DATA_PATH = "/data/dimenet/sankey/all_sankey.json";
 const DEFAULT_MAX_INSTANCE = 158;
 const SHOW_FMI_CSPA = false;
+
+type SankeyEdge = {
+  source_node_id?: number;
+  target_node_id?: number;
+  source_label?: string;
+  target_label?: string;
+  value?: number;
+  pct_of_source?: number;
+};
+
+type SankeyNodeLike = {
+  id: number;
+  label: string;
+  value: number;
+  previous: number;
+};
+
+function parseClusterFromLabel(label: string): number {
+  const m = /_C(\d+)$/.exec(label);
+  return m ? Number(m[1]) : 0;
+}
+
+function parseGroupFromLabel(label: string): string {
+  const i = label.lastIndexOf("_C");
+  return i === -1 ? label : label.slice(0, i);
+}
+
+function buildNodesByGroup(edges: SankeyEdge[]): Record<string, SankeyNodeLike[]> {
+  const inSum = new Map<string, number>();
+  const outSum = new Map<string, number>();
+  const labelsByGroup = new Map<string, Set<string>>();
+
+  edges.forEach((e) => {
+    const src = String(e.source_label ?? "");
+    const tgt = String(e.target_label ?? "");
+    const val = Number(e.value ?? 0) || 0;
+    if (!src || !tgt || val <= 0) return;
+
+    outSum.set(src, (outSum.get(src) ?? 0) + val);
+    inSum.set(tgt, (inSum.get(tgt) ?? 0) + val);
+
+    const srcGroup = parseGroupFromLabel(src);
+    const tgtGroup = parseGroupFromLabel(tgt);
+    if (!labelsByGroup.has(srcGroup)) labelsByGroup.set(srcGroup, new Set());
+    if (!labelsByGroup.has(tgtGroup)) labelsByGroup.set(tgtGroup, new Set());
+    labelsByGroup.get(srcGroup)?.add(src);
+    labelsByGroup.get(tgtGroup)?.add(tgt);
+  });
+
+  const out: Record<string, SankeyNodeLike[]> = {};
+  labelsByGroup.forEach((labels, group) => {
+    const sorted = Array.from(labels).sort((a, b) => parseClusterFromLabel(a) - parseClusterFromLabel(b));
+    let previous = 0;
+    out[group] = sorted.map((label) => {
+      const value = Math.max(inSum.get(label) ?? 0, outSum.get(label) ?? 0);
+      const node = {
+        id: parseClusterFromLabel(label),
+        label,
+        value,
+        previous,
+      };
+      previous += value;
+      return node;
+    });
+  });
+
+  return out;
+}
+
+function normalizeSankeyData(raw: any): any {
+  const data = JSON.parse(JSON.stringify(raw ?? {}));
+
+  Object.keys(data.epoch || {}).forEach((rowKey) => {
+    const rowObj = data.epoch[rowKey] || {};
+    const edges: SankeyEdge[] = Array.isArray(rowObj.edges) ? rowObj.edges : [];
+    if (!rowObj.nodes || Object.keys(rowObj.nodes).length === 0) {
+      rowObj.nodes = buildNodesByGroup(edges);
+    }
+    data.epoch[rowKey] = rowObj;
+  });
+
+  Object.keys(data.layer || {}).forEach((colKey) => {
+    const colObj = data.layer[colKey] || {};
+    const edges: SankeyEdge[] = Array.isArray(colObj.edges) ? colObj.edges : [];
+    if (!colObj.nodes || Object.keys(colObj.nodes).length === 0) {
+      colObj.nodes = buildNodesByGroup(edges);
+    }
+    data.layer[colKey] = colObj;
+  });
+
+  return data;
+}
 
 type SankeyViewProps = {
   onModelSelect?: (modelKey: string) => void;
@@ -79,7 +171,8 @@ export default function SankeyView({
         if (!res.ok) throw new Error("Failed to fetch all_sankey.json");
         return res.json();
       })
-      .then((data) => {
+      .then((rawData) => {
+        const data = normalizeSankeyData(rawData);
         const ROW_NAMES: string[] = Object.keys(data?.epoch || {});
         const COLUMN_NAMES: string[] = Object.keys(data?.layer || {});
         const MODEL_SET = new Set(ROW_NAMES);
@@ -232,6 +325,9 @@ export default function SankeyView({
 
         const x = d3.scaleBand<number>().range([0, innerW]).domain(d3.range(maxClusters)).padding(0.2);
         const y = d3.scaleLinear().domain([0, maxInstance]).range([innerH, 0]);
+        const MAX_NODE_BAR_WIDTH = 20;
+        const nodeBarWidth = Math.min(x.bandwidth(), MAX_NODE_BAR_WIDTH);
+        const nodeBarOffset = (x.bandwidth() - nodeBarWidth) / 2;
 
         const nodeLookup = new Map<string, { rowName: string; columnName: string; idx: number; node: any }>();
 
@@ -299,11 +395,21 @@ export default function SankeyView({
             let sourceInfo: any = null;
             let targetInfo: any = null;
             const nodesByRow = columnObj.nodes || {};
+            const sourceLabel = String(edge.source_label ?? "");
+            const targetLabel = String(edge.target_label ?? "");
 
             Object.keys(nodesByRow).forEach((rowName) => {
               (nodesByRow[rowName] || []).forEach((node: any, idx: number) => {
-                if (node.id === edge.source_node_id) sourceInfo = { node, rowName, idx };
-                if (node.id === edge.target_node_id) targetInfo = { node, rowName, idx };
+                const nodeLabel = String(node?.label ?? "");
+                const sourceByLabel = sourceLabel !== "" && nodeLabel === sourceLabel;
+                const targetByLabel = targetLabel !== "" && nodeLabel === targetLabel;
+                const sourceById =
+                  sourceLabel === "" && edge.source_node_id !== undefined && node?.id === edge.source_node_id;
+                const targetById =
+                  targetLabel === "" && edge.target_node_id !== undefined && node?.id === edge.target_node_id;
+
+                if (sourceByLabel || sourceById) sourceInfo = { node, rowName, idx };
+                if (targetByLabel || targetById) targetInfo = { node, rowName, idx };
               });
             });
 
@@ -332,9 +438,9 @@ export default function SankeyView({
 
             let pathD = "";
             if (!SWAP_AXES) {
-              const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + x.bandwidth() / 2;
+              const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
               const srcCenterY = srcO.y + cellMargin.top + sBarY + Math.max(0, sBarH);
-              const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + x.bandwidth() / 2;
+              const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
               const tgtCenterY = tgtO.y + cellMargin.top + tBarY;
               const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
               pathD = `M ${srcCenterX},${srcCenterY}
@@ -342,9 +448,9 @@ export default function SankeyView({
                        ${tgtCenterX},${tgtCenterY - dy}
                        ${tgtCenterX},${tgtCenterY}`;
             } else {
-              const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + x.bandwidth();
+              const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
               const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
-              const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number);
+              const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
               const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
               const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
               pathD = `M ${srcCenterX},${srcCenterY}
@@ -397,9 +503,9 @@ export default function SankeyView({
 
             let pathD = "";
             if (!SWAP_AXES) {
-              const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + x.bandwidth();
+              const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
               const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
-              const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number);
+              const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
               const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
               const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
               pathD = `M ${srcCenterX},${srcCenterY}
@@ -407,9 +513,9 @@ export default function SankeyView({
                        ${tgtCenterX - dx},${tgtCenterY}
                        ${tgtCenterX},${tgtCenterY}`;
             } else {
-              const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + x.bandwidth() / 2;
+              const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
               const srcCenterY = srcO.y + cellMargin.top + sBarY + Math.max(0, sBarH);
-              const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + x.bandwidth() / 2;
+              const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
               const tgtCenterY = tgtO.y + cellMargin.top + tBarY;
               const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
               pathD = `M ${srcCenterX},${srcCenterY}
@@ -430,9 +536,9 @@ export default function SankeyView({
             .enter()
             .append("rect")
             .attr("class", "bar")
-            .attr("x", (_d: any, i: number) => x(i) as number)
+            .attr("x", (_d: any, i: number) => (x(i) as number) + nodeBarOffset)
             .attr("y", (d: any) => innerH - y(d.previous))
-            .attr("width", x.bandwidth())
+            .attr("width", nodeBarWidth)
             .attr("height", (d: any) => innerH - y(d.value))
             .attr("fill", "#aaa")
             .attr("data-row", rowName)
@@ -793,7 +899,7 @@ export default function SankeyView({
 
   useEffect(() => {
     if (!SHOW_FMI_CSPA) return;
-    fetch("/data/bic_aic/avg_fmi_cspa_by_layer.json")
+    fetch("/data/dimenet/bic_aic/avg_fmi_cspa_by_layer.json")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load avg fmi/cspa metrics");
         return res.json();

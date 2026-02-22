@@ -46,7 +46,7 @@ const UNSYNC_TOP_PAD = 14;
 const UNSYNC_BOTTOM_PAD = 14;
 
 export default function SankeyVertical({
-  dataPath = "/data/sankey/noaug_sankey_samples.json",
+  dataPath = "/data/dimenet/sankey/sankey_samples.json",
   syncTransform,
   onSyncTransform,
   mode = "model",

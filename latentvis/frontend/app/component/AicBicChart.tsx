@@ -199,7 +199,7 @@ export default function AicBicChart({ dataPath, allDataPaths, isSelected }: AicB
       });
 
     function pMatch(d: AicBicData, path: string) {
-      const expect = `/data/bic_aic/${d.model}_${d.layer}.json`;
+      const expect = `/data/dimenet/bic_aic/${d.model}_${d.layer}.json`;
       return path === expect;
     }
 
