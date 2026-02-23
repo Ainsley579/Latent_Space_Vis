@@ -24,7 +24,9 @@ const LOCAL_JSME_SCRIPT_SRC = "/jsme/jsme.nocache.js";
 
 export default function StructureEditorPanel() {
   const reactId = useId();
+  const inlineHostId = useMemo(() => `jsme_inline_host_${reactId.replace(/:/g, "_")}`, [reactId]);
   const hostId = useMemo(() => `jsme_modal_host_${reactId.replace(/:/g, "_")}`, [reactId]);
+  const inlineEditorRef = useRef<JsmeInstance | null>(null);
   const modalEditorRef = useRef<JsmeInstance | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [scriptReady, setScriptReady] = useState(false);
@@ -99,6 +101,25 @@ export default function StructureEditorPanel() {
   }, []);
 
   useEffect(() => {
+    if (!scriptReady) return;
+    const host = document.getElementById(inlineHostId);
+    if (!host) return;
+    host.innerHTML = "";
+
+    if (!window.JSApplet?.JSME) return;
+
+    try {
+      inlineEditorRef.current = new window.JSApplet.JSME(inlineHostId, "100%", "100%") as JsmeInstance;
+      if (currentJme && inlineEditorRef.current?.readMolecule) {
+        inlineEditorRef.current.readMolecule(currentJme);
+      }
+    } catch (e) {
+      console.error(e);
+      window.setTimeout(() => setError("Unable to load JSME editor."), 0);
+    }
+  }, [scriptReady, inlineHostId]);
+
+  useEffect(() => {
     if (!isOpen || !scriptReady) return;
     const host = document.getElementById(hostId);
     if (!host) return;
@@ -119,6 +140,17 @@ export default function StructureEditorPanel() {
     }
   }, [isOpen, scriptReady, currentJme, hostId]);
 
+  useEffect(() => {
+    if (!currentJme || !inlineEditorRef.current?.readMolecule) return;
+    inlineEditorRef.current.readMolecule(currentJme);
+  }, [currentJme]);
+
+  function openModalFromInline() {
+    const inlineJme = inlineEditorRef.current?.jmeFile?.();
+    if (inlineJme) setCurrentJme(inlineJme);
+    setIsOpen(true);
+  }
+
   function closeModalAndSync() {
     const modalJme = modalEditorRef.current?.jmeFile?.();
     if (modalJme) setCurrentJme(modalJme);
@@ -130,16 +162,19 @@ export default function StructureEditorPanel() {
       <div className="shrink-0 px-2 py-1 text-sm font-semibold text-zinc-700 border-b border-zinc-200">
         Structure Editor
       </div>
-      <div className="flex-1 min-h-0 p-3 flex items-center justify-center">
+      <div className="flex-1 min-h-0 p-3 flex flex-col gap-2">
+        <div className="h-48 w-full border border-zinc-200 rounded bg-white overflow-hidden">
+          <div id={inlineHostId} className="w-full h-full" />
+        </div>
         <button
           type="button"
-          className="px-4 py-2 rounded border border-zinc-300 bg-white text-sm text-zinc-700 hover:bg-zinc-50"
-          onClick={() => setIsOpen(true)}
+          className="self-center px-4 py-2 rounded border border-zinc-300 bg-white text-sm text-zinc-700 hover:bg-zinc-50"
+          onClick={openModalFromInline}
         >
-          {currentJme ? "Open JSME (Edit)" : "Open JSME"}
+          {currentJme ? "Open Large JSME (Edit)" : "Open Large JSME"}
         </button>
         {error && (
-          <div className="mt-2 text-xs text-amber-700">
+          <div className="text-xs text-amber-700">
             {error}
           </div>
         )}
