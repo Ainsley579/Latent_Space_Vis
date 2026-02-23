@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal, SankeyLink, SankeyNode } from "d3-sankey";
 import { CLUSTER_COLORS, SANKEY_NODE_COLOR, SANKEY_LINK_COLOR, HIGHLIGHT_RED } from "../theme/colors";
@@ -135,9 +135,13 @@ export default function SankeyHorizontal({
   const dragStartRef = useRef<{ x: number; panX: number }>({ x: 0, panX: 0 });
   const CELL_W = 120;
   const SYNC_BASE_OFFSET = 1 * CELL_W;
+  const ZOOM_MIN = 0.01;
+  const ZOOM_MAX = 4;
+  const ZOOM_STEP = 1.15;
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [zoomX, setZoomX] = useState(1);
   const [panX, setPanX] = useState(0);
+  const [showZoomControls, setShowZoomControls] = useState(false);
   const isControlled = activeNodeKey !== undefined;
   const displayActiveNode = isControlled ? (activeNodeKey ?? null) : activeNode;
 
@@ -166,6 +170,7 @@ export default function SankeyHorizontal({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    const host = container;
     container.innerHTML = "";
 
     const ro = new ResizeObserver(() => draw());
@@ -505,19 +510,14 @@ export default function SankeyHorizontal({
       });
 
     function onWheel(e: WheelEvent) {
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (!Number.isFinite(delta) || delta === 0) return;
       e.preventDefault();
       if (syncTransform) {
-        const prevScale = syncTransform.scale;
-        const nextScale = Math.max(0.01, Math.min(4, prevScale * (1 + -e.deltaY * 0.002)));
-        if (nextScale === prevScale) return;
-        const currOffset = syncTransform.x - SYNC_BASE_OFFSET * prevScale;
-        const nextX = currOffset + SYNC_BASE_OFFSET * nextScale;
-        onSyncTransform?.({ x: nextX, y: 0, scale: nextScale });
+        const nextPanX = syncTransform.x - SYNC_BASE_OFFSET * syncTransform.scale - delta;
+        onSyncTransform?.({ x: nextPanX + SYNC_BASE_OFFSET * syncTransform.scale, y: 0, scale: syncTransform.scale });
       } else {
-        setZoomX((prev) => {
-          const next = Math.max(0.01, Math.min(4, prev * (1 + -e.deltaY * 0.002)));
-          return next === prev ? prev : next;
-        });
+        host.scrollLeft += delta;
       }
     }
 
@@ -652,15 +652,113 @@ export default function SankeyHorizontal({
     draggingRef.current = false;
   }
 
+  function applyZoom(multiplier: number) {
+    if (syncTransform) {
+      const prevScale = syncTransform.scale;
+      const nextScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, prevScale * multiplier));
+      if (nextScale === prevScale) return;
+      const currOffset = syncTransform.x - SYNC_BASE_OFFSET * prevScale;
+      const nextX = currOffset + SYNC_BASE_OFFSET * nextScale;
+      onSyncTransform?.({ x: nextX, y: 0, scale: nextScale });
+      return;
+    }
+    setZoomX((prev) => {
+      const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, prev * multiplier));
+      return next === prev ? prev : next;
+    });
+  }
+
+  const zoomBtnBaseStyle: CSSProperties = {
+    width: 34,
+    height: 34,
+    border: "none",
+    background: "rgba(255,255,255,0.96)",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#111827",
+    cursor: "pointer",
+    transition: "background 0.12s ease, transform 0.12s ease",
+  };
+
   return (
     <div
-      ref={containerRef}
-      className="w-full h-full"
-      style={{ overflowX: "hidden", overflowY: "hidden", cursor: syncTransform ? "default" : draggingRef.current ? "grabbing" : "grab" }}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-    />
+      className="w-full h-full relative"
+      onMouseEnter={() => setShowZoomControls(true)}
+      onMouseLeave={() => setShowZoomControls(false)}
+    >
+      <div
+        ref={containerRef}
+        className="w-full h-full"
+        style={{ overflowX: "auto", overflowY: "hidden", cursor: syncTransform ? "default" : draggingRef.current ? "grabbing" : "grab" }}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+      />
+      <div
+        style={{
+          position: "absolute",
+          right: 8,
+          bottom: 8,
+          display: "flex",
+          gap: 0,
+          zIndex: 30,
+          pointerEvents: showZoomControls ? "auto" : "none",
+          opacity: showZoomControls ? 1 : 0,
+          transition: "opacity 0.15s ease",
+          border: "1px solid #d4d4d8",
+          borderRadius: 8,
+          overflow: "hidden",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+          background: "rgba(255,255,255,0.9)",
+        }}
+      >
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            applyZoom(ZOOM_STEP);
+          }}
+          title="Zoom in"
+          aria-label="Zoom in"
+          style={{ ...zoomBtnBaseStyle, borderRight: "1px solid #e4e4e7" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#f3f4f6";
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.96)";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            applyZoom(1 / ZOOM_STEP);
+          }}
+          title="Zoom out"
+          aria-label="Zoom out"
+          style={zoomBtnBaseStyle}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#f3f4f6";
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.96)";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
   );
 }
