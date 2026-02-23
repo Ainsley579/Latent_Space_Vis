@@ -400,12 +400,16 @@ export default function Home() {
     const rows = substructures.filter(
       (d) => d.model_type === selectedModel && d.layer_name === selectedLayer,
     );
-    const map: Record<number, { knn: boolean; kfn: boolean }> = {};
+    const map: Record<number, { knn: boolean; kfn: boolean; knnSmiles: string | null; knnSmarts: string | null }> = {};
 
     rows.forEach((d) => {
-      if (!map[d.cluster_id]) map[d.cluster_id] = { knn: false, kfn: false };
+      if (!map[d.cluster_id]) map[d.cluster_id] = { knn: false, kfn: false, knnSmiles: null, knnSmarts: null };
       const hasData = d.mcs_smiles != null || d.mcs_smarts != null;
-      if (d.group === "knn") map[d.cluster_id].knn = hasData;
+      if (d.group === "knn") {
+        map[d.cluster_id].knn = hasData;
+        map[d.cluster_id].knnSmiles = d.mcs_smiles;
+        map[d.cluster_id].knnSmarts = d.mcs_smarts;
+      }
       if (d.group === "kfn") map[d.cluster_id].kfn = hasData;
     });
 
@@ -463,8 +467,8 @@ export default function Home() {
   }, [clusterTotalPages]);
 
   function resolveImageSrc(realId: string | number, imageType: string) {
-    const key = String(realId);
-    return `/molecule_images/${key}_${imageType}.png`;
+    const key = sanitizePathKey(String(realId).trim());
+    return `${datasetBase}/molecule_images/${key}_${imageType}.png`;
   }
 
   function resolveSubstructureImage(
@@ -788,6 +792,7 @@ export default function Home() {
                       setHoverLock(false);
                       setSuppressScatterCluster(false);
                     }}
+                    resolveImageSrc={resolveImageSrc}
                   />
                 </div>
               </div>

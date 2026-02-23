@@ -94,6 +94,15 @@ function inferSequenceFromRows(
 }
 
 const LAYER_ORDER = [
+  "ffn_layer_1",
+  "ffn_layer_2",
+  "fingerprint",
+  "gnn_layer_1",
+  "gnn_layer_2",
+  "gnn_layer_3",
+  "gnn_layer_4",
+  "gnn_layer_5",
+  "gnn_layer_6",
   "emb",
   "output_block_0",
   "output_block_1",
@@ -103,15 +112,6 @@ const LAYER_ORDER = [
   "u_mlp_input",
   "u_mlp_l1",
   "u_mlp_l2",
-  "gnn_layer_1",
-  "gnn_layer_2",
-  "gnn_layer_3",
-  "gnn_layer_4",
-  "gnn_layer_5",
-  "gnn_layer_6",
-  "fingerprint",
-  "ffn_layer_1",
-  "ffn_layer_2",
 ];
 
 const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
