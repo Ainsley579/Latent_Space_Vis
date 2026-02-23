@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal, SankeyLink, SankeyNode } from "d3-sankey";
 import { CLUSTER_COLORS, SANKEY_NODE_COLOR, SANKEY_LINK_COLOR, HIGHLIGHT_RED } from "../theme/colors";
@@ -27,6 +27,72 @@ type SankeyHorizontalProps = {
   onNodeSelect?: (sel: { model?: string; layer?: string; cluster: number; ids?: string[] }) => void;
 };
 
+function inferSequenceFromRows(
+  rows: SampleRow[],
+  mode: "layer" | "model",
+  preferredOrder: string[]
+): string[] {
+  const firstSeen = new Map<string, number>();
+  let seenIdx = 0;
+  const present = new Set<string>();
+  const edgeCounts = new Map<string, number>();
+
+  rows.forEach((r) => {
+    const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
+    const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
+    if (!fromKey || !toKey) return;
+    present.add(fromKey);
+    present.add(toKey);
+    if (!firstSeen.has(fromKey)) firstSeen.set(fromKey, seenIdx++);
+    if (!firstSeen.has(toKey)) firstSeen.set(toKey, seenIdx++);
+    const ek = `${fromKey}->${toKey}`;
+    edgeCounts.set(ek, (edgeCounts.get(ek) ?? 0) + 1);
+  });
+
+  const fromPreferred = preferredOrder.filter((k) => present.has(k));
+  if (fromPreferred.length > 0) return fromPreferred;
+
+  const fallback = Array.from(present).sort((a, b) => {
+    const na = Number(a);
+    const nb = Number(b);
+    if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+    const sa = firstSeen.get(a) ?? Number.MAX_SAFE_INTEGER;
+    const sb = firstSeen.get(b) ?? Number.MAX_SAFE_INTEGER;
+    if (sa !== sb) return sa - sb;
+    return a.localeCompare(b);
+  });
+  if (mode !== "layer") return fallback;
+
+  const bestNext = new Map<string, string>();
+  const bestVal = new Map<string, number>();
+  const incoming = new Set<string>();
+  edgeCounts.forEach((cnt, key) => {
+    const [src, tgt] = key.split("->");
+    if (!src || !tgt || src === tgt) return;
+    const prev = bestVal.get(src) ?? -1;
+    if (cnt > prev) {
+      bestVal.set(src, cnt);
+      bestNext.set(src, tgt);
+    }
+  });
+  bestNext.forEach((tgt) => incoming.add(tgt));
+
+  const starts = fallback.filter((k) => !incoming.has(k));
+  const order: string[] = [];
+  const visited = new Set<string>();
+  const walk = (start: string) => {
+    let cur: string | undefined = start;
+    while (cur && !visited.has(cur)) {
+      visited.add(cur);
+      order.push(cur);
+      cur = bestNext.get(cur);
+    }
+  };
+  starts.forEach(walk);
+  fallback.forEach(walk);
+  return order;
+}
+
 const LAYER_ORDER = [
   "emb",
   "output_block_0",
@@ -44,9 +110,12 @@ const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
 const UNSYNC_SHIFT_X = 0;
 const UNSYNC_LEFT_PAD = 20;
 const UNSYNC_RIGHT_PAD = 20;
+const MIN_LAYER_GAP = 80;
+const MIN_EPOCH_GAP = 150;
+const SYNC_EPOCH_GAP = 170;
 
 export default function SankeyHorizontal({
-  dataPath = "/data/sankey/noaug_sankey_samples.json",
+  dataPath = "/data/dimenet/sankey/sankey_samples.json",
   syncTransform,
   onSyncTransform,
   mode = "layer",
@@ -66,9 +135,13 @@ export default function SankeyHorizontal({
   const dragStartRef = useRef<{ x: number; panX: number }>({ x: 0, panX: 0 });
   const CELL_W = 120;
   const SYNC_BASE_OFFSET = 1 * CELL_W;
+  const ZOOM_MIN = 0.01;
+  const ZOOM_MAX = 4;
+  const ZOOM_STEP = 1.15;
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [zoomX, setZoomX] = useState(1);
   const [panX, setPanX] = useState(0);
+  const [showZoomControls, setShowZoomControls] = useState(false);
   const isControlled = activeNodeKey !== undefined;
   const displayActiveNode = isControlled ? (activeNodeKey ?? null) : activeNode;
 
@@ -97,6 +170,7 @@ export default function SankeyHorizontal({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    const host = container;
     container.innerHTML = "";
 
     const ro = new ResizeObserver(() => draw());
@@ -183,7 +257,7 @@ export default function SankeyHorizontal({
         presentLayers.add(toKey);
       });
       const order = mode === "model" ? MODEL_ORDER : LAYER_ORDER;
-      const layers = order.filter((l) => presentLayers.has(l));
+      const layers = inferSequenceFromRows(lastRows, mode, order).filter((l) => presentLayers.has(l));
       const layerIndex = new Map(layers.map((l, i) => [l, i]));
       const centerOffset = CELL_MARGIN_LEFT + INNER_W / 2;
       const isSynced = !!syncTransform;
@@ -191,10 +265,11 @@ export default function SankeyHorizontal({
       const unsyncedStep = (() => {
         if (isSynced) return CELL_W;
         if (layers.length <= 1) return 0;
-        return Math.max(40, (width - UNSYNC_LEFT_PAD - UNSYNC_RIGHT_PAD) / (layers.length - 1));
+        const minGap = mode === "model" ? MIN_EPOCH_GAP : MIN_LAYER_GAP;
+        return Math.max(minGap, (width - UNSYNC_LEFT_PAD - UNSYNC_RIGHT_PAD) / (layers.length - 1));
       })();
       const offsetX = isSynced ? 0 : UNSYNC_SHIFT_X;
-      const spacing = isSynced ? CELL_W : unsyncedStep;
+      const spacing = isSynced ? (mode === "model" ? SYNC_EPOCH_GAP : CELL_W) : unsyncedStep;
       const totalWidth = isSynced
         ? width
         : Math.max(
@@ -212,7 +287,7 @@ export default function SankeyHorizontal({
         const idx = layerIndex.get(layer);
         if (idx == null) return;
         const baseX = isSynced
-          ? MARGIN_LEFT + centerOffset + (idx + 0.5) * CELL_W
+          ? MARGIN_LEFT + centerOffset + (idx + 0.5) * spacing
           : (layers.length <= 1 ? width / 2 : UNSYNC_LEFT_PAD + idx * unsyncedStep);
         const centerX = baseX + offsetX;
         node.x0 = centerX - NODE_W / 2;
@@ -246,6 +321,7 @@ export default function SankeyHorizontal({
         .attr("fill", "none")
         .attr("stroke", SANKEY_LINK_COLOR)
         .attr("stroke-opacity", 0.4)
+        .attr("vector-effect", "non-scaling-stroke")
         .attr("stroke-width", (d: any) => Math.max(1, d.width || 1))
         .attr("data-key", (d: any) => d.key);
 
@@ -312,6 +388,7 @@ export default function SankeyHorizontal({
         .attr("x2", (d) => d.x2)
         .attr("y2", (d) => d.y2)
         .attr("stroke", SANKEY_LINK_COLOR)
+        .attr("vector-effect", "non-scaling-stroke")
         .attr("stroke-width", 1.2)
         .attr("opacity", 0)
         .attr("class", (d) => `sample-${d.id}`)
@@ -433,19 +510,14 @@ export default function SankeyHorizontal({
       });
 
     function onWheel(e: WheelEvent) {
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (!Number.isFinite(delta) || delta === 0) return;
       e.preventDefault();
       if (syncTransform) {
-        const prevScale = syncTransform.scale;
-        const nextScale = Math.max(1, Math.min(4, prevScale * (1 + -e.deltaY * 0.002)));
-        if (nextScale === prevScale) return;
-        const currOffset = syncTransform.x - SYNC_BASE_OFFSET * prevScale;
-        const nextX = currOffset + SYNC_BASE_OFFSET * nextScale;
-        onSyncTransform?.({ x: nextX, y: 0, scale: nextScale });
+        const nextPanX = syncTransform.x - SYNC_BASE_OFFSET * syncTransform.scale - delta;
+        onSyncTransform?.({ x: nextPanX + SYNC_BASE_OFFSET * syncTransform.scale, y: 0, scale: syncTransform.scale });
       } else {
-        setZoomX((prev) => {
-          const next = Math.max(1, Math.min(4, prev * (1 + -e.deltaY * 0.002)));
-          return next === prev ? prev : next;
-        });
+        host.scrollLeft += delta;
       }
     }
 
@@ -580,15 +652,113 @@ export default function SankeyHorizontal({
     draggingRef.current = false;
   }
 
+  function applyZoom(multiplier: number) {
+    if (syncTransform) {
+      const prevScale = syncTransform.scale;
+      const nextScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, prevScale * multiplier));
+      if (nextScale === prevScale) return;
+      const currOffset = syncTransform.x - SYNC_BASE_OFFSET * prevScale;
+      const nextX = currOffset + SYNC_BASE_OFFSET * nextScale;
+      onSyncTransform?.({ x: nextX, y: 0, scale: nextScale });
+      return;
+    }
+    setZoomX((prev) => {
+      const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, prev * multiplier));
+      return next === prev ? prev : next;
+    });
+  }
+
+  const zoomBtnBaseStyle: CSSProperties = {
+    width: 34,
+    height: 34,
+    border: "none",
+    background: "rgba(255,255,255,0.96)",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#111827",
+    cursor: "pointer",
+    transition: "background 0.12s ease, transform 0.12s ease",
+  };
+
   return (
     <div
-      ref={containerRef}
-      className="w-full h-full"
-      style={{ overflowX: "hidden", overflowY: "hidden", cursor: syncTransform ? "default" : draggingRef.current ? "grabbing" : "grab" }}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-    />
+      className="w-full h-full relative"
+      onMouseEnter={() => setShowZoomControls(true)}
+      onMouseLeave={() => setShowZoomControls(false)}
+    >
+      <div
+        ref={containerRef}
+        className="w-full h-full"
+        style={{ overflowX: "auto", overflowY: "hidden", cursor: syncTransform ? "default" : draggingRef.current ? "grabbing" : "grab" }}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+      />
+      <div
+        style={{
+          position: "absolute",
+          right: 8,
+          bottom: 8,
+          display: "flex",
+          gap: 0,
+          zIndex: 30,
+          pointerEvents: showZoomControls ? "auto" : "none",
+          opacity: showZoomControls ? 1 : 0,
+          transition: "opacity 0.15s ease",
+          border: "1px solid #d4d4d8",
+          borderRadius: 8,
+          overflow: "hidden",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+          background: "rgba(255,255,255,0.9)",
+        }}
+      >
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            applyZoom(ZOOM_STEP);
+          }}
+          title="Zoom in"
+          aria-label="Zoom in"
+          style={{ ...zoomBtnBaseStyle, borderRight: "1px solid #e4e4e7" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#f3f4f6";
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.96)";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            applyZoom(1 / ZOOM_STEP);
+          }}
+          title="Zoom out"
+          aria-label="Zoom out"
+          style={zoomBtnBaseStyle}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#f3f4f6";
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.96)";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
   );
 }

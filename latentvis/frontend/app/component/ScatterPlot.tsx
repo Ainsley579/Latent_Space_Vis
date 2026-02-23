@@ -184,7 +184,7 @@ export default function ScatterPlot({
       ];
       const zoom = d3
         .zoom<SVGSVGElement, unknown>()
-        .scaleExtent([1, 8])
+        .scaleExtent([0.01, 8])
         .translateExtent(extent)
         .extent(extent)
         .on("zoom", (event) => {

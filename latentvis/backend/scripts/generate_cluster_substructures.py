@@ -44,11 +44,15 @@ def _load_smiles_map(csv_path, id_column, smiles_column):
         smiles = row[smiles_column]
         if pd.isna(rid) or pd.isna(smiles):
             continue
-        try:
-            rid_int = int(rid)
-        except Exception:
+        rid_str = str(rid).strip()
+        if rid_str == "":
             continue
-        mapping[rid_int] = str(smiles)
+        mapping[rid_str] = str(smiles)
+        try:
+            rid_int = int(float(rid))
+            mapping[rid_int] = str(smiles)
+        except Exception:
+            pass
     return mapping
 
 
@@ -58,13 +62,21 @@ def _ids_to_mols(ids, smiles_map):
     invalid = []
     seen_canonical = set()
     for rid in ids:
-        smiles = smiles_map.get(int(rid))
+        rid_raw = str(rid).strip()
+        rid_key = rid_raw
+        smiles = smiles_map.get(rid_key)
+        if smiles is None:
+            try:
+                rid_int = int(float(rid_raw))
+                smiles = smiles_map.get(rid_int)
+            except Exception:
+                rid_int = None
         if not smiles:
-            missing.append(int(rid))
+            missing.append(rid_int if rid_int is not None else rid_raw)
             continue
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
-            invalid.append(int(rid))
+            invalid.append(rid_int if rid_int is not None else rid_raw)
             continue
         canonical = Chem.MolToSmiles(mol, canonical=True)
         if canonical in seen_canonical:
@@ -177,6 +189,14 @@ def main():
                 )
             else:
                 smarts, smiles = None, None
+            rid_values = []
+            for x in ids:
+                sx = str(x).strip()
+                try:
+                    rid_values.append(int(float(sx)))
+                except Exception:
+                    rid_values.append(sx)
+
             out_entries.append(
                 {
                     "layer_name": layer,
@@ -184,7 +204,7 @@ def main():
                     "cluster_id": cluster_id,
                     "group": group_name,
                     "k": k,
-                    "real_ids": [int(x) for x in ids],
+                    "real_ids": rid_values,
                     "valid_molecules": len(mols),
                     "missing_real_ids": missing,
                     "invalid_smiles_real_ids": invalid,

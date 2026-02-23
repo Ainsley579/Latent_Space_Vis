@@ -38,7 +38,7 @@ export default function ZoomPan({
   const transformRef = useRef<Transform>({ x: 0, y: 0, scale: 1 });
   const [contentSize, setContentSize] = useState({ width: 1, height: 1 });
   const [showZoomControls, setShowZoomControls] = useState(false);
-  const minScaleRef = useRef(1);
+  const minScaleRef = useRef(0.01);
   const didInitialFitRef = useRef(false);
   const userInteractedRef = useRef(false);
 
@@ -90,13 +90,14 @@ export default function ZoomPan({
 
     const scaleToFitWidth = cRect.width / baseW;
     // Keep the previous behavior: viewport-width fit can be >1 when the canvas is wider.
-    const minScale = Math.max(0.1, Math.min(maxScale, scaleToFitWidth));
+    const minScale = 0.01;
+    const fitScale = Math.max(0.01, Math.min(maxScale, scaleToFitWidth));
     minScaleRef.current = minScale;
 
     const currentScale = transformRef.current.scale;
     const nextScale =
       !didInitialFitRef.current || !userInteractedRef.current
-        ? minScale
+        ? fitScale
         : Math.max(currentScale, minScale);
     if (Math.abs(nextScale - currentScale) > 0.0001) {
       setTransform((prev) => ({ ...prev, scale: nextScale }));
