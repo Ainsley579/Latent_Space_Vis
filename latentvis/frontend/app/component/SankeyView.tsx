@@ -112,6 +112,46 @@ function sortRowKeys(keys: string[]): string[] {
   });
 }
 
+const PREFERRED_LAYER_ORDER = [
+  "emb",
+  "output_block_0",
+  "output_block_1",
+  "output_block_2",
+  "output_block_3",
+  "output_block_4",
+  "u_mlp_input",
+  "u_mlp_l1",
+  "u_mlp_l2",
+  "gnn_layer_1",
+  "gnn_layer_2",
+  "gnn_layer_3",
+  "gnn_layer_4",
+  "gnn_layer_5",
+  "gnn_layer_6",
+  "fingerprint",
+  "ffn_layer_1",
+  "ffn_layer_2",
+];
+const PREFERRED_LAYER_INDEX = new Map(PREFERRED_LAYER_ORDER.map((name, idx) => [name, idx]));
+
+function sortLayerKeys(keys: string[]): string[] {
+  return [...keys].sort((a, b) => {
+    const ai = PREFERRED_LAYER_INDEX.get(a);
+    const bi = PREFERRED_LAYER_INDEX.get(b);
+    if (ai != null && bi != null) return ai - bi;
+    if (ai != null) return -1;
+    if (bi != null) return 1;
+
+    // For unknown layer names, keep numerical suffixes in natural order.
+    const am = /^(.*?)(\d+)$/.exec(a);
+    const bm = /^(.*?)(\d+)$/.exec(b);
+    if (am && bm && am[1] === bm[1]) {
+      return Number(am[2]) - Number(bm[2]);
+    }
+    return a.localeCompare(b);
+  });
+}
+
 type SankeyViewProps = {
   dataPath?: string;
   metricsPath?: string;
@@ -190,7 +230,7 @@ export default function SankeyView({
       .then((rawData) => {
         const data = normalizeSankeyData(rawData);
         const ROW_NAMES: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
-        const COLUMN_NAMES: string[] = Object.keys(data?.layer || {});
+        const COLUMN_NAMES: string[] = sortLayerKeys(Object.keys(data?.layer || {}));
         const MODEL_SET = new Set(ROW_NAMES);
         const LAYER_SET = new Set(COLUMN_NAMES);
 
