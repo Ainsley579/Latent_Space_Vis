@@ -96,6 +96,15 @@ export default function Home() {
       k: number;
     }[]
   >([]);
+  const [clusterSortedMembers, setClusterSortedMembers] = useState<
+    {
+      layer_name: string;
+      model_type: string;
+      cluster_id: number;
+      sorted_real_ids: Array<string | number>;
+      count?: number;
+    }[]
+  >([]);
   const [syncLinkedSankeyViews, setSyncLinkedSankeyViews] = useState(false);
   const [showLargeHoverPreview, setShowLargeHoverPreview] = useState(true);
   const [largeHoverPreviewSize, setLargeHoverPreviewSize] = useState(320);
@@ -396,6 +405,22 @@ export default function Home() {
       });
   }, [datasetBase]);
 
+  useEffect(() => {
+    fetch(`${datasetBase}/topk/cluster_sorted_members.json`)
+      .then((res) => {
+        if (res.status === 404) return [];
+        if (!res.ok) throw new Error("Failed to load cluster sorted members");
+        return res.json();
+      })
+      .then((json) => {
+        setClusterSortedMembers(Array.isArray(json) ? json : []);
+      })
+      .catch((err) => {
+        console.error(err);
+        setClusterSortedMembers([]);
+      });
+  }, [datasetBase]);
+
 
   useEffect(() => {
     fetch(`${datasetBase}/substructures/cluster_substructures.json`)
@@ -441,6 +466,20 @@ export default function Home() {
     return map;
   }, [substructures, selectedModel, selectedLayer]);
 
+  const sortedMembersByClusterKey = useMemo(() => {
+    const map = new Map<string, string[]>();
+    clusterSortedMembers.forEach((d) => {
+      const key = `${d.model_type}__${d.layer_name}__${d.cluster_id}`;
+      if (Array.isArray(d.sorted_real_ids) && d.sorted_real_ids.length > 0) {
+        map.set(
+          key,
+          d.sorted_real_ids.map((id) => String(id)),
+        );
+      }
+    });
+    return map;
+  }, [clusterSortedMembers]);
+
   const clusterInstanceIds = useMemo(() => {
     if (!selectedNode) return [];
 
@@ -464,13 +503,30 @@ export default function Home() {
       }
     });
 
+    const key = `${selectedNode.model}__${selectedNode.layer}__${selectedNode.cluster}`;
+    const sorted = sortedMembersByClusterKey.get(key);
+    if (sorted && sorted.length > 0) {
+      const ordered = sorted.filter((id) => ids.size === 0 || ids.has(id));
+      if (ordered.length > 0) {
+        const orderedSet = new Set(ordered);
+        const extras = Array.from(ids).filter((id) => !orderedSet.has(id));
+        extras.sort((a, b) => {
+          const na = Number(a);
+          const nb = Number(b);
+          if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+          return a.localeCompare(b);
+        });
+        return [...ordered, ...extras];
+      }
+    }
+
     return Array.from(ids).sort((a, b) => {
       const na = Number(a);
       const nb = Number(b);
       if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
       return a.localeCompare(b);
     });
-  }, [activeSankeyRows, selectedNode]);
+  }, [activeSankeyRows, selectedNode, sortedMembersByClusterKey]);
 
   const clusterTotalPages = useMemo(() => {
     if (clusterInstanceIds.length === 0) return 1;
