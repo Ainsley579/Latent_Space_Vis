@@ -41,6 +41,7 @@ export default function ZoomPan({
   const minScaleRef = useRef(0.01);
   const didInitialFitRef = useRef(false);
   const userInteractedRef = useRef(false);
+  const suppressTransformEmitRef = useRef(false);
 
   const transformStyle = useMemo(
     () => ({
@@ -52,7 +53,9 @@ export default function ZoomPan({
 
   useEffect(() => {
     transformRef.current = transform;
-    onTransform?.(transform);
+    if (!suppressTransformEmitRef.current) {
+      onTransform?.(transform);
+    }
   }, [transform]);
 
   useEffect(() => {
@@ -66,7 +69,8 @@ export default function ZoomPan({
     if (dx < 0.5 && dy < 0.5 && ds < 0.001) return;
 
     const nextScale = clamp(externalTransform.scale, minScaleRef.current, maxScale);
-    setTransform((prev) => ({ ...prev, scale: nextScale }));
+    suppressTransformEmitRef.current = true;
+    setTransform({ x: externalTransform.x, y: externalTransform.y, scale: nextScale });
     window.requestAnimationFrame(() => {
       const maxLeft = Math.max(0, container.scrollWidth - container.clientWidth);
       const maxTop = Math.max(0, container.scrollHeight - container.clientHeight);
@@ -74,6 +78,9 @@ export default function ZoomPan({
       const nextTop = clamp(panPadding - externalTransform.y, 0, maxTop);
       container.scrollLeft = nextLeft;
       container.scrollTop = nextTop;
+      window.requestAnimationFrame(() => {
+        suppressTransformEmitRef.current = false;
+      });
     });
   }, [externalTransform]);
 
@@ -127,7 +134,10 @@ export default function ZoomPan({
     const container = containerRef.current;
     const content = contentRef.current;
     if (!container || !content) return;
-    const onScroll = () => emitTransformFromScroll(transformRef.current.scale);
+    const onScroll = () => {
+      if (suppressTransformEmitRef.current) return;
+      emitTransformFromScroll(transformRef.current.scale);
+    };
     container.addEventListener("scroll", onScroll, { passive: true });
 
     const ro = new ResizeObserver(() => recomputeMinScale());

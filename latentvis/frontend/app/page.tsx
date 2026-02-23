@@ -157,6 +157,15 @@ export default function Home() {
     });
   }
 
+  function mergeAndSyncSankeyTransform(partial: Partial<{ x: number; y: number; scale: number }>) {
+    const base = pendingTransformRef.current ?? lastSyncedTransformRef.current;
+    handleSankeyTransformSync({
+      x: partial.x ?? base.x,
+      y: partial.y ?? base.y,
+      scale: partial.scale ?? base.scale,
+    });
+  }
+
   function toggleSyncLinkedViews() {
     setSyncLinkedSankeyViews((prev) => {
       const nextEnabled = !prev;
@@ -631,7 +640,7 @@ export default function Home() {
                 syncTransform={syncLinkedSankeyViews ? syncTransformVertical : undefined}
                 onSyncTransform={(t) => {
                   if (!syncLinkedSankeyViews) return;
-                  handleSankeyTransformSync({ x: sankeyTransform.x, y: t.y, scale: t.scale });
+                  mergeAndSyncSankeyTransform({ y: t.y, scale: t.scale });
                 }}
                 activeNodeKey={
                   selectedNode
@@ -704,7 +713,7 @@ export default function Home() {
                 syncTransform={syncLinkedSankeyViews ? syncTransformHorizontal : undefined}
                 onSyncTransform={(t) => {
                   if (!syncLinkedSankeyViews) return;
-                  handleSankeyTransformSync({ x: t.x, y: sankeyTransform.y, scale: t.scale });
+                  mergeAndSyncSankeyTransform({ x: t.x, scale: t.scale });
                 }}
                 activeNodeKey={
                   selectedNode

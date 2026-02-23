@@ -121,7 +121,7 @@ const UNSYNC_TOP_PAD = 14;
 const UNSYNC_BOTTOM_PAD = 14;
 const MIN_LAYER_GAP = 80;
 const MIN_EPOCH_GAP = 150;
-const SYNC_EPOCH_GAP = 190;
+const SYNC_VERTICAL_SHIFT_RATIO = 0.5;
 
 export default function SankeyVertical({
   dataPath = "/data/dimenet/sankey/sankey_samples.json",
@@ -137,6 +137,8 @@ export default function SankeyVertical({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const nodeSamplesRef = useRef<Map<string, Set<string>>>(new Map());
   const onNodeSelectRef = useRef(onNodeSelect);
+  const syncTransformRef = useRef(syncTransform);
+  const onSyncTransformRef = useRef(onSyncTransform);
   const activeNodeKeyRef = useRef(activeNodeKey);
   const isControlledRef = useRef(activeNodeKey !== undefined);
   const displayActiveNodeRef = useRef<string | null>(null);
@@ -157,6 +159,12 @@ export default function SankeyVertical({
   useEffect(() => {
     onNodeSelectRef.current = onNodeSelect;
   }, [onNodeSelect]);
+  useEffect(() => {
+    syncTransformRef.current = syncTransform;
+  }, [syncTransform]);
+  useEffect(() => {
+    onSyncTransformRef.current = onSyncTransform;
+  }, [onSyncTransform]);
 
   useEffect(() => {
     activeNodeKeyRef.current = activeNodeKey;
@@ -282,10 +290,10 @@ export default function SankeyVertical({
             );
 
       // Synced mode keeps alignment with 2D; unsynced mode fills available width.
-      const MODEL_GAP = isSynced ? (mode === "model" ? SYNC_EPOCH_GAP : CELL_H) : unsyncedGap;
+      const MODEL_GAP = isSynced ? CELL_H : unsyncedGap;
       const baseLeft = isSynced ? MARGIN_LEFT : unsyncedLeftPad;
       const scale = 1;
-      const offsetY = isSynced ? 0 : UNSYNC_SHIFT_Y;
+      const offsetY = isSynced ? CELL_H * SYNC_VERTICAL_SHIFT_RATIO : UNSYNC_SHIFT_Y;
       const totalHeight = Math.max(
         height,
         baseLeft + (Math.max(1, renderOrder.length) - 0.5) * MODEL_GAP + offsetY + NODE_W / 2 + 10
@@ -536,9 +544,10 @@ export default function SankeyVertical({
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       if (!Number.isFinite(delta) || delta === 0) return;
       e.preventDefault();
-      if (syncTransform) {
-        const nextPanY = syncTransform.y - SYNC_BASE_OFFSET * syncTransform.scale - delta;
-        onSyncTransform?.({ x: 0, y: nextPanY + SYNC_BASE_OFFSET * syncTransform.scale, scale: syncTransform.scale });
+      const currSync = syncTransformRef.current;
+      if (currSync) {
+        const nextPanY = currSync.y - SYNC_BASE_OFFSET * currSync.scale - delta;
+        onSyncTransformRef.current?.({ x: 0, y: nextPanY + SYNC_BASE_OFFSET * currSync.scale, scale: currSync.scale });
       } else {
         const canNativeScroll = host.scrollHeight - host.clientHeight > 1;
         if (canNativeScroll) {
