@@ -27,6 +27,72 @@ type SankeyVerticalProps = {
   onNodeSelect?: (sel: { model?: string; layer?: string; cluster: number; ids?: string[] }) => void;
 };
 
+function inferSequenceFromRows(
+  rows: SampleRow[],
+  mode: "layer" | "model",
+  preferredOrder: string[]
+): string[] {
+  const firstSeen = new Map<string, number>();
+  let seenIdx = 0;
+  const present = new Set<string>();
+  const edgeCounts = new Map<string, number>();
+
+  rows.forEach((r) => {
+    const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
+    const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+    if (!fromKey || !toKey) return;
+    present.add(fromKey);
+    present.add(toKey);
+    if (!firstSeen.has(fromKey)) firstSeen.set(fromKey, seenIdx++);
+    if (!firstSeen.has(toKey)) firstSeen.set(toKey, seenIdx++);
+    const ek = `${fromKey}->${toKey}`;
+    edgeCounts.set(ek, (edgeCounts.get(ek) ?? 0) + 1);
+  });
+
+  const fromPreferred = preferredOrder.filter((k) => present.has(k));
+  if (fromPreferred.length > 0) return fromPreferred;
+
+  const fallback = Array.from(present).sort((a, b) => {
+    const na = Number(a);
+    const nb = Number(b);
+    if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+    const sa = firstSeen.get(a) ?? Number.MAX_SAFE_INTEGER;
+    const sb = firstSeen.get(b) ?? Number.MAX_SAFE_INTEGER;
+    if (sa !== sb) return sa - sb;
+    return a.localeCompare(b);
+  });
+  if (mode !== "layer") return fallback;
+
+  const bestNext = new Map<string, string>();
+  const bestVal = new Map<string, number>();
+  const incoming = new Set<string>();
+  edgeCounts.forEach((cnt, key) => {
+    const [src, tgt] = key.split("->");
+    if (!src || !tgt || src === tgt) return;
+    const prev = bestVal.get(src) ?? -1;
+    if (cnt > prev) {
+      bestVal.set(src, cnt);
+      bestNext.set(src, tgt);
+    }
+  });
+  bestNext.forEach((tgt) => incoming.add(tgt));
+
+  const starts = fallback.filter((k) => !incoming.has(k));
+  const order: string[] = [];
+  const visited = new Set<string>();
+  const walk = (start: string) => {
+    let cur: string | undefined = start;
+    while (cur && !visited.has(cur)) {
+      visited.add(cur);
+      order.push(cur);
+      cur = bestNext.get(cur);
+    }
+  };
+  starts.forEach(walk);
+  fallback.forEach(walk);
+  return order;
+}
+
 const LAYER_ORDER = [
   "emb",
   "output_block_0",
@@ -44,6 +110,9 @@ const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
 const UNSYNC_SHIFT_Y = 0;
 const UNSYNC_TOP_PAD = 14;
 const UNSYNC_BOTTOM_PAD = 14;
+const MIN_LAYER_GAP = 80;
+const MIN_EPOCH_GAP = 150;
+const SYNC_EPOCH_GAP = 190;
 
 export default function SankeyVertical({
   dataPath = "/data/dimenet/sankey/sankey_samples.json",
@@ -183,14 +252,9 @@ export default function SankeyVertical({
 
       const isSynced = !!syncTransform;
       const order = mode === "model" ? MODEL_ORDER : LAYER_ORDER;
-      const presentOrder = order.filter((m) => (nodesByModel.get(m)?.length ?? 0) > 0);
-      const fallbackOrder = Array.from(nodesByModel.keys()).sort((a, b) => {
-        const na = Number(a);
-        const nb = Number(b);
-        if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
-        return a.localeCompare(b);
-      });
-      const renderOrder = presentOrder.length > 0 ? presentOrder : fallbackOrder;
+      const renderOrder = inferSequenceFromRows(rows as SampleRow[], mode, order).filter(
+        (m) => (nodesByModel.get(m)?.length ?? 0) > 0
+      );
 
       // In rotated rendering, x-axis maps to screen Y (vertical direction).
       const unsyncedLeftPad = UNSYNC_TOP_PAD;
@@ -198,10 +262,13 @@ export default function SankeyVertical({
       const unsyncedGap =
         renderOrder.length <= 1
           ? 0
-          : Math.max(40, (drawW - unsyncedLeftPad - unsyncedRightPad - NODE_W) / (renderOrder.length - 1));
+          : Math.max(
+              mode === "model" ? MIN_EPOCH_GAP : MIN_LAYER_GAP,
+              (drawW - unsyncedLeftPad - unsyncedRightPad - NODE_W) / (renderOrder.length - 1)
+            );
 
       // Synced mode keeps alignment with 2D; unsynced mode fills available width.
-      const MODEL_GAP = isSynced ? CELL_H : unsyncedGap;
+      const MODEL_GAP = isSynced ? (mode === "model" ? SYNC_EPOCH_GAP : CELL_H) : unsyncedGap;
       const baseLeft = isSynced ? MARGIN_LEFT : unsyncedLeftPad;
       const scale = 1;
       const offsetY = isSynced ? 0 : UNSYNC_SHIFT_Y;
@@ -299,6 +366,7 @@ export default function SankeyVertical({
         .attr("fill", "none")
         .attr("stroke", SANKEY_LINK_COLOR)
         .attr("stroke-opacity", 0.35)
+        .attr("vector-effect", "non-scaling-stroke")
         .attr("stroke-width", (d) => {
           const s = nodeByKey.get(d.src);
           if (!s) return 1;
@@ -357,6 +425,7 @@ export default function SankeyVertical({
         .attr("x2", (d) => d.x2)
         .attr("y2", (d) => d.y2)
         .attr("stroke", SANKEY_LINK_COLOR)
+        .attr("vector-effect", "non-scaling-stroke")
         .attr("stroke-width", 1.1)
         .attr("opacity", 0)
         .attr("class", (d) => `sample-${d.id}`)

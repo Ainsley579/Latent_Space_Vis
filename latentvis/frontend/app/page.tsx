@@ -32,7 +32,7 @@ function sanitizePathKey(value: string) {
 }
 
 export default function Home() {
-  const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("dimenet");
+  const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
   const datasetBaseFor = (dataset: DatasetKey) => `/data/${dataset}`;
   const datasetBase = datasetBaseFor(selectedDataset);
   const buildSankeyModelPath = (model: string, dataset: DatasetKey = selectedDataset) =>
@@ -54,13 +54,13 @@ export default function Home() {
     setSankeyPathVertical(buildVerticalPath(layer, dataset));
   };
 
-  const [sankeyPath, setSankeyPath] = useState("/data/dimenet/sankey/noaug_sankey_samples.json");
-  const [sankeyPathVertical, setSankeyPathVertical] = useState("/data/dimenet/sankey/vertical_model_samples_emb.json");
+  const [sankeyPath, setSankeyPath] = useState("/data/chemprop/sankey/0_sankey_samples.json");
+  const [sankeyPathVertical, setSankeyPathVertical] = useState("/data/chemprop/sankey/vertical_model_samples_fingerprint.json");
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
-  const [selectedLayer, setSelectedLayer] = useState("emb");
-  const [selectedModel, setSelectedModel] = useState("dimenet_noaug");
+  const [selectedLayer, setSelectedLayer] = useState("fingerprint");
+  const [selectedModel, setSelectedModel] = useState("0");
   const [scatterProjection, setScatterProjection] = useState<"default" | "pca" | "mds" | "umap" | "tsne">("default");
-  const [scatterPath, setScatterPath] = useState("/data/dimenet/scatterplot/dimenet_noaug_emb.json");
+  const [scatterPath, setScatterPath] = useState("/data/chemprop/scatterplot/0_fingerprint.json");
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
