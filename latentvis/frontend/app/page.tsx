@@ -375,6 +375,8 @@ export default function Home() {
   useEffect(() => {
     fetch(`${datasetBase}/substructures/cluster_substructures.json`)
       .then((res) => {
+        // Some datasets may not provide substructure files yet; treat missing file as empty.
+        if (res.status === 404) return [];
         if (!res.ok) throw new Error("Failed to load substructure data");
         return res.json();
       })
@@ -975,7 +977,6 @@ export default function Home() {
           </button>
           <div
             className="absolute left-0 top-0 bottom-0 z-30 flex items-start"
-            onMouseEnter={() => setIsControlPanelOpen(true)}
             onMouseLeave={() => setIsControlPanelOpen(false)}
           >
             <div
@@ -1015,6 +1016,7 @@ export default function Home() {
             <button
               type="button"
               className="mt-12 h-9 w-6 rounded-r border border-l-0 border-zinc-400 bg-white text-xs text-zinc-600 shadow pointer-events-auto"
+              onMouseEnter={() => setIsControlPanelOpen(true)}
               onClick={() => setIsControlPanelOpen((prev) => !prev)}
               title={isControlPanelOpen ? "Hide control panel" : "Show control panel"}
               aria-label={isControlPanelOpen ? "Hide control panel" : "Show control panel"}
