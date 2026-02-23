@@ -119,8 +119,8 @@ const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
 const UNSYNC_SHIFT_X = 0;
 const UNSYNC_LEFT_PAD = 20;
 const UNSYNC_RIGHT_PAD = 20;
-const MIN_LAYER_GAP = 80;
-const MIN_EPOCH_GAP = 150;
+const MIN_LAYER_GAP = 60;
+const MIN_EPOCH_GAP = 120;
 
 export default function SankeyHorizontal({
   dataPath = "/data/dimenet/sankey/sankey_samples.json",

@@ -119,8 +119,8 @@ const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
 const UNSYNC_SHIFT_Y = 0;
 const UNSYNC_TOP_PAD = 14;
 const UNSYNC_BOTTOM_PAD = 14;
-const MIN_LAYER_GAP = 80;
-const MIN_EPOCH_GAP = 150;
+const MIN_LAYER_GAP = 30;
+const MIN_EPOCH_GAP = 60;
 const SYNC_VERTICAL_SHIFT_RATIO = 0.5;
 
 export default function SankeyVertical({

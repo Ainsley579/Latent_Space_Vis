@@ -111,6 +111,7 @@ export default function Home() {
   const syncRafRef = useRef<number | null>(null);
   const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
   const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
+  const syncSourceRef = useRef<{ source: "view" | "vertical" | "horizontal"; ts: number } | null>(null);
   function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }) {
     setHoverLock(false);
     if (
@@ -135,7 +136,16 @@ export default function Home() {
     setHoveredId(id);
   }
 
-  function handleSankeyTransformSync(next: { x: number; y: number; scale: number }) {
+  function handleSankeyTransformSync(
+    next: { x: number; y: number; scale: number },
+    source: "view" | "vertical" | "horizontal"
+  ) {
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const lock = syncSourceRef.current;
+    const SOURCE_LOCK_MS = 140;
+    if (lock && lock.source !== source && now - lock.ts < SOURCE_LOCK_MS) return;
+    syncSourceRef.current = { source, ts: now };
+
     pendingTransformRef.current = next;
     if (syncRafRef.current != null) return;
 
@@ -157,13 +167,19 @@ export default function Home() {
     });
   }
 
-  function mergeAndSyncSankeyTransform(partial: Partial<{ x: number; y: number; scale: number }>) {
+  function mergeAndSyncSankeyTransform(
+    partial: Partial<{ x: number; y: number; scale: number }>,
+    source: "view" | "vertical" | "horizontal"
+  ) {
     const base = pendingTransformRef.current ?? lastSyncedTransformRef.current;
-    handleSankeyTransformSync({
-      x: partial.x ?? base.x,
-      y: partial.y ?? base.y,
-      scale: partial.scale ?? base.scale,
-    });
+    handleSankeyTransformSync(
+      {
+        x: partial.x ?? base.x,
+        y: partial.y ?? base.y,
+        scale: partial.scale ?? base.scale,
+      },
+      source
+    );
   }
 
   function toggleSyncLinkedViews() {
@@ -568,6 +584,13 @@ export default function Home() {
     window.addEventListener("mouseup", onUp);
   }
 
+  const nowTs = typeof performance !== "undefined" ? performance.now() : Date.now();
+  const viewIsSyncSource =
+    syncSourceRef.current?.source === "view" &&
+    nowTs - (syncSourceRef.current?.ts ?? 0) < 180;
+  const sankeyViewExternalTransform =
+    syncLinkedSankeyViews && !viewIsSyncSource ? sankeyTransform : undefined;
+
   return (
     <div className="flex min-h-screen w-full">
       <main className="flex min-h-screen w-full">
@@ -619,8 +642,8 @@ export default function Home() {
                   }
                 }}
                 onSwapAxes={(swap) => setSwapAxes(swap)}
-                externalTransform={syncLinkedSankeyViews ? sankeyTransform : undefined}
-                onTransform={(t) => handleSankeyTransformSync(t)}
+                externalTransform={sankeyViewExternalTransform}
+                onTransform={(t) => handleSankeyTransformSync(t, "view")}
               />
             </div>
           </div>
@@ -640,7 +663,7 @@ export default function Home() {
                 syncTransform={syncLinkedSankeyViews ? syncTransformVertical : undefined}
                 onSyncTransform={(t) => {
                   if (!syncLinkedSankeyViews) return;
-                  mergeAndSyncSankeyTransform({ y: t.y, scale: t.scale });
+                  mergeAndSyncSankeyTransform({ y: t.y, scale: t.scale }, "vertical");
                 }}
                 activeNodeKey={
                   selectedNode
@@ -713,7 +736,7 @@ export default function Home() {
                 syncTransform={syncLinkedSankeyViews ? syncTransformHorizontal : undefined}
                 onSyncTransform={(t) => {
                   if (!syncLinkedSankeyViews) return;
-                  mergeAndSyncSankeyTransform({ x: t.x, scale: t.scale });
+                  mergeAndSyncSankeyTransform({ x: t.x, scale: t.scale }, "horizontal");
                 }}
                 activeNodeKey={
                   selectedNode
