@@ -135,6 +135,7 @@ def load_single_pt(pt_path: Path) -> Dict[str, Any]:
             epoch_set = set()
             layer_set = set()
             real_ids = None
+            smiles_list = None
             for epoch_key, epoch_data in raw.items():
                 if not isinstance(epoch_data, dict) or split_name not in epoch_data:
                     continue
@@ -152,14 +153,20 @@ def load_single_pt(pt_path: Path) -> Dict[str, Any]:
                         layer_set.add(str(layer_key))
                 if real_ids is None and "id" in split_data:
                     real_ids = list(split_data["id"])
+                # SMILES from same split (aligned with real_ids) for substructure MCS
+                smiles_list = split_data.get("smiles") if isinstance(split_data.get("smiles"), (list, tuple)) else None
             if cells_esol:
                 n_s = next(iter(cells_esol.values())).shape[0]
+                id_to_smiles = None
+                if real_ids is not None and smiles_list is not None and len(smiles_list) == n_s:
+                    id_to_smiles = dict(zip(real_ids, [str(s) for s in smiles_list]))
                 return {
                     "cells": cells_esol,
                     "epoch_keys": sorted(epoch_set),
                     "layer_keys": sorted(layer_set),
                     "n_samples": n_s,
                     "real_ids": real_ids,
+                    "id_to_smiles": id_to_smiles,
                 }
             # else try next split
         # Fall through to other handling

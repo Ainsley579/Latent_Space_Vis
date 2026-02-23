@@ -202,6 +202,7 @@ def run_pipeline(
     layer_keys = list(data["layer_keys"])
     n_samples = data["n_samples"]
     real_ids = data.get("real_ids")
+    id_to_smiles_from_input = data.get("id_to_smiles") or {}
 
     if input_path2 and model_name2:
         data2 = load_embedding_input(input_path2, model_name=model_name2, layer_file_map=layer_file_map2)
@@ -431,13 +432,28 @@ def run_pipeline(
         )
         (base / "clustering_metrics").mkdir(parents=True, exist_ok=True)
         ca_df_method.to_csv(base / "clustering_metrics" / "cluster_assignments_with_real_id.csv", index=False)
-        # Substructure (MCS) for this clustering method
-        if _RDKIT_AVAILABLE and smiles_csv and Path(smiles_csv).exists():
+        # Substructure (MCS): use SMILES from CSV if provided, else from .pt (id_to_smiles_from_input)
+        id_to_smiles = {}
+        if smiles_csv and Path(smiles_csv).exists():
             smiles_df = pd.read_csv(smiles_csv)
             if smiles_id_column in smiles_df.columns and smiles_smiles_column in smiles_df.columns:
-                id_to_smiles = dict(zip(smiles_df[smiles_id_column].astype(int), smiles_df[smiles_smiles_column].astype(str)))
-            else:
-                id_to_smiles = {}
+                id_to_smiles = dict(zip(smiles_df[smiles_id_column].astype(str), smiles_df[smiles_smiles_column].astype(str)))
+                for k, v in zip(smiles_df[smiles_id_column].astype(int), smiles_df[smiles_smiles_column].astype(str)):
+                    id_to_smiles[k] = v
+        if not id_to_smiles and id_to_smiles_from_input:
+            id_to_smiles = id_to_smiles_from_input
+        if _RDKIT_AVAILABLE and id_to_smiles:
+            def _get_smi(rid):
+                v = id_to_smiles.get(rid)
+                if v is not None:
+                    return v
+                v = id_to_smiles.get(str(rid))
+                if v is not None:
+                    return v
+                try:
+                    return id_to_smiles.get(int(rid))
+                except (TypeError, ValueError):
+                    return None
             substruct_list = []
             for entry in topk_list:
                 for group, key in [("knn", "top_k_closest_real_ids"), ("kfn", "top_k_farthest_real_ids")]:
@@ -447,7 +463,7 @@ def run_pipeline(
                     invalid = []
                     seen_canonical = set()
                     for rid in rids:
-                        smi = id_to_smiles.get(int(rid))
+                        smi = _get_smi(rid)
                         if not smi:
                             missing.append(rid)
                             continue
@@ -479,10 +495,10 @@ def run_pipeline(
             (sub_dir / "cluster_substructures.json").write_text(json.dumps(substruct_list, indent=2))
         print("Wrote outputs for clustering method: {} -> {}".format(cl_method, base))
 
-    if not _RDKIT_AVAILABLE and (smiles_csv and Path(smiles_csv).exists()):
+    if not _RDKIT_AVAILABLE and (id_to_smiles_from_input or (smiles_csv and Path(smiles_csv).exists())):
         print("RDKit not available; skipping substructures.")
-    elif not smiles_csv or not Path(smiles_csv).exists():
-        print("No SMILES CSV provided; skipping substructures.")
+    elif not id_to_smiles_from_input and (not smiles_csv or not Path(smiles_csv).exists()):
+        print("No SMILES CSV or .pt smiles provided; skipping substructures.")
 
     # FMI/CSPA summary (default clustering method only)
     fmi_cspa_layers = []

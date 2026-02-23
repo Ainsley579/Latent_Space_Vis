@@ -114,21 +114,47 @@ def reduce_embedding(
 ) -> np.ndarray:
     """
     Single entry for 2D reduction. method in ('pca', 'mds', 'umap', 'tsne').
+    When input has only 1 feature (or effective rank 1), returns 2D with second
+    dimension spread (not a line) so scatter plots are visible.
     """
     n_samples, n_features = X.shape[0], X.shape[1]
-    if n_samples < 2 or n_features < 2:
-        # Return trivial 2D so pipeline can continue (e.g. single-feature or single-sample cell)
+    if n_samples < 2:
         out = np.zeros((n_samples, 2), dtype=np.float64)
         if n_features >= 1:
-            out[:, 0] = X[:, 0]
+            out[:, 0] = X.ravel()
+        return out
+    if n_features < 2:
+        # Single feature: use x = feature, y = spread (so not a single line)
+        out = np.zeros((n_samples, 2), dtype=np.float64)
+        out[:, 0] = X.ravel()
+        out[:, 1] = np.linspace(-1.0, 1.0, n_samples)
         return out
     method = method.lower()
+    result = None
     if method == "pca":
-        return reduce_pca(X, random_state=random_state, **kwargs)
-    if method == "mds":
-        return reduce_mds(X, random_state=random_state, **kwargs)
-    if method == "umap":
-        return reduce_umap(X, random_state=random_state, **kwargs)
-    if method == "tsne":
-        return reduce_tsne(X, random_state=random_state, **kwargs)
-    raise ValueError(f"Unknown method: {method}")
+        result = reduce_pca(X, random_state=random_state, **kwargs)
+    elif method == "mds":
+        result = reduce_mds(X, random_state=random_state, **kwargs)
+    elif method == "umap":
+        result = reduce_umap(X, random_state=random_state, **kwargs)
+    elif method == "tsne":
+        result = reduce_tsne(X, random_state=random_state, **kwargs)
+    else:
+        raise ValueError(f"Unknown method: {method}")
+    # If second dimension has near-zero variance (rank-1 data), spread it so scatter isn't a line
+    result = _ensure_2d_spread(result, random_state=random_state)
+    return result
+
+
+def _ensure_2d_spread(arr: np.ndarray, random_state: int = _RANDOM_STATE) -> np.ndarray:
+    """If second column has negligible variance, replace with spread so plot is not a line."""
+    if arr.shape[1] < 2:
+        return arr
+    col1 = arr[:, 1]
+    var1 = np.var(col1)
+    scale = max(1e-10, np.std(arr[:, 0]))
+    if var1 < (0.01 * scale) ** 2:  # effectively degenerate
+        rs = np.random.RandomState(random_state)
+        arr = arr.copy()
+        arr[:, 1] = np.linspace(-scale * 0.5, scale * 0.5, arr.shape[0]) + rs.randn(arr.shape[0]) * scale * 0.02
+    return arr
