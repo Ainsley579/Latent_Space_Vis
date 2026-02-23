@@ -17,6 +17,7 @@ type JsmeInstance = {
   svg?: () => string;
   toSVG?: () => string;
   svgFile?: () => string;
+  setSize?: (width: string, height: string) => void;
 };
 
 const JSME_SCRIPT_ID = "jsme-editor-script";
@@ -32,6 +33,12 @@ export default function StructureEditorPanel() {
   const [scriptReady, setScriptReady] = useState(false);
   const [currentJme, setCurrentJme] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  function getHostSize(element: HTMLElement) {
+    const width = Math.max(240, Math.floor(element.clientWidth));
+    const height = Math.max(160, Math.floor(element.clientHeight));
+    return { width: `${width}px`, height: `${height}px` };
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -104,20 +111,36 @@ export default function StructureEditorPanel() {
     if (!scriptReady) return;
     const host = document.getElementById(inlineHostId);
     if (!host) return;
-    host.innerHTML = "";
+    const JsmeCtor = window.JSApplet?.JSME;
+    if (!JsmeCtor) return;
 
-    if (!window.JSApplet?.JSME) return;
-
-    try {
-      inlineEditorRef.current = new window.JSApplet.JSME(inlineHostId, "100%", "100%") as JsmeInstance;
-      if (currentJme && inlineEditorRef.current?.readMolecule) {
-        inlineEditorRef.current.readMolecule(currentJme);
+    const mountInlineEditor = () => {
+      host.innerHTML = "";
+      const { width, height } = getHostSize(host);
+      try {
+        inlineEditorRef.current = new JsmeCtor(inlineHostId, width, height) as JsmeInstance;
+        if (currentJme && inlineEditorRef.current?.readMolecule) {
+          inlineEditorRef.current.readMolecule(currentJme);
+        }
+      } catch (e) {
+        console.error(e);
+        window.setTimeout(() => setError("Unable to load JSME editor."), 0);
       }
-    } catch (e) {
-      console.error(e);
-      window.setTimeout(() => setError("Unable to load JSME editor."), 0);
+    };
+
+    mountInlineEditor();
+
+    const observer = new ResizeObserver(() => {
+      if (!inlineEditorRef.current?.setSize) return;
+      const { width, height } = getHostSize(host);
+      inlineEditorRef.current.setSize(width, height);
+    });
+    observer.observe(host);
+
+    return () => {
+      observer.disconnect();
     }
-  }, [scriptReady, inlineHostId]);
+  }, [scriptReady, inlineHostId, currentJme]);
 
   useEffect(() => {
     if (!isOpen || !scriptReady) return;
@@ -130,7 +153,8 @@ export default function StructureEditorPanel() {
     }
 
     try {
-      modalEditorRef.current = new window.JSApplet.JSME(hostId, "100%", "100%") as JsmeInstance;
+      const { width, height } = getHostSize(host);
+      modalEditorRef.current = new window.JSApplet.JSME(hostId, width, height) as JsmeInstance;
       if (currentJme && modalEditorRef.current?.readMolecule) {
         modalEditorRef.current.readMolecule(currentJme);
       }
@@ -163,16 +187,16 @@ export default function StructureEditorPanel() {
         Structure Editor
       </div>
       <div className="flex-1 min-h-0 p-3 flex flex-col gap-2">
-        <div className="h-48 w-full border border-zinc-200 rounded bg-white overflow-hidden">
+        <div className="relative h-48 w-full border border-zinc-200 rounded bg-white overflow-hidden">
+          <button
+            type="button"
+            className="absolute right-2 top-2 z-10 px-3 py-1 rounded border border-zinc-300 bg-white/95 text-xs text-zinc-700 shadow-sm hover:bg-white"
+            onClick={openModalFromInline}
+          >
+            {currentJme ? "Open JSME (Edit)" : "Open JSME"}
+          </button>
           <div id={inlineHostId} className="w-full h-full" />
         </div>
-        <button
-          type="button"
-          className="self-center px-4 py-2 rounded border border-zinc-300 bg-white text-sm text-zinc-700 hover:bg-zinc-50"
-          onClick={openModalFromInline}
-        >
-          {currentJme ? "Open Large JSME (Edit)" : "Open Large JSME"}
-        </button>
         {error && (
           <div className="text-xs text-amber-700">
             {error}
