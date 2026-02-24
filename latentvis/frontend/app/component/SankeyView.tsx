@@ -134,6 +134,17 @@ const PREFERRED_LAYER_ORDER = [
 ];
 const PREFERRED_LAYER_INDEX = new Map(PREFERRED_LAYER_ORDER.map((name, idx) => [name, idx]));
 
+function toShortLayerName(name: string): string {
+  if (name === "fingerprint") return "fp";
+  const gnn = /^gnn_layer_(\d+)$/.exec(name);
+  if (gnn) return `gnn${gnn[1]}`;
+  const ffn = /^ffn_layer_(\d+)$/.exec(name);
+  if (ffn) return `ffn${ffn[1]}`;
+  const fnn = /^fnn_layer_(\d+)$/.exec(name);
+  if (fnn) return `fnn${fnn[1]}`;
+  return name;
+}
+
 function sortLayerKeys(keys: string[]): string[] {
   return [...keys].sort((a, b) => {
     const ai = PREFERRED_LAYER_INDEX.get(a);
@@ -1331,7 +1342,7 @@ export default function SankeyView({
                         className="absolute text-sm text-zinc-700"
                         style={{ transform: `translate(${x}px, 0px) translateX(-50%)` }}
                       >
-                        {name}
+                        {toShortLayerName(name)}
                       </div>
                     );
                   })}
@@ -1354,7 +1365,7 @@ export default function SankeyView({
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {name}
+                        {toShortLayerName(name)}
                       </div>
                     );
                   })}

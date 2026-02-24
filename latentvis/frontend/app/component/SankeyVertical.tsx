@@ -123,6 +123,17 @@ const MIN_LAYER_GAP = 30;
 const MIN_EPOCH_GAP = 60;
 const SYNC_VERTICAL_SHIFT_RATIO = 0.5;
 
+function toShortLayerName(name: string): string {
+  if (name === "fingerprint") return "fp";
+  const gnn = /^gnn_layer_(\d+)$/.exec(name);
+  if (gnn) return `gnn${gnn[1]}`;
+  const ffn = /^ffn_layer_(\d+)$/.exec(name);
+  if (ffn) return `ffn${ffn[1]}`;
+  const fnn = /^fnn_layer_(\d+)$/.exec(name);
+  if (fnn) return `fnn${fnn[1]}`;
+  return name;
+}
+
 export default function SankeyVertical({
   dataPath = "/data/dimenet/sankey/sankey_samples.json",
   syncTransform,
@@ -320,7 +331,7 @@ export default function SankeyVertical({
         .attr("stroke-width", 2)
         .attr("paint-order", "stroke")
         .style("pointer-events", "none")
-        .text((d) => d);
+        .text((d) => toShortLayerName(String(d)));
 
       const nodes: Array<{ key: string; model: string; value: number; x: number; y: number; h: number }> = [];
       renderOrder.forEach((model, i) => {
