@@ -6,8 +6,8 @@ type TopkEntry = {
   layer_name: string;
   model_type: string;
   cluster_id: number;
-  top_k_closest_real_ids: number[];
-  top_k_farthest_real_ids: number[];
+  top_k_closest_real_ids: (string | number)[];
+  top_k_farthest_real_ids: (string | number)[];
   k: number;
 };
 

@@ -311,6 +311,15 @@ def run_pipeline(
                     vals.append(int(lab[i]) if i is not None else -1)
             ca_df[col] = vals
 
+    # Write real_id -> SMILES for frontend (all instances); enables molecule images / client rendering
+    if id_to_smiles_from_input:
+        smiles_out = out / "real_id_to_smiles.json"
+        smiles_out.write_text(
+            json.dumps({str(k): v for k, v in id_to_smiles_from_input.items()}, indent=2),
+            encoding="utf-8",
+        )
+        print("Wrote {} ({} entries) for frontend molecule lookup.".format(smiles_out, len(id_to_smiles_from_input)))
+
     # ---- Write outputs per clustering method (root for first method, clustering/<method>/ for others) ----
     for cl_method in run_methods:
         base = out if cl_method == run_methods[0] else (out / "clustering" / cl_method)
@@ -484,11 +493,17 @@ def run_pipeline(
                         )
                     else:
                         mcs_smarts, mcs_smiles = None, None
+                    # When MCS is null (diverse molecules), frontend can show this instead of blank
+                    mcs_note = None
+                    if mcs_smarts is None and mcs_smiles is None and len(mols) > 0:
+                        mcs_note = "No common substructure found"
+                    elif missing:
+                        mcs_note = "Missing SMILES for {} real_id(s)".format(len(missing))
                     substruct_list.append({
                         "layer_name": entry["layer_name"], "model_type": entry["model_type"], "cluster_id": entry["cluster_id"],
                         "group": group, "k": entry["k"], "real_ids": rids, "valid_molecules": len(mols),
                         "missing_real_ids": missing, "invalid_smiles_real_ids": invalid,
-                        "mcs_smarts": mcs_smarts, "mcs_smiles": mcs_smiles,
+                        "mcs_smarts": mcs_smarts, "mcs_smiles": mcs_smiles, "mcs_note": mcs_note,
                     })
             sub_dir = base / "substructures"
             sub_dir.mkdir(parents=True, exist_ok=True)

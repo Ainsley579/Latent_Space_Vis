@@ -115,4 +115,10 @@ Input: chemprop-embeddings.pt (ESOL structure: epoch -> split -> embeddings -> l
 README_EOF
 echo "Wrote README.md to $OUTPUT_DIR"
 
+# Generate molecule images from real_id_to_smiles.json for frontend KNN view
+if [[ -f "$OUTPUT_DIR/real_id_to_smiles.json" ]]; then
+  echo "Generating molecule images..."
+  python3 "$BACKEND_DIR/scripts/generate_molecule_images_from_smiles.py" --case-dir "$OUTPUT_DIR" || true
+fi
+
 exit 0

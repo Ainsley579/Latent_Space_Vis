@@ -10,12 +10,13 @@ type SubstructureRow = {
   cluster_id: number;
   group: "knn" | "kfn";
   k: number;
-  real_ids: number[];
+  real_ids: (string | number)[];
   valid_molecules: number;
   missing_real_ids: number[];
   invalid_smiles_real_ids: number[];
   mcs_smarts: string | null;
   mcs_smiles: string | null;
+  mcs_note?: string | null;
 };
 
 type PatternViewPanelProps = {
@@ -95,11 +96,11 @@ export default function PatternViewPanel({
                     </div>
                     <div className="text-xs text-zinc-600">
                       <span className="font-semibold">SMILES:</span>{" "}
-                      {entry.mcs_smiles ?? "null"}
+                      {entry.mcs_smiles ?? entry.mcs_note ?? "No common substructure"}
                     </div>
                     <div className="text-xs text-zinc-600 break-all">
                       <span className="font-semibold">SMARTS:</span>{" "}
-                      {entry.mcs_smarts ?? "null"}
+                      {entry.mcs_smarts ?? entry.mcs_note ?? "No common substructure"}
                     </div>
                     <div className="text-xs text-zinc-500">
                       Valid molecules: {entry.valid_molecules} / K={entry.k}
