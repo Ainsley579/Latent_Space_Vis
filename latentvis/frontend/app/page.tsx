@@ -268,6 +268,28 @@ export default function Home() {
     });
   }
 
+  function exportBookmarkedIdsCsv() {
+    if (bookmarkedIds.size === 0) return;
+    const ids = Array.from(bookmarkedIds).sort((a, b) => {
+      const na = Number(a);
+      const nb = Number(b);
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+    const rows = ["real_id", ...ids.map((id) => `"${String(id).replace(/"/g, '""')}"`)];
+    const csv = rows.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const dateTag = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `${selectedDataset}_${selectedClustering}_bookmarked_ids_${dateTag}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   useEffect(() => {
     setScatterPath(buildScatterPath(selectedModel, selectedLayer, scatterProjection));
   }, [datasetBase, selectedModel, selectedLayer, scatterProjection]);
@@ -1094,7 +1116,7 @@ export default function Home() {
           >
             <div
               className={
-                "mt-12 h-[280px] bg-white pointer-events-auto overflow-hidden transition-all duration-300 ease-out " +
+                "mt-12 h-[420px] bg-white pointer-events-auto overflow-hidden transition-all duration-300 ease-out " +
                 (isControlPanelOpen
                   ? "w-56 opacity-100 translate-x-0 border border-zinc-400 shadow-lg"
                   : "w-0 opacity-0 -translate-x-2 border border-transparent shadow-none")
@@ -1149,6 +1171,8 @@ export default function Home() {
                   onToggleLargePreview={() => setShowLargeHoverPreview((prev) => !prev)}
                   largePreviewSize={largeHoverPreviewSize}
                   onLargePreviewSizeChange={setLargeHoverPreviewSize}
+                  onExportBookmarks={exportBookmarkedIdsCsv}
+                  bookmarkCount={bookmarkedIds.size}
                 />
               </div>
             </div>
