@@ -33,6 +33,16 @@ def generate_range():
     return jsonify({"ok": True, "min": min_value, "max": max_value})
 
 
+@app.route("/search-smiles", methods=["POST", "OPTIONS"])
+def search_smiles():
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    payload = request.get_json(silent=True) or {}
+    smiles = payload.get("smiles")
+    print(f"[flask-backend] search-smiles smiles={smiles}", flush=True)
+    return jsonify({"ok": True, "smiles": smiles})
+
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5001, debug=True)
-

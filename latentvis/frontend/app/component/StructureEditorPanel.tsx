@@ -13,6 +13,7 @@ declare global {
 
 type JsmeInstance = {
   jmeFile?: () => string;
+  smiles?: () => string;
   readMolecule?: (input: string) => void;
   svg?: () => string;
   toSVG?: () => string;
@@ -33,6 +34,7 @@ export default function StructureEditorPanel() {
   const [scriptReady, setScriptReady] = useState(false);
   const [currentJme, setCurrentJme] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [searchBusy, setSearchBusy] = useState(false);
 
   function getHostSize(element: HTMLElement) {
     const width = Math.max(240, Math.floor(element.clientWidth));
@@ -181,6 +183,39 @@ export default function StructureEditorPanel() {
     setIsOpen(false);
   }
 
+  function getActiveSmiles() {
+    const editor = isOpen ? modalEditorRef.current : inlineEditorRef.current;
+    const editorSmiles = editor?.smiles?.();
+    if (editorSmiles && editorSmiles.trim().length > 0) return editorSmiles.trim();
+    return null;
+  }
+
+  async function searchCurrentSmiles() {
+    const smiles = getActiveSmiles();
+    if (!smiles) {
+      setError("Current structure cannot be converted to SMILES.");
+      return;
+    }
+    setSearchBusy(true);
+    setError(null);
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
+      const res = await fetch(`${apiBase}/search-smiles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ smiles }),
+      });
+      if (!res.ok) {
+        throw new Error(`search-smiles API failed: ${res.status}`);
+      }
+    } catch (e) {
+      console.error(e);
+      setError("Failed to send SMILES to backend.");
+    } finally {
+      setSearchBusy(false);
+    }
+  }
+
   return (
     <div className="w-full h-full flex flex-col">
       <div className="shrink-0 px-2 py-1 text-sm font-semibold text-zinc-700 border-b border-zinc-200">
@@ -188,6 +223,19 @@ export default function StructureEditorPanel() {
       </div>
       <div className="flex-1 min-h-0 p-3 flex flex-col gap-2">
         <div className="relative h-48 w-full border border-zinc-200 rounded bg-white overflow-hidden">
+          <button
+            type="button"
+            className={
+              "absolute left-2 top-2 z-10 px-3 py-1 rounded border text-xs shadow-sm " +
+              (searchBusy
+                ? "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed"
+                : "border-zinc-300 bg-white/95 text-zinc-700 hover:bg-white")
+            }
+            onClick={searchCurrentSmiles}
+            disabled={searchBusy}
+          >
+            {searchBusy ? "Searching..." : "Search"}
+          </button>
           <button
             type="button"
             className="absolute right-2 top-2 z-10 px-3 py-1 rounded border border-zinc-300 bg-white/95 text-xs text-zinc-700 shadow-sm hover:bg-white"
@@ -208,13 +256,28 @@ export default function StructureEditorPanel() {
           <div className="w-[min(1200px,92vw)] h-[82vh] bg-white border border-zinc-300 rounded shadow-xl flex flex-col">
             <div className="shrink-0 px-3 py-2 border-b border-zinc-200 flex items-center justify-between">
               <div className="text-sm font-semibold text-zinc-700">JSME Structure Editor</div>
-              <button
-                type="button"
-                className="px-2 py-1 rounded border border-zinc-300 text-xs text-zinc-700 hover:bg-zinc-50"
-                onClick={closeModalAndSync}
-              >
-                Close
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className={
+                    "px-2 py-1 rounded border text-xs " +
+                    (searchBusy
+                      ? "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed"
+                      : "border-zinc-300 text-zinc-700 hover:bg-zinc-50")
+                  }
+                  onClick={searchCurrentSmiles}
+                  disabled={searchBusy}
+                >
+                  {searchBusy ? "Searching..." : "Search"}
+                </button>
+                <button
+                  type="button"
+                  className="px-2 py-1 rounded border border-zinc-300 text-xs text-zinc-700 hover:bg-zinc-50"
+                  onClick={closeModalAndSync}
+                >
+                  Close
+                </button>
+              </div>
             </div>
             <div className="flex-1 min-h-0 p-2">
               <div id={hostId} className="w-full h-full border border-zinc-200 rounded bg-white" />
