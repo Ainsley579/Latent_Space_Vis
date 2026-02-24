@@ -20,7 +20,14 @@ type SankeySampleRow = {
 };
 
 type DatasetKey = "dimenet" | "chemprop" | "chemeleon";
+type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan";
 const DATASET_OPTIONS: DatasetKey[] = ["dimenet", "chemprop", "chemeleon"];
+const DATASET_OPTIONS_UI: DatasetKey[] = ["chemprop", "chemeleon"];
+const CLUSTERING_OPTIONS: Array<{ value: ClusteringKey; label: string }> = [
+  { value: "pgmeans", label: "PG Means" },
+  { value: "agglomerative", label: "Agglomerative" },
+  { value: "hdbscan", label: "HDBSCAN" },
+];
 const DATASET_DEFAULTS: Record<DatasetKey, { model: string; layer: string }> = {
   dimenet: { model: "dimenet_noaug", layer: "emb" },
   chemprop: { model: "0", layer: "fingerprint" },
@@ -33,25 +40,39 @@ function sanitizePathKey(value: string) {
 
 export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
-  const datasetBaseFor = (dataset: DatasetKey) => `/data/${dataset}`;
-  const datasetBase = datasetBaseFor(selectedDataset);
+  const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("pgmeans");
+  const datasetBaseFor = (
+    dataset: DatasetKey,
+    clustering: ClusteringKey = selectedClustering
+  ) => {
+    if (clustering === "pgmeans") return `/data/${dataset}`;
+    return `/data/${dataset}/clustering/${clustering}`;
+  };
+  const datasetBase = datasetBaseFor(selectedDataset, selectedClustering);
   const buildSankeyModelPath = (model: string, dataset: DatasetKey = selectedDataset) =>
-    `${datasetBaseFor(dataset)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`;
+    `${datasetBaseFor(dataset, selectedClustering)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`;
   const buildVerticalPath = (layer: string, dataset: DatasetKey = selectedDataset) =>
-    `${datasetBaseFor(dataset)}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`;
+    `${datasetBaseFor(dataset, selectedClustering)}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`;
   const buildScatterPath = (
     model: string,
     layer: string,
     projection: "default" | "pca" | "mds" | "umap" | "tsne",
-    dataset: DatasetKey = selectedDataset
+    dataset: DatasetKey = selectedDataset,
+    clustering: ClusteringKey = selectedClustering
   ) => {
     const base = `${model}_${layer}`;
     const file = projection === "default" ? `${base}.json` : `${base}_${projection}.json`;
-    return `${datasetBaseFor(dataset)}/scatterplot/${file}`;
+    return `${datasetBaseFor(dataset, clustering)}/scatterplot/${file}`;
   };
-  const syncSankeyPaths = (model: string, layer: string, dataset: DatasetKey = selectedDataset) => {
-    setSankeyPath(buildSankeyModelPath(model, dataset));
-    setSankeyPathVertical(buildVerticalPath(layer, dataset));
+  const syncSankeyPaths = (
+    model: string,
+    layer: string,
+    dataset: DatasetKey = selectedDataset,
+    clustering: ClusteringKey = selectedClustering
+  ) => {
+    const base = datasetBaseFor(dataset, clustering);
+    setSankeyPath(`${base}/sankey/${sanitizePathKey(model)}_sankey_samples.json`);
+    setSankeyPathVertical(`${base}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`);
   };
 
   const [sankeyPath, setSankeyPath] = useState("/data/chemprop/sankey/0_sankey_samples.json");
@@ -287,7 +308,7 @@ export default function Home() {
       .catch((err) => {
         console.error(err);
       });
-  }, [datasetBase, selectedDataset]);
+  }, [datasetBase, selectedDataset, selectedClustering]);
 
   useEffect(() => {
     if (!selectedNode) {
@@ -1086,17 +1107,43 @@ export default function Home() {
                   onDatasetChange={(d) => {
                     const next = d as DatasetKey;
                     const defaults = DATASET_DEFAULTS[next];
+                    const nextClustering = selectedClustering;
                     setSelectedDataset(next);
                     setSelectedModel(defaults.model);
                     setSelectedLayer(defaults.layer);
-                    syncSankeyPaths(defaults.model, defaults.layer, next);
-                    setScatterPath(buildScatterPath(defaults.model, defaults.layer, scatterProjection, next));
+                    syncSankeyPaths(defaults.model, defaults.layer, next, nextClustering);
+                    setScatterPath(
+                      buildScatterPath(
+                        defaults.model,
+                        defaults.layer,
+                        scatterProjection,
+                        next,
+                        nextClustering
+                      )
+                    );
                     setSelectedNode(null);
                     setSelectedIds(null);
                     setCellSelected(false);
                     setActiveSankeyRows([]);
                   }}
-                  datasetOptions={DATASET_OPTIONS}
+                  datasetOptions={DATASET_OPTIONS_UI}
+                  clustering={selectedClustering}
+                  clusteringOptions={CLUSTERING_OPTIONS}
+                  onClusteringChange={(c) => {
+                    const next = c as ClusteringKey;
+                    const defaults = DATASET_DEFAULTS[selectedDataset];
+                    setSelectedClustering(next);
+                    setSelectedModel(defaults.model);
+                    setSelectedLayer(defaults.layer);
+                    syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, next);
+                    setScatterPath(
+                      buildScatterPath(defaults.model, defaults.layer, scatterProjection, selectedDataset, next)
+                    );
+                    setSelectedNode(null);
+                    setSelectedIds(null);
+                    setCellSelected(false);
+                    setActiveSankeyRows([]);
+                  }}
                   syncOn={syncLinkedSankeyViews}
                   onToggleSync={toggleSyncLinkedViews}
                   largePreviewOn={showLargeHoverPreview}

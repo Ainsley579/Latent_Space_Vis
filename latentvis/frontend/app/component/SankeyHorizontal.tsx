@@ -249,7 +249,7 @@ export default function SankeyHorizontal({
       const LEGEND_LEFT = 32;
       const MARGIN_LEFT = 50 + LEGEND_LEFT;
       const TOP = 10;
-      const BOTTOM = 10;
+      const BOTTOM = 26;
 
       const sankeyGen = sankey<{ name: string }, { source: number; target: number; value: number; key: string }>()
         .nodeWidth(NODE_W)
@@ -297,7 +297,7 @@ export default function SankeyHorizontal({
       svg.attr("width", totalWidth);
 
       // Layer/model labels for each column (bottom side).
-      const labelY = height - 4;
+      const labelY = height - 16;
       svg
         .append("g")
         .attr("class", "axis-labels")
@@ -316,8 +316,12 @@ export default function SankeyHorizontal({
         .attr("y", labelY)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "ideographic")
-        .attr("font-size", 11)
+        .attr("font-size", 12)
+        .attr("font-weight", 600)
         .attr("fill", "#374151")
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 2)
+        .attr("paint-order", "stroke")
         .style("pointer-events", "none")
         .text((d) => d);
 
@@ -524,7 +528,9 @@ export default function SankeyHorizontal({
         .attr("stroke-width", (d) => (highlightId && d.id === highlightId ? 2.2 : 1.2));
 
       // Re-apply current transform right after redraw so viewport state is preserved.
-      const groups = svg.selectAll("g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels");
+      const groups = svg.selectAll(
+        "g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels, g.axis-labels"
+      );
       if (syncTransform) {
         const scale = syncTransform.scale;
         const offsetX = syncTransform.x - SYNC_BASE_OFFSET * scale;
@@ -656,7 +662,9 @@ export default function SankeyHorizontal({
     if (!container) return;
     const svg = container.querySelector("svg");
     if (!svg) return;
-    const groups = svg.querySelectorAll("g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels");
+    const groups = svg.querySelectorAll(
+      "g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels, g.axis-labels"
+    );
     let transformAttr = "";
     if (syncTransform) {
       const scale = syncTransform.scale;

@@ -6,6 +6,9 @@ type SyncControlPanelProps = {
   dataset: string;
   onDatasetChange: (dataset: string) => void;
   datasetOptions: string[];
+  clustering?: string;
+  clusteringOptions?: Array<{ value: string; label: string }>;
+  onClusteringChange?: (clustering: string) => void;
   syncOn: boolean;
   onToggleSync: () => void;
   largePreviewOn: boolean;
@@ -18,6 +21,9 @@ export default function SyncControlPanel({
   dataset,
   onDatasetChange,
   datasetOptions,
+  clustering,
+  clusteringOptions = [],
+  onClusteringChange,
   syncOn,
   onToggleSync,
   largePreviewOn,
@@ -56,6 +62,22 @@ export default function SyncControlPanel({
           ))}
         </select>
       </div>
+      {clustering && clusteringOptions.length > 0 && onClusteringChange && (
+        <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
+          <label className="text-[10px] text-zinc-700 shrink-0">CLUSTERING</label>
+          <select
+            className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
+            value={clustering}
+            onChange={(e) => onClusteringChange(e.target.value)}
+          >
+            {clusteringOptions.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="flex items-center justify-start gap-2 min-w-0 mb-2">
         <span className="text-[10px] text-zinc-700">SYNC</span>
         <button
