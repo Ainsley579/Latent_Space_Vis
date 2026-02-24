@@ -6,9 +6,11 @@ type TopkNearestRow = {
   top_k_closest_real_ids: number[];
 };
 
-type ClusterSubstructureFlags = {
+type ClusterSubstructureData = {
   knn: boolean;
   kfn: boolean;
+  knnSmiles: string | null;
+  knnSmarts: string | null;
 };
 
 type TopkNearestPanelProps = {
@@ -22,7 +24,7 @@ type TopkNearestPanelProps = {
   onHoverIdChange: (id: string | null) => void;
   resolveImageSrc: (realId: string | number, imageType: string) => string;
   resolveSubstructureImage: (model: string, layer: string, cluster: number, group: "knn" | "kfn") => string;
-  substructureByCluster: Record<number, ClusterSubstructureFlags>;
+  substructureByCluster: Record<number, ClusterSubstructureData>;
   clusterBadgeColor: (cluster: number) => string;
   onClusterSelect?: (cluster: number) => void;
   onImagePreviewStart?: (src: string, anchor?: DOMRect) => void;
@@ -56,6 +58,7 @@ export default function TopkNearestPanel({
 }: TopkNearestPanelProps) {
   const PAGE_SIZE = 5;
   const [pageByCluster, setPageByCluster] = useState<Record<number, number>>({});
+  const [failedSubImages, setFailedSubImages] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setPageByCluster((prev) => {
@@ -89,7 +92,10 @@ export default function TopkNearestPanel({
             </div>
           </div>
           {rows.map((row) => {
-            const subFlags = substructureByCluster[row.cluster_id] ?? { knn: false, kfn: false };
+            const subData = substructureByCluster[row.cluster_id] ?? { knn: false, kfn: false, knnSmiles: null, knnSmarts: null };
+            const subKey = `${selectedModel}__${selectedLayer}__${row.cluster_id}__knn`;
+            const subSrc = resolveSubstructureImage(selectedModel, selectedLayer, row.cluster_id, "knn");
+            const showSubImage = subData.knn && !failedSubImages[subKey];
             const totalPages = Math.max(1, Math.ceil(row.top_k_closest_real_ids.length / PAGE_SIZE));
             const page = Math.min(pageByCluster[row.cluster_id] ?? 0, totalPages - 1);
             const start = page * PAGE_SIZE;
@@ -115,33 +121,45 @@ export default function TopkNearestPanel({
                   <div
                     className="relative w-full max-w-[180px] aspect-square mx-auto"
                     onMouseEnter={
-                      subFlags.knn
+                      showSubImage
                         ? (e: ReactMouseEvent<HTMLDivElement>) =>
                             onImagePreviewStart?.(
-                              resolveSubstructureImage(selectedModel, selectedLayer, row.cluster_id, "knn"),
+                              subSrc,
                               (e.currentTarget as HTMLDivElement).getBoundingClientRect(),
                             )
                         : undefined
                     }
-                    onMouseLeave={subFlags.knn ? () => onImagePreviewEnd?.() : undefined}
+                    onMouseLeave={showSubImage ? () => onImagePreviewEnd?.() : undefined}
                   >
-                    {subFlags.knn ? (
-                      <img
-                        src={resolveSubstructureImage(selectedModel, selectedLayer, row.cluster_id, "knn")}
-                        alt={`KNN substructure ${row.cluster_id}`}
+                    {subData.knn ? (
+                      <div
                         className={
-                          `w-full h-full object-contain bg-white border ` +
+                          `w-full h-full bg-white border p-2 flex flex-col ` +
                           (selectedCluster === row.cluster_id ? "border-black" : "border-zinc-200")
                         }
-                        onLoad={(e) => {
-                          const target = e.currentTarget as HTMLImageElement;
-                          target.style.display = "block";
-                        }}
-                        onError={(e) => {
-                          const target = e.currentTarget as HTMLImageElement;
-                          target.style.display = "none";
-                        }}
-                      />
+                      >
+                        {showSubImage ? (
+                          <img
+                            src={subSrc}
+                            alt={`KNN substructure ${row.cluster_id}`}
+                            className="w-full h-full object-contain"
+                            onError={() => {
+                              setFailedSubImages((prev) => ({ ...prev, [subKey]: true }));
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <svg width="64" height="64" viewBox="0 0 86 86" aria-hidden="true" className="text-zinc-300">
+                              <g fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M30 18h26l13 22-13 22H30L17 40z" />
+                                <path d="M30 18l13 22-13 22" />
+                                <path d="M56 18L43 40l13 22" />
+                                <circle cx="43" cy="40" r="2.5" fill="currentColor" />
+                              </g>
+                            </svg>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div
                         className={

@@ -94,6 +94,15 @@ function inferSequenceFromRows(
 }
 
 const LAYER_ORDER = [
+  "ffn_layer_1",
+  "ffn_layer_2",
+  "fingerprint",
+  "gnn_layer_1",
+  "gnn_layer_2",
+  "gnn_layer_3",
+  "gnn_layer_4",
+  "gnn_layer_5",
+  "gnn_layer_6",
   "emb",
   "output_block_0",
   "output_block_1",
@@ -110,9 +119,8 @@ const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
 const UNSYNC_SHIFT_X = 0;
 const UNSYNC_LEFT_PAD = 20;
 const UNSYNC_RIGHT_PAD = 20;
-const MIN_LAYER_GAP = 80;
-const MIN_EPOCH_GAP = 150;
-const SYNC_EPOCH_GAP = 170;
+const MIN_LAYER_GAP = 60;
+const MIN_EPOCH_GAP = 120;
 
 export default function SankeyHorizontal({
   dataPath = "/data/dimenet/sankey/sankey_samples.json",
@@ -128,6 +136,8 @@ export default function SankeyHorizontal({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const nodeSamplesRef = useRef<Map<string, Set<string>>>(new Map());
   const onNodeSelectRef = useRef(onNodeSelect);
+  const syncTransformRef = useRef(syncTransform);
+  const onSyncTransformRef = useRef(onSyncTransform);
   const activeNodeKeyRef = useRef(activeNodeKey);
   const isControlledRef = useRef(activeNodeKey !== undefined);
   const displayActiveNodeRef = useRef<string | null>(null);
@@ -148,6 +158,12 @@ export default function SankeyHorizontal({
   useEffect(() => {
     onNodeSelectRef.current = onNodeSelect;
   }, [onNodeSelect]);
+  useEffect(() => {
+    syncTransformRef.current = syncTransform;
+  }, [syncTransform]);
+  useEffect(() => {
+    onSyncTransformRef.current = onSyncTransform;
+  }, [onSyncTransform]);
 
   useEffect(() => {
     activeNodeKeyRef.current = activeNodeKey;
@@ -269,7 +285,7 @@ export default function SankeyHorizontal({
         return Math.max(minGap, (width - UNSYNC_LEFT_PAD - UNSYNC_RIGHT_PAD) / (layers.length - 1));
       })();
       const offsetX = isSynced ? 0 : UNSYNC_SHIFT_X;
-      const spacing = isSynced ? (mode === "model" ? SYNC_EPOCH_GAP : CELL_W) : unsyncedStep;
+      const spacing = isSynced ? CELL_W : unsyncedStep;
       const totalWidth = isSynced
         ? width
         : Math.max(
@@ -513,9 +529,10 @@ export default function SankeyHorizontal({
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       if (!Number.isFinite(delta) || delta === 0) return;
       e.preventDefault();
-      if (syncTransform) {
-        const nextPanX = syncTransform.x - SYNC_BASE_OFFSET * syncTransform.scale - delta;
-        onSyncTransform?.({ x: nextPanX + SYNC_BASE_OFFSET * syncTransform.scale, y: 0, scale: syncTransform.scale });
+      const currSync = syncTransformRef.current;
+      if (currSync) {
+        const nextPanX = currSync.x - SYNC_BASE_OFFSET * currSync.scale - delta;
+        onSyncTransformRef.current?.({ x: nextPanX + SYNC_BASE_OFFSET * currSync.scale, y: 0, scale: currSync.scale });
       } else {
         host.scrollLeft += delta;
       }

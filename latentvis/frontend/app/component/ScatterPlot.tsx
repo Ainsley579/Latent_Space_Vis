@@ -22,6 +22,7 @@ type ScatterPlotProps = {
   onPointHoverIdChange?: (id: string | null) => void;
   onClusterSelect?: (sel: { model?: string; layer?: string; cluster: number; real_ids: string[] }) => void;
   onClearSelection?: () => void;
+  resolveImageSrc?: (realId: string | number, imageType: string) => string;
 };
 
 export default function ScatterPlot({
@@ -35,6 +36,7 @@ export default function ScatterPlot({
   onPointHoverIdChange,
   onClusterSelect,
   onClearSelection,
+  resolveImageSrc,
 }: ScatterPlotProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const onPointSelectRef = useRef(onPointSelect);
@@ -139,7 +141,9 @@ export default function ScatterPlot({
         .attr("stroke-width", (d) => (highlightId && String(d.real_id) === highlightId ? 1.8 : 0.9))
         .style("cursor", "pointer")
         .on("mouseover", (event, d) => {
-          const imgSrc = `/molecule_images/${String(d.real_id)}_ligand.png`;
+          const imgSrc = resolveImageSrc
+            ? resolveImageSrc(String(d.real_id), "ligand")
+            : `/molecule_images/${String(d.real_id)}_ligand.png`;
           onPointHoverIdChangeRef.current?.(String(d.real_id));
           tooltipImg.style("display", "block").attr("src", imgSrc);
           tooltip.style("display", "block");

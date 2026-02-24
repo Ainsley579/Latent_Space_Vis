@@ -96,6 +96,15 @@ export default function Home() {
       k: number;
     }[]
   >([]);
+  const [clusterSortedMembers, setClusterSortedMembers] = useState<
+    {
+      layer_name: string;
+      model_type: string;
+      cluster_id: number;
+      sorted_real_ids: Array<string | number>;
+      count?: number;
+    }[]
+  >([]);
   const [syncLinkedSankeyViews, setSyncLinkedSankeyViews] = useState(false);
   const [showLargeHoverPreview, setShowLargeHoverPreview] = useState(true);
   const [largeHoverPreviewSize, setLargeHoverPreviewSize] = useState(320);
@@ -111,6 +120,7 @@ export default function Home() {
   const syncRafRef = useRef<number | null>(null);
   const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
   const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
+  const syncSourceRef = useRef<{ source: "view" | "vertical" | "horizontal"; ts: number } | null>(null);
   function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }) {
     setHoverLock(false);
     if (
@@ -135,7 +145,16 @@ export default function Home() {
     setHoveredId(id);
   }
 
-  function handleSankeyTransformSync(next: { x: number; y: number; scale: number }) {
+  function handleSankeyTransformSync(
+    next: { x: number; y: number; scale: number },
+    source: "view" | "vertical" | "horizontal"
+  ) {
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const lock = syncSourceRef.current;
+    const SOURCE_LOCK_MS = 140;
+    if (lock && lock.source !== source && now - lock.ts < SOURCE_LOCK_MS) return;
+    syncSourceRef.current = { source, ts: now };
+
     pendingTransformRef.current = next;
     if (syncRafRef.current != null) return;
 
@@ -155,6 +174,21 @@ export default function Home() {
       lastSyncedTransformRef.current = t;
       setSankeyTransform(t);
     });
+  }
+
+  function mergeAndSyncSankeyTransform(
+    partial: Partial<{ x: number; y: number; scale: number }>,
+    source: "view" | "vertical" | "horizontal"
+  ) {
+    const base = pendingTransformRef.current ?? lastSyncedTransformRef.current;
+    handleSankeyTransformSync(
+      {
+        x: partial.x ?? base.x,
+        y: partial.y ?? base.y,
+        scale: partial.scale ?? base.scale,
+      },
+      source
+    );
   }
 
   function toggleSyncLinkedViews() {
@@ -371,6 +405,22 @@ export default function Home() {
       });
   }, [datasetBase]);
 
+  useEffect(() => {
+    fetch(`${datasetBase}/topk/cluster_sorted_members.json`)
+      .then((res) => {
+        if (res.status === 404) return [];
+        if (!res.ok) throw new Error("Failed to load cluster sorted members");
+        return res.json();
+      })
+      .then((json) => {
+        setClusterSortedMembers(Array.isArray(json) ? json : []);
+      })
+      .catch((err) => {
+        console.error(err);
+        setClusterSortedMembers([]);
+      });
+  }, [datasetBase]);
+
 
   useEffect(() => {
     fetch(`${datasetBase}/substructures/cluster_substructures.json`)
@@ -400,17 +450,35 @@ export default function Home() {
     const rows = substructures.filter(
       (d) => d.model_type === selectedModel && d.layer_name === selectedLayer,
     );
-    const map: Record<number, { knn: boolean; kfn: boolean }> = {};
+    const map: Record<number, { knn: boolean; kfn: boolean; knnSmiles: string | null; knnSmarts: string | null }> = {};
 
     rows.forEach((d) => {
-      if (!map[d.cluster_id]) map[d.cluster_id] = { knn: false, kfn: false };
+      if (!map[d.cluster_id]) map[d.cluster_id] = { knn: false, kfn: false, knnSmiles: null, knnSmarts: null };
       const hasData = d.mcs_smiles != null || d.mcs_smarts != null;
-      if (d.group === "knn") map[d.cluster_id].knn = hasData;
+      if (d.group === "knn") {
+        map[d.cluster_id].knn = hasData;
+        map[d.cluster_id].knnSmiles = d.mcs_smiles;
+        map[d.cluster_id].knnSmarts = d.mcs_smarts;
+      }
       if (d.group === "kfn") map[d.cluster_id].kfn = hasData;
     });
 
     return map;
   }, [substructures, selectedModel, selectedLayer]);
+
+  const sortedMembersByClusterKey = useMemo(() => {
+    const map = new Map<string, string[]>();
+    clusterSortedMembers.forEach((d) => {
+      const key = `${d.model_type}__${d.layer_name}__${d.cluster_id}`;
+      if (Array.isArray(d.sorted_real_ids) && d.sorted_real_ids.length > 0) {
+        map.set(
+          key,
+          d.sorted_real_ids.map((id) => String(id)),
+        );
+      }
+    });
+    return map;
+  }, [clusterSortedMembers]);
 
   const clusterInstanceIds = useMemo(() => {
     if (!selectedNode) return [];
@@ -435,13 +503,30 @@ export default function Home() {
       }
     });
 
+    const key = `${selectedNode.model}__${selectedNode.layer}__${selectedNode.cluster}`;
+    const sorted = sortedMembersByClusterKey.get(key);
+    if (sorted && sorted.length > 0) {
+      const ordered = sorted.filter((id) => ids.size === 0 || ids.has(id));
+      if (ordered.length > 0) {
+        const orderedSet = new Set(ordered);
+        const extras = Array.from(ids).filter((id) => !orderedSet.has(id));
+        extras.sort((a, b) => {
+          const na = Number(a);
+          const nb = Number(b);
+          if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+          return a.localeCompare(b);
+        });
+        return [...ordered, ...extras];
+      }
+    }
+
     return Array.from(ids).sort((a, b) => {
       const na = Number(a);
       const nb = Number(b);
       if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
       return a.localeCompare(b);
     });
-  }, [activeSankeyRows, selectedNode]);
+  }, [activeSankeyRows, selectedNode, sortedMembersByClusterKey]);
 
   const clusterTotalPages = useMemo(() => {
     if (clusterInstanceIds.length === 0) return 1;
@@ -463,8 +548,8 @@ export default function Home() {
   }, [clusterTotalPages]);
 
   function resolveImageSrc(realId: string | number, imageType: string) {
-    const key = String(realId);
-    return `/molecule_images/${key}_${imageType}.png`;
+    const key = sanitizePathKey(String(realId).trim());
+    return `${datasetBase}/molecule_images/${key}_${imageType}.png`;
   }
 
   function resolveSubstructureImage(
@@ -555,6 +640,13 @@ export default function Home() {
     window.addEventListener("mouseup", onUp);
   }
 
+  const nowTs = typeof performance !== "undefined" ? performance.now() : Date.now();
+  const viewIsSyncSource =
+    syncSourceRef.current?.source === "view" &&
+    nowTs - (syncSourceRef.current?.ts ?? 0) < 180;
+  const sankeyViewExternalTransform =
+    syncLinkedSankeyViews && !viewIsSyncSource ? sankeyTransform : undefined;
+
   return (
     <div className="flex min-h-screen w-full">
       <main className="flex min-h-screen w-full">
@@ -606,8 +698,8 @@ export default function Home() {
                   }
                 }}
                 onSwapAxes={(swap) => setSwapAxes(swap)}
-                externalTransform={syncLinkedSankeyViews ? sankeyTransform : undefined}
-                onTransform={(t) => handleSankeyTransformSync(t)}
+                externalTransform={sankeyViewExternalTransform}
+                onTransform={(t) => handleSankeyTransformSync(t, "view")}
               />
             </div>
           </div>
@@ -627,7 +719,7 @@ export default function Home() {
                 syncTransform={syncLinkedSankeyViews ? syncTransformVertical : undefined}
                 onSyncTransform={(t) => {
                   if (!syncLinkedSankeyViews) return;
-                  handleSankeyTransformSync({ x: sankeyTransform.x, y: t.y, scale: t.scale });
+                  mergeAndSyncSankeyTransform({ y: t.y, scale: t.scale }, "vertical");
                 }}
                 activeNodeKey={
                   selectedNode
@@ -700,7 +792,7 @@ export default function Home() {
                 syncTransform={syncLinkedSankeyViews ? syncTransformHorizontal : undefined}
                 onSyncTransform={(t) => {
                   if (!syncLinkedSankeyViews) return;
-                  handleSankeyTransformSync({ x: t.x, y: sankeyTransform.y, scale: t.scale });
+                  mergeAndSyncSankeyTransform({ x: t.x, scale: t.scale }, "horizontal");
                 }}
                 activeNodeKey={
                   selectedNode
@@ -788,6 +880,7 @@ export default function Home() {
                       setHoverLock(false);
                       setSuppressScatterCluster(false);
                     }}
+                    resolveImageSrc={resolveImageSrc}
                   />
                 </div>
               </div>

@@ -112,6 +112,46 @@ function sortRowKeys(keys: string[]): string[] {
   });
 }
 
+const PREFERRED_LAYER_ORDER = [
+  "ffn_layer_1",
+  "ffn_layer_2",
+  "fingerprint",
+  "gnn_layer_1",
+  "gnn_layer_2",
+  "gnn_layer_3",
+  "gnn_layer_4",
+  "gnn_layer_5",
+  "gnn_layer_6",
+  "emb",
+  "output_block_0",
+  "output_block_1",
+  "output_block_2",
+  "output_block_3",
+  "output_block_4",
+  "u_mlp_input",
+  "u_mlp_l1",
+  "u_mlp_l2",
+];
+const PREFERRED_LAYER_INDEX = new Map(PREFERRED_LAYER_ORDER.map((name, idx) => [name, idx]));
+
+function sortLayerKeys(keys: string[]): string[] {
+  return [...keys].sort((a, b) => {
+    const ai = PREFERRED_LAYER_INDEX.get(a);
+    const bi = PREFERRED_LAYER_INDEX.get(b);
+    if (ai != null && bi != null) return ai - bi;
+    if (ai != null) return -1;
+    if (bi != null) return 1;
+
+    // For unknown layer names, keep numerical suffixes in natural order.
+    const am = /^(.*?)(\d+)$/.exec(a);
+    const bm = /^(.*?)(\d+)$/.exec(b);
+    if (am && bm && am[1] === bm[1]) {
+      return Number(am[2]) - Number(bm[2]);
+    }
+    return a.localeCompare(b);
+  });
+}
+
 type SankeyViewProps = {
   dataPath?: string;
   metricsPath?: string;
@@ -190,7 +230,7 @@ export default function SankeyView({
       .then((rawData) => {
         const data = normalizeSankeyData(rawData);
         const ROW_NAMES: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
-        const COLUMN_NAMES: string[] = Object.keys(data?.layer || {});
+        const COLUMN_NAMES: string[] = sortLayerKeys(Object.keys(data?.layer || {}));
         const MODEL_SET = new Set(ROW_NAMES);
         const LAYER_SET = new Set(COLUMN_NAMES);
 
@@ -346,11 +386,27 @@ export default function SankeyView({
         const nodeBarOffset = (x.bandwidth() - nodeBarWidth) / 2;
 
         const nodeLookup = new Map<string, { rowName: string; columnName: string; idx: number; node: any }>();
+        const nodeIdLookup = new Map<string, { rowName: string; columnName: string; idx: number; node: any }>();
 
         function columnFromLabel(label: string) {
           const i = label.lastIndexOf("_C");
           if (i === -1) return label;
           return label.slice(0, i);
+        }
+
+        function lookupNode(
+          rowName: string,
+          columnName: string,
+          label: string,
+          nodeId: number | undefined
+        ): { rowName: string; columnName: string; idx: number; node: any } | null {
+          const byLabel = nodeLookup.get(`${rowName}|${columnName}|${label}`);
+          if (byLabel) return byLabel;
+          if (nodeId !== undefined) {
+            const byId = nodeIdLookup.get(`${rowName}|${columnName}|${String(nodeId)}`);
+            if (byId) return byId;
+          }
+          return null;
         }
 
         const nodeDrawQueue: Array<{
@@ -369,6 +425,11 @@ export default function SankeyView({
             const label = String(node.label ?? "");
             const key = `${rowName}|${columnName}|${label}`;
             nodeLookup.set(key, { rowName, columnName, idx, node });
+            const nodeId = node?.id;
+            if (nodeId !== undefined && nodeId !== null) {
+              const idKey = `${rowName}|${columnName}|${String(nodeId)}`;
+              nodeIdLookup.set(idKey, { rowName, columnName, idx, node });
+            }
           });
         });
 
@@ -431,22 +492,29 @@ export default function SankeyView({
 
             if (!sourceInfo || !targetInfo) return;
 
-            const srcO = cellOrigin(sourceInfo.rowName, columnKey, cellW, cellH);
-            const tgtO = cellOrigin(targetInfo.rowName, columnKey, cellW, cellH);
-            const srcRowIdx = ROW_INDEX.get(sourceInfo.rowName);
-            const tgtRowIdx = ROW_INDEX.get(targetInfo.rowName);
-            if (srcRowIdx == null || tgtRowIdx == null || Math.abs(srcRowIdx - tgtRowIdx) !== 1) return;
+            const srcRowIdxRaw = ROW_INDEX.get(sourceInfo.rowName);
+            const tgtRowIdxRaw = ROW_INDEX.get(targetInfo.rowName);
+            if (srcRowIdxRaw == null || tgtRowIdxRaw == null) return;
+            if (Math.abs(tgtRowIdxRaw - srcRowIdxRaw) !== 1) return;
+            // Keep adjacent-only links; auto-flip reversed edges to forward order.
+            const forwardColumn =
+              tgtRowIdxRaw > srcRowIdxRaw
+                ? { source: sourceInfo, target: targetInfo }
+                : { source: targetInfo, target: sourceInfo };
 
-            const srcIdx = sourceInfo.idx;
-            const tgtIdx = targetInfo.idx;
+            const srcO = cellOrigin(forwardColumn.source.rowName, columnKey, cellW, cellH);
+            const tgtO = cellOrigin(forwardColumn.target.rowName, columnKey, cellW, cellH);
+
+            const srcIdx = forwardColumn.source.idx;
+            const tgtIdx = forwardColumn.target.idx;
             const srcBand = x(srcIdx);
             const tgtBand = x(tgtIdx);
             if (srcBand == null || tgtBand == null) return;
 
-            const sPrev = sourceInfo.node.previous ?? 0;
-            const sVal = sourceInfo.node.value ?? 0;
-            const tPrev = targetInfo.node.previous ?? 0;
-            const tVal = targetInfo.node.value ?? 0;
+            const sPrev = forwardColumn.source.node.previous ?? 0;
+            const sVal = forwardColumn.source.node.value ?? 0;
+            const tPrev = forwardColumn.target.node.previous ?? 0;
+            const tVal = forwardColumn.target.node.value ?? 0;
 
             const sBarY = innerH - y(sPrev);
             const sBarH = innerH - y(sVal);
@@ -490,28 +558,38 @@ export default function SankeyView({
           if (ROW_INDEX.get(rowKey) == null) return;
 
           (rowObj.edges || []).forEach((edge: any) => {
-            const sLabel = String(edge.source_label ?? "");
-            const tLabel = String(edge.target_label ?? "");
-            const sCol = columnFromLabel(sLabel);
-            const tCol = columnFromLabel(tLabel);
-            const sourceInfo = nodeLookup.get(`${rowKey}|${sCol}|${sLabel}`) || null;
-            const targetInfo = nodeLookup.get(`${rowKey}|${tCol}|${tLabel}`) || null;
+            const sLabelRaw = String(edge.source_label ?? "");
+            const tLabelRaw = String(edge.target_label ?? "");
+            const sColRaw = columnFromLabel(sLabelRaw);
+            const tColRaw = columnFromLabel(tLabelRaw);
+            const sourceInfo = lookupNode(rowKey, sColRaw, sLabelRaw, edge.source_node_id);
+            const targetInfo = lookupNode(rowKey, tColRaw, tLabelRaw, edge.target_node_id);
 
             if (!sourceInfo || !targetInfo) return;
+            const srcColIdxRaw = COLUMN_INDEX.get(sourceInfo.columnName);
+            const tgtColIdxRaw = COLUMN_INDEX.get(targetInfo.columnName);
+            if (srcColIdxRaw == null || tgtColIdxRaw == null) return;
+            // Strict adjacency only: previous layer <-> next layer.
+            if (Math.abs(tgtColIdxRaw - srcColIdxRaw) !== 1) return;
+            // Auto-orient reversed data to forward order by column index.
+            const forwardRow =
+              tgtColIdxRaw > srcColIdxRaw
+                ? { source: sourceInfo, target: targetInfo }
+                : { source: targetInfo, target: sourceInfo };
 
-            const srcO = cellOrigin(rowKey, sourceInfo.columnName, cellW, cellH);
-            const tgtO = cellOrigin(rowKey, targetInfo.columnName, cellW, cellH);
+            const srcO = cellOrigin(rowKey, forwardRow.source.columnName, cellW, cellH);
+            const tgtO = cellOrigin(rowKey, forwardRow.target.columnName, cellW, cellH);
 
-            const srcIdx = sourceInfo.idx;
-            const tgtIdx = targetInfo.idx;
+            const srcIdx = forwardRow.source.idx;
+            const tgtIdx = forwardRow.target.idx;
             const srcBand = x(srcIdx);
             const tgtBand = x(tgtIdx);
             if (srcBand == null || tgtBand == null) return;
 
-            const sPrev = sourceInfo.node.previous ?? 0;
-            const sVal = sourceInfo.node.value ?? 0;
-            const tPrev = targetInfo.node.previous ?? 0;
-            const tVal = targetInfo.node.value ?? 0;
+            const sPrev = forwardRow.source.node.previous ?? 0;
+            const sVal = forwardRow.source.node.value ?? 0;
+            const tPrev = forwardRow.target.node.previous ?? 0;
+            const tVal = forwardRow.target.node.value ?? 0;
 
             const sBarY = innerH - y(sPrev);
             const sBarH = innerH - y(sVal);

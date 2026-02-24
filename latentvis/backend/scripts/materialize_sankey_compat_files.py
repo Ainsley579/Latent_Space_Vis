@@ -34,6 +34,23 @@ def infer_layers(fieldnames: Sequence[str]) -> List[str]:
     return layers
 
 
+def reorder_layers(layers: Sequence[str], preferred: Sequence[str]) -> List[str]:
+    if not preferred:
+        return list(layers)
+    seen = set()
+    out: List[str] = []
+    layer_set = set(layers)
+    for layer in preferred:
+        if layer in layer_set and layer not in seen:
+            out.append(layer)
+            seen.add(layer)
+    for layer in layers:
+        if layer not in seen:
+            out.append(layer)
+            seen.add(layer)
+    return out
+
+
 def parse_int(value: str) -> int | None:
     if value is None:
         return None
@@ -314,6 +331,12 @@ def main() -> None:
         default="auto",
         help="auto: explicit source/target if provided else first two; adjacent: generate transitions for all adjacent model pairs",
     )
+    parser.add_argument(
+        "--layer-order",
+        type=str,
+        default="",
+        help="Optional comma-separated layer order override, e.g. ffn_layer_1,ffn_layer_2,fingerprint,gnn_layer_1,gnn_layer_2,gnn_layer_3",
+    )
     args = parser.parse_args()
 
     dataset_root = args.dataset_root
@@ -325,6 +348,9 @@ def main() -> None:
 
     fieldnames, rows = load_csv(csv_path)
     layers = infer_layers(fieldnames)
+    if args.layer_order.strip():
+        preferred_layers = [s.strip() for s in args.layer_order.split(",") if s.strip()]
+        layers = reorder_layers(layers, preferred_layers)
     if len(layers) < 1:
         raise ValueError(f"No *_cluster columns found in: {csv_path}")
 
