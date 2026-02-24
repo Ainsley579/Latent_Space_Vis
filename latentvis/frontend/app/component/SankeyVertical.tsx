@@ -300,6 +300,23 @@ export default function SankeyVertical({
       );
       svg.attr("height", totalHeight);
 
+      // Layer/model labels for each row (right side; screen-space, not rotated with data group).
+      svg
+        .append("g")
+        .attr("class", "axis-labels")
+        .selectAll("text")
+        .data(renderOrder)
+        .enter()
+        .append("text")
+        .attr("x", width - 6)
+        .attr("y", (_d, i) => baseLeft + i * MODEL_GAP + offsetY)
+        .attr("text-anchor", "end")
+        .attr("dominant-baseline", "middle")
+        .attr("font-size", 11)
+        .attr("fill", "#374151")
+        .style("pointer-events", "none")
+        .text((d) => d);
+
       const nodes: Array<{ key: string; model: string; value: number; x: number; y: number; h: number }> = [];
       renderOrder.forEach((model, i) => {
         const list = nodesByModel.get(model) || [];

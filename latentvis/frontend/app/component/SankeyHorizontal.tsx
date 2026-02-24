@@ -296,6 +296,31 @@ export default function SankeyHorizontal({
       // re-create svg with expanded width if needed
       svg.attr("width", totalWidth);
 
+      // Layer/model labels for each column (bottom side).
+      const labelY = height - 4;
+      svg
+        .append("g")
+        .attr("class", "axis-labels")
+        .selectAll("text")
+        .data(layers)
+        .enter()
+        .append("text")
+        .attr("x", (_d, i) => {
+          const baseX = isSynced
+            ? MARGIN_LEFT + centerOffset + (i + 0.5) * spacing
+            : layers.length <= 1
+              ? width / 2
+              : UNSYNC_LEFT_PAD + i * unsyncedStep;
+          return baseX + offsetX;
+        })
+        .attr("y", labelY)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "ideographic")
+        .attr("font-size", 11)
+        .attr("fill", "#374151")
+        .style("pointer-events", "none")
+        .text((d) => d);
+
       (sankeyGraph.nodes as SankeyNode<any, any>[]).forEach((node: any) => {
         const name = String(node.name || "");
         const idxC = name.lastIndexOf("_");
