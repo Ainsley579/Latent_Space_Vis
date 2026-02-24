@@ -729,7 +729,7 @@ export default function Home() {
               id="sankeyVertical"
               className="w-full h-full border border-zinc-400 min-h-0 relative"
             >
-              <div className="absolute top-1 right-2 text-xs text-zinc-600 bg-white/80 px-1 rounded">
+              <div className="absolute top-1 right-2 z-30 pointer-events-none text-xs text-zinc-600 bg-white/90 px-1 rounded shadow-sm">
                 {swapAxes ? selectedModel : selectedLayer}
               </div>
               <SankeyVertical
@@ -802,7 +802,7 @@ export default function Home() {
               id="sankeyHorizontal"
               className="w-full h-full border border-zinc-400 relative"
             >
-              <div className="absolute top-1 left-2 text-xs text-zinc-600 bg-white/80 px-1 rounded">
+              <div className="absolute top-1 left-2 z-30 pointer-events-none text-xs text-zinc-600 bg-white/90 px-1 rounded shadow-sm">
                 {swapAxes ? selectedLayer : selectedModel}
               </div>
               <SankeyHorizontal
