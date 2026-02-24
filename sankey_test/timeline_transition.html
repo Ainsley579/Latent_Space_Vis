@@ -157,7 +157,7 @@
             if (nextSwap) p.set('swap', '1');
             else p.delete('swap');
 
-            // 把当前 slider 的 min/max 也写进 URL（如果元素已经存在）
+            // Write current slider min/max into URL if elements exist
             const minEl = document.getElementById('minRange');
             const maxEl = document.getElementById('maxRange');
             if (minEl && maxEl) {

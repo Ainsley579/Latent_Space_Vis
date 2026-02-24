@@ -4,7 +4,7 @@ Backend analyzer for GMM clustering and dimensionality reduction.
 
 Provides simplified interface for:
 1. GMM fitting on embeddings
-2. PCA/UMAP 降维
+2. PCA/UMAP dimensionality reduction
 3. Cluster assignment and metrics
 4. Sankey flow analysis
 """

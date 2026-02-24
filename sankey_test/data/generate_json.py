@@ -2,14 +2,14 @@
 """
 parse_sankey.py
 
-批量解析:
+Batch parse:
  - data/sankey_spatial_epoch_{epochnames}.csv
  - data/sankey_temporal_{layernames}.csv
 
-输出:
+Output:
  - out/all_sankey.json
- - out/sankey_spatial_epoch_{epochnames}.json (每个文件一份)
- - out/sankey_temporal_{layernames}.json (每个文件一份)
+ - out/sankey_spatial_epoch_{epochnames}.json (one per file)
+ - out/sankey_temporal_{layernames}.json (one per file)
 """
 import argparse
 import csv
@@ -24,32 +24,31 @@ TEMPORAL_RE = re.compile(r"sankey_temporal_(?P<layername>.+?)\.csv$", re.IGNOREC
 
 def parse_csv_edges(path: Path) -> List[Dict[str, Any]]:
     """
-    解析 CSV 文件，返回 edges 列表。
-    期望每行格式:
+    Parse CSV file and return list of edges.
+    Expected row format:
     source_node_id,target_node_id,source_label,target_label,value
     """
     edges = []
     with path.open("r", encoding="utf-8") as f:
         reader = csv.reader(f)
-        rows = [r for r in reader if any(cell.strip() for cell in r)]  # 去掉空行
+        rows = [r for r in reader if any(cell.strip() for cell in r)]  # skip blank lines
         if not rows:
             return edges
 
-        # 检测是否第一行是 header（包含 'source' 或 'source_node_id' 文本）
+        # Detect if first row is header (contains 'source' or 'source_node_id')
         first = [c.strip().lower() for c in rows[0]]
         has_header = any(h in first for h in ("source", "source_node_id", "source_label", "target_label", "value"))
         start_idx = 1 if has_header else 0
 
         for i, row in enumerate(rows[start_idx:], start=start_idx):
-            # 保护性处理：行可能含有逗号分隔但多余空格
+            # Defensive: row may have comma-separated cells with extra spaces
             if len(row) < 5:
-                # 尝试用 join 切分（若 source_label, target_label 含逗号会出问题，但假设不含）
-                # 跳过不完整行
-                print(f"警告: 跳过不完整行 {i+1} in {path}: {row}")
+                # Skip incomplete rows
+                print("Warning: skipping incomplete row %d in %s: %s" % (i + 1, path, row))
                 continue
-            # 只取前5列
+            # Use first 5 columns only
             s_node, t_node, s_label, t_label, val = [c.strip() for c in row[:5]]
-            # 将 id 转为 int（若不能转则保持原字符串）
+            # Convert ids to int when possible, else keep string
             try:
                 s_node_i = int(s_node)
             except:
@@ -58,15 +57,14 @@ def parse_csv_edges(path: Path) -> List[Dict[str, Any]]:
                 t_node_i = int(t_node)
             except:
                 t_node_i = t_node
-            # 将 value 转为 int 或 float
+            # Convert value to int or float
             try:
                 if "." in val:
                     v = float(val)
                 else:
                     v = int(val)
-            except:
-                # 若解析失败保留字符串
-                v = val
+            except Exception:
+                v = val  # keep string on parse failure
             edges.append({
                 "source_node_id": s_node_i,
                 "target_node_id": t_node_i,
@@ -141,9 +139,9 @@ from typing import Any
 
 def _extract_layer_and_cluster_from_label(label: str):
     """
-    从像 `layer1_C0_3` 或 `E000_C0_3` 的 label 中提取:
-      - layer_name: 如果 label 以 'layer' 开头，返回 'layerX'；否则 return None (caller may supply).
-      - cluster_id: 整个第一个 '_' 后面的部分，例如 'C0_3'
+    From labels like `layer1_C0_3` or `E000_C0_3` extract:
+      - layer_name: if label starts with 'layer', return 'layerX'; else None (caller may supply).
+      - cluster_id: the part after the first '_', e.g. 'C0_3'
     """
     if not label:
         return (None, None)
@@ -326,23 +324,23 @@ def build_spatial_entry(path: Path, epoch: str) -> Dict[str, Any]:
 
 def _extract_epoch_from_label(label: str):
     """
-    尝试从 label 中提取 epoch 字符串，例如：
+    Try to extract epoch string from label, e.g.:
       - 'E000_C0_3' -> '000'
       - '000_C0_3'  -> '000'
       - 'layer1_E001_C0' -> '001'
-    返回 None 如果无法提取。
+    Returns None if extraction fails.
     """
     if not label:
         return None
-    # 常见形式 E000 或 E000_... / ..._E000_...
+    # Common form E000 or E000_... / ..._E000_...
     m = re.search(r'E(?P<epoch>\d{1,})', str(label))
     if m:
         return m.group('epoch')
-    # 直接以数字开头的情况 000_xxx
+    # Direct numeric prefix 000_xxx
     m2 = re.match(r'^(?P<epoch>\d{1,})[_\-]', str(label))
     if m2:
         return m2.group('epoch')
-    # 尾部带数字的情形 e.g. ..._000
+    # Numeric suffix e.g. ..._000
     m3 = re.search(r'[_\-](?P<epoch>\d{1,})$', str(label))
     if m3:
         return m3.group('epoch')
@@ -495,7 +493,7 @@ def main(data_dir: Path, out_dir: Path, write_individual_files: bool = True):
                 out_path = out_dir / f"{csv_path.stem}.json"
                 out_path.write_text(json.dumps(entry, ensure_ascii=False, indent=2), encoding="utf-8")
         else:
-            print(f"跳过非匹配文件: {name}")
+            print("Skipping non-matching file: %s" % name)
 
     # --- compute edge percentages (pct_of_source) for spatial and temporal results ---
     compute_edge_percentages(spatial_results)
@@ -518,15 +516,15 @@ def main(data_dir: Path, out_dir: Path, write_individual_files: bool = True):
     all_out = out_dir / "all_sankey.json"
     all_out.write_text(json.dumps(all_data, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # 打印摘要
-    print(f"解析完成。{len(spatial_results)} 个 spatial_epoch 文件，{len(temporal_results)} 个 temporal 文件。")
-    print(f"输出目录: {out_dir}")
-    print(f"主合并文件: {all_out}")
+    # Print summary
+    print("Parse complete. %d spatial_epoch files, %d temporal files." % (len(spatial_results), len(temporal_results)))
+    print("Output dir: %s" % out_dir)
+    print("Merged file: %s" % all_out)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Parse sankey CSVs and write structured JSON.")
-    parser.add_argument("--data-dir", "-d", default="./", help="存放 sankey CSV 的目录（默认: data）")
-    parser.add_argument("--out-dir", "-o", default="./", help="JSON 输出目录（默认: out）")
-    parser.add_argument("--no-individual", action="store_true", help="不为每个 CSV 生成单独的 JSON 文件（只生成 all_sankey.json）")
+    parser.add_argument("--data-dir", "-d", default="./", help="Directory containing sankey CSVs (default: .)")
+    parser.add_argument("--out-dir", "-o", default="./", help="Directory for JSON output (default: .)")
+    parser.add_argument("--no-individual", action="store_true", help="Do not write per-CSV JSON files (only all_sankey.json)")
     args = parser.parse_args()
     main(Path(args.data_dir), Path(args.out_dir), write_individual_files=(not args.no_individual))
