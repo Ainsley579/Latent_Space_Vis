@@ -290,6 +290,22 @@ export default function Home() {
     URL.revokeObjectURL(url);
   }
 
+  async function generateFromRange(minValue: number, maxValue: number) {
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
+      const res = await fetch(`${apiBase}/generate-range`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ min: minValue, max: maxValue }),
+      });
+      if (!res.ok) {
+        throw new Error(`Generate API failed: ${res.status}`);
+      }
+    } catch (err) {
+      console.error("Failed to call generate-range API:", err);
+    }
+  }
+
   useEffect(() => {
     setScatterPath(buildScatterPath(selectedModel, selectedLayer, scatterProjection));
   }, [datasetBase, selectedModel, selectedLayer, scatterProjection]);
@@ -1171,6 +1187,8 @@ export default function Home() {
                   onToggleLargePreview={() => setShowLargeHoverPreview((prev) => !prev)}
                   largePreviewSize={largeHoverPreviewSize}
                   onLargePreviewSizeChange={setLargeHoverPreviewSize}
+                  onGenerateRange={generateFromRange}
+                  generateEnabled={true}
                   onExportBookmarks={exportBookmarkedIdsCsv}
                   bookmarkCount={bookmarkedIds.size}
                 />

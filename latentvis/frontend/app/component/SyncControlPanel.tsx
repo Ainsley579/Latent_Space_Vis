@@ -15,6 +15,8 @@ type SyncControlPanelProps = {
   onToggleLargePreview: () => void;
   largePreviewSize: number;
   onLargePreviewSizeChange: (size: number) => void;
+  onGenerateRange?: (minValue: number, maxValue: number) => void;
+  generateEnabled?: boolean;
   onExportBookmarks?: () => void;
   bookmarkCount?: number;
 };
@@ -32,6 +34,8 @@ export default function SyncControlPanel({
   onToggleLargePreview,
   largePreviewSize,
   onLargePreviewSizeChange,
+  onGenerateRange,
+  generateEnabled = true,
   onExportBookmarks,
   bookmarkCount = 0,
 }: SyncControlPanelProps) {
@@ -182,7 +186,14 @@ export default function SyncControlPanel({
       <div className="flex items-center justify-center gap-2 min-w-0">
         <button
           type="button"
-          className="h-6 px-3 rounded border border-zinc-300 bg-zinc-50 text-xs text-zinc-700 hover:bg-zinc-100 shrink-0"
+          className={
+            "h-6 px-3 rounded border text-xs shrink-0 " +
+            (generateEnabled
+              ? "border-zinc-300 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
+              : "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed")
+          }
+          disabled={!generateEnabled}
+          onClick={() => onGenerateRange?.(minValue, maxValue)}
         >
           Generate
         </button>
