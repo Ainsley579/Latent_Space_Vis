@@ -6,24 +6,38 @@ type SyncControlPanelProps = {
   dataset: string;
   onDatasetChange: (dataset: string) => void;
   datasetOptions: string[];
+  clustering?: string;
+  clusteringOptions?: Array<{ value: string; label: string }>;
+  onClusteringChange?: (clustering: string) => void;
   syncOn: boolean;
   onToggleSync: () => void;
   largePreviewOn: boolean;
   onToggleLargePreview: () => void;
   largePreviewSize: number;
   onLargePreviewSizeChange: (size: number) => void;
+  onGenerateRange?: (minValue: number, maxValue: number) => void;
+  generateEnabled?: boolean;
+  onExportBookmarks?: () => void;
+  bookmarkCount?: number;
 };
 
 export default function SyncControlPanel({
   dataset,
   onDatasetChange,
   datasetOptions,
+  clustering,
+  clusteringOptions = [],
+  onClusteringChange,
   syncOn,
   onToggleSync,
   largePreviewOn,
   onToggleLargePreview,
   largePreviewSize,
   onLargePreviewSizeChange,
+  onGenerateRange,
+  generateEnabled = true,
+  onExportBookmarks,
+  bookmarkCount = 0,
 }: SyncControlPanelProps) {
   const [minValue, setMinValue] = useState(1);
   const [maxValue, setMaxValue] = useState(20);
@@ -41,7 +55,7 @@ export default function SyncControlPanel({
       <div className="shrink-0 px-2 py-1 text-sm font-semibold text-zinc-700 border-b border-zinc-200">
         Control Panel
       </div>
-      <div className="flex-1 min-h-0 px-2 py-2 flex flex-col gap-2">
+      <div className="flex-1 min-h-0 px-2 py-2 flex flex-col gap-2 overflow-y-auto">
       <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
         <label className="text-[10px] text-zinc-700 shrink-0">DATASET</label>
         <select
@@ -56,6 +70,22 @@ export default function SyncControlPanel({
           ))}
         </select>
       </div>
+      {clustering && clusteringOptions.length > 0 && onClusteringChange && (
+        <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
+          <label className="text-[10px] text-zinc-700 shrink-0">CLUSTERING</label>
+          <select
+            className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
+            value={clustering}
+            onChange={(e) => onClusteringChange(e.target.value)}
+          >
+            {clusteringOptions.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="flex items-center justify-start gap-2 min-w-0 mb-2">
         <span className="text-[10px] text-zinc-700">SYNC</span>
         <button
@@ -156,15 +186,30 @@ export default function SyncControlPanel({
       <div className="flex items-center justify-center gap-2 min-w-0">
         <button
           type="button"
-          className="h-6 px-3 rounded border border-zinc-300 bg-zinc-50 text-xs text-zinc-700 hover:bg-zinc-100 shrink-0"
+          className={
+            "h-6 px-3 rounded border text-xs shrink-0 " +
+            (generateEnabled
+              ? "border-zinc-300 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
+              : "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed")
+          }
+          disabled={!generateEnabled}
+          onClick={() => onGenerateRange?.(minValue, maxValue)}
         >
           Generate
         </button>
         <button
           type="button"
-          className="h-6 px-3 rounded border border-zinc-300 bg-zinc-50 text-xs text-zinc-700 hover:bg-zinc-100 shrink-0"
+          className={
+            "h-6 px-3 rounded border text-xs shrink-0 " +
+            (bookmarkCount > 0
+              ? "border-zinc-300 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
+              : "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed")
+          }
+          disabled={bookmarkCount <= 0}
+          title={bookmarkCount > 0 ? `Export ${bookmarkCount} bookmarked IDs` : "No bookmarked IDs"}
+          onClick={onExportBookmarks}
         >
-          Export
+          Export ({bookmarkCount})
         </button>
       </div>
       </div>

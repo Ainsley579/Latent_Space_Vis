@@ -123,6 +123,17 @@ const MIN_LAYER_GAP = 30;
 const MIN_EPOCH_GAP = 60;
 const SYNC_VERTICAL_SHIFT_RATIO = 0.5;
 
+function toShortLayerName(name: string): string {
+  if (name === "fingerprint") return "fp";
+  const gnn = /^gnn_layer_(\d+)$/.exec(name);
+  if (gnn) return `gnn${gnn[1]}`;
+  const ffn = /^ffn_layer_(\d+)$/.exec(name);
+  if (ffn) return `ffn${ffn[1]}`;
+  const fnn = /^fnn_layer_(\d+)$/.exec(name);
+  if (fnn) return `fnn${fnn[1]}`;
+  return name;
+}
+
 export default function SankeyVertical({
   dataPath = "/data/dimenet/sankey/sankey_samples.json",
   syncTransform,
@@ -248,7 +259,7 @@ export default function SankeyVertical({
       const rows = lastRows as any[];
       const NODE_W = 12;
       const NODE_PAD = 4;
-      const BOTTOM = 10;
+      const BOTTOM = 28;
       const TOP = 10;
       const MARGIN_LEFT = CELL_H * 2 + 10;
       const bandH = Math.max(1, drawH - TOP - BOTTOM);
@@ -299,6 +310,28 @@ export default function SankeyVertical({
         baseLeft + (Math.max(1, renderOrder.length) - 0.5) * MODEL_GAP + offsetY + NODE_W / 2 + 10
       );
       svg.attr("height", totalHeight);
+
+      // Layer/model labels for each row (right side; screen-space, not rotated with data group).
+      const labelYOffset = -8;
+      svg
+        .append("g")
+        .attr("class", "axis-labels")
+        .selectAll("text")
+        .data(renderOrder)
+        .enter()
+        .append("text")
+        .attr("x", width - 6)
+        .attr("y", (_d, i) => baseLeft + i * MODEL_GAP + offsetY + labelYOffset)
+        .attr("text-anchor", "end")
+        .attr("dominant-baseline", "middle")
+        .attr("font-size", 12)
+        .attr("font-weight", 600)
+        .attr("fill", "#374151")
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 2)
+        .attr("paint-order", "stroke")
+        .style("pointer-events", "none")
+        .text((d) => toShortLayerName(String(d)));
 
       const nodes: Array<{ key: string; model: string; value: number; x: number; y: number; h: number }> = [];
       renderOrder.forEach((model, i) => {
@@ -513,16 +546,24 @@ export default function SankeyVertical({
         .attr("stroke", (d) => (highlightId && d.id === highlightId ? HIGHLIGHT_RED : SANKEY_LINK_COLOR))
         .attr("stroke-width", (d) => (highlightId && d.id === highlightId ? 2 : 1.1));
 
+      // Keep labels above links/nodes.
+      svg.selectAll("g.axis-labels").raise();
+
       // Re-apply current transform right after redraw so viewport state is preserved.
-      const groups = svg.selectAll("g.links, g.sample-trajectories, g.nodes");
+      const contentGroups = svg.selectAll("g.links, g.sample-trajectories, g.nodes");
+      const labelGroups = svg.selectAll("g.axis-labels");
       if (syncTransform) {
         const scale = syncTransform.scale;
         const offsetX = syncTransform.y - SYNC_BASE_OFFSET * scale;
-        groups.attr("transform", `translate(${offsetX},0) scale(${scale},1)`);
+        contentGroups.attr("transform", `translate(${offsetX},0) scale(${scale},1)`);
+        // Keep labels on screen-space vertical transform (not horizontal drift).
+        labelGroups.attr("transform", `translate(0,${offsetX}) scale(1,${scale})`);
       } else if (panY !== 0 || zoomX !== 1) {
-        groups.attr("transform", `translate(${panY},0) scale(${zoomX},1)`);
+        contentGroups.attr("transform", `translate(${panY},0) scale(${zoomX},1)`);
+        labelGroups.attr("transform", `translate(0,${panY}) scale(1,${zoomX})`);
       } else {
-        groups.attr("transform", null);
+        contentGroups.attr("transform", null);
+        labelGroups.attr("transform", null);
       }
     }
 
@@ -617,19 +658,27 @@ export default function SankeyVertical({
     if (!container) return;
     const svg = container.querySelector("svg");
     if (!svg) return;
-    const groups = svg.querySelectorAll("g.links, g.sample-trajectories, g.nodes");
-    let transformAttr = "";
+    const contentGroups = svg.querySelectorAll("g.links, g.sample-trajectories, g.nodes");
+    const labelGroups = svg.querySelectorAll("g.axis-labels");
+    let contentTransformAttr = "";
+    let labelTransformAttr = "";
     if (syncTransform) {
       const scale = syncTransform.scale;
       const offsetX = syncTransform.y - SYNC_BASE_OFFSET * scale;
-      transformAttr = `translate(${offsetX},0) scale(${scale},1)`;
+      contentTransformAttr = `translate(${offsetX},0) scale(${scale},1)`;
+      labelTransformAttr = `translate(0,${offsetX}) scale(1,${scale})`;
     } else if (panY !== 0 || zoomX !== 1) {
       // In rotated space, x-translate maps to on-screen vertical movement.
-      transformAttr = `translate(${panY},0) scale(${zoomX},1)`;
+      contentTransformAttr = `translate(${panY},0) scale(${zoomX},1)`;
+      labelTransformAttr = `translate(0,${panY}) scale(1,${zoomX})`;
     }
 
-    groups.forEach((el) => {
-      if (transformAttr) (el as SVGGElement).setAttribute("transform", transformAttr);
+    contentGroups.forEach((el) => {
+      if (contentTransformAttr) (el as SVGGElement).setAttribute("transform", contentTransformAttr);
+      else (el as SVGGElement).removeAttribute("transform");
+    });
+    labelGroups.forEach((el) => {
+      if (labelTransformAttr) (el as SVGGElement).setAttribute("transform", labelTransformAttr);
       else (el as SVGGElement).removeAttribute("transform");
     });
   }, [syncTransform, panY, zoomX]);
@@ -694,7 +743,7 @@ export default function SankeyVertical({
       <div
         ref={containerRef}
         className="w-full h-full"
-        style={{ overflowX: "hidden", overflowY: "scroll", cursor: syncTransform ? "default" : draggingRef.current ? "grabbing" : "grab" }}
+        style={{ overflowX: "auto", overflowY: "scroll", cursor: syncTransform ? "default" : draggingRef.current ? "grabbing" : "grab" }}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}

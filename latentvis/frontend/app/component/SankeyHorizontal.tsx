@@ -122,6 +122,17 @@ const UNSYNC_RIGHT_PAD = 20;
 const MIN_LAYER_GAP = 60;
 const MIN_EPOCH_GAP = 120;
 
+function toShortLayerName(name: string): string {
+  if (name === "fingerprint") return "fp";
+  const gnn = /^gnn_layer_(\d+)$/.exec(name);
+  if (gnn) return `gnn${gnn[1]}`;
+  const ffn = /^ffn_layer_(\d+)$/.exec(name);
+  if (ffn) return `ffn${ffn[1]}`;
+  const fnn = /^fnn_layer_(\d+)$/.exec(name);
+  if (fnn) return `fnn${fnn[1]}`;
+  return name;
+}
+
 export default function SankeyHorizontal({
   dataPath = "/data/dimenet/sankey/sankey_samples.json",
   syncTransform,
@@ -249,7 +260,7 @@ export default function SankeyHorizontal({
       const LEGEND_LEFT = 32;
       const MARGIN_LEFT = 50 + LEGEND_LEFT;
       const TOP = 10;
-      const BOTTOM = 10;
+      const BOTTOM = 26;
 
       const sankeyGen = sankey<{ name: string }, { source: number; target: number; value: number; key: string }>()
         .nodeWidth(NODE_W)
@@ -295,6 +306,35 @@ export default function SankeyHorizontal({
 
       // re-create svg with expanded width if needed
       svg.attr("width", totalWidth);
+
+      // Layer/model labels for each column (bottom side).
+      const labelY = height - 16;
+      svg
+        .append("g")
+        .attr("class", "axis-labels")
+        .selectAll("text")
+        .data(layers)
+        .enter()
+        .append("text")
+        .attr("x", (_d, i) => {
+          const baseX = isSynced
+            ? MARGIN_LEFT + centerOffset + (i + 0.5) * spacing
+            : layers.length <= 1
+              ? width / 2
+              : UNSYNC_LEFT_PAD + i * unsyncedStep;
+          return baseX + offsetX;
+        })
+        .attr("y", labelY)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "ideographic")
+        .attr("font-size", 12)
+        .attr("font-weight", 600)
+        .attr("fill", "#374151")
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 2)
+        .attr("paint-order", "stroke")
+        .style("pointer-events", "none")
+        .text((d) => toShortLayerName(String(d)));
 
       (sankeyGraph.nodes as SankeyNode<any, any>[]).forEach((node: any) => {
         const name = String(node.name || "");
@@ -499,7 +539,9 @@ export default function SankeyHorizontal({
         .attr("stroke-width", (d) => (highlightId && d.id === highlightId ? 2.2 : 1.2));
 
       // Re-apply current transform right after redraw so viewport state is preserved.
-      const groups = svg.selectAll("g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels");
+      const groups = svg.selectAll(
+        "g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels, g.axis-labels"
+      );
       if (syncTransform) {
         const scale = syncTransform.scale;
         const offsetX = syncTransform.x - SYNC_BASE_OFFSET * scale;
@@ -631,7 +673,9 @@ export default function SankeyHorizontal({
     if (!container) return;
     const svg = container.querySelector("svg");
     if (!svg) return;
-    const groups = svg.querySelectorAll("g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels");
+    const groups = svg.querySelectorAll(
+      "g.noaug-links, g.sample-trajectories, g.noaug-nodes, g.cluster-number-labels, g.axis-labels"
+    );
     let transformAttr = "";
     if (syncTransform) {
       const scale = syncTransform.scale;

@@ -134,6 +134,17 @@ const PREFERRED_LAYER_ORDER = [
 ];
 const PREFERRED_LAYER_INDEX = new Map(PREFERRED_LAYER_ORDER.map((name, idx) => [name, idx]));
 
+function toShortLayerName(name: string): string {
+  if (name === "fingerprint") return "fp";
+  const gnn = /^gnn_layer_(\d+)$/.exec(name);
+  if (gnn) return `gnn${gnn[1]}`;
+  const ffn = /^ffn_layer_(\d+)$/.exec(name);
+  if (ffn) return `ffn${ffn[1]}`;
+  const fnn = /^fnn_layer_(\d+)$/.exec(name);
+  if (fnn) return `fnn${fnn[1]}`;
+  return name;
+}
+
 function sortLayerKeys(keys: string[]): string[] {
   return [...keys].sort((a, b) => {
     const ai = PREFERRED_LAYER_INDEX.get(a);
@@ -301,15 +312,7 @@ export default function SankeyView({
             const innerG = g.append("g").attr("transform", `translate(${cellMargin.left}, ${cellMargin.top})`);
             cells.push(innerG);
 
-            g.on("mouseenter", (_event: any, datum: any) => {
-              if (lockedCell) return;
-              setCellHighlight(datum.rowName, datum.columnName, true);
-            })
-              .on("mouseleave", (_event: any, datum: any) => {
-                if (lockedCell) return;
-                setCellHighlight(datum.rowName, datum.columnName, false);
-              })
-              .on("click", (_event: any, datum: any) => {
+            g.on("click", (_event: any, datum: any) => {
                 const isSameLocked =
                   lockedCell?.rowName === datum.rowName &&
                   lockedCell?.columnName === datum.columnName;
@@ -346,6 +349,7 @@ export default function SankeyView({
               });
           });
         });
+
 
         const maxClusters = (() => {
           let max = 0;
@@ -1328,44 +1332,50 @@ export default function SankeyView({
 
             {layout && (
               <>
-                <div className="absolute left-0 top-0 right-0 h-5 pointer-events-none bg-white/90 z-10">
-                  {layout.colNames.map((name, i) => {
-                    const x =
-                      transform.x +
-                      transform.scale * (layout.margin.left + i * layout.cellW + layout.cellMargin.left + layout.innerW / 2);
-                    return (
-                      <div
-                        key={name}
-                        className="absolute text-sm text-zinc-700"
-                        style={{ transform: `translate(${x}px, 0px) translateX(-50%)` }}
-                      >
-                        {name}
+                <div className="absolute left-0 top-0 right-0 h-5 pointer-events-none bg-white/90 z-10 overflow-hidden">
+                  <div
+                    className="absolute top-0 h-5"
+                    style={{
+                      left: transform.x + transform.scale * layout.margin.left + 24,
+                      width: transform.scale * layout.cellW * layout.colNames.length,
+                      display: "grid",
+                      gridTemplateColumns: `repeat(${Math.max(1, layout.colNames.length)}, minmax(0, 1fr))`,
+                      alignItems: "center",
+                    }}
+                  >
+                    {layout.colNames.map((name) => (
+                      <div key={name} className="text-sm text-zinc-700 text-center whitespace-nowrap">
+                        {toShortLayerName(name)}
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-                <div className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none bg-white/90 z-10">
-                  {layout.rowNames.map((name, i) => {
-                    const y =
-                      transform.y +
-                      transform.scale * (layout.margin.top + i * layout.cellH + layout.cellMargin.top + layout.innerH / 2);
-                    return (
+                <div className="absolute left-0 top-0 bottom-0 w-10 pointer-events-none bg-white/90 z-10 overflow-hidden">
+                  <div
+                    className="absolute left-0 w-10"
+                    style={{
+                      top: transform.y + transform.scale * layout.margin.top,
+                      height: transform.scale * layout.cellH * layout.rowNames.length,
+                      display: "grid",
+                      gridTemplateRows: `repeat(${Math.max(1, layout.rowNames.length)}, minmax(0, 1fr))`,
+                      justifyItems: "start",
+                      alignItems: "center",
+                      paddingLeft: 2,
+                    }}
+                  >
+                    {layout.rowNames.map((name) => (
                       <div
                         key={name}
-                        className="absolute text-sm text-zinc-700"
+                        className="text-sm text-zinc-700 whitespace-nowrap"
                         style={{
-                          left: 2,
-                          top: y,
-                          transform: "translateY(-50%)",
                           writingMode: "vertical-lr",
                           textOrientation: "mixed",
-                          whiteSpace: "nowrap",
                         }}
                       >
-                        {name}
+                        {toShortLayerName(name)}
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
               </>
             )}
@@ -1395,8 +1405,8 @@ export default function SankeyView({
 
         #chart {
           width: fit-content;
-          max-width: 100%;
-          margin: 16px 0 10px;
+          max-width: none;
+          margin: 0;
         }
 
         input[type="range"] {

@@ -20,7 +20,14 @@ type SankeySampleRow = {
 };
 
 type DatasetKey = "dimenet" | "chemprop" | "chemeleon";
+type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan";
 const DATASET_OPTIONS: DatasetKey[] = ["dimenet", "chemprop", "chemeleon"];
+const DATASET_OPTIONS_UI: DatasetKey[] = ["chemprop", "chemeleon"];
+const CLUSTERING_OPTIONS: Array<{ value: ClusteringKey; label: string }> = [
+  { value: "pgmeans", label: "PG Means" },
+  { value: "agglomerative", label: "Agglomerative" },
+  { value: "hdbscan", label: "HDBSCAN" },
+];
 const DATASET_DEFAULTS: Record<DatasetKey, { model: string; layer: string }> = {
   dimenet: { model: "dimenet_noaug", layer: "emb" },
   chemprop: { model: "0", layer: "fingerprint" },
@@ -33,25 +40,39 @@ function sanitizePathKey(value: string) {
 
 export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
-  const datasetBaseFor = (dataset: DatasetKey) => `/data/${dataset}`;
-  const datasetBase = datasetBaseFor(selectedDataset);
+  const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("pgmeans");
+  const datasetBaseFor = (
+    dataset: DatasetKey,
+    clustering: ClusteringKey = selectedClustering
+  ) => {
+    if (clustering === "pgmeans") return `/data/${dataset}`;
+    return `/data/${dataset}/clustering/${clustering}`;
+  };
+  const datasetBase = datasetBaseFor(selectedDataset, selectedClustering);
   const buildSankeyModelPath = (model: string, dataset: DatasetKey = selectedDataset) =>
-    `${datasetBaseFor(dataset)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`;
+    `${datasetBaseFor(dataset, selectedClustering)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`;
   const buildVerticalPath = (layer: string, dataset: DatasetKey = selectedDataset) =>
-    `${datasetBaseFor(dataset)}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`;
+    `${datasetBaseFor(dataset, selectedClustering)}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`;
   const buildScatterPath = (
     model: string,
     layer: string,
-    projection: "default" | "pca" | "mds" | "umap" | "tsne",
-    dataset: DatasetKey = selectedDataset
+    projection: "pca" | "mds" | "umap" | "tsne",
+    dataset: DatasetKey = selectedDataset,
+    clustering: ClusteringKey = selectedClustering
   ) => {
     const base = `${model}_${layer}`;
-    const file = projection === "default" ? `${base}.json` : `${base}_${projection}.json`;
-    return `${datasetBaseFor(dataset)}/scatterplot/${file}`;
+    const file = `${base}_${projection}.json`;
+    return `${datasetBaseFor(dataset, clustering)}/scatterplot/${file}`;
   };
-  const syncSankeyPaths = (model: string, layer: string, dataset: DatasetKey = selectedDataset) => {
-    setSankeyPath(buildSankeyModelPath(model, dataset));
-    setSankeyPathVertical(buildVerticalPath(layer, dataset));
+  const syncSankeyPaths = (
+    model: string,
+    layer: string,
+    dataset: DatasetKey = selectedDataset,
+    clustering: ClusteringKey = selectedClustering
+  ) => {
+    const base = datasetBaseFor(dataset, clustering);
+    setSankeyPath(`${base}/sankey/${sanitizePathKey(model)}_sankey_samples.json`);
+    setSankeyPathVertical(`${base}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`);
   };
 
   const [sankeyPath, setSankeyPath] = useState("/data/chemprop/sankey/0_sankey_samples.json");
@@ -59,8 +80,8 @@ export default function Home() {
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [selectedLayer, setSelectedLayer] = useState("fingerprint");
   const [selectedModel, setSelectedModel] = useState("0");
-  const [scatterProjection, setScatterProjection] = useState<"default" | "pca" | "mds" | "umap" | "tsne">("default");
-  const [scatterPath, setScatterPath] = useState("/data/chemprop/scatterplot/0_fingerprint.json");
+  const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
+  const [scatterPath, setScatterPath] = useState("/data/chemprop/scatterplot/0_fingerprint_pca.json");
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -247,6 +268,44 @@ export default function Home() {
     });
   }
 
+  function exportBookmarkedIdsCsv() {
+    if (bookmarkedIds.size === 0) return;
+    const ids = Array.from(bookmarkedIds).sort((a, b) => {
+      const na = Number(a);
+      const nb = Number(b);
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+    const rows = ["real_id", ...ids.map((id) => `"${String(id).replace(/"/g, '""')}"`)];
+    const csv = rows.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const dateTag = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `${selectedDataset}_${selectedClustering}_bookmarked_ids_${dateTag}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  async function generateFromRange(minValue: number, maxValue: number) {
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
+      const res = await fetch(`${apiBase}/generate-range`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ min: minValue, max: maxValue }),
+      });
+      if (!res.ok) {
+        throw new Error(`Generate API failed: ${res.status}`);
+      }
+    } catch (err) {
+      console.error("Failed to call generate-range API:", err);
+    }
+  }
+
   useEffect(() => {
     setScatterPath(buildScatterPath(selectedModel, selectedLayer, scatterProjection));
   }, [datasetBase, selectedModel, selectedLayer, scatterProjection]);
@@ -287,7 +346,7 @@ export default function Home() {
       .catch((err) => {
         console.error(err);
       });
-  }, [datasetBase, selectedDataset]);
+  }, [datasetBase, selectedDataset, selectedClustering]);
 
   useEffect(() => {
     if (!selectedNode) {
@@ -708,7 +767,7 @@ export default function Home() {
               id="sankeyVertical"
               className="w-full h-full border border-zinc-400 min-h-0 relative"
             >
-              <div className="absolute top-1 right-2 text-xs text-zinc-600 bg-white/80 px-1 rounded">
+              <div className="absolute top-1 right-2 z-30 pointer-events-none text-xs text-zinc-600 bg-white/90 px-1 rounded shadow-sm">
                 {swapAxes ? selectedModel : selectedLayer}
               </div>
               <SankeyVertical
@@ -781,7 +840,7 @@ export default function Home() {
               id="sankeyHorizontal"
               className="w-full h-full border border-zinc-400 relative"
             >
-              <div className="absolute top-1 left-2 text-xs text-zinc-600 bg-white/80 px-1 rounded">
+              <div className="absolute top-1 left-2 z-30 pointer-events-none text-xs text-zinc-600 bg-white/90 px-1 rounded shadow-sm">
                 {swapAxes ? selectedLayer : selectedModel}
               </div>
               <SankeyHorizontal
@@ -832,7 +891,6 @@ export default function Home() {
                     onChange={(e) => setScatterProjection(e.target.value as typeof scatterProjection)}
                     className="text-xs border border-zinc-300 rounded px-2 py-1 bg-white text-zinc-800"
                   >
-                    <option value="default">Default (MDS)</option>
                     <option value="pca">PCA</option>
                     <option value="mds">MDS</option>
                     <option value="umap">UMAP</option>
@@ -1074,7 +1132,7 @@ export default function Home() {
           >
             <div
               className={
-                "mt-12 h-[280px] bg-white pointer-events-auto overflow-hidden transition-all duration-300 ease-out " +
+                "mt-12 h-[420px] bg-white pointer-events-auto overflow-hidden transition-all duration-300 ease-out " +
                 (isControlPanelOpen
                   ? "w-56 opacity-100 translate-x-0 border border-zinc-400 shadow-lg"
                   : "w-0 opacity-0 -translate-x-2 border border-transparent shadow-none")
@@ -1086,23 +1144,53 @@ export default function Home() {
                   onDatasetChange={(d) => {
                     const next = d as DatasetKey;
                     const defaults = DATASET_DEFAULTS[next];
+                    const nextClustering = selectedClustering;
                     setSelectedDataset(next);
                     setSelectedModel(defaults.model);
                     setSelectedLayer(defaults.layer);
-                    syncSankeyPaths(defaults.model, defaults.layer, next);
-                    setScatterPath(buildScatterPath(defaults.model, defaults.layer, scatterProjection, next));
+                    syncSankeyPaths(defaults.model, defaults.layer, next, nextClustering);
+                    setScatterPath(
+                      buildScatterPath(
+                        defaults.model,
+                        defaults.layer,
+                        scatterProjection,
+                        next,
+                        nextClustering
+                      )
+                    );
                     setSelectedNode(null);
                     setSelectedIds(null);
                     setCellSelected(false);
                     setActiveSankeyRows([]);
                   }}
-                  datasetOptions={DATASET_OPTIONS}
+                  datasetOptions={DATASET_OPTIONS_UI}
+                  clustering={selectedClustering}
+                  clusteringOptions={CLUSTERING_OPTIONS}
+                  onClusteringChange={(c) => {
+                    const next = c as ClusteringKey;
+                    const defaults = DATASET_DEFAULTS[selectedDataset];
+                    setSelectedClustering(next);
+                    setSelectedModel(defaults.model);
+                    setSelectedLayer(defaults.layer);
+                    syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, next);
+                    setScatterPath(
+                      buildScatterPath(defaults.model, defaults.layer, scatterProjection, selectedDataset, next)
+                    );
+                    setSelectedNode(null);
+                    setSelectedIds(null);
+                    setCellSelected(false);
+                    setActiveSankeyRows([]);
+                  }}
                   syncOn={syncLinkedSankeyViews}
                   onToggleSync={toggleSyncLinkedViews}
                   largePreviewOn={showLargeHoverPreview}
                   onToggleLargePreview={() => setShowLargeHoverPreview((prev) => !prev)}
                   largePreviewSize={largeHoverPreviewSize}
                   onLargePreviewSizeChange={setLargeHoverPreviewSize}
+                  onGenerateRange={generateFromRange}
+                  generateEnabled={true}
+                  onExportBookmarks={exportBookmarkedIdsCsv}
+                  bookmarkCount={bookmarkedIds.size}
                 />
               </div>
             </div>
