@@ -56,12 +56,12 @@ export default function Home() {
   const buildScatterPath = (
     model: string,
     layer: string,
-    projection: "default" | "pca" | "mds" | "umap" | "tsne",
+    projection: "pca" | "mds" | "umap" | "tsne",
     dataset: DatasetKey = selectedDataset,
     clustering: ClusteringKey = selectedClustering
   ) => {
     const base = `${model}_${layer}`;
-    const file = projection === "default" ? `${base}.json` : `${base}_${projection}.json`;
+    const file = `${base}_${projection}.json`;
     return `${datasetBaseFor(dataset, clustering)}/scatterplot/${file}`;
   };
   const syncSankeyPaths = (
@@ -80,8 +80,8 @@ export default function Home() {
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [selectedLayer, setSelectedLayer] = useState("fingerprint");
   const [selectedModel, setSelectedModel] = useState("0");
-  const [scatterProjection, setScatterProjection] = useState<"default" | "pca" | "mds" | "umap" | "tsne">("default");
-  const [scatterPath, setScatterPath] = useState("/data/chemprop/scatterplot/0_fingerprint.json");
+  const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
+  const [scatterPath, setScatterPath] = useState("/data/chemprop/scatterplot/0_fingerprint_pca.json");
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -853,7 +853,6 @@ export default function Home() {
                     onChange={(e) => setScatterProjection(e.target.value as typeof scatterProjection)}
                     className="text-xs border border-zinc-300 rounded px-2 py-1 bg-white text-zinc-800"
                   >
-                    <option value="default">Default (MDS)</option>
                     <option value="pca">PCA</option>
                     <option value="mds">MDS</option>
                     <option value="umap">UMAP</option>
