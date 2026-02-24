@@ -301,15 +301,7 @@ export default function SankeyView({
             const innerG = g.append("g").attr("transform", `translate(${cellMargin.left}, ${cellMargin.top})`);
             cells.push(innerG);
 
-            g.on("mouseenter", (_event: any, datum: any) => {
-              if (lockedCell) return;
-              setCellHighlight(datum.rowName, datum.columnName, true);
-            })
-              .on("mouseleave", (_event: any, datum: any) => {
-                if (lockedCell) return;
-                setCellHighlight(datum.rowName, datum.columnName, false);
-              })
-              .on("click", (_event: any, datum: any) => {
+            g.on("click", (_event: any, datum: any) => {
                 const isSameLocked =
                   lockedCell?.rowName === datum.rowName &&
                   lockedCell?.columnName === datum.columnName;
