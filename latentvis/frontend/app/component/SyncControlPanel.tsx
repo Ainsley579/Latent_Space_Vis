@@ -16,7 +16,13 @@ type SyncControlPanelProps = {
   largePreviewSize: number;
   onLargePreviewSizeChange: (size: number) => void;
   onGenerateRange?: (minValue: number, maxValue: number) => void;
+  onGenerateAgglomerative?: (config: {
+    k: number | null;
+    linkage: "ward" | "complete" | "average";
+  }) => void;
   generateEnabled?: boolean;
+  generateBusy?: boolean;
+  generateMessage?: string;
   onExportBookmarks?: () => void;
   bookmarkCount?: number;
 };
@@ -35,12 +41,21 @@ export default function SyncControlPanel({
   largePreviewSize,
   onLargePreviewSizeChange,
   onGenerateRange,
+  onGenerateAgglomerative,
   generateEnabled = true,
+  generateBusy = false,
+  generateMessage = "",
   onExportBookmarks,
   bookmarkCount = 0,
 }: SyncControlPanelProps) {
   const [minValue, setMinValue] = useState(2);
   const [maxValue, setMaxValue] = useState(10);
+  const [agglomerativeKMode, setAgglomerativeKMode] = useState<"auto" | "manual">("auto");
+  const [agglomerativeK, setAgglomerativeK] = useState(6);
+  const [agglomerativeLinkage, setAgglomerativeLinkage] =
+    useState<"ward" | "complete" | "average">("ward");
+  const isAgglomerative = clustering === "agglomerative";
+  const isPgmeans = clustering === "pgmeans";
 
   const minOptions = useMemo(() => {
     const list = Array.from({ length: 19 }, (_, i) => i + 2).filter((v) => v <= maxValue);
@@ -146,59 +161,119 @@ export default function SyncControlPanel({
         />
       </div>
 
-      <div className="text-[10px] text-zinc-500 text-center mb-0.5">Clustering k range (min–max)</div>
-      <div className="flex items-center justify-center gap-3 min-w-0">
-        <label className="text-xs text-zinc-600 shrink-0">Min</label>
-        <select
-          className="h-6 w-14 px-1 text-xs border border-zinc-300 rounded bg-white shrink-0"
-          value={minValue}
-          onChange={(e) => {
-            const next = Number(e.target.value);
-            setMinValue(next);
-            if (maxValue <= next) setMaxValue(Math.min(20, next + 1));
-          }}
-        >
-          {minOptions.map((v) => (
-            <option key={`min-${v}`} value={v}>
-              {v}
-            </option>
-          ))}
-        </select>
+      {isPgmeans ? (
+        <>
+          <div className="text-[10px] text-zinc-500 text-center mb-0.5">Clustering k range (min-max)</div>
+          <div className="flex items-center justify-center gap-3 min-w-0">
+            <label className="text-xs text-zinc-600 shrink-0">Min</label>
+            <select
+              className="h-6 w-14 px-1 text-xs border border-zinc-300 rounded bg-white shrink-0"
+              value={minValue}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                setMinValue(next);
+                if (maxValue <= next) setMaxValue(Math.min(20, next + 1));
+              }}
+            >
+              {minOptions.map((v) => (
+                <option key={`min-${v}`} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      </div>
-
-      <div className="flex items-center justify-center gap-3 min-w-0">
-        <label className="text-xs text-zinc-600 shrink-0">Max</label>
-        <select
-          className="h-6 w-14 px-1 text-xs border border-zinc-300 rounded bg-white shrink-0"
-          value={maxValue}
-          onChange={(e) => {
-            const next = Number(e.target.value);
-            setMaxValue(next);
-            if (minValue >= next) setMinValue(Math.max(2, next - 1));
-          }}
-        >
-          {maxOptions.map((v) => (
-            <option key={`max-${v}`} value={v}>
-              {v}
-            </option>
-          ))}
-        </select>
-      </div>
+          <div className="flex items-center justify-center gap-3 min-w-0">
+            <label className="text-xs text-zinc-600 shrink-0">Max</label>
+            <select
+              className="h-6 w-14 px-1 text-xs border border-zinc-300 rounded bg-white shrink-0"
+              value={maxValue}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                setMaxValue(next);
+                if (minValue >= next) setMinValue(Math.max(2, next - 1));
+              }}
+            >
+              {maxOptions.map((v) => (
+                <option key={`max-${v}`} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+        </>
+      ) : isAgglomerative ? (
+        <>
+          <div className="text-[10px] text-zinc-500 text-center mb-0.5">Agglomerative parameters</div>
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <label className="text-xs text-zinc-600 shrink-0">Linkage</label>
+            <select
+              className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
+              value={agglomerativeLinkage}
+              onChange={(e) =>
+                setAgglomerativeLinkage(e.target.value as "ward" | "complete" | "average")
+              }
+            >
+              <option value="ward">ward</option>
+              <option value="complete">complete</option>
+              <option value="average">average</option>
+            </select>
+          </div>
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <label className="text-xs text-zinc-600 shrink-0">k mode</label>
+            <select
+              className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
+              value={agglomerativeKMode}
+              onChange={(e) => setAgglomerativeKMode(e.target.value as "auto" | "manual")}
+            >
+              <option value="auto">auto (BIC)</option>
+              <option value="manual">manual</option>
+            </select>
+          </div>
+          {agglomerativeKMode === "manual" ? (
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              <label className="text-xs text-zinc-600 shrink-0">k</label>
+              <select
+                className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
+                value={agglomerativeK}
+                onChange={(e) => setAgglomerativeK(Number(e.target.value))}
+              >
+                {Array.from({ length: 14 }, (_, i) => i + 2).map((v) => (
+                  <option key={`agg-k-${v}`} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+        </>
+      ) : null}
+      {!isPgmeans && !isAgglomerative ? (
+        <div className="text-[10px] text-zinc-500 text-center">No extra parameters for this method.</div>
+      ) : null}
 
       <div className="flex items-center justify-center gap-2 min-w-0">
         <button
           type="button"
           className={
             "h-6 px-3 rounded border text-xs shrink-0 " +
-            (generateEnabled
+            (generateEnabled && !generateBusy
               ? "border-zinc-300 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
               : "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed")
           }
-          disabled={!generateEnabled}
-          onClick={() => onGenerateRange?.(minValue, maxValue)}
+          disabled={!generateEnabled || generateBusy}
+          onClick={() => {
+            if (isAgglomerative) {
+              onGenerateAgglomerative?.({
+                k: agglomerativeKMode === "manual" ? agglomerativeK : null,
+                linkage: agglomerativeLinkage,
+              });
+              return;
+            }
+            onGenerateRange?.(minValue, maxValue);
+          }}
         >
-          Generate
+          {generateBusy ? "Generating..." : "Generate"}
         </button>
         <button
           type="button"
@@ -215,6 +290,9 @@ export default function SyncControlPanel({
           Export ({bookmarkCount})
         </button>
       </div>
+      {generateMessage ? (
+        <div className="text-[10px] text-zinc-500 text-center break-words">{generateMessage}</div>
+      ) : null}
       </div>
     </div>
   );

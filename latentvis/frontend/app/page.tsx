@@ -19,6 +19,21 @@ type SankeySampleRow = {
   to_cluster: number;
 };
 
+type ScatterPoint = {
+  real_id: string | number;
+  x: number;
+  y: number;
+  cluster_id: number;
+};
+
+type GeneratedSankeyPayload = {
+  dataset: DatasetKey;
+  clustering: ClusteringKey;
+  allSankey: any;
+  modelSamples: Record<string, SankeySampleRow[]>;
+  verticalSamplesByLayer: Record<string, SankeySampleRow[]>;
+};
+
 type DatasetKey = "dimenet" | "chemprop" | "chemeleon";
 type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan";
 const DATASET_OPTIONS: DatasetKey[] = ["dimenet", "chemprop", "chemeleon"];
@@ -41,6 +56,8 @@ function sanitizePathKey(value: string) {
 export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
   const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("pgmeans");
+  const [generatedSankeyPayload, setGeneratedSankeyPayload] = useState<GeneratedSankeyPayload | null>(null);
+  const generatedSankeyBlobUrlsRef = useRef<Map<string, string>>(new Map());
   const datasetBaseFor = (
     dataset: DatasetKey,
     clustering: ClusteringKey = selectedClustering
@@ -50,10 +67,79 @@ export default function Home() {
   };
   const datasetBase = datasetBaseFor(selectedDataset, selectedClustering);
   const assetBase = `/data/${selectedDataset}`;
-  const buildSankeyModelPath = (model: string, dataset: DatasetKey = selectedDataset) =>
-    `${datasetBaseFor(dataset, selectedClustering)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`;
-  const buildVerticalPath = (layer: string, dataset: DatasetKey = selectedDataset) =>
-    `${datasetBaseFor(dataset, selectedClustering)}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`;
+  const revokeGeneratedSankeyBlobUrls = () => {
+    generatedSankeyBlobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+    generatedSankeyBlobUrlsRef.current.clear();
+  };
+  const buildGeneratedSankeyBlobUrl = (cacheKey: string, payload: unknown): string => {
+    const cached = generatedSankeyBlobUrlsRef.current.get(cacheKey);
+    if (cached) return cached;
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(payload ?? [])], { type: "application/json" })
+    );
+    generatedSankeyBlobUrlsRef.current.set(cacheKey, url);
+    return url;
+  };
+  const generatedMatchesCurrent =
+    !!generatedSankeyPayload &&
+    generatedSankeyPayload.dataset === selectedDataset &&
+    generatedSankeyPayload.clustering === selectedClustering;
+  const withVersion = (url: string, version: number = sankeyRefreshKey) => {
+    const sep = url.includes("?") ? "&" : "?";
+    return `${url}${sep}v=${version}`;
+  };
+  const buildAllSankeyPath = (
+    dataset: DatasetKey = selectedDataset,
+    clustering: ClusteringKey = selectedClustering,
+    version: number = sankeyRefreshKey
+  ) => {
+    if (
+      generatedSankeyPayload &&
+      generatedSankeyPayload.dataset === dataset &&
+      generatedSankeyPayload.clustering === clustering
+    ) {
+      return buildGeneratedSankeyBlobUrl("all_sankey", generatedSankeyPayload.allSankey);
+    }
+    return withVersion(`${datasetBaseFor(dataset, clustering)}/sankey/all_sankey.json`, version);
+  };
+  const buildSankeyModelPath = (
+    model: string,
+    dataset: DatasetKey = selectedDataset,
+    clustering: ClusteringKey = selectedClustering,
+    version: number = sankeyRefreshKey
+  ) => {
+    if (
+      generatedSankeyPayload &&
+      generatedSankeyPayload.dataset === dataset &&
+      generatedSankeyPayload.clustering === clustering
+    ) {
+      const rows = generatedSankeyPayload.modelSamples?.[model] ?? [];
+      return buildGeneratedSankeyBlobUrl(`model:${model}`, rows);
+    }
+    return withVersion(
+      `${datasetBaseFor(dataset, clustering)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`,
+      version
+    );
+  };
+  const buildVerticalPath = (
+    layer: string,
+    dataset: DatasetKey = selectedDataset,
+    clustering: ClusteringKey = selectedClustering,
+    version: number = sankeyRefreshKey
+  ) => {
+    if (
+      generatedSankeyPayload &&
+      generatedSankeyPayload.dataset === dataset &&
+      generatedSankeyPayload.clustering === clustering
+    ) {
+      const rows = generatedSankeyPayload.verticalSamplesByLayer?.[layer] ?? [];
+      return buildGeneratedSankeyBlobUrl(`vertical:${layer}`, rows);
+    }
+    return withVersion(
+      `${datasetBaseFor(dataset, clustering)}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`,
+      version
+    );
+  };
   const buildScatterPath = (
     model: string,
     layer: string,
@@ -69,11 +155,11 @@ export default function Home() {
     model: string,
     layer: string,
     dataset: DatasetKey = selectedDataset,
-    clustering: ClusteringKey = selectedClustering
+    clustering: ClusteringKey = selectedClustering,
+    version: number = sankeyRefreshKey
   ) => {
-    const base = datasetBaseFor(dataset, clustering);
-    setSankeyPath(`${base}/sankey/${sanitizePathKey(model)}_sankey_samples.json`);
-    setSankeyPathVertical(`${base}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`);
+    setSankeyPath(buildSankeyModelPath(model, dataset, clustering, version));
+    setSankeyPathVertical(buildVerticalPath(layer, dataset, clustering, version));
   };
 
   const [sankeyPath, setSankeyPath] = useState("/data/chemprop/sankey/0_sankey_samples.json");
@@ -83,6 +169,7 @@ export default function Home() {
   const [selectedModel, setSelectedModel] = useState("0");
   const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
   const [scatterPath, setScatterPath] = useState("/data/chemprop/scatterplot/0_fingerprint_pca.json");
+  const scatterOverrideUrlRef = useRef<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -109,6 +196,8 @@ export default function Home() {
   const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
   const [activeSankeyRows, setActiveSankeyRows] = useState<SankeySampleRow[]>([]);
   const [sankeyRefreshKey, setSankeyRefreshKey] = useState(0);
+  const [isGeneratingRange, setIsGeneratingRange] = useState(false);
+  const [generateStatusText, setGenerateStatusText] = useState("");
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -149,6 +238,15 @@ export default function Home() {
   const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
   const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
   const syncSourceRef = useRef<{ source: "view" | "vertical" | "horizontal"; ts: number } | null>(null);
+  useEffect(() => {
+    return () => {
+      revokeGeneratedSankeyBlobUrls();
+      if (scatterOverrideUrlRef.current) {
+        URL.revokeObjectURL(scatterOverrideUrlRef.current);
+        scatterOverrideUrlRef.current = null;
+      }
+    };
+  }, []);
   function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }) {
     setHoverLock(false);
     if (
@@ -344,9 +442,20 @@ export default function Home() {
     setLastSearchCount(null);
   }, [selectedDataset, selectedClustering]);
 
+  useEffect(() => {
+    if (!generatedMatchesCurrent) {
+      revokeGeneratedSankeyBlobUrls();
+      setGeneratedSankeyPayload(null);
+    }
+  }, [selectedDataset, selectedClustering]);
+
   async function generateFromRange(minValue: number, maxValue: number) {
+    if (isGeneratingRange) return;
+    setIsGeneratingRange(true);
+    setGenerateStatusText(`Running generate-range [${minValue}, ${maxValue}] ...`);
     try {
-      const apiBase = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
+  const apiBaseRaw = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
+  const apiBase = apiBaseRaw.replace(/\/+$/, "");
       const clusteringParam = selectedClustering === "pgmeans" ? "gmm" : selectedClustering;
       const res = await fetch(`${apiBase}/generate-range`, {
         method: "POST",
@@ -361,13 +470,141 @@ export default function Home() {
       if (!res.ok) {
         throw new Error(`Generate API failed: ${res.status}`);
       }
+      setGenerateStatusText("Materializing Sankey files ...");
+      const materializeRes = await fetch(`${apiBase}/materialize-sankey-files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dataset: selectedDataset,
+          clustering: selectedClustering,
+          include_payload: true,
+          write_files: false,
+        }),
+      });
+      if (!materializeRes.ok) {
+        throw new Error(`Materialize API failed: ${materializeRes.status}`);
+      }
+      const materializeJson = await materializeRes.json();
+      const casePayload = materializeJson?.payload?.[selectedDataset];
+      if (!casePayload) {
+        throw new Error("Materialize API missing payload for selected dataset");
+      }
+      revokeGeneratedSankeyBlobUrls();
+      setGeneratedSankeyPayload({
+        dataset: selectedDataset,
+        clustering: selectedClustering,
+        allSankey: casePayload.all_sankey ?? { epoch: {}, layer: {} },
+        modelSamples: (casePayload.model_samples ?? {}) as Record<string, SankeySampleRow[]>,
+        verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<string, SankeySampleRow[]>,
+      });
       setSankeyRefreshKey((k: number) => k + 1);
+      setGenerateStatusText("Generate finished.");
     } catch (err) {
       console.error("Failed to call generate-range API:", err);
+      setGenerateStatusText(`Generate failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsGeneratingRange(false);
+    }
+  }
+
+  async function generateAgglomerative(config: {
+    k: number | null;
+    linkage: "ward" | "complete" | "average";
+  }) {
+    if (isGeneratingRange) return;
+    setIsGeneratingRange(true);
+    setGenerateStatusText(
+      `Reclustering agglomerative (epoch=${selectedModel}, layer=${selectedLayer}, linkage=${config.linkage}, k=${
+        config.k == null ? "auto" : config.k
+      }) ...`
+    );
+    try {
+      const apiBaseRaw = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
+      const apiBase = apiBaseRaw.replace(/\/+$/, "");
+      const res = await fetch(`${apiBase}/recluster-agglomerative`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dataset: selectedDataset,
+          epoch: selectedModel,
+          layer: selectedLayer,
+          k: config.k,
+          linkage: config.linkage,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error(`Recluster API failed: ${res.status}`);
+      }
+      const json = await res.json();
+      const labelCount = Array.isArray(json?.labels) ? json.labels.length : 0;
+      const realIdCount = Array.isArray(json?.real_ids) ? json.real_ids.length : 0;
+      const assignmentRows = Array.isArray(json?.assignments) ? json.assignments : [];
+      let reclusterChangedCount = 0;
+      if (assignmentRows.length > 0) {
+        const currentScatterPath = buildScatterPath(
+          selectedModel,
+          selectedLayer,
+          scatterProjection,
+          selectedDataset,
+          selectedClustering
+        );
+        const scatterRes = await fetch(currentScatterPath);
+        if (!scatterRes.ok) {
+          throw new Error(`Failed to load scatter for recluster render: ${scatterRes.status}`);
+        }
+        const scatterRows = (await scatterRes.json()) as ScatterPoint[];
+        const normalizeRealId = (v: unknown): string => {
+          const s = String(v ?? "").trim();
+          if (/^-?\d+(?:\.0+)?$/.test(s)) return String(Math.trunc(Number(s)));
+          return s;
+        };
+        const labelById = new Map<string, number>();
+        assignmentRows.forEach((r: any) => {
+          labelById.set(normalizeRealId(r.real_id), Number(r.cluster_id));
+        });
+        const updatedScatter = scatterRows.map((row, idx) => {
+          const key = normalizeRealId(row.real_id);
+          let nextCluster: number | null = null;
+          if (labelById.has(key)) {
+            nextCluster = labelById.get(key) ?? null;
+          } else if (idx < assignmentRows.length) {
+            // Fallback when ID formatting differs but row order aligns.
+            nextCluster = Number(assignmentRows[idx]?.cluster_id);
+          }
+          if (nextCluster == null || Number.isNaN(nextCluster)) return row;
+          if (Number(row.cluster_id) !== Number(nextCluster)) reclusterChangedCount += 1;
+          return {
+            ...row,
+            cluster_id: nextCluster,
+          };
+        });
+        if (scatterOverrideUrlRef.current) {
+          URL.revokeObjectURL(scatterOverrideUrlRef.current);
+          scatterOverrideUrlRef.current = null;
+        }
+        const blobUrl = URL.createObjectURL(
+          new Blob([JSON.stringify(updatedScatter)], { type: "application/json" })
+        );
+        scatterOverrideUrlRef.current = blobUrl;
+        setScatterPath(blobUrl);
+      }
+      setSankeyRefreshKey((k) => k + 1);
+      setGenerateStatusText(
+        `Recluster finished: k=${json?.k ?? "?"}, labels=${labelCount}, real_ids=${realIdCount}, changed=${reclusterChangedCount}.`
+      );
+    } catch (err) {
+      console.error("Failed to call recluster-agglomerative API:", err);
+      setGenerateStatusText(`Recluster failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsGeneratingRange(false);
     }
   }
 
   useEffect(() => {
+    if (scatterOverrideUrlRef.current) {
+      URL.revokeObjectURL(scatterOverrideUrlRef.current);
+      scatterOverrideUrlRef.current = null;
+    }
     setScatterPath(buildScatterPath(selectedModel, selectedLayer, scatterProjection));
   }, [datasetBase, selectedModel, selectedLayer, scatterProjection]);
 
@@ -377,7 +614,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch(`${datasetBase}/sankey/all_sankey.json`)
+    fetch(buildAllSankeyPath(selectedDataset, selectedClustering))
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load all_sankey.json");
         return res.json();
@@ -407,7 +644,7 @@ export default function Home() {
       .catch((err) => {
         console.error(err);
       });
-  }, [datasetBase, selectedDataset, selectedClustering, sankeyRefreshKey]);
+  }, [datasetBase, selectedDataset, selectedClustering, sankeyRefreshKey, generatedSankeyPayload]);
 
   useEffect(() => {
     if (!selectedNode) {
@@ -793,7 +1030,8 @@ export default function Home() {
               className="w-full h-full border border-zinc-400"
             >
               <SankeyView
-                dataPath={`${datasetBase}/sankey/all_sankey.json`}
+                key={`sankeyview-${selectedDataset}-${selectedClustering}-${sankeyRefreshKey}`}
+                dataPath={buildAllSankeyPath(selectedDataset, selectedClustering)}
                 metricsPath={`${datasetBase}/bic_aic/avg_fmi_cspa_by_layer.json`}
                 onModelSelect={(model) => {
                   setSankeyPath(buildSankeyModelPath(model));
@@ -1325,7 +1563,10 @@ export default function Home() {
                   largePreviewSize={largeHoverPreviewSize}
                   onLargePreviewSizeChange={setLargeHoverPreviewSize}
                   onGenerateRange={generateFromRange}
+                  onGenerateAgglomerative={generateAgglomerative}
                   generateEnabled={true}
+                  generateBusy={isGeneratingRange}
+                  generateMessage={generateStatusText}
                   onExportBookmarks={exportBookmarkedIdsCsv}
                   bookmarkCount={bookmarkedIds.size}
                 />

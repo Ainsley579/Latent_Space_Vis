@@ -148,15 +148,8 @@ export default function TopkNearestPanel({
                             }}
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <svg width="64" height="64" viewBox="0 0 86 86" aria-hidden="true" className="text-zinc-300">
-                              <g fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M30 18h26l13 22-13 22H30L17 40z" />
-                                <path d="M30 18l13 22-13 22" />
-                                <path d="M56 18L43 40l13 22" />
-                                <circle cx="43" cy="40" r="2.5" fill="currentColor" />
-                              </g>
-                            </svg>
+                          <div className="w-full h-full flex items-center justify-center text-sm text-zinc-400">
+                            null
                           </div>
                         )}
                       </div>
