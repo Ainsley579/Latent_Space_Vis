@@ -19,6 +19,14 @@ type SankeySampleRow = {
   to_cluster: number;
 };
 
+type GeneratedSankeyPayload = {
+  dataset: DatasetKey;
+  clustering: ClusteringKey;
+  allSankey: any;
+  modelSamples: Record<string, SankeySampleRow[]>;
+  verticalSamplesByLayer: Record<string, SankeySampleRow[]>;
+};
+
 type DatasetKey = "dimenet" | "chemprop" | "chemeleon";
 type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan";
 const DATASET_OPTIONS: DatasetKey[] = ["dimenet", "chemprop", "chemeleon"];
@@ -41,6 +49,31 @@ function sanitizePathKey(value: string) {
 export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
   const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("pgmeans");
+  const [sankeyDataVersion, setSankeyDataVersion] = useState<number>(0);
+  const [generatedSankeyPayload, setGeneratedSankeyPayload] = useState<GeneratedSankeyPayload | null>(null);
+  const generatedSankeyBlobUrlsRef = useRef<Map<string, string>>(new Map());
+  const apiBase = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
+  const withVersion = (url: string, version: number = sankeyDataVersion) => {
+    const sep = url.includes("?") ? "&" : "?";
+    return `${url}${sep}v=${version}`;
+  };
+  const revokeGeneratedSankeyBlobUrls = () => {
+    generatedSankeyBlobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+    generatedSankeyBlobUrlsRef.current.clear();
+  };
+  const buildGeneratedSankeyBlobUrl = (cacheKey: string, payload: unknown): string => {
+    const cached = generatedSankeyBlobUrlsRef.current.get(cacheKey);
+    if (cached) return cached;
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(payload ?? [])], { type: "application/json" })
+    );
+    generatedSankeyBlobUrlsRef.current.set(cacheKey, url);
+    return url;
+  };
+  const generatedMatchesCurrent =
+    !!generatedSankeyPayload &&
+    generatedSankeyPayload.dataset === selectedDataset &&
+    generatedSankeyPayload.clustering === selectedClustering;
   const datasetBaseFor = (
     dataset: DatasetKey,
     clustering: ClusteringKey = selectedClustering
@@ -50,10 +83,52 @@ export default function Home() {
   };
   const datasetBase = datasetBaseFor(selectedDataset, selectedClustering);
   const assetBase = `/data/${selectedDataset}`;
-  const buildSankeyModelPath = (model: string, dataset: DatasetKey = selectedDataset) =>
-    `${datasetBaseFor(dataset, selectedClustering)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`;
-  const buildVerticalPath = (layer: string, dataset: DatasetKey = selectedDataset) =>
-    `${datasetBaseFor(dataset, selectedClustering)}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`;
+  const buildAllSankeyPath = (
+    dataset: DatasetKey = selectedDataset,
+    clustering: ClusteringKey = selectedClustering,
+    version: number = sankeyDataVersion
+  ) => {
+    if (
+      generatedSankeyPayload &&
+      generatedSankeyPayload.dataset === dataset &&
+      generatedSankeyPayload.clustering === clustering
+    ) {
+      return buildGeneratedSankeyBlobUrl("all_sankey", generatedSankeyPayload.allSankey);
+    }
+    return withVersion(`${datasetBaseFor(dataset, clustering)}/sankey/all_sankey.json`, version);
+  };
+  const buildSankeyModelPath = (
+    model: string,
+    dataset: DatasetKey = selectedDataset,
+    clustering: ClusteringKey = selectedClustering,
+    version: number = sankeyDataVersion
+  ) => {
+    if (
+      generatedSankeyPayload &&
+      generatedSankeyPayload.dataset === dataset &&
+      generatedSankeyPayload.clustering === clustering
+    ) {
+      const rows = generatedSankeyPayload.modelSamples?.[model] ?? [];
+      return buildGeneratedSankeyBlobUrl(`model:${model}`, rows);
+    }
+    return withVersion(`${datasetBaseFor(dataset, clustering)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`, version);
+  };
+  const buildVerticalPath = (
+    layer: string,
+    dataset: DatasetKey = selectedDataset,
+    clustering: ClusteringKey = selectedClustering,
+    version: number = sankeyDataVersion
+  ) => {
+    if (
+      generatedSankeyPayload &&
+      generatedSankeyPayload.dataset === dataset &&
+      generatedSankeyPayload.clustering === clustering
+    ) {
+      const rows = generatedSankeyPayload.verticalSamplesByLayer?.[layer] ?? [];
+      return buildGeneratedSankeyBlobUrl(`vertical:${layer}`, rows);
+    }
+    return withVersion(`${datasetBaseFor(dataset, clustering)}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`, version);
+  };
   const buildScatterPath = (
     model: string,
     layer: string,
@@ -69,11 +144,11 @@ export default function Home() {
     model: string,
     layer: string,
     dataset: DatasetKey = selectedDataset,
-    clustering: ClusteringKey = selectedClustering
+    clustering: ClusteringKey = selectedClustering,
+    version: number = sankeyDataVersion
   ) => {
-    const base = datasetBaseFor(dataset, clustering);
-    setSankeyPath(`${base}/sankey/${sanitizePathKey(model)}_sankey_samples.json`);
-    setSankeyPathVertical(`${base}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`);
+    setSankeyPath(buildSankeyModelPath(model, dataset, clustering, version));
+    setSankeyPathVertical(buildVerticalPath(layer, dataset, clustering, version));
   };
 
   const [sankeyPath, setSankeyPath] = useState("/data/chemprop/sankey/0_sankey_samples.json");
@@ -145,6 +220,12 @@ export default function Home() {
   const layoutGridRef = useRef<HTMLDivElement | null>(null);
   const bottomSplitHostRef = useRef<HTMLDivElement | null>(null);
   const syncRafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      revokeGeneratedSankeyBlobUrls();
+    };
+  }, []);
   const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
   const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
   const syncSourceRef = useRef<{ source: "view" | "vertical" | "horizontal"; ts: number } | null>(null);
@@ -343,19 +424,64 @@ export default function Home() {
     setLastSearchCount(null);
   }, [selectedDataset, selectedClustering]);
 
+  useEffect(() => {
+    if (!generatedMatchesCurrent) {
+      revokeGeneratedSankeyBlobUrls();
+      setGeneratedSankeyPayload(null);
+    }
+  }, [selectedDataset, selectedClustering]);
+
   async function generateFromRange(minValue: number, maxValue: number) {
     try {
-      const apiBase = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
       const res = await fetch(`${apiBase}/generate-range`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ min: minValue, max: maxValue }),
+        body: JSON.stringify({
+          min: minValue,
+          max: maxValue,
+          dataset: selectedDataset,
+        }),
       });
       if (!res.ok) {
         throw new Error(`Generate API failed: ${res.status}`);
       }
+
+      const materializeRes = await fetch(`${apiBase}/materialize-sankey-files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dataset: selectedDataset,
+          clustering: selectedClustering,
+          include_payload: true,
+          write_files: false,
+        }),
+      });
+      if (!materializeRes.ok) {
+        throw new Error(`Materialize API failed: ${materializeRes.status}`);
+      }
+      const materializeJson = await materializeRes.json();
+      const casePayload = materializeJson?.payload?.[selectedDataset];
+      if (!casePayload) {
+        throw new Error("Materialize API missing payload for selected dataset");
+      }
+
+      revokeGeneratedSankeyBlobUrls();
+      setGeneratedSankeyPayload({
+        dataset: selectedDataset,
+        clustering: selectedClustering,
+        allSankey: casePayload.all_sankey ?? { epoch: {}, layer: {} },
+        modelSamples: (casePayload.model_samples ?? {}) as Record<string, SankeySampleRow[]>,
+        verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<
+          string,
+          SankeySampleRow[]
+        >,
+      });
+
+      const nextVer = Date.now();
+      setSankeyDataVersion(nextVer);
+      syncSankeyPaths(selectedModel, selectedLayer, selectedDataset, selectedClustering, nextVer);
     } catch (err) {
-      console.error("Failed to call generate-range API:", err);
+      console.error("Failed to regenerate sankey files:", err);
     }
   }
 
@@ -369,7 +495,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch(`${datasetBase}/sankey/all_sankey.json`)
+    fetch(buildAllSankeyPath(selectedDataset, selectedClustering))
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load all_sankey.json");
         return res.json();
@@ -399,7 +525,7 @@ export default function Home() {
       .catch((err) => {
         console.error(err);
       });
-  }, [datasetBase, selectedDataset, selectedClustering]);
+  }, [datasetBase, selectedDataset, selectedClustering, sankeyDataVersion]);
 
   useEffect(() => {
     if (!selectedNode) {
@@ -785,7 +911,7 @@ export default function Home() {
               className="w-full h-full border border-zinc-400"
             >
               <SankeyView
-                dataPath={`${datasetBase}/sankey/all_sankey.json`}
+                dataPath={buildAllSankeyPath(selectedDataset, selectedClustering)}
                 metricsPath={`${datasetBase}/bic_aic/avg_fmi_cspa_by_layer.json`}
                 onModelSelect={(model) => {
                   setSankeyPath(buildSankeyModelPath(model));
