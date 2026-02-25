@@ -49,6 +49,7 @@ export default function Home() {
     return `/data/${dataset}/clustering/${clustering}`;
   };
   const datasetBase = datasetBaseFor(selectedDataset, selectedClustering);
+  const assetBase = `/data/${selectedDataset}`;
   const buildSankeyModelPath = (model: string, dataset: DatasetKey = selectedDataset) =>
     `${datasetBaseFor(dataset, selectedClustering)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`;
   const buildVerticalPath = (layer: string, dataset: DatasetKey = selectedDataset) =>
@@ -608,7 +609,7 @@ export default function Home() {
 
   function resolveImageSrc(realId: string | number, imageType: string) {
     const key = sanitizePathKey(String(realId).trim());
-    return `${datasetBase}/molecule_images/${key}_${imageType}.png`;
+    return `${assetBase}/molecule_images/${key}_${imageType}.png`;
   }
 
   function resolveSubstructureImage(
@@ -619,7 +620,7 @@ export default function Home() {
   ) {
     const safeModel = model.replace(/[^a-zA-Z0-9_-]/g, "_");
     const safeLayer = layer.replace(/[^a-zA-Z0-9_-]/g, "_");
-    return `${datasetBase}/substructures/images/${safeModel}_${safeLayer}_cluster${cluster}_${group}.png`;
+    return `${assetBase}/substructures/images/${safeModel}_${safeLayer}_cluster${cluster}_${group}.png`;
   }
 
   function clusterBadgeColor(cluster: number) {
