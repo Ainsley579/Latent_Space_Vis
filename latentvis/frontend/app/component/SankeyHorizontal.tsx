@@ -24,6 +24,7 @@ type SankeyHorizontalProps = {
   layerKey?: string;
   activeNodeKey?: string | null;
   highlightId?: string | null;
+  highlightIds?: string[] | null;
   onNodeSelect?: (sel: { model?: string; layer?: string; cluster: number; ids?: string[] }) => void;
 };
 
@@ -142,6 +143,7 @@ export default function SankeyHorizontal({
   layerKey,
   activeNodeKey,
   highlightId,
+  highlightIds,
   onNodeSelect,
 }: SankeyHorizontalProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -526,6 +528,10 @@ export default function SankeyHorizontal({
       }
 
       const baseOpacity = (d: { id: string }) => {
+        const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
+        if (highlightSet.size > 0) {
+          return highlightSet.has(d.id) ? 1 : 0;
+        }
         if (displayActiveNode) {
           const samples = nodeSamples.get(displayActiveNode) || new Set();
           return samples.has(d.id) ? 0.8 : 0;
@@ -534,9 +540,21 @@ export default function SankeyHorizontal({
       };
 
       sampleSel
-        .attr("opacity", (d) => (highlightId && d.id === highlightId ? 1 : baseOpacity(d)))
-        .attr("stroke", (d) => (highlightId && d.id === highlightId ? HIGHLIGHT_RED : SANKEY_LINK_COLOR))
-        .attr("stroke-width", (d) => (highlightId && d.id === highlightId ? 2.2 : 1.2));
+        .attr("opacity", (d) => {
+          const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
+          const isHighlight = (!!highlightId && d.id === highlightId) || highlightSet.has(d.id);
+          return isHighlight ? 1 : baseOpacity(d);
+        })
+        .attr("stroke", (d) => {
+          const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
+          const isHighlight = (!!highlightId && d.id === highlightId) || highlightSet.has(d.id);
+          return isHighlight ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
+        })
+        .attr("stroke-width", (d) => {
+          const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
+          const isHighlight = (!!highlightId && d.id === highlightId) || highlightSet.has(d.id);
+          return isHighlight ? 2.2 : 1.2;
+        });
 
       // Re-apply current transform right after redraw so viewport state is preserved.
       const groups = svg.selectAll(
@@ -622,11 +640,18 @@ export default function SankeyHorizontal({
     });
 
     const samplesForActive = activeName ? nodeSamplesRef.current.get(activeName) || new Set<string>() : new Set<string>();
+    const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
     const lines = Array.from(svg.querySelectorAll("g.sample-trajectories line[data-id]")) as SVGLineElement[];
     lines.forEach((line) => {
       const id = line.getAttribute("data-id") || "";
-      const isHighlight = !!highlightId && id === highlightId;
-      const opacity = isHighlight ? 1 : activeName ? (samplesForActive.has(id) ? 0.8 : 0) : 0;
+      const isHighlight = (!!highlightId && id === highlightId) || highlightSet.has(id);
+      const opacity = highlightSet.size > 0
+        ? (highlightSet.has(id) ? 1 : 0)
+        : isHighlight
+          ? 1
+          : activeName
+            ? (samplesForActive.has(id) ? 0.8 : 0)
+            : 0;
       line.setAttribute("opacity", String(opacity));
       line.setAttribute("stroke", isHighlight ? HIGHLIGHT_RED : SANKEY_LINK_COLOR);
       line.setAttribute("stroke-width", isHighlight ? "2.2" : "1.2");
@@ -666,7 +691,7 @@ export default function SankeyHorizontal({
         .attr("paint-order", "stroke")
         .text((d) => String(d.cluster));
     }
-  }, [displayActiveNode, highlightId, mode, modelKey, layerKey]);
+  }, [displayActiveNode, highlightId, highlightIds, mode, modelKey, layerKey]);
 
   useEffect(() => {
     const container = containerRef.current;

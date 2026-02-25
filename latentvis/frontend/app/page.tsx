@@ -49,6 +49,7 @@ export default function Home() {
     return `/data/${dataset}/clustering/${clustering}`;
   };
   const datasetBase = datasetBaseFor(selectedDataset, selectedClustering);
+  const assetBase = `/data/${selectedDataset}`;
   const buildSankeyModelPath = (model: string, dataset: DatasetKey = selectedDataset) =>
     `${datasetBaseFor(dataset, selectedClustering)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`;
   const buildVerticalPath = (layer: string, dataset: DatasetKey = selectedDataset) =>
@@ -133,6 +134,11 @@ export default function Home() {
   const [clusterPage, setClusterPage] = useState(0);
   const [clusterPageSize, setClusterPageSize] = useState(10);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
+  const [smilesByRealId, setSmilesByRealId] = useState<Record<string, string>>({});
+  const [searchResultIds, setSearchResultIds] = useState<string[]>([]);
+  const [searchSmiles, setSearchSmiles] = useState<string>("");
+  const [showSearchResultsInMembers, setShowSearchResultsInMembers] = useState(false);
+  const [lastSearchCount, setLastSearchCount] = useState<number | null>(null);
   const [bottomSplitPct, setBottomSplitPct] = useState(35);
   const [workspaceWidthPct, setWorkspaceWidthPct] = useState(80);
   const [workspaceHeightPct, setWorkspaceHeightPct] = useState(70);
@@ -276,7 +282,20 @@ export default function Home() {
       if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
       return a.localeCompare(b);
     });
-    const rows = ["real_id", ...ids.map((id) => `"${String(id).replace(/"/g, '""')}"`)];
+    const quoteCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const rows = [
+      "real_id,smiles",
+      ...ids.map((id) => {
+        const raw = String(id);
+        const smiles =
+          smilesByRealId[raw] ??
+          smilesByRealId[raw.trim()] ??
+          smilesByRealId[raw.toLowerCase()] ??
+          smilesByRealId[raw.trim().toLowerCase()] ??
+          "";
+        return `${quoteCsv(raw)},${quoteCsv(String(smiles))}`;
+      }),
+    ];
     const csv = rows.join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -289,6 +308,40 @@ export default function Home() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
+
+  useEffect(() => {
+    fetch(`/data/${selectedDataset}/real_id_to_smiles.json`)
+      .then((res) => {
+        if (res.status === 404) return {};
+        if (!res.ok) throw new Error("Failed to load real_id_to_smiles.json");
+        return res.json();
+      })
+      .then((json) => {
+        const out: Record<string, string> = {};
+        if (json && typeof json === "object" && !Array.isArray(json)) {
+          Object.entries(json as Record<string, unknown>).forEach(([k, v]) => {
+            const key = String(k);
+            const smiles = typeof v === "string" ? v : "";
+            out[key] = smiles;
+            out[key.trim()] = smiles;
+            out[key.toLowerCase()] = smiles;
+            out[key.trim().toLowerCase()] = smiles;
+          });
+        }
+        setSmilesByRealId(out);
+      })
+      .catch((err) => {
+        console.error(err);
+        setSmilesByRealId({});
+      });
+  }, [selectedDataset]);
+
+  useEffect(() => {
+    setSearchResultIds([]);
+    setSearchSmiles("");
+    setShowSearchResultsInMembers(false);
+    setLastSearchCount(null);
+  }, [selectedDataset, selectedClustering]);
 
   async function generateFromRange(minValue: number, maxValue: number) {
     try {
@@ -587,20 +640,29 @@ export default function Home() {
     });
   }, [activeSankeyRows, selectedNode, sortedMembersByClusterKey]);
 
+  const displayedMemberIds = useMemo(() => {
+    if (showSearchResultsInMembers) return searchResultIds;
+    return clusterInstanceIds;
+  }, [showSearchResultsInMembers, searchResultIds, clusterInstanceIds]);
+
   const clusterTotalPages = useMemo(() => {
-    if (clusterInstanceIds.length === 0) return 1;
-    return Math.max(1, Math.ceil(clusterInstanceIds.length / Math.max(1, clusterPageSize)));
-  }, [clusterInstanceIds.length, clusterPageSize]);
+    if (displayedMemberIds.length === 0) return 1;
+    return Math.max(1, Math.ceil(displayedMemberIds.length / Math.max(1, clusterPageSize)));
+  }, [displayedMemberIds.length, clusterPageSize]);
 
   const clusterPagedIds = useMemo(() => {
     const size = Math.max(1, clusterPageSize);
     const start = clusterPage * size;
-    return clusterInstanceIds.slice(start, start + size);
-  }, [clusterInstanceIds, clusterPage, clusterPageSize]);
+    return displayedMemberIds.slice(start, start + size);
+  }, [displayedMemberIds, clusterPage, clusterPageSize]);
 
   useEffect(() => {
     setClusterPage(0);
   }, [selectedNode?.model, selectedNode?.layer, selectedNode?.cluster]);
+
+  useEffect(() => {
+    setClusterPage(0);
+  }, [showSearchResultsInMembers, searchResultIds]);
 
   useEffect(() => {
     setClusterPage((prev) => Math.min(prev, Math.max(0, clusterTotalPages - 1)));
@@ -608,7 +670,7 @@ export default function Home() {
 
   function resolveImageSrc(realId: string | number, imageType: string) {
     const key = sanitizePathKey(String(realId).trim());
-    return `${datasetBase}/molecule_images/${key}_${imageType}.png`;
+    return `${assetBase}/molecule_images/${key}_${imageType}.png`;
   }
 
   function resolveSubstructureImage(
@@ -619,7 +681,7 @@ export default function Home() {
   ) {
     const safeModel = model.replace(/[^a-zA-Z0-9_-]/g, "_");
     const safeLayer = layer.replace(/[^a-zA-Z0-9_-]/g, "_");
-    return `${datasetBase}/substructures/images/${safeModel}_${safeLayer}_cluster${cluster}_${group}.png`;
+    return `${assetBase}/substructures/images/${safeModel}_${safeLayer}_cluster${cluster}_${group}.png`;
   }
 
   function clusterBadgeColor(cluster: number) {
@@ -788,6 +850,7 @@ export default function Home() {
                     : null
                 }
                 highlightId={hoveredId}
+                highlightIds={showSearchResultsInMembers ? searchResultIds : null}
                 onNodeSelect={(sel) => {
                   if (!sel.model || sel.layer == null) return;
                   toggleNode({ model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster, ids: sel.ids });
@@ -861,6 +924,7 @@ export default function Home() {
                     : null
                 }
                 highlightId={hoveredId}
+                highlightIds={showSearchResultsInMembers ? searchResultIds : null}
                 onNodeSelect={(sel) => {
                   if (!sel.layer || !sel.model) return;
                   toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: sel.ids });
@@ -877,7 +941,19 @@ export default function Home() {
               id="editor"
               className="w-full h-full border border-zinc-400 relative"
             >
-              <StructureEditorPanel />
+              <StructureEditorPanel
+                dataset={selectedDataset}
+                onSearchResultIds={(ids, smiles) => {
+                  const uniq = Array.from(new Set(ids.map((x) => String(x))));
+                  setSearchResultIds(uniq);
+                  setSearchSmiles(smiles);
+                  setLastSearchCount(uniq.length);
+                  setShowSearchResultsInMembers(uniq.length > 0);
+                  setSelectedIds(uniq.length > 0 ? uniq : null);
+                  setHoveredId(null);
+                  setHoverLock(false);
+                }}
+              />
             </div>
           </div>
 
@@ -904,7 +980,7 @@ export default function Home() {
                   <ScatterPlot
                     dataPath={scatterPath}
                     activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
-                    activeIds={selectedIds}
+                    activeIds={showSearchResultsInMembers ? searchResultIds : selectedIds}
                     highlightId={hoveredId}
                     modelKey={selectedModel}
                     layerKey={selectedLayer}
@@ -965,18 +1041,71 @@ export default function Home() {
                   className="w-full h-full border border-zinc-400 bg-white"
                 >
                   <div className="w-full h-full p-2 box-border overflow-hidden">
-                    {!selectedNode && (
-                      <div className="text-sm text-zinc-500">Select a cluster to view all instances.</div>
+                    {!selectedNode && !showSearchResultsInMembers && (
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex flex-col gap-1">
+                          <div className="text-sm text-zinc-500">Select a cluster to view all instances.</div>
+                          {lastSearchCount != null && (
+                            <div className="text-xs text-zinc-500">
+                              Search result: {lastSearchCount} ids{searchSmiles ? ` for ${searchSmiles}` : ""}.
+                            </div>
+                          )}
+                        </div>
+                        {searchResultIds.length > 0 && (
+                          <button
+                            type="button"
+                            className="px-2 py-1 rounded border text-xs border-zinc-300 bg-white text-zinc-700"
+                            title={searchSmiles ? `SMILES: ${searchSmiles}` : "Show Search Results"}
+                            onClick={() => {
+                              setShowSearchResultsInMembers(true);
+                              setSelectedIds(searchResultIds);
+                              setHoveredId(null);
+                              setHoverLock(false);
+                            }}
+                          >
+                            Show Search Results ({searchResultIds.length})
+                          </button>
+                        )}
+                      </div>
                     )}
-                    {selectedNode && (
+                    {(selectedNode || showSearchResultsInMembers) && (
                       <div className="h-full min-h-0 flex flex-col gap-2">
-                        <div className="text-sm font-semibold text-zinc-700">Cluster Members ({clusterInstanceIds.length})</div>
-                        {clusterInstanceIds.length === 0 && (
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-semibold text-zinc-700">
+                            {showSearchResultsInMembers ? `Search Results (${displayedMemberIds.length})` : `Cluster Members (${displayedMemberIds.length})`}
+                          </div>
+                          {searchResultIds.length > 0 && (
+                            <button
+                              type="button"
+                              className={
+                                "px-2 py-1 rounded border text-xs " +
+                                (showSearchResultsInMembers
+                                  ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                  : "border-zinc-300 bg-white text-zinc-700")
+                              }
+                              title={searchSmiles ? `SMILES: ${searchSmiles}` : "Show Search Results"}
+                              onClick={() => {
+                                const next = !showSearchResultsInMembers;
+                                setShowSearchResultsInMembers(next);
+                                if (next) {
+                                  setSelectedIds(searchResultIds);
+                                  setHoveredId(null);
+                                  setHoverLock(false);
+                                }
+                              }}
+                            >
+                              {showSearchResultsInMembers ? "Back To Cluster" : `Show Search Results (${searchResultIds.length})`}
+                            </button>
+                          )}
+                        </div>
+                        {displayedMemberIds.length === 0 && (
                           <div className="text-sm text-zinc-500">
-                            No instances found for {selectedNode.model} / {selectedNode.layer} / cluster {selectedNode.cluster}.
+                            {showSearchResultsInMembers
+                              ? "No search results found for current SMILES."
+                              : `No instances found for ${selectedNode?.model} / ${selectedNode?.layer} / cluster ${selectedNode?.cluster}.`}
                           </div>
                         )}
-                        {clusterInstanceIds.length > 0 && (
+                        {displayedMemberIds.length > 0 && (
                           <>
                             <div className="flex items-center justify-between text-xs text-zinc-600">
                               <div>
@@ -1057,7 +1186,7 @@ export default function Home() {
                                         target.style.display = "none";
                                       }}
                                     />
-                                    {selectedNode && (
+                                    {selectedNode && !showSearchResultsInMembers && (
                                       <div
                                         className="absolute top-0.5 left-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
                                         style={{ backgroundColor: clusterBadgeColor(selectedNode.cluster) }}

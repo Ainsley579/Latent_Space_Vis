@@ -90,6 +90,13 @@ def search_smiles():
         if ids:
             results[case] = ids
             total += len(ids)
+        preview = ids[:20]
+        print(
+            f"[flask-backend] search-smiles case={case} matched={len(ids)} ids={preview}",
+            flush=True,
+        )
+
+    print(f"[flask-backend] search-smiles total_ids={total}", flush=True)
 
     return jsonify({"ok": True, "smiles": smiles, "matches": results, "total_ids": total})
 
