@@ -346,7 +346,8 @@ export default function Home() {
 
   async function generateFromRange(minValue: number, maxValue: number) {
     try {
-      const apiBase = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
+  const apiBaseRaw = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
+  const apiBase = apiBaseRaw.replace(/\/+$/, "");
       const clusteringParam = selectedClustering === "pgmeans" ? "gmm" : selectedClustering;
       const res = await fetch(`${apiBase}/generate-range`, {
         method: "POST",
