@@ -24,7 +24,12 @@ type JsmeInstance = {
 const JSME_SCRIPT_ID = "jsme-editor-script";
 const LOCAL_JSME_SCRIPT_SRC = "/jsme/jsme.nocache.js";
 
-export default function StructureEditorPanel() {
+type StructureEditorPanelProps = {
+  dataset?: string;
+  onSearchResultIds?: (ids: string[], smiles: string) => void;
+};
+
+export default function StructureEditorPanel({ dataset, onSearchResultIds }: StructureEditorPanelProps) {
   const reactId = useId();
   const inlineHostId = useMemo(() => `jsme_inline_host_${reactId.replace(/:/g, "_")}`, [reactId]);
   const hostId = useMemo(() => `jsme_modal_host_${reactId.replace(/:/g, "_")}`, [reactId]);
@@ -191,6 +196,7 @@ export default function StructureEditorPanel() {
   }
 
   async function searchCurrentSmiles() {
+    if (searchBusy) return;
     const smiles = getActiveSmiles();
     if (!smiles) {
       setError("Current structure cannot be converted to SMILES.");
@@ -203,11 +209,22 @@ export default function StructureEditorPanel() {
       const res = await fetch(`${apiBase}/search-smiles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ smiles }),
+        body: JSON.stringify({ smiles, dataset }),
       });
       if (!res.ok) {
         throw new Error(`search-smiles API failed: ${res.status}`);
       }
+      const json = await res.json().catch(() => ({}));
+      const matches = (json && typeof json === "object" ? (json as any).matches : {}) || {};
+      let ids: string[] = [];
+      if (dataset && matches && typeof matches === "object" && Array.isArray(matches[dataset])) {
+        ids = matches[dataset].map((x: unknown) => String(x));
+      } else if (matches && typeof matches === "object") {
+        ids = Object.values(matches)
+          .flatMap((arr) => (Array.isArray(arr) ? arr : []))
+          .map((x) => String(x));
+      }
+      onSearchResultIds?.(Array.from(new Set(ids)), smiles);
     } catch (e) {
       console.error(e);
       setError("Failed to send SMILES to backend.");
@@ -228,11 +245,10 @@ export default function StructureEditorPanel() {
             className={
               "absolute left-2 top-2 z-10 px-3 py-1 rounded border text-xs shadow-sm " +
               (searchBusy
-                ? "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed"
+                ? "border-zinc-200 bg-zinc-100 text-zinc-400"
                 : "border-zinc-300 bg-white/95 text-zinc-700 hover:bg-white")
             }
             onClick={searchCurrentSmiles}
-            disabled={searchBusy}
           >
             {searchBusy ? "Searching..." : "Search"}
           </button>
@@ -262,11 +278,10 @@ export default function StructureEditorPanel() {
                   className={
                     "px-2 py-1 rounded border text-xs " +
                     (searchBusy
-                      ? "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed"
+                      ? "border-zinc-200 bg-zinc-100 text-zinc-400"
                       : "border-zinc-300 text-zinc-700 hover:bg-zinc-50")
                   }
                   onClick={searchCurrentSmiles}
-                  disabled={searchBusy}
                 >
                   {searchBusy ? "Searching..." : "Search"}
                 </button>
