@@ -2,6 +2,7 @@
 
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -43,29 +44,47 @@ def health():
 
 
 def _normalize_smiles(s: str) -> str:
-    # Simple normalization: strip whitespace; do not change case.
     return (s or "").strip()
 
 
-def _search_smiles_in_case(case: str, smiles_query: str) -> List[str]:
-    """Return list of real_ids in a given case whose SMILES matches the query."""
+def _search_smiles_substructure_in_case(case: str, smiles_query: str):
+    """
+    Substructure search: return list of real_ids whose molecule contains the query
+    (query is a substructure; all IDs that contain it are returned).
+    Uses RDKit HasSubstructMatch. Returns (matches, error_message).
+    """
     case_dir = DATA_ROOT / case
     mapping_path = case_dir / "real_id_to_smiles.json"
     if not mapping_path.is_file():
-        return []
+        return [], None
     try:
-        mapping: Dict[str, str] = json.loads(mapping_path.read_text(encoding="utf-8"))
-    except Exception as e:  # pragma: no cover - defensive
-        print(f"[flask-backend] failed to load {mapping_path}: {e}", flush=True)
-        return []
+        mapping = json.loads(mapping_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print("[flask-backend] failed to load %s: %s" % (mapping_path, e), flush=True)
+        return [], None
     q = _normalize_smiles(smiles_query)
     if not q:
-        return []
-    matches: List[str] = []
+        return [], "empty_smiles"
+    try:
+        from rdkit import Chem
+        query_mol = Chem.MolFromSmiles(q)
+        if query_mol is None:
+            return [], "invalid_query_smiles"
+    except Exception as e:
+        print("[flask-backend] rdkit/query mol failed: %s" % e, flush=True)
+        return [], "invalid_query_smiles"
+    matches = []
     for real_id, smi in mapping.items():
-        if _normalize_smiles(str(smi)) == q:
-            matches.append(str(real_id))
-    return matches
+        smi = _normalize_smiles(str(smi))
+        if not smi:
+            continue
+        try:
+            mol = Chem.MolFromSmiles(smi)
+            if mol is not None and mol.HasSubstructMatch(query_mol):
+                matches.append(str(real_id))
+        except Exception:
+            continue
+    return matches, None
 
 
 @app.route("/search-smiles", methods=["POST", "OPTIONS"])
@@ -83,35 +102,53 @@ def search_smiles():
         return jsonify({"ok": False, "error": "invalid_smiles"}), 400
 
     cases = [dataset] if isinstance(dataset, str) else list(DEFAULT_CASES)
-    results: Dict[str, List[str]] = {}
+    results = {}
     total = 0
     for case in cases:
-        ids = _search_smiles_in_case(case, smiles)
+        ids, err = _search_smiles_substructure_in_case(case, smiles)
+        if err:
+            return jsonify({"ok": False, "error": err}), 400
         if ids:
             results[case] = ids
             total += len(ids)
-        preview = ids[:20]
         print(
-            f"[flask-backend] search-smiles case={case} matched={len(ids)} ids={preview}",
+            "[flask-backend] search-smiles case=%s substructure_matched=%s ids_preview=%s"
+            % (case, len(ids), ids[:20]),
             flush=True,
         )
 
-    print(f"[flask-backend] search-smiles total_ids={total}", flush=True)
-
+    print("[flask-backend] search-smiles total_ids=%s" % total, flush=True)
     return jsonify({"ok": True, "smiles": smiles, "matches": results, "total_ids": total})
 
 
-def _filter_sankey_for_range(case: str, min_value: int, max_value: int) -> Tuple[int, int]:
-    """Filter all_sankey.json and sankey_samples.json in-place for a given [min,max] model range.
+def _cluster_id_from_label(label: str) -> int:
+    """Parse cluster ID from label like 'ffn_layer_1_C0' or 'fingerprint_C2'. Returns -1 if no _C suffix."""
+    if not label or "_C" not in label:
+        return -1
+    try:
+        return int(label.split("_C")[-1])
+    except (ValueError, TypeError):
+        return -1
 
-    Returns (kept_epochs, kept_rows) for logging.
+
+def _filter_sankey_for_range(case: str, min_value: int, max_value: int) -> Tuple[int, int]:
+    """Filter all_sankey.json and all *_sankey_samples.json / vertical_model_samples_*.json
+    in-place for a given [min,max] **cluster ID** range (clustering range, not epoch).
+
+    - all_sankey: keep edges where both source_label and target_label have cluster ID in [min, max].
+    - Sample files: keep rows where from_cluster and to_cluster are in [min, max].
+
+    Returns (kept_edges, kept_sample_rows) for logging.
     """
     case_dir = DATA_ROOT / case
     sankey_dir = case_dir / "sankey"
     all_sankey_path = sankey_dir / "all_sankey.json"
     samples_path = sankey_dir / "sankey_samples.json"
 
-    kept_epochs = 0
+    def cluster_in_range(cid: int) -> bool:
+        return min_value <= cid <= max_value
+
+    kept_edges = 0
     kept_rows = 0
 
     if all_sankey_path.is_file():
@@ -121,19 +158,32 @@ def _filter_sankey_for_range(case: str, min_value: int, max_value: int) -> Tuple
             print(f"[flask-backend] failed to load {all_sankey_path}: {e}", flush=True)
         else:
             epoch_dict = data.get("epoch") or {}
-            new_epoch = {}
             for ek, payload in epoch_dict.items():
-                try:
-                    ek_int = int(ek)
-                except (ValueError, TypeError):
-                    # Keep non-numeric keys unchanged
-                    new_epoch[ek] = payload
-                    continue
-                if min_value <= ek_int <= max_value:
-                    new_epoch[ek] = payload
-            kept_epochs = len(new_epoch)
-            data["epoch"] = new_epoch
+                edges = payload.get("edges") or []
+                filtered_edges = [
+                    e
+                    for e in edges
+                    if cluster_in_range(_cluster_id_from_label(e.get("source_label", "")))
+                    and cluster_in_range(_cluster_id_from_label(e.get("target_label", "")))
+                ]
+                kept_edges += len(filtered_edges)
+                payload["edges"] = filtered_edges
+            data["epoch"] = epoch_dict
             all_sankey_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    def filter_sample_rows(rows: list) -> list:
+        out = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            try:
+                fc = int(row.get("from_cluster"))
+                tc = int(row.get("to_cluster"))
+            except (ValueError, TypeError):
+                continue
+            if cluster_in_range(fc) and cluster_in_range(tc):
+                out.append(row)
+        return out
 
     if samples_path.is_file():
         try:
@@ -141,55 +191,117 @@ def _filter_sankey_for_range(case: str, min_value: int, max_value: int) -> Tuple
         except Exception as e:  # pragma: no cover - defensive
             print(f"[flask-backend] failed to load {samples_path}: {e}", flush=True)
         else:
-            def in_range(model_str: str) -> bool:
-                try:
-                    v = int(model_str)
-                except (ValueError, TypeError):
-                    return True  # keep non-numeric
-                return (min_value <= v <= max_value)
-
-            filtered = [
-                row
-                for row in rows
-                if in_range(row.get("from_model")) and in_range(row.get("to_model"))
-            ]
+            filtered = filter_sample_rows(rows)
             kept_rows = len(filtered)
             samples_path.write_text(json.dumps(filtered, indent=2), encoding="utf-8")
 
-    return kept_epochs, kept_rows
+    for f in sankey_dir.iterdir():
+        if not f.is_file() or f.suffix != ".json":
+            continue
+        name = f.name
+        if not (
+            name.endswith("_sankey_samples.json")
+            or name.startswith("vertical_model_samples")
+        ):
+            continue
+        try:
+            rows = json.loads(f.read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"[flask-backend] skip filter {f.name}: {e}", flush=True)
+            continue
+        if not isinstance(rows, list):
+            continue
+        filtered = filter_sample_rows(rows)
+        f.write_text(json.dumps(filtered, indent=2), encoding="utf-8")
+
+    return kept_edges, kept_rows
 
 
 @app.route("/generate-range", methods=["POST", "OPTIONS"])
 def generate_range():
+    """Re-run clustering pipeline with user-supplied k_min/k_max (min/max), then materialize sankey compat files."""
     if request.method == "OPTIONS":
         return ("", 204)
 
     payload = request.get_json(silent=True) or {}
     min_value = payload.get("min")
     max_value = payload.get("max")
-    dataset = payload.get("dataset")  # optional: limit to a single case
+    dataset = payload.get("dataset")
+    clustering = (payload.get("clustering") or "gmm").lower().strip()
 
-    print(f"[flask-backend] generate-range min={min_value}, max={max_value}, dataset={dataset}", flush=True)
+    # Frontend may send "pgmeans" for default clustering -> backend uses "gmm"
+    if clustering == "pgmeans":
+        clustering = "gmm"
+
+    print(
+        f"[flask-backend] generate-range k_min={min_value}, k_max={max_value}, dataset={dataset}, clustering={clustering}",
+        flush=True,
+    )
 
     try:
-        min_int = int(min_value)
-        max_int = int(max_value)
+        k_min = int(min_value)
+        k_max = int(max_value)
     except (ValueError, TypeError):
         return jsonify({"ok": False, "error": "invalid_range"}), 400
-    if min_int > max_int:
-        min_int, max_int = max_int, min_int
+    if k_min > k_max:
+        k_min, k_max = k_max, k_min
+    if k_min < 2:
+        k_min = 2
+    if k_max < k_min:
+        k_max = k_min
 
-    cases = [dataset] if isinstance(dataset, str) else list(DEFAULT_CASES)
-    summary: Dict[str, Dict[str, int]] = {}
-    for case in cases:
-        epochs, rows = _filter_sankey_for_range(case, min_int, max_int)
-        summary[case] = {"kept_epochs": epochs, "kept_sample_rows": rows}
-        print(
-            f"[flask-backend] generate-range case={case} -> kept_epochs={epochs}, kept_sample_rows={rows}",
-            flush=True,
+    if not dataset or dataset not in DEFAULT_CASES:
+        return jsonify({"ok": False, "error": "invalid_dataset"}), 400
+    if clustering not in ("gmm", "agglomerative", "hdbscan"):
+        return jsonify({"ok": False, "error": "invalid_clustering"}), 400
+
+    input_path = EMBEDDING_PATHS.get(dataset)
+    if not input_path or not input_path.is_file():
+        return jsonify({"ok": False, "error": "embedding_not_found", "detail": str(input_path)}), 404
+
+    case_dir = DATA_ROOT / dataset
+    case_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        from run_pipeline_from_embeddings import run_pipeline
+
+        ok = run_pipeline(
+            input_path=str(input_path),
+            output_dir=str(case_dir),
+            k_min=k_min,
+            k_max=k_max,
+            clustering_method=clustering,
+            skip_tsne=True,
         )
+        if not ok:
+            return jsonify({"ok": False, "error": "pipeline_failed"}), 500
+    except Exception as e:
+        print(f"[flask-backend] generate-range pipeline failed: {e}", flush=True)
+        return jsonify({"ok": False, "error": "pipeline_failed", "detail": str(e)}), 500
 
-    return jsonify({"ok": True, "min": min_int, "max": max_int, "summary": summary})
+    # Base dir where pipeline wrote outputs for this method (root for gmm, clustering/<method> for others)
+    base = case_dir if clustering == "gmm" else (case_dir / "clustering" / clustering)
+    materialize_script = _BACKEND_DIR / "scripts" / "materialize_sankey_compat_files.py"
+    if materialize_script.is_file():
+        try:
+            subprocess.run(
+                [sys.executable, str(materialize_script), "--dataset-root", str(base), "--vertical-mode", "adjacent"],
+                cwd=str(_BACKEND_DIR.parent),
+                check=True,
+                capture_output=True,
+                timeout=300,
+            )
+        except (subprocess.CalledProcessError, subprocess.TimeoutError) as e:
+            print(f"[flask-backend] materialize_sankey_compat failed (non-fatal): {e}", flush=True)
+
+    return jsonify({
+        "ok": True,
+        "min": k_min,
+        "max": k_max,
+        "dataset": dataset,
+        "clustering": clustering,
+        "summary": {dataset: {"status": "done"}},
+    })
 
 
 def _load_embedding_cell(dataset, epoch, layer):

@@ -39,15 +39,17 @@ export default function SyncControlPanel({
   onExportBookmarks,
   bookmarkCount = 0,
 }: SyncControlPanelProps) {
-  const [minValue, setMinValue] = useState(1);
-  const [maxValue, setMaxValue] = useState(20);
+  const [minValue, setMinValue] = useState(2);
+  const [maxValue, setMaxValue] = useState(10);
 
   const minOptions = useMemo(() => {
-    return Array.from({ length: 20 }, (_, i) => i + 1).filter((v) => v < maxValue);
+    const list = Array.from({ length: 19 }, (_, i) => i + 2).filter((v) => v <= maxValue);
+    return list.length ? list : [2];
   }, [maxValue]);
 
   const maxOptions = useMemo(() => {
-    return Array.from({ length: 20 }, (_, i) => i + 1).filter((v) => v > minValue);
+    const list = Array.from({ length: 19 }, (_, i) => i + 2).filter((v) => v >= minValue);
+    return list.length ? list : [20];
   }, [minValue]);
 
   return (
@@ -144,6 +146,7 @@ export default function SyncControlPanel({
         />
       </div>
 
+      <div className="text-[10px] text-zinc-500 text-center mb-0.5">Clustering k range (min–max)</div>
       <div className="flex items-center justify-center gap-3 min-w-0">
         <label className="text-xs text-zinc-600 shrink-0">Min</label>
         <select
@@ -172,7 +175,7 @@ export default function SyncControlPanel({
           onChange={(e) => {
             const next = Number(e.target.value);
             setMaxValue(next);
-            if (minValue >= next) setMinValue(Math.max(1, next - 1));
+            if (minValue >= next) setMinValue(Math.max(2, next - 1));
           }}
         >
           {maxOptions.map((v) => (

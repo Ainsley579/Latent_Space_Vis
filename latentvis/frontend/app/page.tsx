@@ -108,6 +108,7 @@ export default function Home() {
   const [swapAxes, setSwapAxes] = useState(false);
   const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
   const [activeSankeyRows, setActiveSankeyRows] = useState<SankeySampleRow[]>([]);
+  const [sankeyRefreshKey, setSankeyRefreshKey] = useState(0);
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -346,14 +347,21 @@ export default function Home() {
   async function generateFromRange(minValue: number, maxValue: number) {
     try {
       const apiBase = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
+      const clusteringParam = selectedClustering === "pgmeans" ? "gmm" : selectedClustering;
       const res = await fetch(`${apiBase}/generate-range`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ min: minValue, max: maxValue }),
+        body: JSON.stringify({
+          min: minValue,
+          max: maxValue,
+          dataset: selectedDataset,
+          clustering: clusteringParam,
+        }),
       });
       if (!res.ok) {
         throw new Error(`Generate API failed: ${res.status}`);
       }
+      setSankeyRefreshKey((k: number) => k + 1);
     } catch (err) {
       console.error("Failed to call generate-range API:", err);
     }
@@ -399,7 +407,7 @@ export default function Home() {
       .catch((err) => {
         console.error(err);
       });
-  }, [datasetBase, selectedDataset, selectedClustering]);
+  }, [datasetBase, selectedDataset, selectedClustering, sankeyRefreshKey]);
 
   useEffect(() => {
     if (!selectedNode) {
@@ -424,7 +432,7 @@ export default function Home() {
         console.error(err);
         setActiveSankeyRows([]);
       });
-  }, [activeSankeyPath]);
+  }, [activeSankeyPath, sankeyRefreshKey]);
 
   const tabCycleData = useMemo(() => {
     if (!selectedNode) return null;
