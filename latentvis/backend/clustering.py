@@ -82,9 +82,10 @@ def fit_hdbscan(emb, min_cluster_size=5, min_samples=3, random_state=42):
     }
 
 
-def fit_agglomerative(emb, n_clusters=None, k_min=2, k_max=15, random_state=42):
+def fit_agglomerative(emb, n_clusters=None, k_min=2, k_max=15, random_state=42, linkage="ward"):
     """
     Agglomerative Clustering. If n_clusters is None, run GMM once to get best_k and use it.
+    linkage: "ward" (default), "complete", or "average". Ward uses Euclidean only.
     Returns dict with labels, k, k_values=[k], bic=[None], aic=[None].
     """
     from sklearn.cluster import AgglomerativeClustering
@@ -93,10 +94,12 @@ def fit_agglomerative(emb, n_clusters=None, k_min=2, k_max=15, random_state=42):
         gmm_out = fit_gmm(emb, k_min=k_min, k_max=k_max, random_state=random_state)
         n_clusters = gmm_out["k"]
     n_clusters = max(2, min(n_clusters, len(X) - 1))
-    # Ward linkage uses Euclidean only; do not pass metric (incompatible with older sklearn)
+    link = (linkage or "ward").lower()
+    if link not in ("ward", "complete", "average"):
+        link = "ward"
     ac = AgglomerativeClustering(
         n_clusters=n_clusters,
-        linkage="ward",
+        linkage=link,
     )
     labels = ac.fit_predict(X)
     return {
@@ -130,5 +133,6 @@ def fit_clustering(emb, method="gmm", k_min=2, k_max=15, random_state=42, **kwar
             k_min=k_min,
             k_max=k_max,
             random_state=random_state,
+            linkage=kwargs.get("linkage", "ward"),
         )
     raise ValueError("Unknown clustering method: {}".format(method))

@@ -40,19 +40,25 @@ def reduce_mds(
     max_iter: int = 300,
 ) -> np.ndarray:
     from sklearn.manifold import MDS
+    from sklearn.metrics import pairwise_distances
+    from sklearn.preprocessing import normalize
     if standardize:
         X = _standardize(X)
     if X.shape[1] > 50:
         from sklearn.decomposition import PCA
         X = PCA(n_components=50, random_state=random_state).fit_transform(X)
+    # Use cosine distance: 1 - cosine similarity (as sklearn's 'cosine' metric).
+    # We compute a precomputed dissimilarity matrix so the distance definition is explicit.
+    Xn = normalize(X, norm="l2", axis=1)
+    D = pairwise_distances(Xn, metric="cosine")
     mds = MDS(
         n_components=n_components,
         random_state=random_state,
-        dissimilarity="euclidean",
+        dissimilarity="precomputed",
         n_jobs=n_jobs,
         max_iter=max_iter,
     )
-    return mds.fit_transform(X)
+    return mds.fit_transform(D)
 
 
 def reduce_umap(
@@ -96,13 +102,24 @@ def reduce_tsne(
     n = X.shape[0]
     perp = min(perplexity, max(5, n // 4))
     iters = min(n_iter, max(250, n * 5))  # at least 250 (sklearn requirement), cap for speed
-    tsne = TSNE(
-        n_components=n_components,
-        random_state=random_state,
-        perplexity=perp,
-        n_iter=iters,
-        init="pca",
-    )
+    # sklearn changed parameter name from n_iter -> max_iter in newer versions.
+    # Try n_iter first for backward compatibility, then max_iter.
+    try:
+        tsne = TSNE(
+            n_components=n_components,
+            random_state=random_state,
+            perplexity=perp,
+            n_iter=iters,
+            init="pca",
+        )
+    except TypeError:
+        tsne = TSNE(
+            n_components=n_components,
+            random_state=random_state,
+            perplexity=perp,
+            max_iter=iters,
+            init="pca",
+        )
     return tsne.fit_transform(X)
 
 

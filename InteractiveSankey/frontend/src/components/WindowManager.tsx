@@ -231,9 +231,9 @@ export default function WindowManager() {
                                                     if (el) scatterRefs.current[idx] = el;
                                                 }}
                                                 onScroll={(scrollLeft) => syncScatterScroll(idx, scrollLeft)}
-                                                data={w.scatterData}          // ✅ 直接喂 JSON
+                                                data={w.scatterData}          // pass JSON directly
                                                 zoomFactor={zoomFactor}
-                                                hideControls={idx === 0}   // ✅ 第一个窗口隐藏控制条
+                                                hideControls={idx === 0}   // hide controls on first window
                                             />
                                         ) : w.scatterCsv ? (
                                             <ScatterPlot
@@ -243,7 +243,7 @@ export default function WindowManager() {
                                                 onScroll={(scrollLeft) => syncScatterScroll(idx, scrollLeft)}
                                                 clusterFilePath={w.scatterCsv}
                                                 zoomFactor={zoomFactor}
-                                                hideControls={idx === 0}   // ✅ 第一个窗口隐藏控制条
+                                                hideControls={idx === 0}   // hide controls on first window
                                             />
                                         ) : (
                                             <div style={{ opacity: 0.5, padding: "1rem", fontSize: "0.9rem" }}>
