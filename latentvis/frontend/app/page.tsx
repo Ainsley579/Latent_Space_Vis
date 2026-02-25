@@ -50,10 +50,30 @@ export default function Home() {
   };
   const datasetBase = datasetBaseFor(selectedDataset, selectedClustering);
   const assetBase = `/data/${selectedDataset}`;
-  const buildSankeyModelPath = (model: string, dataset: DatasetKey = selectedDataset) =>
-    `${datasetBaseFor(dataset, selectedClustering)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`;
-  const buildVerticalPath = (layer: string, dataset: DatasetKey = selectedDataset) =>
-    `${datasetBaseFor(dataset, selectedClustering)}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`;
+  const withVersion = (url: string, version: number = sankeyRefreshKey) => {
+    const sep = url.includes("?") ? "&" : "?";
+    return `${url}${sep}v=${version}`;
+  };
+  const buildSankeyModelPath = (
+    model: string,
+    dataset: DatasetKey = selectedDataset,
+    clustering: ClusteringKey = selectedClustering,
+    version: number = sankeyRefreshKey
+  ) =>
+    withVersion(
+      `${datasetBaseFor(dataset, clustering)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`,
+      version
+    );
+  const buildVerticalPath = (
+    layer: string,
+    dataset: DatasetKey = selectedDataset,
+    clustering: ClusteringKey = selectedClustering,
+    version: number = sankeyRefreshKey
+  ) =>
+    withVersion(
+      `${datasetBaseFor(dataset, clustering)}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`,
+      version
+    );
   const buildScatterPath = (
     model: string,
     layer: string,
@@ -69,11 +89,11 @@ export default function Home() {
     model: string,
     layer: string,
     dataset: DatasetKey = selectedDataset,
-    clustering: ClusteringKey = selectedClustering
+    clustering: ClusteringKey = selectedClustering,
+    version: number = sankeyRefreshKey
   ) => {
-    const base = datasetBaseFor(dataset, clustering);
-    setSankeyPath(`${base}/sankey/${sanitizePathKey(model)}_sankey_samples.json`);
-    setSankeyPathVertical(`${base}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`);
+    setSankeyPath(buildSankeyModelPath(model, dataset, clustering, version));
+    setSankeyPathVertical(buildVerticalPath(layer, dataset, clustering, version));
   };
 
   const [sankeyPath, setSankeyPath] = useState("/data/chemprop/sankey/0_sankey_samples.json");
@@ -109,6 +129,8 @@ export default function Home() {
   const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
   const [activeSankeyRows, setActiveSankeyRows] = useState<SankeySampleRow[]>([]);
   const [sankeyRefreshKey, setSankeyRefreshKey] = useState(0);
+  const [isGeneratingRange, setIsGeneratingRange] = useState(false);
+  const [generateStatusText, setGenerateStatusText] = useState("");
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -345,6 +367,9 @@ export default function Home() {
   }, [selectedDataset, selectedClustering]);
 
   async function generateFromRange(minValue: number, maxValue: number) {
+    if (isGeneratingRange) return;
+    setIsGeneratingRange(true);
+    setGenerateStatusText(`Running generate-range [${minValue}, ${maxValue}] ...`);
     try {
   const apiBaseRaw = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
   const apiBase = apiBaseRaw.replace(/\/+$/, "");
@@ -362,9 +387,25 @@ export default function Home() {
       if (!res.ok) {
         throw new Error(`Generate API failed: ${res.status}`);
       }
+      setGenerateStatusText("Materializing Sankey files ...");
+      const materializeRes = await fetch(`${apiBase}/materialize-sankey-files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dataset: selectedDataset,
+          clustering: selectedClustering,
+        }),
+      });
+      if (!materializeRes.ok) {
+        throw new Error(`Materialize API failed: ${materializeRes.status}`);
+      }
       setSankeyRefreshKey((k: number) => k + 1);
+      setGenerateStatusText("Generate finished.");
     } catch (err) {
       console.error("Failed to call generate-range API:", err);
+      setGenerateStatusText(`Generate failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsGeneratingRange(false);
     }
   }
 
@@ -378,7 +419,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch(`${datasetBase}/sankey/all_sankey.json`)
+    fetch(withVersion(`${datasetBase}/sankey/all_sankey.json`))
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load all_sankey.json");
         return res.json();
@@ -794,7 +835,8 @@ export default function Home() {
               className="w-full h-full border border-zinc-400"
             >
               <SankeyView
-                dataPath={`${datasetBase}/sankey/all_sankey.json`}
+                key={`sankeyview-${selectedDataset}-${selectedClustering}-${sankeyRefreshKey}`}
+                dataPath={withVersion(`${datasetBase}/sankey/all_sankey.json`)}
                 metricsPath={`${datasetBase}/bic_aic/avg_fmi_cspa_by_layer.json`}
                 onModelSelect={(model) => {
                   setSankeyPath(buildSankeyModelPath(model));
@@ -1327,6 +1369,8 @@ export default function Home() {
                   onLargePreviewSizeChange={setLargeHoverPreviewSize}
                   onGenerateRange={generateFromRange}
                   generateEnabled={true}
+                  generateBusy={isGeneratingRange}
+                  generateMessage={generateStatusText}
                   onExportBookmarks={exportBookmarkedIdsCsv}
                   bookmarkCount={bookmarkedIds.size}
                 />

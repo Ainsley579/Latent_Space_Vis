@@ -17,6 +17,8 @@ type SyncControlPanelProps = {
   onLargePreviewSizeChange: (size: number) => void;
   onGenerateRange?: (minValue: number, maxValue: number) => void;
   generateEnabled?: boolean;
+  generateBusy?: boolean;
+  generateMessage?: string;
   onExportBookmarks?: () => void;
   bookmarkCount?: number;
 };
@@ -36,6 +38,8 @@ export default function SyncControlPanel({
   onLargePreviewSizeChange,
   onGenerateRange,
   generateEnabled = true,
+  generateBusy = false,
+  generateMessage = "",
   onExportBookmarks,
   bookmarkCount = 0,
 }: SyncControlPanelProps) {
@@ -191,14 +195,14 @@ export default function SyncControlPanel({
           type="button"
           className={
             "h-6 px-3 rounded border text-xs shrink-0 " +
-            (generateEnabled
+            (generateEnabled && !generateBusy
               ? "border-zinc-300 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
               : "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed")
           }
-          disabled={!generateEnabled}
+          disabled={!generateEnabled || generateBusy}
           onClick={() => onGenerateRange?.(minValue, maxValue)}
         >
-          Generate
+          {generateBusy ? "Generating..." : "Generate"}
         </button>
         <button
           type="button"
@@ -215,6 +219,9 @@ export default function SyncControlPanel({
           Export ({bookmarkCount})
         </button>
       </div>
+      {generateMessage ? (
+        <div className="text-[10px] text-zinc-500 text-center break-words">{generateMessage}</div>
+      ) : null}
       </div>
     </div>
   );

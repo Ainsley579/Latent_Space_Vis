@@ -17,25 +17,60 @@ def fit_gmm(emb, k_min=2, k_max=15, random_state=42):
     GMM with BIC-based model selection. Returns labels, best_k, k_values, bic_list, aic_list.
     """
     from sklearn.mixture import GaussianMixture
-    X = StandardScaler().fit_transform(_flatten(emb))
+
+    # Use float64 to improve numerical stability for covariance estimation.
+    X = StandardScaler().fit_transform(_flatten(emb)).astype(np.float64, copy=False)
+
+    def _fit_one(k):
+        # Try progressively stronger regularization; fallback to diag covariance.
+        for cov_type in ("full", "diag"):
+            for reg in (1e-6, 1e-5, 1e-4, 1e-3, 1e-2):
+                try:
+                    gmm = GaussianMixture(
+                        n_components=k,
+                        covariance_type=cov_type,
+                        random_state=random_state,
+                        max_iter=300,
+                        reg_covar=reg,
+                        n_init=2,
+                    )
+                    gmm.fit(X)
+                    return gmm
+                except Exception:
+                    continue
+        return None
+
     k_values = list(range(k_min, k_max + 1))
     bic_list, aic_list = [], []
+    fitted_by_k = {}
     for k in k_values:
-        try:
-            gmm = GaussianMixture(
-                n_components=k, covariance_type="full", random_state=random_state, max_iter=200
-            )
-            gmm.fit(X)
+        gmm = _fit_one(k)
+        if gmm is not None:
+            fitted_by_k[k] = gmm
             bic_list.append(float(gmm.bic(X)))
             aic_list.append(float(gmm.aic(X)))
-        except Exception:
+        else:
             bic_list.append(float("inf"))
             aic_list.append(float("inf"))
-    best_k = k_values[int(np.argmin(bic_list))]
-    gmm = GaussianMixture(
-        n_components=best_k, covariance_type="full", random_state=random_state, max_iter=200
-    )
-    gmm.fit(X)
+
+    # If all candidates fail, return a single fallback cluster instead of raising.
+    if not fitted_by_k:
+        labels = np.zeros(X.shape[0], dtype=int)
+        return {
+            "labels": labels,
+            "k": 1,
+            "k_values": [1],
+            "bic": [None],
+            "aic": [None],
+        }
+
+    best_idx = int(np.argmin(bic_list))
+    best_k = k_values[best_idx]
+    gmm = fitted_by_k.get(best_k)
+    if gmm is None:
+        # np.argmin might point to a failed k if BIC ties/edge cases occur.
+        best_k = min(fitted_by_k.keys())
+        gmm = fitted_by_k[best_k]
     labels = gmm.predict(X)
     return {
         "labels": labels,
