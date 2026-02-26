@@ -187,19 +187,32 @@ def run_pipeline(
     n_clusters_override: Optional[int] = None,
     linkage_override: Optional[str] = None,
     reuse_scatter_coords: bool = False,
+    substructure_max_members: Optional[int] = None,
+    scatter_subdir: str = "scatterplot",
+    data_split: Optional[str] = None,
+    write_fmi_cspa: bool = True,
+    interactive_output_suffix: str = "",
+    verbose_dr: bool = True,
 ) -> bool:
     """
     Load embedding input (optionally two directories for two epochs), run full analysis, write all frontend JSONs.
 
     default_reduction: method used for the default scatter file (no suffix); one of pca, mds, umap, tsne.
     If input_path2/model_name2/layer_file_map2 are set, both are loaded and merged (two epochs).
+    interactive_output_suffix: when set (e.g. "_current"), write topk, sankey, substructures,
+    clustering_metrics to topk_current, sankey_current, etc., so original artifacts are not overwritten.
     """
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
     # Load
     print("Loading embedding input...")
-    data = load_embedding_input(input_path, model_name=model_name, layer_file_map=layer_file_map)
+    data = load_embedding_input(
+        input_path,
+        model_name=model_name,
+        layer_file_map=layer_file_map,
+        data_split=data_split,
+    )
     cells = dict(data["cells"])
     epoch_keys = list(data["epoch_keys"])
     layer_keys = list(data["layer_keys"])
@@ -208,7 +221,12 @@ def run_pipeline(
     id_to_smiles_from_input = data.get("id_to_smiles") or {}
 
     if input_path2 and model_name2:
-        data2 = load_embedding_input(input_path2, model_name=model_name2, layer_file_map=layer_file_map2)
+        data2 = load_embedding_input(
+            input_path2,
+            model_name=model_name2,
+            layer_file_map=layer_file_map2,
+            data_split=data_split,
+        )
         if data2["n_samples"] != n_samples:
             print(f"Error: second input n_samples={data2['n_samples']} != first n_samples={n_samples}")
             return False
@@ -244,6 +262,7 @@ def run_pipeline(
     def _scatter_source_dirs(root: Path) -> list:
         """Candidate dirs where scatterplot JSONs may already exist (for coordinate reuse)."""
         dirs = []
+        # Baseline scatter directories are always named "scatterplot" under each clustering method.
         d0 = root / "scatterplot"
         if d0.is_dir():
             dirs.append(d0)
@@ -408,7 +427,7 @@ def run_pipeline(
     # ---- Write outputs per clustering method (root for first method, clustering/<method>/ for others) ----
     for cl_method in run_methods:
         base = out if cl_method == run_methods[0] else (out / "clustering" / cl_method)
-        scatter_dir = base / "scatterplot"
+        scatter_dir = base / scatter_subdir
         scatter_dir.mkdir(parents=True, exist_ok=True)
         for (ek, lk), cell in results.items():
             coords = cell.get("coords", {})
@@ -477,7 +496,7 @@ def run_pipeline(
                     "sorted_real_ids": sorted_real_ids,
                     "count": len(sorted_real_ids),
                 })
-        topk_dir = base / "topk"
+        topk_dir = base / ("topk" + interactive_output_suffix)
         topk_dir.mkdir(parents=True, exist_ok=True)
         (topk_dir / "cluster_representatives.json").write_text(json.dumps(topk_list, indent=2))
         (topk_dir / "cluster_sorted_members.json").write_text(json.dumps(sorted_members_list, indent=2))
@@ -504,7 +523,7 @@ def run_pipeline(
                 edges.extend(_edges_from_transitions(lab0, lab1, str(e0), str(e1)))
             if edges:
                 all_sankey["layer"][lk] = {"type": "spatial_layer", "layer": lk, "edges": edges}
-        sankey_dir = base / "sankey"
+        sankey_dir = base / ("sankey" + interactive_output_suffix)
         sankey_dir.mkdir(parents=True, exist_ok=True)
         (sankey_dir / "all_sankey.json").write_text(json.dumps(all_sankey, indent=2))
         ca_df_method = ca_df.copy()
@@ -524,8 +543,9 @@ def run_pipeline(
         (sankey_dir / "sankey_samples.json").write_text(
             json.dumps(sample_rows, indent=2, default=_json_default)
         )
-        (base / "clustering_metrics").mkdir(parents=True, exist_ok=True)
-        ca_df_method.to_csv(base / "clustering_metrics" / "cluster_assignments_with_real_id.csv", index=False)
+        cm_dir = base / ("clustering_metrics" + interactive_output_suffix)
+        cm_dir.mkdir(parents=True, exist_ok=True)
+        ca_df_method.to_csv(cm_dir / "cluster_assignments_with_real_id.csv", index=False)
         # Substructure (MCS): use SMILES from CSV if provided, else from .pt (id_to_smiles_from_input)
         id_to_smiles = {}
         if smiles_csv and Path(smiles_csv).exists():
@@ -548,10 +568,32 @@ def run_pipeline(
                     return id_to_smiles.get(int(rid))
                 except (TypeError, ValueError):
                     return None
+            # Map (model_type, layer_name, cluster_id) -> full sorted real_ids (closest first) for flexible M selection
+            cluster_sorted_map = {}
+            for sm in sorted_members_list:
+                key = (sm.get("model_type"), sm.get("layer_name"), sm.get("cluster_id"))
+                if key[0] is None or key[1] is None or key[2] is None:
+                    continue
+                if isinstance(sm.get("sorted_real_ids"), list):
+                    cluster_sorted_map[key] = list(sm["sorted_real_ids"])
+
             substruct_list = []
             for entry in topk_list:
+                key_tuple = (entry.get("model_type"), entry.get("layer_name"), entry.get("cluster_id"))
+                base_sorted = cluster_sorted_map.get(key_tuple)
                 for group, key in [("knn", "top_k_closest_real_ids"), ("kfn", "top_k_farthest_real_ids")]:
-                    rids = entry[key]
+                    # Determine candidate real_ids for MCS:
+                    # - If substructure_max_members is set and we have full sorted_real_ids, use first M (nearest)
+                    #   for knn and last M (farthest) for kfn.
+                    # - Otherwise fall back to the top-k lists in topk_list entry.
+                    if substructure_max_members is not None and substructure_max_members > 0 and base_sorted:
+                        m = min(substructure_max_members, len(base_sorted))
+                        if group == "knn":
+                            rids = base_sorted[:m]
+                        else:  # kfn
+                            rids = list(reversed(base_sorted))[:m]
+                    else:
+                        rids = entry[key]
                     mols = []
                     missing = []
                     invalid = []
@@ -590,7 +632,7 @@ def run_pipeline(
                         "missing_real_ids": missing, "invalid_smiles_real_ids": invalid,
                         "mcs_smarts": mcs_smarts, "mcs_smiles": mcs_smiles, "mcs_note": mcs_note,
                     })
-            sub_dir = base / "substructures"
+            sub_dir = base / ("substructures" + interactive_output_suffix)
             sub_dir.mkdir(parents=True, exist_ok=True)
             (sub_dir / "cluster_substructures.json").write_text(json.dumps(substruct_list, indent=2))
         print("Wrote outputs for clustering method: {} -> {}".format(cl_method, base))
@@ -600,37 +642,39 @@ def run_pipeline(
     elif not id_to_smiles_from_input and (not smiles_csv or not Path(smiles_csv).exists()):
         print("No SMILES CSV or .pt smiles provided; skipping substructures.")
 
-    # FMI/CSPA summary (default clustering method only)
-    fmi_cspa_layers = []
-    for lk in layer_keys:
-        fmi_vals, cspa_vals = [], []
-        for i in range(len(epoch_keys) - 1):
-            e0, e1 = epoch_keys[i], epoch_keys[i + 1]
-            lab0 = res(e0, lk, run_methods[0]).get("labels")
-            lab1 = res(e1, lk, run_methods[0]).get("labels")
-            if lab0 is None or lab1 is None:
-                continue
-            try:
-                fmi_vals.append(fowlkes_mallows_score(lab0, lab1))
-                sim0 = (lab0[:, None] == lab0[None, :]).astype(float)
-                sim1 = (lab1[:, None] == lab1[None, :]).astype(float)
-                cspa_vals.append(float(np.linalg.norm((sim0 + sim1) / 2.0, ord="fro")))
-            except Exception:
-                pass
-        if fmi_vals or cspa_vals:
-            fmi_cspa_layers.append({
-                "layer": lk,
-                "avg_fmi": float(np.mean(fmi_vals)) if fmi_vals else None,
-                "avg_cspa": float(np.mean(cspa_vals)) if cspa_vals else None,
-                "count": len(fmi_vals),
-            })
-    if fmi_cspa_layers:
-        fmi_dir = out / "bic_aic"
-        fmi_dir.mkdir(parents=True, exist_ok=True)
-        (fmi_dir / "avg_fmi_cspa_by_layer.json").write_text(
-            json.dumps({"layers": fmi_cspa_layers, "models": epoch_keys}, indent=2)
-        )
-        print("Wrote avg_fmi_cspa_by_layer.json (FMI/CSPA between consecutive epochs).")
+    # FMI/CSPA summary (default clustering method only).
+    # This can be expensive (O(n^2) per epoch pair); allow callers to disable it.
+    if write_fmi_cspa:
+        fmi_cspa_layers = []
+        for lk in layer_keys:
+            fmi_vals, cspa_vals = [], []
+            for i in range(len(epoch_keys) - 1):
+                e0, e1 = epoch_keys[i], epoch_keys[i + 1]
+                lab0 = res(e0, lk, run_methods[0]).get("labels")
+                lab1 = res(e1, lk, run_methods[0]).get("labels")
+                if lab0 is None or lab1 is None:
+                    continue
+                try:
+                    fmi_vals.append(fowlkes_mallows_score(lab0, lab1))
+                    sim0 = (lab0[:, None] == lab0[None, :]).astype(float)
+                    sim1 = (lab1[:, None] == lab1[None, :]).astype(float)
+                    cspa_vals.append(float(np.linalg.norm((sim0 + sim1) / 2.0, ord="fro")))
+                except Exception:
+                    pass
+            if fmi_vals or cspa_vals:
+                fmi_cspa_layers.append({
+                    "layer": lk,
+                    "avg_fmi": float(np.mean(fmi_vals)) if fmi_vals else None,
+                    "avg_cspa": float(np.mean(cspa_vals)) if cspa_vals else None,
+                    "count": len(fmi_vals),
+                })
+        if fmi_cspa_layers:
+            fmi_dir = out / "bic_aic"
+            fmi_dir.mkdir(parents=True, exist_ok=True)
+            (fmi_dir / "avg_fmi_cspa_by_layer.json").write_text(
+                json.dumps({"layers": fmi_cspa_layers, "models": epoch_keys}, indent=2)
+            )
+            print("Wrote avg_fmi_cspa_by_layer.json (FMI/CSPA between consecutive epochs).")
 
     return True
 
@@ -655,8 +699,34 @@ def main():
                     help="Clustering method: gmm (default), hdbscan, agglomerative, or all")
     ap.add_argument("--max-epochs", type=int, default=None, help="Limit to first N epochs (e.g. 10 for quick run)")
     ap.add_argument("--skip-tsne", action="store_true", help="Skip t-SNE (use PCA for tsne coords); much faster")
-    ap.add_argument("--output-to-frontend", action="store_true",
-                    help="Write directly to frontend/public/data instead of copying later")
+    ap.add_argument(
+        "--substructure-max-members",
+        type=int,
+        default=None,
+        help="Max number of nearest/farthest members per cluster to use for substructure MCS (default: all available).",
+    )
+    ap.add_argument(
+        "--output-to-frontend",
+        action="store_true",
+        help="Write directly to frontend/public/data instead of copying later",
+    )
+    ap.add_argument(
+        "--data-split",
+        default=None,
+        choices=["train", "val", "test"],
+        help="When input is an ESOL-style .pt (chemprop/chemeleon), restrict to a single split; "
+             "default keeps existing preference order test→val→train.",
+    )
+    ap.add_argument(
+        "--no-fmi-cspa",
+        action="store_true",
+        help="Skip expensive FMI/CSPA summary computation (avg_fmi_cspa_by_layer.json).",
+    )
+    ap.add_argument(
+        "--quiet-dr",
+        action="store_true",
+        help="Reduce per-cell dimensionality reduction logging (e.g. for interactive runs).",
+    )
     args = ap.parse_args()
 
     output_dir = args.output_dir
@@ -692,6 +762,10 @@ def main():
         clustering_method=args.clustering_method,
         max_epochs=args.max_epochs,
         skip_tsne=args.skip_tsne,
+        substructure_max_members=args.substructure_max_members,
+        data_split=args.data_split,
+        write_fmi_cspa=not args.no_fmi_cspa,
+        verbose_dr=not getattr(args, "quiet_dr", False),
     )
     sys.exit(0 if success else 1)
 

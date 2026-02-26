@@ -24,7 +24,7 @@ BACKEND_DIR="/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/
 SCRIPT_DIR="$BACKEND_DIR/scripts"
 INPUT="/global/cfs/projectdirs/m636/nhadler/projects/esol/data/chemeleon-embeddings.pt"
 FRONTEND_DATA="/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/frontend/public/data"
-OUTPUT_DIR="$FRONTEND_DATA/chemeleon"
+OUTPUT_DIR="$FRONTEND_DATA/chemeleon/test"
 
 # Fail fast: verify all paths exist before running
 if [[ ! -d "$BACKEND_DIR" ]]; then echo "ERROR: BACKEND_DIR missing: $BACKEND_DIR"; exit 1; fi
@@ -51,7 +51,7 @@ python3 run_pipeline_from_embeddings.py \
   --k-max 8 \
   --default-reduction pca \
   --clustering-method all \
-  --skip-tsne
+  --data-split test
 
 EXIT=$?
 echo ""

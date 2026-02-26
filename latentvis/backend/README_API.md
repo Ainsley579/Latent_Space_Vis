@@ -118,6 +118,27 @@ Override with environment variables:
 
 ---
 
+### POST /cluster-containment
+
+Compare a **user-defined clustering** (e.g. from a spreadsheet) with the backend’s clustering for one cell. Returns a containment matrix: for each user cluster, the percentage of its points in each of our clusters.
+
+- **Request body (JSON):**
+  - `dataset` (string, required): `"chemprop"` or `"chemeleon"`
+  - `epoch`, `layer` (required): cell identifiers
+  - `clustering` (string, optional): e.g. `"pgmeans"`, `"gmm"`
+  - `data_split` (string, optional): `"test"` or `"train"` (default `"test"`)
+  - `use_current` (boolean, optional): use `clustering_metrics_current` if true; else baseline
+  - `user_clustering` (array, required): `[{ "real_id": "<id>", "user_cluster_id": <int> }, ...]`
+
+- **Response (200):**
+  - `user_cluster_ids`, `our_cluster_ids`: sorted ids
+  - `matrix`: rows = user clusters, cols = our clusters; value = % of that user cluster in that our cluster
+  - `entries`: list of `{ user_cluster_id, our_cluster_id, count, percentage_of_user_cluster }`
+
+See **README_CLUSTER_CONTAINMENT.md** in this directory for full request/response examples and frontend usage.
+
+---
+
 ## Running the backend
 
 ```bash
