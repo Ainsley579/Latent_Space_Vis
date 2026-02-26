@@ -440,16 +440,18 @@ export default function SankeyView({
           if (!layer || !fromEpoch || !toEpoch || !Number.isFinite(pct)) return;
           pctByLayerTransition.set(`${layer}|${fromEpoch}|${toEpoch}`, Math.max(0, Math.min(100, pct)));
         });
-        const horizontalGapColor = d3
+        const redGapColor = d3
           .scaleLinear<string>()
           .domain([0, 100])
           .range(["#f3f4f6", "#7f1d1d"])
           .clamp(true);
-        const verticalGapColor = d3
+        const greenGapColor = d3
           .scaleLinear<string>()
           .domain([0, 100])
           .range(["#f0fdf4", "#166534"])
           .clamp(true);
+        const horizontalGapColor = SWAP_AXES ? greenGapColor : redGapColor;
+        const verticalGapColor = SWAP_AXES ? redGapColor : greenGapColor;
         const gapHeatmap = gRoot.append("g").attr("class", "cell-gap-heatmap");
 
         if (!SWAP_AXES) {
