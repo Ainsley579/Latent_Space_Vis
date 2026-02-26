@@ -4,6 +4,9 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
+import shutil
+import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Iterable
 
@@ -22,6 +25,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = PROJECT_ROOT / "latentvis" / "frontend" / "public" / "data"
 DEFAULT_CASES = ("chemprop", "chemeleon")
 DEFAULT_CLUSTERING = "pgmeans"
+_GENERATED_RUNS: Dict[Tuple[str, str], Dict[str, str]] = {}
 
 # Embedding .pt paths (override with env LATENTVIS_CHEMPROP_PT / LATENTVIS_CHEMELEON_PT)
 _DEFAULT_PT_ROOT = Path("/global/cfs/projectdirs/m636/nhadler/projects/esol/data")
@@ -116,12 +120,10 @@ def _write_json(path: Path, payload) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def _materialize_compat_sankey_files(
-    case: str,
-    clustering: Optional[str] = None,
+def _materialize_compat_sankey_files_from_base(
+    case_dir: Path,
     write_files: bool = True,
 ) -> Dict[str, object]:
-    case_dir = _case_dir(case, clustering)
     sankey_dir = case_dir / "sankey"
     all_path = sankey_dir / "all_sankey.json"
     samples_path = sankey_dir / "sankey_samples.json"
@@ -220,6 +222,15 @@ def _materialize_compat_sankey_files(
         "model_samples": model_rows,
         "vertical_samples_by_layer": by_layer,
     }
+
+
+def _materialize_compat_sankey_files(
+    case: str,
+    clustering: Optional[str] = None,
+    write_files: bool = True,
+) -> Dict[str, object]:
+    case_dir = _case_dir(case, clustering)
+    return _materialize_compat_sankey_files_from_base(case_dir, write_files=write_files)
 
 
 def _search_smiles_substructure_in_case(case: str, smiles_query: str):
@@ -408,6 +419,8 @@ def generate_range():
         linkage = "ward"
     dataset = payload.get("dataset")
     clustering = (payload.get("clustering") or "gmm").lower().strip()
+    include_payload = bool(payload.get("include_payload", False))
+    persist = bool(payload.get("persist", False))
 
     if clustering == "pgmeans":
         clustering = "gmm"
@@ -453,8 +466,13 @@ def generate_range():
     if not input_path or not input_path.is_file():
         return jsonify({"ok": False, "error": "embedding_not_found", "detail": str(input_path)}), 404
 
-    case_dir = DATA_ROOT / dataset
-    case_dir.mkdir(parents=True, exist_ok=True)
+    if persist:
+        case_dir = DATA_ROOT / dataset
+        case_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        run_root = Path(tempfile.mkdtemp(prefix=f"latentvis_{dataset}_{clustering}_"))
+        case_dir = run_root / dataset
+        case_dir.mkdir(parents=True, exist_ok=True)
 
     try:
         from run_pipeline_from_embeddings import run_pipeline
@@ -475,8 +493,8 @@ def generate_range():
         print(f"[flask-backend] generate-range pipeline failed: {e}", flush=True)
         return jsonify({"ok": False, "error": "pipeline_failed", "detail": str(e)}), 500
 
-    # Base dir where pipeline wrote outputs for this method (root for gmm, clustering/<method> for others)
-    base = case_dir if clustering == "gmm" else (case_dir / "clustering" / clustering)
+    # run_pipeline writes to output_dir root for single-method runs.
+    base = case_dir
     materialize_script = _BACKEND_DIR / "scripts" / "materialize_sankey_compat_files.py"
     if materialize_script.is_file():
         try:
@@ -490,14 +508,50 @@ def generate_range():
         except (subprocess.CalledProcessError, subprocess.TimeoutError) as e:
             print(f"[flask-backend] materialize_sankey_compat failed (non-fatal): {e}", flush=True)
 
+    run_id = None
+    if not persist:
+        key = (dataset, clustering)
+        prev = _GENERATED_RUNS.get(key)
+        if prev:
+            prev_base = prev.get("base_dir")
+            if prev_base:
+                try:
+                    shutil.rmtree(prev_base, ignore_errors=True)
+                except Exception:
+                    pass
+        run_id = uuid.uuid4().hex
+        _GENERATED_RUNS[key] = {"run_id": run_id, "base_dir": str(base)}
+
     # Collect updated-results summary so frontend knows all cells and artifacts were updated
     updated = _collect_updated_results_summary(base)
     summary = {dataset: {"status": "done", "updated": updated}}
 
-    out = {"ok": True, "min": k_min, "max": k_max, "dataset": dataset, "clustering": clustering, "summary": summary}
+    out = {
+        "ok": True,
+        "min": k_min,
+        "max": k_max,
+        "dataset": dataset,
+        "clustering": clustering,
+        "summary": summary,
+        "persist": persist,
+    }
+    if run_id is not None:
+        out["run_id"] = run_id
     if n_clusters_override is not None:
         out["k"] = n_clusters_override
         out["linkage"] = linkage_override
+    if include_payload:
+        compat = _materialize_compat_sankey_files_from_base(base, write_files=False)
+        out["payload"] = {
+            dataset: {
+                "all_sankey": compat["all_sankey"],
+                "model_samples": compat["model_samples"],
+                "vertical_samples_by_layer": compat["vertical_samples_by_layer"],
+                "topk_representatives": _read_json(base / "topk" / "cluster_representatives.json", []),
+                "cluster_sorted_members": _read_json(base / "topk" / "cluster_sorted_members.json", []),
+                "substructures": _read_json(base / "substructures" / "cluster_substructures.json", []),
+            }
+        }
     return jsonify(out)
 
 
@@ -611,6 +665,44 @@ def sankey_vertical():
     if dataset not in DEFAULT_CASES or not layer:
         return jsonify({"ok": False, "error": "invalid_args"}), 400
     path = _case_dir(dataset, clustering) / "sankey" / f"vertical_model_samples_{layer}.json"
+    payload = _read_json(path, None)
+    if payload is None:
+        return jsonify({"ok": False, "error": "not_found"}), 404
+    return jsonify(payload)
+
+
+def _get_generated_base(dataset: str, clustering: str, run_id: Optional[str]) -> Optional[Path]:
+    key = (dataset, clustering)
+    meta = _GENERATED_RUNS.get(key)
+    if not meta:
+        return None
+    if run_id and meta.get("run_id") != run_id:
+        return None
+    base_dir = meta.get("base_dir")
+    if not base_dir:
+        return None
+    p = Path(base_dir)
+    if not p.is_dir():
+        return None
+    return p
+
+
+@app.route("/generated/scatter", methods=["GET"])
+def generated_scatter():
+    dataset = request.args.get("dataset", "").strip()
+    clustering = request.args.get("clustering", "").strip().lower()
+    run_id = request.args.get("run_id", "").strip() or None
+    model = request.args.get("model", "").strip()
+    layer = request.args.get("layer", "").strip()
+    projection = request.args.get("projection", "pca").strip().lower()
+    if dataset not in DEFAULT_CASES or not clustering or not model or not layer:
+        return jsonify({"ok": False, "error": "invalid_args"}), 400
+    if projection not in ("pca", "mds", "umap", "tsne"):
+        projection = "pca"
+    base = _get_generated_base(dataset, clustering, run_id)
+    if base is None:
+        return jsonify({"ok": False, "error": "generated_not_found"}), 404
+    path = base / "scatterplot" / f"{model}_{layer}_{projection}.json"
     payload = _read_json(path, None)
     if payload is None:
         return jsonify({"ok": False, "error": "not_found"}), 404
