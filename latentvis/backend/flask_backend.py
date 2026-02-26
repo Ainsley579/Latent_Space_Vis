@@ -468,6 +468,8 @@ def generate_range():
             skip_tsne=True,
             n_clusters_override=n_clusters_override,
             linkage_override=linkage_override,
+            # Scatter coordinates are precomputed; avoid re-running DR on every parameter change.
+            reuse_scatter_coords=True,
         )
         if not ok:
             return jsonify({"ok": False, "error": "pipeline_failed"}), 500

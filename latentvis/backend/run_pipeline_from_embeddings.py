@@ -186,6 +186,7 @@ def run_pipeline(
     skip_tsne: bool = False,
     n_clusters_override: Optional[int] = None,
     linkage_override: Optional[str] = None,
+    reuse_scatter_coords: bool = False,
 ) -> bool:
     """
     Load embedding input (optionally two directories for two epochs), run full analysis, write all frontend JSONs.
@@ -240,6 +241,58 @@ def run_pipeline(
     results = {}
     cluster_assignments = []  # list of dicts: real_id, epoch, layer_0_cluster, ... (use default method for CA)
 
+    def _scatter_source_dirs(root: Path) -> list:
+        """Candidate dirs where scatterplot JSONs may already exist (for coordinate reuse)."""
+        dirs = []
+        d0 = root / "scatterplot"
+        if d0.is_dir():
+            dirs.append(d0)
+        clustering_dir = root / "clustering"
+        if clustering_dir.is_dir():
+            for sub in clustering_dir.iterdir():
+                d = sub / "scatterplot"
+                if d.is_dir():
+                    dirs.append(d)
+        return dirs
+
+    def _load_coords_from_scatter_json(scatter_dir: Path, model_layer: str, dr_name: str, real_ids_list: list):
+        """
+        Read existing scatter JSON and return Nx2 numpy array in real_ids order.
+        File format: list of {real_id, x, y, cluster_id?}.
+        """
+        p = scatter_dir / "{}_{}.json".format(model_layer, dr_name)
+        if not p.is_file():
+            return None
+        try:
+            rows = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+        if not isinstance(rows, list) or not rows:
+            return None
+        xy_by_id = {}
+        for r in rows:
+            if not isinstance(r, dict):
+                continue
+            rid = r.get("real_id")
+            if rid is None:
+                continue
+            try:
+                x = float(r.get("x"))
+                y = float(r.get("y"))
+            except (TypeError, ValueError):
+                continue
+            xy_by_id[str(rid)] = (x, y)
+        if not xy_by_id:
+            return None
+        arr = np.zeros((len(real_ids_list), 2), dtype=np.float32)
+        for i, rid in enumerate(real_ids_list):
+            xy = xy_by_id.get(str(rid))
+            if xy is None:
+                return None
+            arr[i, 0] = xy[0]
+            arr[i, 1] = xy[1]
+        return arr
+
     for (ek, lk), emb in cells.items():
         emb = _flatten_embeddings(emb)
         if emb.shape[0] != n_samples:
@@ -248,14 +301,33 @@ def run_pipeline(
         print(f"  Processing ({ek}, {lk}) ...", flush=True)
         coords = {}
         dr_list = ["pca", "mds", "umap"] if skip_tsne else ["pca", "mds", "umap", "tsne"]
-        for dr_method in dr_list:
-            try:
-                coords[dr_method] = reduce_embedding(emb, method=dr_method, random_state=random_state)
-                print(f"    {dr_method} ok", flush=True)
-            except Exception as e:
-                print(f"    {dr_method} failed: {e}", flush=True)
-                coords[dr_method] = reduce_embedding(emb, method="pca", random_state=random_state)
-                print(f"    {dr_method} -> pca fallback", flush=True)
+        model_layer = "{}_{}".format(ek, lk)
+        if reuse_scatter_coords:
+            # Reuse precomputed scatter coordinates if present, to avoid expensive DR recomputation.
+            loaded_all = True
+            for dr_method in dr_list:
+                if dr_method == "tsne" and skip_tsne:
+                    continue
+                found = None
+                for sd in _scatter_source_dirs(out):
+                    found = _load_coords_from_scatter_json(sd, model_layer, dr_method, real_ids)
+                    if found is not None:
+                        break
+                if found is None:
+                    loaded_all = False
+                    break
+                coords[dr_method] = found
+            if loaded_all:
+                print("    scatter coords reused (no DR recompute)", flush=True)
+        if not coords:
+            for dr_method in dr_list:
+                try:
+                    coords[dr_method] = reduce_embedding(emb, method=dr_method, random_state=random_state)
+                    print(f"    {dr_method} ok", flush=True)
+                except Exception as e:
+                    print(f"    {dr_method} failed: {e}", flush=True)
+                    coords[dr_method] = reduce_embedding(emb, method="pca", random_state=random_state)
+                    print(f"    {dr_method} -> pca fallback", flush=True)
         if skip_tsne:
             coords["tsne"] = coords["pca"].copy()
             print(f"    tsne skipped (using pca)", flush=True)
