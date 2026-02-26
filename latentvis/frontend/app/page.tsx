@@ -106,12 +106,13 @@ export default function Home() {
     clustering: ClusteringKey = selectedClustering,
     version: number = sankeyRefreshKey
   ) => {
+    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering)] ?? null;
     if (
-      generatedSankeyPayload &&
-      generatedSankeyPayload.dataset === dataset &&
-      generatedSankeyPayload.clustering === clustering
+      payload &&
+      payload.dataset === dataset &&
+      payload.clustering === clustering
     ) {
-      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:all_sankey`, generatedSankeyPayload.allSankey);
+      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:all_sankey`, payload.allSankey);
     }
     return withVersion(`${datasetBaseFor(dataset, clustering)}/sankey/all_sankey.json`, version);
   };
@@ -121,12 +122,13 @@ export default function Home() {
     clustering: ClusteringKey = selectedClustering,
     version: number = sankeyRefreshKey
   ) => {
+    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering)] ?? null;
     if (
-      generatedSankeyPayload &&
-      generatedSankeyPayload.dataset === dataset &&
-      generatedSankeyPayload.clustering === clustering
+      payload &&
+      payload.dataset === dataset &&
+      payload.clustering === clustering
     ) {
-      const rows = generatedSankeyPayload.modelSamples?.[model] ?? [];
+      const rows = payload.modelSamples?.[model] ?? [];
       return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:model:${model}`, rows);
     }
     return withVersion(
@@ -140,12 +142,13 @@ export default function Home() {
     clustering: ClusteringKey = selectedClustering,
     version: number = sankeyRefreshKey
   ) => {
+    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering)] ?? null;
     if (
-      generatedSankeyPayload &&
-      generatedSankeyPayload.dataset === dataset &&
-      generatedSankeyPayload.clustering === clustering
+      payload &&
+      payload.dataset === dataset &&
+      payload.clustering === clustering
     ) {
-      const rows = generatedSankeyPayload.verticalSamplesByLayer?.[layer] ?? [];
+      const rows = payload.verticalSamplesByLayer?.[layer] ?? [];
       return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:vertical:${layer}`, rows);
     }
     return withVersion(
@@ -161,24 +164,9 @@ export default function Home() {
     clustering: ClusteringKey = selectedClustering,
     version: number = dataRefreshKey
   ) => {
-    if (
-      generatedRuntimePayload &&
-      generatedRuntimePayload.dataset === dataset &&
-      generatedRuntimePayload.clustering === clustering
-    ) {
-      const params = new URLSearchParams({
-        dataset,
-        clustering,
-        run_id: generatedRuntimePayload.runId,
-        model,
-        layer,
-        projection,
-      });
-      return `${apiBase}/generated/scatter?${params.toString()}`;
-    }
     const base = `${model}_${layer}`;
     const file = `${base}_${projection}.json`;
-    const url = `${datasetBaseFor(dataset, clustering)}/scatterplot/${file}`;
+    const url = `/data/${dataset}/scatterplot/${file}`;
     const sep = url.includes("?") ? "&" : "?";
     return `${url}${sep}v=${version}`;
   };
@@ -539,18 +527,6 @@ export default function Home() {
       );
       setSubstructures(Array.isArray(casePayload.substructures) ? casePayload.substructures : []);
       setSankeyRefreshKey((k: number) => k + 1);
-      const nextDataVer = Date.now();
-      setDataRefreshKey(nextDataVer);
-      setScatterPath(
-        buildScatterPath(
-          selectedModel,
-          selectedLayer,
-          scatterProjection,
-          selectedDataset,
-          selectedClustering,
-          nextDataVer
-        )
-      );
       setGenerateStatusText("Generate finished (backend temp payload, no static file writes).");
     } catch (err) {
       console.error("Failed to generate payload:", err);
@@ -637,19 +613,7 @@ export default function Home() {
         URL.revokeObjectURL(scatterOverrideUrlRef.current);
         scatterOverrideUrlRef.current = null;
       }
-      const nextDataVer = Date.now();
-      setDataRefreshKey(nextDataVer);
       setSankeyRefreshKey((k) => k + 1);
-      setScatterPath(
-        buildScatterPath(
-          selectedModel,
-          selectedLayer,
-          scatterProjection,
-          selectedDataset,
-          "agglomerative",
-          nextDataVer
-        )
-      );
       setGenerateStatusText(
         `Agglomerative all-cell regenerate finished: k=${config.k == null ? "auto(2-15)" : config.k}, linkage=${config.linkage}.`
       );
