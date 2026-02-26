@@ -315,6 +315,34 @@ export default function SankeyView({
           cellMargin,
         });
 
+        const cellClusterCount = new Map<string, number>();
+        ROW_NAMES.forEach((rowName) => {
+          COLUMN_NAMES.forEach((columnName) => {
+            const nodesForCell = (data.epoch?.[rowName]?.nodes?.[columnName] || []) as any[];
+            const ids = new Set<number>();
+            nodesForCell.forEach((n: any) => {
+              const c =
+                n?.cluster != null && n?.cluster !== ""
+                  ? Number(n.cluster)
+                  : parseClusterFromLabel(String(n?.label ?? ""));
+              if (Number.isFinite(c)) ids.add(c);
+            });
+            cellClusterCount.set(`${rowName}|${columnName}`, ids.size || nodesForCell.length || 0);
+          });
+        });
+        const clusterCounts = Array.from(cellClusterCount.values());
+        const minCellCluster = clusterCounts.length ? Math.min(...clusterCounts) : 0;
+        const maxCellCluster = clusterCounts.length ? Math.max(...clusterCounts) : 1;
+        const cellBgColor = d3
+          .scaleLinear<string>()
+          .domain(
+            minCellCluster === maxCellCluster
+              ? [minCellCluster, minCellCluster + 1]
+              : [minCellCluster, maxCellCluster]
+          )
+          .range(["#eff6ff", "#46518C"])
+          .clamp(true);
+
         const cells: d3.Selection<SVGGElement, any, any, any>[] = [];
         let lockedCell: { rowName: string; columnName: string } | null = null;
         X_NAMES.forEach((xKey, col) => {
@@ -328,7 +356,13 @@ export default function SankeyView({
               .attr("transform", `translate(${col * cellStepX}, ${row * cellStepY})`)
               .datum({ rowName, columnName, col, row });
 
-            g.append("rect").attr("width", cellW).attr("height", cellH).attr("fill", "white").attr("stroke", "#888");
+            const cellCount = cellClusterCount.get(`${rowName}|${columnName}`) ?? 0;
+            g.append("rect")
+              .attr("width", cellW)
+              .attr("height", cellH)
+              .attr("fill", cellBgColor(cellCount))
+              .attr("stroke", "#888")
+              .attr("data-cluster-count", cellCount);
 
             const innerG = g.append("g").attr("transform", `translate(${cellMargin.left}, ${cellMargin.top})`);
             cells.push(innerG);
