@@ -113,8 +113,6 @@ function sortRowKeys(keys: string[]): string[] {
 }
 
 const PREFERRED_LAYER_ORDER = [
-  "ffn_layer_1",
-  "ffn_layer_2",
   "fingerprint",
   "gnn_layer_1",
   "gnn_layer_2",
@@ -122,6 +120,10 @@ const PREFERRED_LAYER_ORDER = [
   "gnn_layer_4",
   "gnn_layer_5",
   "gnn_layer_6",
+  "ffn_layer_1",
+  "ffn_layer_2",
+  "fnn_layer_1",
+  "fnn_layer_2",
   "emb",
   "output_block_0",
   "output_block_1",
@@ -589,17 +591,31 @@ export default function SankeyView({
           return label.slice(0, i);
         }
 
+        function canonicalLayerName(name: string): string {
+          if (/^fnn_layer_/.test(name)) return name.replace(/^fnn_layer_/, "ffn_layer_");
+          return name;
+        }
+
+        function layerNameAliases(name: string): string[] {
+          const out = new Set<string>([name, canonicalLayerName(name)]);
+          if (/^ffn_layer_/.test(name)) out.add(name.replace(/^ffn_layer_/, "fnn_layer_"));
+          if (/^fnn_layer_/.test(name)) out.add(name.replace(/^fnn_layer_/, "ffn_layer_"));
+          return Array.from(out);
+        }
+
         function lookupNode(
           rowName: string,
           columnName: string,
           label: string,
           nodeId: number | undefined
         ): { rowName: string; columnName: string; idx: number; node: any } | null {
-          const byLabel = nodeLookup.get(`${rowName}|${columnName}|${label}`);
-          if (byLabel) return byLabel;
-          if (nodeId !== undefined) {
-            const byId = nodeIdLookup.get(`${rowName}|${columnName}|${String(nodeId)}`);
-            if (byId) return byId;
+          for (const colName of layerNameAliases(columnName)) {
+            const byLabel = nodeLookup.get(`${rowName}|${colName}|${label}`);
+            if (byLabel) return byLabel;
+            if (nodeId !== undefined) {
+              const byId = nodeIdLookup.get(`${rowName}|${colName}|${String(nodeId)}`);
+              if (byId) return byId;
+            }
           }
           return null;
         }
@@ -655,6 +671,35 @@ export default function SankeyView({
             .attr("stroke-opacity", opacity)
             .attr("class", "link-path")
             .attr("data-value", +edgeValue || 0);
+        }
+
+        function buildGreedyBridgeLinks(
+          sourceNodes: any[],
+          targetNodes: any[]
+        ): Array<{ sourceIdx: number; targetIdx: number; value: number }> {
+          const src = sourceNodes
+            .map((n, i) => ({ i, cluster: Number(n?.id ?? i), rem: Math.max(0, Number(n?.value ?? 0)) }))
+            .filter((d) => d.rem > 0)
+            .sort((a, b) => a.cluster - b.cluster);
+          const tgt = targetNodes
+            .map((n, i) => ({ i, cluster: Number(n?.id ?? i), rem: Math.max(0, Number(n?.value ?? 0)) }))
+            .filter((d) => d.rem > 0)
+            .sort((a, b) => a.cluster - b.cluster);
+
+          const out: Array<{ sourceIdx: number; targetIdx: number; value: number }> = [];
+          let si = 0;
+          let ti = 0;
+          while (si < src.length && ti < tgt.length) {
+            const amount = Math.min(src[si].rem, tgt[ti].rem);
+            if (amount > 0) {
+              out.push({ sourceIdx: src[si].i, targetIdx: tgt[ti].i, value: amount });
+              src[si].rem -= amount;
+              tgt[ti].rem -= amount;
+            }
+            if (src[si].rem <= 1e-9) si += 1;
+            if (tgt[ti].rem <= 1e-9) ti += 1;
+          }
+          return out;
         }
 
         let linkGroup: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
@@ -754,18 +799,21 @@ export default function SankeyView({
           Object.keys(data.epoch || {}).forEach((rowKey) => {
           const rowObj = data.epoch[rowKey];
           if (ROW_INDEX.get(rowKey) == null) return;
+          const acceptedPairSet = new Set<string>();
 
           (rowObj.edges || []).forEach((edge: any) => {
             const sLabelRaw = String(edge.source_label ?? "");
             const tLabelRaw = String(edge.target_label ?? "");
-            const sColRaw = columnFromLabel(sLabelRaw);
-            const tColRaw = columnFromLabel(tLabelRaw);
+            const sColRaw = canonicalLayerName(columnFromLabel(sLabelRaw));
+            const tColRaw = canonicalLayerName(columnFromLabel(tLabelRaw));
             const sourceInfo = lookupNode(rowKey, sColRaw, sLabelRaw, edge.source_node_id);
             const targetInfo = lookupNode(rowKey, tColRaw, tLabelRaw, edge.target_node_id);
 
             if (!sourceInfo || !targetInfo) return;
-            const srcColIdxRaw = COLUMN_INDEX.get(sourceInfo.columnName);
-            const tgtColIdxRaw = COLUMN_INDEX.get(targetInfo.columnName);
+            const sourceColCanonical = canonicalLayerName(sourceInfo.columnName);
+            const targetColCanonical = canonicalLayerName(targetInfo.columnName);
+            const srcColIdxRaw = COLUMN_INDEX.get(sourceColCanonical);
+            const tgtColIdxRaw = COLUMN_INDEX.get(targetColCanonical);
             if (srcColIdxRaw == null || tgtColIdxRaw == null) return;
             // Strict adjacency only: previous layer <-> next layer.
             if (Math.abs(tgtColIdxRaw - srcColIdxRaw) !== 1) return;
@@ -774,9 +822,12 @@ export default function SankeyView({
               tgtColIdxRaw > srcColIdxRaw
                 ? { source: sourceInfo, target: targetInfo }
                 : { source: targetInfo, target: sourceInfo };
+            const forwardSrcCol = canonicalLayerName(forwardRow.source.columnName);
+            const forwardTgtCol = canonicalLayerName(forwardRow.target.columnName);
+            acceptedPairSet.add(`${forwardSrcCol}->${forwardTgtCol}`);
 
-            const srcO = cellOrigin(rowKey, forwardRow.source.columnName, cellStepX, cellStepY);
-            const tgtO = cellOrigin(rowKey, forwardRow.target.columnName, cellStepX, cellStepY);
+            const srcO = cellOrigin(rowKey, forwardSrcCol, cellStepX, cellStepY);
+            const tgtO = cellOrigin(rowKey, forwardTgtCol, cellStepX, cellStepY);
 
             const srcIdx = forwardRow.source.idx;
             const tgtIdx = forwardRow.target.idx;
@@ -822,6 +873,77 @@ export default function SankeyView({
             const p2 = appendLinkPath(linkGroup2 as any, pathD, edge.value, strokeW, SANKEY_2D_ROW_LINK_COLOR, 0.2);
             p2.attr("data-row", rowKey);
           });
+
+          // Ensure every adjacent layer pair has ordered paths.
+          // If raw edges have none for a pair, synthesize a complete conservative bridge
+          // from both sides' node masses (cluster-wise), not a single coarse link.
+          for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
+            const fromCol = COLUMN_NAMES[i];
+            const toCol = COLUMN_NAMES[i + 1];
+            const pairKey = `${fromCol}->${toCol}`;
+            if (acceptedPairSet.has(pairKey)) continue;
+
+            const srcNodes = ((rowObj?.nodes?.[fromCol] || []) as any[]).filter((n) => (n?.value ?? 0) > 0);
+            const tgtNodes = ((rowObj?.nodes?.[toCol] || []) as any[]).filter((n) => (n?.value ?? 0) > 0);
+            if (srcNodes.length === 0 || tgtNodes.length === 0) continue;
+
+            const bridges = buildGreedyBridgeLinks(srcNodes, tgtNodes);
+            const srcO = cellOrigin(rowKey, fromCol, cellStepX, cellStepY);
+            const tgtO = cellOrigin(rowKey, toCol, cellStepX, cellStepY);
+
+            bridges.forEach((bridge) => {
+              const srcIdx = bridge.sourceIdx;
+              const tgtIdx = bridge.targetIdx;
+              const srcNode = srcNodes[srcIdx];
+              const tgtNode = tgtNodes[tgtIdx];
+              const srcBand = x(srcIdx);
+              const tgtBand = x(tgtIdx);
+              if (srcBand == null || tgtBand == null) return;
+
+              const sPrev = srcNode.previous ?? 0;
+              const sVal = srcNode.value ?? 0;
+              const tPrev = tgtNode.previous ?? 0;
+              const tVal = tgtNode.value ?? 0;
+              const sBarY = innerH - y(sPrev);
+              const sBarH = innerH - y(sVal);
+              const tBarY = innerH - y(tPrev);
+              const tBarH = innerH - y(tVal);
+
+              let pathD = "";
+              if (!SWAP_AXES) {
+                const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
+                const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
+                const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
+                const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
+                const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
+                pathD = `M ${srcCenterX},${srcCenterY}
+                     C ${srcCenterX + dx},${srcCenterY}
+                       ${tgtCenterX - dx},${tgtCenterY}
+                       ${tgtCenterX},${tgtCenterY}`;
+              } else {
+                const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
+                const srcCenterY = srcO.y + cellMargin.top + sBarY + Math.max(0, sBarH);
+                const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
+                const tgtCenterY = tgtO.y + cellMargin.top + tBarY;
+                const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
+                pathD = `M ${srcCenterX},${srcCenterY}
+                     C ${srcCenterX},${srcCenterY + dy}
+                       ${tgtCenterX},${tgtCenterY - dy}
+                       ${tgtCenterX},${tgtCenterY}`;
+              }
+
+              const syntheticW = Math.max(0.8, linkWidthScale(bridge.value));
+              const synthetic = appendLinkPath(
+                linkGroup2 as any,
+                pathD,
+                bridge.value,
+                syntheticW,
+                SANKEY_2D_ROW_LINK_COLOR,
+                0.14
+              );
+              synthetic.attr("data-row", rowKey).attr("data-synthetic", "1");
+            });
+          }
           });
         }
 
