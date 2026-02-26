@@ -50,7 +50,6 @@ python3 run_pipeline_from_embeddings.py \
   --k-max 8 \
   --default-reduction pca \
   --clustering-method all \
-  --skip-tsne \
   --data-split train
 
 EXIT=$?

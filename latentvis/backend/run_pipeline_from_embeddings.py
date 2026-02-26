@@ -191,12 +191,16 @@ def run_pipeline(
     scatter_subdir: str = "scatterplot",
     data_split: Optional[str] = None,
     write_fmi_cspa: bool = True,
+    interactive_output_suffix: str = "",
+    verbose_dr: bool = True,
 ) -> bool:
     """
     Load embedding input (optionally two directories for two epochs), run full analysis, write all frontend JSONs.
 
     default_reduction: method used for the default scatter file (no suffix); one of pca, mds, umap, tsne.
     If input_path2/model_name2/layer_file_map2 are set, both are loaded and merged (two epochs).
+    interactive_output_suffix: when set (e.g. "_current"), write topk, sankey, substructures,
+    clustering_metrics to topk_current, sankey_current, etc., so original artifacts are not overwritten.
     """
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -492,7 +496,7 @@ def run_pipeline(
                     "sorted_real_ids": sorted_real_ids,
                     "count": len(sorted_real_ids),
                 })
-        topk_dir = base / "topk"
+        topk_dir = base / ("topk" + interactive_output_suffix)
         topk_dir.mkdir(parents=True, exist_ok=True)
         (topk_dir / "cluster_representatives.json").write_text(json.dumps(topk_list, indent=2))
         (topk_dir / "cluster_sorted_members.json").write_text(json.dumps(sorted_members_list, indent=2))
@@ -519,7 +523,7 @@ def run_pipeline(
                 edges.extend(_edges_from_transitions(lab0, lab1, str(e0), str(e1)))
             if edges:
                 all_sankey["layer"][lk] = {"type": "spatial_layer", "layer": lk, "edges": edges}
-        sankey_dir = base / "sankey"
+        sankey_dir = base / ("sankey" + interactive_output_suffix)
         sankey_dir.mkdir(parents=True, exist_ok=True)
         (sankey_dir / "all_sankey.json").write_text(json.dumps(all_sankey, indent=2))
         ca_df_method = ca_df.copy()
@@ -539,8 +543,9 @@ def run_pipeline(
         (sankey_dir / "sankey_samples.json").write_text(
             json.dumps(sample_rows, indent=2, default=_json_default)
         )
-        (base / "clustering_metrics").mkdir(parents=True, exist_ok=True)
-        ca_df_method.to_csv(base / "clustering_metrics" / "cluster_assignments_with_real_id.csv", index=False)
+        cm_dir = base / ("clustering_metrics" + interactive_output_suffix)
+        cm_dir.mkdir(parents=True, exist_ok=True)
+        ca_df_method.to_csv(cm_dir / "cluster_assignments_with_real_id.csv", index=False)
         # Substructure (MCS): use SMILES from CSV if provided, else from .pt (id_to_smiles_from_input)
         id_to_smiles = {}
         if smiles_csv and Path(smiles_csv).exists():
@@ -627,7 +632,7 @@ def run_pipeline(
                         "missing_real_ids": missing, "invalid_smiles_real_ids": invalid,
                         "mcs_smarts": mcs_smarts, "mcs_smiles": mcs_smiles, "mcs_note": mcs_note,
                     })
-            sub_dir = base / "substructures"
+            sub_dir = base / ("substructures" + interactive_output_suffix)
             sub_dir.mkdir(parents=True, exist_ok=True)
             (sub_dir / "cluster_substructures.json").write_text(json.dumps(substruct_list, indent=2))
         print("Wrote outputs for clustering method: {} -> {}".format(cl_method, base))
@@ -717,6 +722,11 @@ def main():
         action="store_true",
         help="Skip expensive FMI/CSPA summary computation (avg_fmi_cspa_by_layer.json).",
     )
+    ap.add_argument(
+        "--quiet-dr",
+        action="store_true",
+        help="Reduce per-cell dimensionality reduction logging (e.g. for interactive runs).",
+    )
     args = ap.parse_args()
 
     output_dir = args.output_dir
@@ -755,6 +765,7 @@ def main():
         substructure_max_members=args.substructure_max_members,
         data_split=args.data_split,
         write_fmi_cspa=not args.no_fmi_cspa,
+        verbose_dr=not getattr(args, "quiet_dr", False),
     )
     sys.exit(0 if success else 1)
 

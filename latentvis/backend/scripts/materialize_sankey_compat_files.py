@@ -337,11 +337,25 @@ def main() -> None:
         default="",
         help="Optional comma-separated layer order override, e.g. ffn_layer_1,ffn_layer_2,fingerprint,gnn_layer_1,gnn_layer_2,gnn_layer_3",
     )
+    parser.add_argument(
+        "--clustering-metrics-subdir",
+        type=str,
+        default="clustering_metrics",
+        help="Subdir under dataset-root for cluster_assignments CSV (default: clustering_metrics; use clustering_metrics_current for interactive runs).",
+    )
+    parser.add_argument(
+        "--sankey-subdir",
+        type=str,
+        default="sankey",
+        help="Subdir under dataset-root for Sankey JSON output (default: sankey; use sankey_current for interactive runs).",
+    )
     args = parser.parse_args()
 
     dataset_root = args.dataset_root
-    csv_path = args.csv or (dataset_root / "clustering_metrics" / "cluster_assignments_with_real_id.csv")
-    sankey_dir = dataset_root / "sankey"
+    cm_subdir = args.clustering_metrics_subdir or "clustering_metrics"
+    sankey_subdir = args.sankey_subdir or "sankey"
+    csv_path = args.csv or (dataset_root / cm_subdir / "cluster_assignments_with_real_id.csv")
+    sankey_dir = dataset_root / sankey_subdir
 
     if not csv_path.exists():
         raise FileNotFoundError(f"Clustering CSV not found: {csv_path}")

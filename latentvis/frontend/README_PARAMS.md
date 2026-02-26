@@ -1,18 +1,30 @@
 ## Frontend parameters and new data layout
 
-This doc summarizes how the frontend should interact with the updated backend and data layout.
+This doc summarizes how the frontend should interact with the updated backend and data layout. All paths and APIs use English only.
+
+### 0. Regularized data paths (test / train)
+
+- The backend uses a **single path convention** for both splits:
+  - **Test:** `public/data/<case>/test/` (e.g. `public/data/chemprop/test/`, `public/data/chemeleon/test/`).
+  - **Train:** `public/data/<case>/train/` (e.g. `public/data/chemprop/train/`, `public/data/chemeleon/train/`).
+- **Frontend must use the same convention:** build the dataset base path as:
+  - `/data/<case>/test` when the user selects **test** split.
+  - `/data/<case>/train` when the user selects **train** split.
+- Example: for test, request scatter as `/data/chemprop/test/scatterplot/0_fingerprint_pca.json`; for train, `/data/chemprop/train/scatterplot/...`. Do **not** use `/data/<case>/` without a split segment so that test and train data stay consistent.
+- Three case studies: **chemprop** and **chemeleon** have full baseline data under `test/` and `train/`. **dimenet** only requires correct format and paths under `public/data/dimenet/`; content can be placeholder.
 
 ### 1. Scatterplot: coordinates vs. coloring
 
-- **Baseline coordinates** are written once by the offline pipeline:
-  - `public/data/<case>/scatterplot/{epoch}_{layer}.json`
-  - `public/data/<case>/scatterplot/{epoch}_{layer}_{projection}.json` where `projection ∈ {pca, mds, umap, tsne}`.
+- **Baseline coordinates** are written once by the offline pipeline under the split folder:
+  - `public/data/<case>/<split>/scatterplot/{epoch}_{layer}.json`
+  - `public/data/<case>/<split>/scatterplot/{epoch}_{layer}_{projection}.json` where `projection ∈ {pca, mds, umap, tsne}`.
+- All four projections (pca, mds, umap, tsne) are distinct per cell; baseline jobs do **not** use `--skip-tsne` so that t-SNE is computed and differs from PCA.
 - When the user changes clustering parameters from the UI (**k range, linkage, etc.**) and the app calls
   `/generate-range`, the backend:
   - **does NOT recompute dimensionality reduction** (no PCA/MDS/UMAP/TSNE).
   - reuses baseline `(x, y)` from `scatterplot/*.json`.
-  - recomputes clusters and writes **updated coloring** to:
-    - `public/data/<case>/scatterplot_current/{epoch}_{layer}_{projection}.json`
+  - recomputes clusters and writes **updated coloring** to (without touching baseline files):
+    - `public/data/<case>/<split>/scatterplot_current/{epoch}_{layer}_{projection}.json`
 - The scatter JSON shape is unchanged:
 
 ```json
@@ -24,18 +36,19 @@ This doc summarizes how the frontend should interact with the updated backend an
 
 #### Frontend behavior
 
-- The helper `buildScatterPath(model, layer, projection, dataset, clustering)` now chooses between:
-  - **baseline**: `/data/<case>/scatterplot/{model}_{layer}_{projection}.json`
-  - **current**: `/data/<case>/scatterplot_current/{model}_{layer}_{projection}.json`
+- The helper that builds scatter URLs should use the split in the path and choose:
+  - **baseline**: `/data/<case>/<split>/scatterplot/{model}_{layer}_{projection}.json`
+  - **current**: `/data/<case>/<split>/scatterplot_current/{model}_{layer}_{projection}.json`
+  where `<split>` is `test` or `train` (see section 0).
 - State:
   - `useCurrentScatter = false` on initial load and whenever the dataset or clustering method changes.
   - On successful `/generate-range` or agglomerative re-run, `useCurrentScatter` is set to `true`, so the UI reads
     `scatterplot_current/...` (same coords, updated `cluster_id`).
 
-### 2. Substructure (MCS) and the `SUBSTRUCTURE M` parameter
+### 2. Substructure (MCS) and the `SUBSTRUCTURE M` parameter (m)
 
-- The control panel exposes **`SUBSTRUCTURE M`**:
-  - Meaning: per cluster, per group (knn/kfn), only the first **M members** are used for substructure MCS.
+- The control panel exposes **`SUBSTRUCTURE M`** (parameter **m**):
+  - Meaning: per cluster, per group (knn/kfn), substructure MCS is computed using **only the nearest m** members (for knn) or **farthest m** (for kfn), i.e. "from nearest to farthest, the first m" for that cluster.
   - Default value: 32.
 - This value is sent to the backend on:
   - `/generate-range` body as `substructure_max_members`.
@@ -69,36 +82,41 @@ This doc summarizes how the frontend should interact with the updated backend an
   They can be recomputed on demand by running the script directly or by passing
   `compute_transition_stats: true` in the JSON body if the backend exposes this option.
 
-### 5. Baseline vs. current results
+### 5. Baseline vs. current results (originals never overwritten)
 
 - **Baseline** (offline pipeline):
-  - Run `run_pipeline_from_embeddings.py` with `output_dir` pointing to a dedicated baseline folder (e.g.
-    `latentvis/frontend/public/data/chemprop_baseline` or `.../chemprop/test/baseline`).
-  - This run computes:
-    - all scatter projections (coords + initial `cluster_id`),
-    - topk,
-    - substructures,
-    - Sankey,
-    - clustering metrics.
-  - Baseline folders should not be touched by interactive operations.
+  - Run `run_pipeline_from_embeddings.py` with `output_dir` = `public/data/<case>/test` or `public/data/<case>/train`.
+  - This run computes and writes **only** into the baseline dirs:
+    - `scatterplot/`, `topk/`, `substructures/`, `sankey/`, `clustering_metrics/`, `bic_aic/`.
+  - Baseline JSON/CSV files are **never** overwritten by frontend-triggered operations.
 - **Current** (interactive `/generate-range`):
-  - Writes updated results into the standard case layout under `public/data/<case>/...`:
-    - `scatterplot_current/` (new cluster colors, reused coords),
-    - `topk/`, `substructures/`, `sankey/`, `clustering_metrics/`, and transition stats.
-  - The frontend reads from `/data/<case>/...` for the **current** view; baseline is kept only as a reference.
+  - All recomputed outputs are written to **separate** subdirs under the same split:
+    - `scatterplot_current/` (new cluster colors, reused coords; no DR recompute),
+    - `topk_current/`, `substructures_current/`, `sankey_current/`, `clustering_metrics_current/`.
+  - The frontend should read from these `*_current` paths when showing results of a generate run; baseline paths remain for the initial view.
 
 ### 6. Train vs. test split
 
 - The chemprop/chemeleon `.pt` structure is `epoch → split (train/val/test) → embeddings → layer`.
-- The embedding loader now accepts an explicit `data_split` / `preferred_split` and still defaults to
-  `"test"` (then `"val"`, `"train"`) when not specified, so existing behavior is preserved.
-- The pipeline accepts a `data_split` argument (`"test"` or `"train"`) and restricts loading to that split.
-  - Test baseline: `public/data/chemprop/...`, `public/data/chemeleon/...`
-  - Train baseline: `public/data/chemprop/train/...`, `public/data/chemeleon/train/...`
-- The control panel exposes a **DATA SPLIT** dropdown (`test` / `train`):
-  - `datasetBaseFor(dataset, clustering, dataSplit)` incorporates the split into the base path so that
-    URLs under `/data/...` are routed to the correct split-specific directory.
-  - API payloads (`/generate-range`, `materialize-sankey-files`, agglomerative re-run) now include `data_split`
-    so the backend can read the correct split from the shared `.pt` embeddings.
+- The embedding loader accepts `data_split` / `preferred_split` and defaults to `"test"` when not set.
+- The pipeline accepts `data_split` (`"test"` or `"train"`) and writes under `public/data/<case>/<split>/`.
+- The control panel **DATA SPLIT** dropdown: frontend should set the dataset base path to `/data/<case>/test` or `/data/<case>/train` and include `data_split` in all API payloads (`/generate-range`, `materialize-sankey-files`, agglomerative re-run).
+
+### 7. Cluster containment API (user clustering vs backend clustering)
+
+- **Endpoint:** `POST /cluster-containment`
+- The frontend can send a **user-defined clustering** for one cell (e.g. from a spreadsheet) and get back a **containment matrix** between user clusters and the backend’s clustering (e.g. PGMeans).
+- **Request body (JSON):**
+  - `dataset` (string, required): `"chemprop"` or `"chemeleon"`
+  - `epoch`, `layer` (required): cell identifiers
+  - `clustering` (string, optional): backend method, e.g. `"pgmeans"` or `"gmm"`
+  - `data_split` (string, optional): `"test"` or `"train"`
+  - `use_current` (boolean, optional): if true, use `clustering_metrics_current` and backend’s current run; otherwise baseline.
+  - `user_clustering` (array, required): list of `{ "real_id": "<id>", "user_cluster_id": <0-based integer> }` (one entry per point in the cell).
+- **Response (200):**
+  - `user_cluster_ids`, `our_cluster_ids`: sorted lists of ids.
+  - `matrix`: 2D array, rows = user clusters, cols = our clusters; value = percentage of that user cluster that falls in that our cluster.
+  - `entries`: list of `{ "user_cluster_id", "our_cluster_id", "count", "percentage_of_user_cluster" }`.
+- Example: if the user sends 3 clusters and the backend has 4, the result is a 3×4 matrix and 12 entries. See `latentvis/backend/README_CLUSTER_CONTAINMENT.md` for full request/response and usage.
 
 

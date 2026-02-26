@@ -60,16 +60,15 @@ def _normalize_split(value: Optional[str]) -> Optional[str]:
 
 def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[str] = None) -> Path:
     """
-    Resolve case directory for a given dataset, clustering method, and optional data split.
+    Resolve case directory for a given dataset, clustering method, and data split.
 
-    - For default behavior (no split or 'test'), paths remain DATA_ROOT/<case>[ /clustering/<method> ].
-    - For train/val, an extra split segment is inserted: DATA_ROOT/<case>/<split>/...
+    Paths are regularized: both test and train live under a split segment.
+    - DATA_ROOT/<case>/test/...  (default when split is None or "test")
+    - DATA_ROOT/<case>/train/...
     """
     method = (clustering or DEFAULT_CLUSTERING).strip().lower()
-    split = _normalize_split(data_split)
-    root = DATA_ROOT / case
-    if split and split != "test":
-        root = root / split
+    split = _normalize_split(data_split) or "test"
+    root = DATA_ROOT / case / split
     if method == "pgmeans":
         return root
     return root / "clustering" / method
@@ -480,10 +479,8 @@ def generate_range():
     if not input_path or not input_path.is_file():
         return jsonify({"ok": False, "error": "embedding_not_found", "detail": str(input_path)}), 404
 
-    split_norm = _normalize_split(data_split)
-    case_dir = DATA_ROOT / dataset
-    if split_norm and split_norm != "test":
-        case_dir = case_dir / split_norm
+    split_norm = _normalize_split(data_split) or "test"
+    case_dir = DATA_ROOT / dataset / split_norm
     case_dir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -498,13 +495,13 @@ def generate_range():
             skip_tsne=True,
             n_clusters_override=n_clusters_override,
             linkage_override=linkage_override,
-            # Scatter coordinates are precomputed; avoid re-running DR on every parameter change.
-            # Write updated cluster coloring to a separate directory so baseline scatter is preserved.
             reuse_scatter_coords=True,
             substructure_max_members=sub_m,
             scatter_subdir="scatterplot_current",
             data_split=split_norm,
             write_fmi_cspa=False,
+            interactive_output_suffix="_current",
+            verbose_dr=False,
         )
         if not ok:
             return jsonify({"ok": False, "error": "pipeline_failed"}), 500
@@ -518,7 +515,18 @@ def generate_range():
     if materialize_script.is_file():
         try:
             subprocess.run(
-                [sys.executable, str(materialize_script), "--dataset-root", str(base), "--vertical-mode", "adjacent"],
+                [
+                    sys.executable,
+                    str(materialize_script),
+                    "--dataset-root",
+                    str(base),
+                    "--vertical-mode",
+                    "adjacent",
+                    "--clustering-metrics-subdir",
+                    "clustering_metrics_current",
+                    "--sankey-subdir",
+                    "sankey_current",
+                ],
                 cwd=str(_BACKEND_DIR.parent),
                 check=True,
                 capture_output=True,
@@ -544,8 +552,8 @@ def generate_range():
             except (subprocess.CalledProcessError, subprocess.TimeoutError) as e:
                 print(f"[flask-backend] compute_layer_transition_stats failed (non-fatal): {e}", flush=True)
 
-    # Collect updated-results summary so frontend knows all cells and artifacts were updated
-    updated = _collect_updated_results_summary(base)
+    # Collect updated-results summary from interactive output dirs (scatterplot_current, topk_current, etc.)
+    updated = _collect_updated_results_summary(base, output_suffix="_current")
     summary = {dataset: {"status": "done", "updated": updated}}
 
     out = {"ok": True, "min": k_min, "max": k_max, "dataset": dataset, "clustering": clustering, "summary": summary}
@@ -555,17 +563,18 @@ def generate_range():
     return jsonify(out)
 
 
-def _collect_updated_results_summary(base: Path) -> Dict[str, object]:
-    """Scan pipeline output dir and return counts for scatter, topk, substructures, sankey, cluster_assignments."""
+def _collect_updated_results_summary(base: Path, output_suffix: str = "") -> Dict[str, object]:
+    """Scan pipeline output dir and return counts for scatter, topk, substructures, sankey, cluster_assignments.
+    When output_suffix is '_current', scans scatterplot_current, topk_current, etc. (interactive run)."""
     summary = {"cells": 0, "scatter_files": 0, "topk_representatives": 0, "topk_sorted_members": 0, "substructure_entries": 0, "sankey_ok": False, "cluster_assignments_ok": False}
     if not base.is_dir():
         return summary
-    scatter_dir = base / "scatterplot"
+    scatter_dir = base / ("scatterplot" + output_suffix)
     if scatter_dir.is_dir():
         pca_files = list(scatter_dir.glob("*_pca.json"))
         summary["cells"] = len(pca_files)
         summary["scatter_files"] = len(list(scatter_dir.glob("*.json")))
-    topk_dir = base / "topk"
+    topk_dir = base / ("topk" + output_suffix)
     if (topk_dir / "cluster_representatives.json").is_file():
         try:
             data = json.loads((topk_dir / "cluster_representatives.json").read_text(encoding="utf-8"))
@@ -578,15 +587,15 @@ def _collect_updated_results_summary(base: Path) -> Dict[str, object]:
             summary["topk_sorted_members"] = len(data) if isinstance(data, list) else 0
         except Exception:
             pass
-    sub_dir = base / "substructures"
+    sub_dir = base / ("substructures" + output_suffix)
     if (sub_dir / "cluster_substructures.json").is_file():
         try:
             data = json.loads((sub_dir / "cluster_substructures.json").read_text(encoding="utf-8"))
             summary["substructure_entries"] = len(data) if isinstance(data, list) else 0
         except Exception:
             pass
-    summary["sankey_ok"] = (base / "sankey" / "all_sankey.json").is_file()
-    summary["cluster_assignments_ok"] = (base / "clustering_metrics" / "cluster_assignments_with_real_id.csv").is_file()
+    summary["sankey_ok"] = (base / ("sankey" + output_suffix) / "all_sankey.json").is_file()
+    summary["cluster_assignments_ok"] = (base / ("clustering_metrics" + output_suffix) / "cluster_assignments_with_real_id.csv").is_file()
     return summary
 
 
@@ -640,9 +649,10 @@ def materialize_sankey_files():
 def sankey_all():
     dataset = request.args.get("dataset", "")
     clustering = request.args.get("clustering", DEFAULT_CLUSTERING)
+    data_split = request.args.get("data_split")
     if dataset not in DEFAULT_CASES:
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
-    path = _case_dir(dataset, clustering) / "sankey" / "all_sankey.json"
+    path = _case_dir(dataset, clustering, data_split) / "sankey" / "all_sankey.json"
     payload = _read_json(path, None)
     if payload is None:
         return jsonify({"ok": False, "error": "not_found"}), 404
@@ -653,10 +663,11 @@ def sankey_all():
 def sankey_model():
     dataset = request.args.get("dataset", "")
     clustering = request.args.get("clustering", DEFAULT_CLUSTERING)
+    data_split = request.args.get("data_split")
     model = request.args.get("model", "")
     if dataset not in DEFAULT_CASES or not model:
         return jsonify({"ok": False, "error": "invalid_args"}), 400
-    path = _case_dir(dataset, clustering) / "sankey" / f"{model}_sankey_samples.json"
+    path = _case_dir(dataset, clustering, data_split) / "sankey" / f"{model}_sankey_samples.json"
     payload = _read_json(path, None)
     if payload is None:
         return jsonify({"ok": False, "error": "not_found"}), 404
@@ -667,14 +678,129 @@ def sankey_model():
 def sankey_vertical():
     dataset = request.args.get("dataset", "")
     clustering = request.args.get("clustering", DEFAULT_CLUSTERING)
+    data_split = request.args.get("data_split")
     layer = request.args.get("layer", "")
     if dataset not in DEFAULT_CASES or not layer:
         return jsonify({"ok": False, "error": "invalid_args"}), 400
-    path = _case_dir(dataset, clustering) / "sankey" / f"vertical_model_samples_{layer}.json"
+    path = _case_dir(dataset, clustering, data_split) / "sankey" / f"vertical_model_samples_{layer}.json"
     payload = _read_json(path, None)
     if payload is None:
         return jsonify({"ok": False, "error": "not_found"}), 404
     return jsonify(payload)
+
+
+@app.route("/cluster-containment", methods=["POST", "OPTIONS"])
+def cluster_containment():
+    """
+    Compute containment/overlap matrix between user-provided clustering and backend clustering for one cell.
+    Request body: dataset, epoch, layer, clustering (our method), optional data_split, use_current,
+    and user_clustering: list of { "real_id": <id>, "user_cluster_id": <0-based id> } (or spreadsheet rows).
+    Returns: user_cluster_ids, our_cluster_ids, matrix (rows=user, cols=our, value=pct of user cluster in our cluster),
+    and entries list for each (user_cluster_id, our_cluster_id, count, percentage_of_user_cluster).
+    """
+    if request.method == "OPTIONS":
+        return ("", 204)
+    payload = request.get_json(silent=True) or {}
+    dataset = payload.get("dataset")
+    epoch = payload.get("epoch")
+    layer = payload.get("layer")
+    clustering = (payload.get("clustering") or DEFAULT_CLUSTERING).strip().lower()
+    if clustering == "pgmeans":
+        clustering = "gmm"
+    data_split = payload.get("data_split")
+    use_current = bool(payload.get("use_current"))
+    user_clustering = payload.get("user_clustering")
+    if not isinstance(user_clustering, list):
+        user_clustering = []
+
+    if not dataset or dataset not in DEFAULT_CASES:
+        return jsonify({"ok": False, "error": "invalid_dataset"}), 400
+    if epoch is None or layer is None:
+        return jsonify({"ok": False, "error": "missing_epoch_or_layer"}), 400
+    if clustering not in ("gmm", "agglomerative", "hdbscan"):
+        return jsonify({"ok": False, "error": "invalid_clustering"}), 400
+
+    case_dir = _case_dir(dataset, clustering, data_split)
+    cm_subdir = "clustering_metrics_current" if use_current else "clustering_metrics"
+    csv_path = case_dir / cm_subdir / "cluster_assignments_with_real_id.csv"
+    if not csv_path.is_file():
+        return jsonify({"ok": False, "error": "cluster_assignments_not_found", "path": str(csv_path)}), 404
+
+    import csv as csv_module
+    our_rid_to_cluster: Dict[str, int] = {}
+    layer_col = "{}_cluster".format(str(layer).strip())
+    with csv_path.open("r", encoding="utf-8") as f:
+        reader = csv_module.DictReader(f)
+        for row in reader:
+            if str(row.get("epoch")) != str(epoch):
+                continue
+            rid = row.get("real_id")
+            if rid is None:
+                continue
+            try:
+                val = row.get(layer_col)
+                our_rid_to_cluster[str(rid)] = int(float(val)) if val not in (None, "") else -1
+            except (ValueError, TypeError):
+                our_rid_to_cluster[str(rid)] = -1
+
+    user_rid_to_cluster: Dict[str, int] = {}
+    for item in user_clustering:
+        if not isinstance(item, dict):
+            continue
+        rid = item.get("real_id")
+        cid = item.get("user_cluster_id")
+        if rid is None or cid is None:
+            continue
+        try:
+            user_rid_to_cluster[str(rid)] = int(cid)
+        except (ValueError, TypeError):
+            continue
+
+    if not user_rid_to_cluster:
+        return jsonify({"ok": False, "error": "empty_user_clustering"}), 400
+
+    user_cids = sorted(set(user_rid_to_cluster.values()))
+    our_cids = sorted(set(our_rid_to_cluster.values()) - {-1})
+    if not our_cids:
+        return jsonify({"ok": False, "error": "no_our_clusters"}), 400
+
+    counts: Dict[Tuple[int, int], int] = {}
+    user_sizes: Dict[int, int] = {}
+    for rid, u_cid in user_rid_to_cluster.items():
+        user_sizes[u_cid] = user_sizes.get(u_cid, 0) + 1
+        o_cid = our_rid_to_cluster.get(rid, -1)
+        if o_cid < 0:
+            continue
+        counts[(u_cid, o_cid)] = counts.get((u_cid, o_cid), 0) + 1
+
+    matrix = []
+    entries = []
+    for u_cid in user_cids:
+        row = []
+        size_u = user_sizes.get(u_cid, 0) or 1
+        for o_cid in our_cids:
+            c = counts.get((u_cid, o_cid), 0)
+            pct = round(100.0 * c / size_u, 4)
+            row.append(pct)
+            entries.append({
+                "user_cluster_id": u_cid,
+                "our_cluster_id": o_cid,
+                "count": c,
+                "percentage_of_user_cluster": pct,
+            })
+        matrix.append(row)
+
+    return jsonify({
+        "ok": True,
+        "dataset": dataset,
+        "epoch": str(epoch),
+        "layer": layer,
+        "clustering": clustering,
+        "user_cluster_ids": user_cids,
+        "our_cluster_ids": our_cids,
+        "matrix": matrix,
+        "entries": entries,
+    })
 
 
 def _load_embedding_cell(dataset, epoch, layer, data_split: Optional[str] = None):
