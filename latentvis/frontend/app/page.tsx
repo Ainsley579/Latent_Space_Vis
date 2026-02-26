@@ -196,6 +196,7 @@ export default function Home() {
   const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
   const [activeSankeyRows, setActiveSankeyRows] = useState<SankeySampleRow[]>([]);
   const [sankeyRefreshKey, setSankeyRefreshKey] = useState(0);
+  const [dataRefreshKey, setDataRefreshKey] = useState(0);
   const [isGeneratingRange, setIsGeneratingRange] = useState(false);
   const [generateStatusText, setGenerateStatusText] = useState("");
   const [topkData, setTopkData] = useState<
@@ -498,6 +499,7 @@ export default function Home() {
         verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<string, SankeySampleRow[]>,
       });
       setSankeyRefreshKey((k: number) => k + 1);
+      setDataRefreshKey((k: number) => k + 1);
       setGenerateStatusText("Generate finished.");
     } catch (err) {
       console.error("Failed to call generate-range API:", err);
@@ -512,89 +514,41 @@ export default function Home() {
     linkage: "ward" | "complete" | "average";
   }) {
     if (isGeneratingRange) return;
+    const k = config.k ?? 5;
     setIsGeneratingRange(true);
     setGenerateStatusText(
-      `Reclustering agglomerative (epoch=${selectedModel}, layer=${selectedLayer}, linkage=${config.linkage}, k=${
-        config.k == null ? "auto" : config.k
-      }) ...`
+      `Re-running agglomerative for ALL cells (k=${k}, linkage=${config.linkage}) ...`
     );
     try {
       const apiBaseRaw = process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001";
       const apiBase = apiBaseRaw.replace(/\/+$/, "");
-      const res = await fetch(`${apiBase}/recluster-agglomerative`, {
+      const res = await fetch(`${apiBase}/generate-range`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dataset: selectedDataset,
-          epoch: selectedModel,
-          layer: selectedLayer,
-          k: config.k,
+          clustering: "agglomerative",
+          k,
           linkage: config.linkage,
         }),
       });
       if (!res.ok) {
-        throw new Error(`Recluster API failed: ${res.status}`);
+        throw new Error(`Generate API failed: ${res.status}`);
       }
       const json = await res.json();
-      const labelCount = Array.isArray(json?.labels) ? json.labels.length : 0;
-      const realIdCount = Array.isArray(json?.real_ids) ? json.real_ids.length : 0;
-      const assignmentRows = Array.isArray(json?.assignments) ? json.assignments : [];
-      let reclusterChangedCount = 0;
-      if (assignmentRows.length > 0) {
-        const currentScatterPath = buildScatterPath(
-          selectedModel,
-          selectedLayer,
-          scatterProjection,
-          selectedDataset,
-          selectedClustering
-        );
-        const scatterRes = await fetch(currentScatterPath);
-        if (!scatterRes.ok) {
-          throw new Error(`Failed to load scatter for recluster render: ${scatterRes.status}`);
-        }
-        const scatterRows = (await scatterRes.json()) as ScatterPoint[];
-        const normalizeRealId = (v: unknown): string => {
-          const s = String(v ?? "").trim();
-          if (/^-?\d+(?:\.0+)?$/.test(s)) return String(Math.trunc(Number(s)));
-          return s;
-        };
-        const labelById = new Map<string, number>();
-        assignmentRows.forEach((r: any) => {
-          labelById.set(normalizeRealId(r.real_id), Number(r.cluster_id));
-        });
-        const updatedScatter = scatterRows.map((row, idx) => {
-          const key = normalizeRealId(row.real_id);
-          let nextCluster: number | null = null;
-          if (labelById.has(key)) {
-            nextCluster = labelById.get(key) ?? null;
-          } else if (idx < assignmentRows.length) {
-            // Fallback when ID formatting differs but row order aligns.
-            nextCluster = Number(assignmentRows[idx]?.cluster_id);
-          }
-          if (nextCluster == null || Number.isNaN(nextCluster)) return row;
-          if (Number(row.cluster_id) !== Number(nextCluster)) reclusterChangedCount += 1;
-          return {
-            ...row,
-            cluster_id: nextCluster,
-          };
-        });
-        if (scatterOverrideUrlRef.current) {
-          URL.revokeObjectURL(scatterOverrideUrlRef.current);
-          scatterOverrideUrlRef.current = null;
-        }
-        const blobUrl = URL.createObjectURL(
-          new Blob([JSON.stringify(updatedScatter)], { type: "application/json" })
-        );
-        scatterOverrideUrlRef.current = blobUrl;
-        setScatterPath(blobUrl);
+      if (scatterOverrideUrlRef.current) {
+        URL.revokeObjectURL(scatterOverrideUrlRef.current);
+        scatterOverrideUrlRef.current = null;
       }
-      setSankeyRefreshKey((k) => k + 1);
+      setScatterPath(buildScatterPath(selectedModel, selectedLayer, scatterProjection));
+      setSankeyRefreshKey((prev: number) => prev + 1);
+      setDataRefreshKey((prev: number) => prev + 1);
       setGenerateStatusText(
-        `Recluster finished: k=${json?.k ?? "?"}, labels=${labelCount}, real_ids=${realIdCount}, changed=${reclusterChangedCount}.`
+        `All cells updated: k=${json?.k ?? k}, linkage=${config.linkage}. Substructures and cluster order refreshed.`
       );
     } catch (err) {
-      console.error("Failed to call recluster-agglomerative API:", err);
-      setGenerateStatusText(`Recluster failed: ${err instanceof Error ? err.message : String(err)}`);
+      console.error("Failed to call generate-range for agglomerative:", err);
+      setGenerateStatusText(`Generate failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsGeneratingRange(false);
     }
@@ -760,7 +714,7 @@ export default function Home() {
         console.error(err);
         setTopkData([]);
       });
-  }, [datasetBase]);
+  }, [datasetBase, dataRefreshKey]);
 
   useEffect(() => {
     fetch(`${datasetBase}/topk/cluster_sorted_members.json`)
@@ -776,8 +730,7 @@ export default function Home() {
         console.error(err);
         setClusterSortedMembers([]);
       });
-  }, [datasetBase]);
-
+  }, [datasetBase, dataRefreshKey]);
 
   useEffect(() => {
     fetch(`${datasetBase}/substructures/cluster_substructures.json`)
@@ -794,7 +747,7 @@ export default function Home() {
         console.error(err);
         setSubstructures([]);
       });
-  }, [datasetBase]);
+  }, [datasetBase, dataRefreshKey]);
 
   const topkNearestRows = useMemo(() => {
     return topkData

@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple, Iterable
+from typing import Dict, List, Optional, Tuple, Iterable
 
 from flask import Flask, jsonify, request
 
@@ -48,7 +48,7 @@ def _normalize_smiles(s: str) -> str:
     return (s or "").strip()
 
 
-def _case_dir(case: str, clustering: str | None = None) -> Path:
+def _case_dir(case: str, clustering: Optional[str] = None) -> Path:
     method = (clustering or DEFAULT_CLUSTERING).strip().lower()
     if method == "pgmeans":
         return DATA_ROOT / case
@@ -118,7 +118,7 @@ def _write_json(path: Path, payload) -> None:
 
 def _materialize_compat_sankey_files(
     case: str,
-    clustering: str | None = None,
+    clustering: Optional[str] = None,
     write_files: bool = True,
 ) -> Dict[str, object]:
     case_dir = _case_dir(case, clustering)
@@ -306,7 +306,7 @@ def _cluster_id_from_label(label: str) -> int:
         return -1
 
 
-def _filter_sankey_for_range(case: str, min_value: int, max_value: int, clustering: str | None = None) -> Tuple[int, int]:
+def _filter_sankey_for_range(case: str, min_value: int, max_value: int, clustering: Optional[str] = None) -> Tuple[int, int]:
     """Filter all_sankey.json and all *_sankey_samples.json / vertical_model_samples_*.json
     in-place for a given [min,max] **cluster ID** range (clustering range, not epoch).
 
@@ -394,36 +394,55 @@ def _filter_sankey_for_range(case: str, min_value: int, max_value: int, clusteri
 
 @app.route("/generate-range", methods=["POST", "OPTIONS"])
 def generate_range():
-    """Re-run clustering pipeline with user-supplied k_min/k_max (min/max), then materialize sankey compat files."""
+    """Re-run clustering for ALL cells with user-supplied params. Updates scatter, topk, cluster_sorted_members,
+    substructures, sankey. Accepts: (min, max) for k_min/k_max; or for agglomerative (k, linkage) to apply fixed k and linkage to all cells."""
     if request.method == "OPTIONS":
         return ("", 204)
 
     payload = request.get_json(silent=True) or {}
     min_value = payload.get("min")
     max_value = payload.get("max")
+    k_fixed = payload.get("k")
+    linkage = (payload.get("linkage") or "ward").strip().lower()
+    if linkage not in ("ward", "complete", "average"):
+        linkage = "ward"
     dataset = payload.get("dataset")
     clustering = (payload.get("clustering") or "gmm").lower().strip()
 
-    # Frontend may send "pgmeans" for default clustering -> backend uses "gmm"
     if clustering == "pgmeans":
         clustering = "gmm"
 
-    print(
-        f"[flask-backend] generate-range k_min={min_value}, k_max={max_value}, dataset={dataset}, clustering={clustering}",
-        flush=True,
-    )
-
-    try:
-        k_min = int(min_value)
-        k_max = int(max_value)
-    except (ValueError, TypeError):
-        return jsonify({"ok": False, "error": "invalid_range"}), 400
-    if k_min > k_max:
-        k_min, k_max = k_max, k_min
-    if k_min < 2:
-        k_min = 2
-    if k_max < k_min:
-        k_max = k_min
+    # Agglomerative with fixed k: apply k and linkage to all cells
+    n_clusters_override = None
+    linkage_override = None
+    if clustering == "agglomerative" and k_fixed is not None:
+        try:
+            n_clusters_override = int(k_fixed)
+            n_clusters_override = max(2, n_clusters_override)
+        except (ValueError, TypeError):
+            return jsonify({"ok": False, "error": "invalid_k"}), 400
+        linkage_override = linkage
+        k_min = k_max = n_clusters_override
+        print(
+            f"[flask-backend] generate-range all cells agg k={n_clusters_override} linkage={linkage_override} dataset={dataset}",
+            flush=True,
+        )
+    else:
+        try:
+            k_min = int(min_value)
+            k_max = int(max_value)
+        except (ValueError, TypeError):
+            return jsonify({"ok": False, "error": "invalid_range"}), 400
+        if k_min > k_max:
+            k_min, k_max = k_max, k_min
+        if k_min < 2:
+            k_min = 2
+        if k_max < k_min:
+            k_max = k_min
+        print(
+            f"[flask-backend] generate-range k_min={k_min}, k_max={k_max}, dataset={dataset}, clustering={clustering}",
+            flush=True,
+        )
 
     if not dataset or dataset not in DEFAULT_CASES:
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
@@ -447,6 +466,8 @@ def generate_range():
             k_max=k_max,
             clustering_method=clustering,
             skip_tsne=True,
+            n_clusters_override=n_clusters_override,
+            linkage_override=linkage_override,
         )
         if not ok:
             return jsonify({"ok": False, "error": "pipeline_failed"}), 500
@@ -469,14 +490,50 @@ def generate_range():
         except (subprocess.CalledProcessError, subprocess.TimeoutError) as e:
             print(f"[flask-backend] materialize_sankey_compat failed (non-fatal): {e}", flush=True)
 
-    return jsonify({
-        "ok": True,
-        "min": k_min,
-        "max": k_max,
-        "dataset": dataset,
-        "clustering": clustering,
-        "summary": {dataset: {"status": "done"}},
-    })
+    # Collect updated-results summary so frontend knows all cells and artifacts were updated
+    updated = _collect_updated_results_summary(base)
+    summary = {dataset: {"status": "done", "updated": updated}}
+
+    out = {"ok": True, "min": k_min, "max": k_max, "dataset": dataset, "clustering": clustering, "summary": summary}
+    if n_clusters_override is not None:
+        out["k"] = n_clusters_override
+        out["linkage"] = linkage_override
+    return jsonify(out)
+
+
+def _collect_updated_results_summary(base: Path) -> Dict[str, object]:
+    """Scan pipeline output dir and return counts for scatter, topk, substructures, sankey, cluster_assignments."""
+    summary = {"cells": 0, "scatter_files": 0, "topk_representatives": 0, "topk_sorted_members": 0, "substructure_entries": 0, "sankey_ok": False, "cluster_assignments_ok": False}
+    if not base.is_dir():
+        return summary
+    scatter_dir = base / "scatterplot"
+    if scatter_dir.is_dir():
+        pca_files = list(scatter_dir.glob("*_pca.json"))
+        summary["cells"] = len(pca_files)
+        summary["scatter_files"] = len(list(scatter_dir.glob("*.json")))
+    topk_dir = base / "topk"
+    if (topk_dir / "cluster_representatives.json").is_file():
+        try:
+            data = json.loads((topk_dir / "cluster_representatives.json").read_text(encoding="utf-8"))
+            summary["topk_representatives"] = len(data) if isinstance(data, list) else 0
+        except Exception:
+            pass
+    if (topk_dir / "cluster_sorted_members.json").is_file():
+        try:
+            data = json.loads((topk_dir / "cluster_sorted_members.json").read_text(encoding="utf-8"))
+            summary["topk_sorted_members"] = len(data) if isinstance(data, list) else 0
+        except Exception:
+            pass
+    sub_dir = base / "substructures"
+    if (sub_dir / "cluster_substructures.json").is_file():
+        try:
+            data = json.loads((sub_dir / "cluster_substructures.json").read_text(encoding="utf-8"))
+            summary["substructure_entries"] = len(data) if isinstance(data, list) else 0
+        except Exception:
+            pass
+    summary["sankey_ok"] = (base / "sankey" / "all_sankey.json").is_file()
+    summary["cluster_assignments_ok"] = (base / "clustering_metrics" / "cluster_assignments_with_real_id.csv").is_file()
+    return summary
 
 
 @app.route("/materialize-sankey-files", methods=["POST", "OPTIONS"])
@@ -578,9 +635,122 @@ def _load_embedding_cell(dataset, epoch, layer):
     return X, list(real_ids)
 
 
+def _cluster_representatives(X, labels, k=5):
+    """Per-cluster: top-k closest/farthest indices (global). Returns dict cluster_id -> {top_k_closest, top_k_farthest, k, sorted_indices}."""
+    import numpy as np
+    from scipy.spatial.distance import cdist
+    X = np.asarray(X)
+    if X.ndim > 2:
+        X = X.reshape(X.shape[0], -1)
+    uniq = np.unique(labels)
+    reps = {}
+    for c in uniq:
+        mask = labels == c
+        pts = X[mask]
+        idx_global = np.where(mask)[0]
+        if len(pts) == 0:
+            continue
+        center = pts.mean(axis=0, keepdims=True)
+        d = cdist(pts, center).ravel()
+        order = np.argsort(d)
+        sorted_indices = [int(idx_global[order[i]]) for i in range(len(order))]
+        n = min(k, len(order))
+        closest = [int(idx_global[order[i]]) for i in range(n)]
+        closest_set = set(closest)
+        farthest = []
+        for i in order[::-1]:
+            idx = int(idx_global[i])
+            if idx in closest_set:
+                continue
+            farthest.append(idx)
+            if len(farthest) >= n:
+                break
+        reps[int(c)] = {"top_k_closest": closest, "top_k_farthest": farthest, "k": n, "sorted_indices": sorted_indices}
+    return reps
+
+
+def _substructures_for_cell(X, real_ids, labels, epoch, layer, id_to_smiles, k_rep=5):
+    """Compute MCS substructure entries for one (epoch, layer) cell. Returns list of dicts matching cluster_substructures.json shape."""
+    if not id_to_smiles:
+        return []
+    try:
+        from rdkit import Chem
+    except Exception:
+        return []
+    try:
+        from mcs_common import common_substructure_smarts_smiles
+    except Exception:
+        common_substructure_smarts_smiles = None
+    reps = _cluster_representatives(X, labels, k=k_rep)
+    real_ids = list(real_ids)
+    n = len(real_ids)
+
+    def get_smi(rid):
+        v = id_to_smiles.get(rid) or id_to_smiles.get(str(rid))
+        if v is not None:
+            return v
+        try:
+            return id_to_smiles.get(int(rid))
+        except (TypeError, ValueError):
+            return None
+
+    substruct_list = []
+    for cluster_id, rep in reps.items():
+        for group, key in [("knn", "top_k_closest"), ("kfn", "top_k_farthest")]:
+            idx_list = rep[key]
+            rids = [real_ids[i] if i < n else i for i in idx_list]
+            mols = []
+            missing = []
+            invalid = []
+            seen_canonical = set()
+            for rid in rids:
+                smi = get_smi(rid)
+                if not smi:
+                    missing.append(rid)
+                    continue
+                mol = Chem.MolFromSmiles(smi)
+                if mol is None:
+                    invalid.append(rid)
+                    continue
+                canonical = Chem.MolToSmiles(mol, canonical=True)
+                if canonical in seen_canonical:
+                    continue
+                seen_canonical.add(canonical)
+                mols.append(mol)
+            smiles_list = [Chem.MolToSmiles(m, canonical=True) for m in mols]
+            if common_substructure_smarts_smiles:
+                mcs_smarts, mcs_smiles = common_substructure_smarts_smiles(
+                    smiles_list, timeout_s=30, ring_matches_ring_only=True, complete_rings_only=True,
+                    match_valences=True, atom_compare="elements", bond_compare="order",
+                )
+            else:
+                mcs_smarts, mcs_smiles = None, None
+            mcs_note = None
+            if mcs_smarts is None and mcs_smiles is None and len(mols) > 0:
+                mcs_note = "No common substructure found"
+            elif missing:
+                mcs_note = "Missing SMILES for {} real_id(s)".format(len(missing))
+            substruct_list.append({
+                "layer_name": str(layer),
+                "model_type": str(epoch),
+                "cluster_id": int(cluster_id),
+                "group": group,
+                "k": rep["k"],
+                "real_ids": rids,
+                "valid_molecules": len(mols),
+                "missing_real_ids": missing,
+                "invalid_smiles_real_ids": invalid,
+                "mcs_smarts": mcs_smarts,
+                "mcs_smiles": mcs_smiles,
+                "mcs_note": mcs_note,
+            })
+    return substruct_list
+
+
 @app.route("/recluster-agglomerative", methods=["POST", "OPTIONS"])
 def recluster_agglomerative():
-    """Re-run Agglomerative clustering with user-chosen k and linkage (ward/complete/average)."""
+    """Re-run Agglomerative clustering for a single cell (epoch, layer). Frontend sends dataset, epoch, layer, k, linkage.
+    Returns new labels/assignments and substructures for this cell so the UI can update scatter and substructure panel."""
     if request.method == "OPTIONS":
         return ("", 204)
 
@@ -620,6 +790,26 @@ def recluster_agglomerative():
     k_out = int(out["k"])
     assignments = [{"real_id": str(rid), "cluster_id": int(labels[i])} for i, rid in enumerate(real_ids)]
 
+    # Flatten X for representatives/substructures (may be 3D from .pt)
+    import numpy as np
+    X_flat = np.asarray(X)
+    if X_flat.ndim > 2:
+        X_flat = X_flat.reshape(X_flat.shape[0], -1)
+
+    id_to_smiles = {}
+    case_dir = DATA_ROOT / dataset
+    smiles_path = case_dir / "real_id_to_smiles.json"
+    if smiles_path.is_file():
+        try:
+            raw = json.loads(smiles_path.read_text(encoding="utf-8"))
+            id_to_smiles = {str(k): v for k, v in raw.items()}
+        except Exception as e:
+            print("[flask-backend] recluster load smiles failed: %s" % e, flush=True)
+
+    substructures = _substructures_for_cell(X_flat, real_ids, labels, epoch, layer, id_to_smiles, k_rep=5)
+    if substructures:
+        print("[flask-backend] recluster-agglomerative substructures for cell: %s entries" % len(substructures), flush=True)
+
     return jsonify({
         "ok": True,
         "dataset": dataset,
@@ -630,6 +820,7 @@ def recluster_agglomerative():
         "real_ids": [str(r) for r in real_ids],
         "labels": [int(x) for x in labels],
         "assignments": assignments,
+        "substructures": substructures,
     })
 
 

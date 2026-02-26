@@ -184,6 +184,8 @@ def run_pipeline(
     clustering_method: str = "gmm",
     max_epochs: Optional[int] = None,
     skip_tsne: bool = False,
+    n_clusters_override: Optional[int] = None,
+    linkage_override: Optional[str] = None,
 ) -> bool:
     """
     Load embedding input (optionally two directories for two epochs), run full analysis, write all frontend JSONs.
@@ -261,9 +263,20 @@ def run_pipeline(
         sys.stderr.flush()
         results[(ek, lk)] = {"coords": coords}
         for cl_method in run_methods:
-            cl_out = fit_clustering(
-                emb, method=cl_method, k_min=k_min, k_max=k_max, random_state=random_state
-            )
+            if cl_method == "agglomerative" and n_clusters_override is not None:
+                from clustering import fit_agglomerative
+                cl_out = fit_agglomerative(
+                    emb,
+                    n_clusters=n_clusters_override,
+                    k_min=k_min,
+                    k_max=k_max,
+                    random_state=random_state,
+                    linkage=linkage_override or "ward",
+                )
+            else:
+                cl_out = fit_clustering(
+                    emb, method=cl_method, k_min=k_min, k_max=k_max, random_state=random_state
+                )
             labels = cl_out["labels"]
             reps = _cluster_representatives(emb, labels, k=5)
             results[(ek, lk)][cl_method] = {
