@@ -66,6 +66,8 @@ This doc summarizes how the frontend should interact with the updated backend an
   - `embedding_loader`: for ESOL `.pt` files, layers follow the order in `split["embeddings"]`; for other inputs, first-seen order (no alphabetical sort).
   - The pipeline writes `sankey/all_sankey.json` (and `sankey_current/all_sankey.json`) with the `"layer"` object’s keys in this **model order**.
 - The frontend should **read layer order from `all_sankey.json`**: use the key order of `data.layer` (e.g. `Object.keys(data.layer)`) as the canonical layer order. No extra sorting; the JSON is already in model order.
+- **Existing files:** If you have old `all_sankey.json` written before the loader/pipeline used model order, run `backend/scripts/reorder_all_sankey_keys.py` to rewrite keys in place, e.g.  
+  `python3 reorder_all_sankey_keys.py <path/to/all_sankey.json> --layer-order "fingerprint,gnn_layer_1,gnn_layer_2,gnn_layer_3,ffn_layer_1,ffn_layer_2" --reorder-epochs`
 
 ### 4. Transition stats: horizontal vs vertical (optional)
 

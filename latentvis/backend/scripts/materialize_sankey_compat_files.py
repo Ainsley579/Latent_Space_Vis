@@ -388,6 +388,7 @@ def main() -> None:
             write_json(full_path, model_rows.get(model, []))
             written.append(full_path)
 
+    # all_sankey["layer"] key order = layers order (CSV column order = model order when CSV from pipeline).
     all_sankey = build_all_sankey(rows, layers, models)
     all_sankey_path = sankey_dir / "all_sankey.json"
     write_json(all_sankey_path, all_sankey)

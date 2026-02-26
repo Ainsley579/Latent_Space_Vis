@@ -1494,626 +1494,6 @@
     }
   },
   "layer": {
-    "ffn_layer_1": {
-      "type": "spatial_layer",
-      "layer": "ffn_layer_1",
-      "edges": [
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "0_C1",
-          "target_label": "1_C1",
-          "value": 74,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "0_C0",
-          "target_label": "1_C0",
-          "value": 39,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "1_C1",
-          "target_label": "2_C1",
-          "value": 71,
-          "pct_of_source": 95.9459
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "1_C0",
-          "target_label": "2_C0",
-          "value": 37,
-          "pct_of_source": 94.8718
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "1_C0",
-          "target_label": "2_C1",
-          "value": 2,
-          "pct_of_source": 5.1282
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 2,
-          "source_label": "1_C1",
-          "target_label": "2_C0",
-          "value": 3,
-          "pct_of_source": 4.0541
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "2_C1",
-          "target_label": "3_C1",
-          "value": 73,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "2_C0",
-          "target_label": "3_C0",
-          "value": 37,
-          "pct_of_source": 92.5
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "2_C0",
-          "target_label": "3_C1",
-          "value": 3,
-          "pct_of_source": 7.5
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "3_C1",
-          "target_label": "4_C1",
-          "value": 74,
-          "pct_of_source": 97.3684
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "3_C0",
-          "target_label": "4_C0",
-          "value": 37,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 2,
-          "source_label": "3_C1",
-          "target_label": "4_C0",
-          "value": 2,
-          "pct_of_source": 2.6316
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "4_C1",
-          "target_label": "5_C1",
-          "value": 73,
-          "pct_of_source": 98.6486
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "4_C0",
-          "target_label": "5_C0",
-          "value": 37,
-          "pct_of_source": 94.8718
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 2,
-          "source_label": "4_C1",
-          "target_label": "5_C0",
-          "value": 1,
-          "pct_of_source": 1.3514
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "4_C0",
-          "target_label": "5_C1",
-          "value": 2,
-          "pct_of_source": 5.1282
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "5_C1",
-          "target_label": "6_C1",
-          "value": 75,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "5_C0",
-          "target_label": "6_C0",
-          "value": 36,
-          "pct_of_source": 94.7368
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "5_C0",
-          "target_label": "6_C1",
-          "value": 2,
-          "pct_of_source": 5.2632
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "6_C1",
-          "target_label": "7_C1",
-          "value": 77,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "6_C0",
-          "target_label": "7_C0",
-          "value": 36,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "7_C1",
-          "target_label": "8_C1",
-          "value": 77,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "7_C0",
-          "target_label": "8_C0",
-          "value": 35,
-          "pct_of_source": 97.2222
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "7_C0",
-          "target_label": "8_C1",
-          "value": 1,
-          "pct_of_source": 2.7778
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "8_C1",
-          "target_label": "9_C1",
-          "value": 77,
-          "pct_of_source": 98.7179
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "8_C0",
-          "target_label": "9_C0",
-          "value": 33,
-          "pct_of_source": 94.2857
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "8_C0",
-          "target_label": "9_C1",
-          "value": 2,
-          "pct_of_source": 5.7143
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 2,
-          "source_label": "8_C1",
-          "target_label": "9_C0",
-          "value": 1,
-          "pct_of_source": 1.2821
-        }
-      ]
-    },
-    "ffn_layer_2": {
-      "type": "spatial_layer",
-      "layer": "ffn_layer_2",
-      "edges": [
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "0_C1",
-          "target_label": "1_C1",
-          "value": 63,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "0_C0",
-          "target_label": "1_C0",
-          "value": 45,
-          "pct_of_source": 90.0
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "0_C0",
-          "target_label": "1_C1",
-          "value": 5,
-          "pct_of_source": 10.0
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "1_C1",
-          "target_label": "2_C1",
-          "value": 29,
-          "pct_of_source": 42.6471
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "1_C0",
-          "target_label": "2_C0",
-          "value": 5,
-          "pct_of_source": 11.1111
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 2,
-          "source_label": "1_C1",
-          "target_label": "2_C0",
-          "value": 39,
-          "pct_of_source": 57.3529
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 4,
-          "source_label": "1_C0",
-          "target_label": "2_C2",
-          "value": 40,
-          "pct_of_source": 88.8889
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 5,
-          "source_label": "2_C1",
-          "target_label": "3_C2",
-          "value": 28,
-          "pct_of_source": 96.5517
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 4,
-          "source_label": "2_C0",
-          "target_label": "3_C1",
-          "value": 40,
-          "pct_of_source": 90.9091
-        },
-        {
-          "source_node_id": 2,
-          "target_node_id": 3,
-          "source_label": "2_C2",
-          "target_label": "3_C0",
-          "value": 38,
-          "pct_of_source": 95.0
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 5,
-          "source_label": "2_C0",
-          "target_label": "3_C2",
-          "value": 1,
-          "pct_of_source": 2.2727
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "2_C0",
-          "target_label": "3_C0",
-          "value": 3,
-          "pct_of_source": 6.8182
-        },
-        {
-          "source_node_id": 2,
-          "target_node_id": 4,
-          "source_label": "2_C2",
-          "target_label": "3_C1",
-          "value": 2,
-          "pct_of_source": 5.0
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 4,
-          "source_label": "2_C1",
-          "target_label": "3_C1",
-          "value": 1,
-          "pct_of_source": 3.4483
-        },
-        {
-          "source_node_id": 2,
-          "target_node_id": 6,
-          "source_label": "3_C2",
-          "target_label": "4_C3",
-          "value": 29,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 4,
-          "source_label": "3_C1",
-          "target_label": "4_C1",
-          "value": 42,
-          "pct_of_source": 97.6744
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "3_C0",
-          "target_label": "4_C0",
-          "value": 31,
-          "pct_of_source": 75.6098
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 4,
-          "source_label": "3_C0",
-          "target_label": "4_C1",
-          "value": 3,
-          "pct_of_source": 7.3171
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 5,
-          "source_label": "3_C0",
-          "target_label": "4_C2",
-          "value": 7,
-          "pct_of_source": 17.0732
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "3_C1",
-          "target_label": "4_C0",
-          "value": 1,
-          "pct_of_source": 2.3256
-        },
-        {
-          "source_node_id": 3,
-          "target_node_id": 7,
-          "source_label": "4_C3",
-          "target_label": "5_C3",
-          "value": 29,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 5,
-          "source_label": "4_C1",
-          "target_label": "5_C1",
-          "value": 41,
-          "pct_of_source": 91.1111
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 4,
-          "source_label": "4_C0",
-          "target_label": "5_C0",
-          "value": 32,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 2,
-          "target_node_id": 6,
-          "source_label": "4_C2",
-          "target_label": "5_C2",
-          "value": 6,
-          "pct_of_source": 85.7143
-        },
-        {
-          "source_node_id": 2,
-          "target_node_id": 4,
-          "source_label": "4_C2",
-          "target_label": "5_C0",
-          "value": 1,
-          "pct_of_source": 14.2857
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 7,
-          "source_label": "4_C1",
-          "target_label": "5_C3",
-          "value": 2,
-          "pct_of_source": 4.4444
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 4,
-          "source_label": "4_C1",
-          "target_label": "5_C0",
-          "value": 2,
-          "pct_of_source": 4.4444
-        },
-        {
-          "source_node_id": 3,
-          "target_node_id": 6,
-          "source_label": "5_C3",
-          "target_label": "6_C2",
-          "value": 30,
-          "pct_of_source": 96.7742
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 5,
-          "source_label": "5_C1",
-          "target_label": "6_C1",
-          "value": 39,
-          "pct_of_source": 95.122
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 4,
-          "source_label": "5_C1",
-          "target_label": "6_C0",
-          "value": 1,
-          "pct_of_source": 2.439
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 4,
-          "source_label": "5_C0",
-          "target_label": "6_C0",
-          "value": 35,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 3,
-          "target_node_id": 5,
-          "source_label": "5_C3",
-          "target_label": "6_C1",
-          "value": 1,
-          "pct_of_source": 3.2258
-        },
-        {
-          "source_node_id": 2,
-          "target_node_id": 4,
-          "source_label": "5_C2",
-          "target_label": "6_C0",
-          "value": 6,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 6,
-          "source_label": "5_C1",
-          "target_label": "6_C2",
-          "value": 1,
-          "pct_of_source": 2.439
-        },
-        {
-          "source_node_id": 2,
-          "target_node_id": 5,
-          "source_label": "6_C2",
-          "target_label": "7_C2",
-          "value": 31,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 4,
-          "source_label": "6_C1",
-          "target_label": "7_C1",
-          "value": 38,
-          "pct_of_source": 95.0
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "6_C0",
-          "target_label": "7_C0",
-          "value": 41,
-          "pct_of_source": 97.619
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 4,
-          "source_label": "6_C0",
-          "target_label": "7_C1",
-          "value": 1,
-          "pct_of_source": 2.381
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "6_C1",
-          "target_label": "7_C0",
-          "value": 1,
-          "pct_of_source": 2.5
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 5,
-          "source_label": "6_C1",
-          "target_label": "7_C2",
-          "value": 1,
-          "pct_of_source": 2.5
-        },
-        {
-          "source_node_id": 2,
-          "target_node_id": 4,
-          "source_label": "7_C2",
-          "target_label": "8_C1",
-          "value": 31,
-          "pct_of_source": 96.875
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 4,
-          "source_label": "7_C1",
-          "target_label": "8_C1",
-          "value": 29,
-          "pct_of_source": 74.359
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "7_C0",
-          "target_label": "8_C0",
-          "value": 42,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "7_C1",
-          "target_label": "8_C0",
-          "value": 10,
-          "pct_of_source": 25.641
-        },
-        {
-          "source_node_id": 2,
-          "target_node_id": 3,
-          "source_label": "7_C2",
-          "target_label": "8_C0",
-          "value": 1,
-          "pct_of_source": 3.125
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "8_C1",
-          "target_label": "9_C1",
-          "value": 56,
-          "pct_of_source": 93.3333
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "8_C0",
-          "target_label": "9_C0",
-          "value": 53,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 1,
-          "target_node_id": 2,
-          "source_label": "8_C1",
-          "target_label": "9_C0",
-          "value": 4,
-          "pct_of_source": 6.6667
-        }
-      ]
-    },
     "fingerprint": {
       "type": "spatial_layer",
       "layer": "fingerprint",
@@ -3047,6 +2427,626 @@
           "target_label": "9_C0",
           "value": 1,
           "pct_of_source": 1.2821
+        }
+      ]
+    },
+    "ffn_layer_1": {
+      "type": "spatial_layer",
+      "layer": "ffn_layer_1",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "0_C1",
+          "target_label": "1_C1",
+          "value": 74,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "0_C0",
+          "target_label": "1_C0",
+          "value": 39,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "1_C1",
+          "target_label": "2_C1",
+          "value": 71,
+          "pct_of_source": 95.9459
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "1_C0",
+          "target_label": "2_C0",
+          "value": 37,
+          "pct_of_source": 94.8718
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "1_C0",
+          "target_label": "2_C1",
+          "value": 2,
+          "pct_of_source": 5.1282
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "1_C1",
+          "target_label": "2_C0",
+          "value": 3,
+          "pct_of_source": 4.0541
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "2_C1",
+          "target_label": "3_C1",
+          "value": 73,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "2_C0",
+          "target_label": "3_C0",
+          "value": 37,
+          "pct_of_source": 92.5
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "2_C0",
+          "target_label": "3_C1",
+          "value": 3,
+          "pct_of_source": 7.5
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "3_C1",
+          "target_label": "4_C1",
+          "value": 74,
+          "pct_of_source": 97.3684
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "3_C0",
+          "target_label": "4_C0",
+          "value": 37,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "3_C1",
+          "target_label": "4_C0",
+          "value": 2,
+          "pct_of_source": 2.6316
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "4_C1",
+          "target_label": "5_C1",
+          "value": 73,
+          "pct_of_source": 98.6486
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "4_C0",
+          "target_label": "5_C0",
+          "value": 37,
+          "pct_of_source": 94.8718
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "4_C1",
+          "target_label": "5_C0",
+          "value": 1,
+          "pct_of_source": 1.3514
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "4_C0",
+          "target_label": "5_C1",
+          "value": 2,
+          "pct_of_source": 5.1282
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "5_C1",
+          "target_label": "6_C1",
+          "value": 75,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "5_C0",
+          "target_label": "6_C0",
+          "value": 36,
+          "pct_of_source": 94.7368
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "5_C0",
+          "target_label": "6_C1",
+          "value": 2,
+          "pct_of_source": 5.2632
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "6_C1",
+          "target_label": "7_C1",
+          "value": 77,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "6_C0",
+          "target_label": "7_C0",
+          "value": 36,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "7_C1",
+          "target_label": "8_C1",
+          "value": 77,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "7_C0",
+          "target_label": "8_C0",
+          "value": 35,
+          "pct_of_source": 97.2222
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "7_C0",
+          "target_label": "8_C1",
+          "value": 1,
+          "pct_of_source": 2.7778
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "8_C1",
+          "target_label": "9_C1",
+          "value": 77,
+          "pct_of_source": 98.7179
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "8_C0",
+          "target_label": "9_C0",
+          "value": 33,
+          "pct_of_source": 94.2857
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "8_C0",
+          "target_label": "9_C1",
+          "value": 2,
+          "pct_of_source": 5.7143
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "8_C1",
+          "target_label": "9_C0",
+          "value": 1,
+          "pct_of_source": 1.2821
+        }
+      ]
+    },
+    "ffn_layer_2": {
+      "type": "spatial_layer",
+      "layer": "ffn_layer_2",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "0_C1",
+          "target_label": "1_C1",
+          "value": 63,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "0_C0",
+          "target_label": "1_C0",
+          "value": 45,
+          "pct_of_source": 90.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "0_C0",
+          "target_label": "1_C1",
+          "value": 5,
+          "pct_of_source": 10.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "1_C1",
+          "target_label": "2_C1",
+          "value": 29,
+          "pct_of_source": 42.6471
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "1_C0",
+          "target_label": "2_C0",
+          "value": 5,
+          "pct_of_source": 11.1111
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "1_C1",
+          "target_label": "2_C0",
+          "value": 39,
+          "pct_of_source": 57.3529
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 4,
+          "source_label": "1_C0",
+          "target_label": "2_C2",
+          "value": 40,
+          "pct_of_source": 88.8889
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 5,
+          "source_label": "2_C1",
+          "target_label": "3_C2",
+          "value": 28,
+          "pct_of_source": 96.5517
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 4,
+          "source_label": "2_C0",
+          "target_label": "3_C1",
+          "value": 40,
+          "pct_of_source": 90.9091
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 3,
+          "source_label": "2_C2",
+          "target_label": "3_C0",
+          "value": 38,
+          "pct_of_source": 95.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 5,
+          "source_label": "2_C0",
+          "target_label": "3_C2",
+          "value": 1,
+          "pct_of_source": 2.2727
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "2_C0",
+          "target_label": "3_C0",
+          "value": 3,
+          "pct_of_source": 6.8182
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 4,
+          "source_label": "2_C2",
+          "target_label": "3_C1",
+          "value": 2,
+          "pct_of_source": 5.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 4,
+          "source_label": "2_C1",
+          "target_label": "3_C1",
+          "value": 1,
+          "pct_of_source": 3.4483
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 6,
+          "source_label": "3_C2",
+          "target_label": "4_C3",
+          "value": 29,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 4,
+          "source_label": "3_C1",
+          "target_label": "4_C1",
+          "value": 42,
+          "pct_of_source": 97.6744
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "3_C0",
+          "target_label": "4_C0",
+          "value": 31,
+          "pct_of_source": 75.6098
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 4,
+          "source_label": "3_C0",
+          "target_label": "4_C1",
+          "value": 3,
+          "pct_of_source": 7.3171
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 5,
+          "source_label": "3_C0",
+          "target_label": "4_C2",
+          "value": 7,
+          "pct_of_source": 17.0732
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "3_C1",
+          "target_label": "4_C0",
+          "value": 1,
+          "pct_of_source": 2.3256
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 7,
+          "source_label": "4_C3",
+          "target_label": "5_C3",
+          "value": 29,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 5,
+          "source_label": "4_C1",
+          "target_label": "5_C1",
+          "value": 41,
+          "pct_of_source": 91.1111
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 4,
+          "source_label": "4_C0",
+          "target_label": "5_C0",
+          "value": 32,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 6,
+          "source_label": "4_C2",
+          "target_label": "5_C2",
+          "value": 6,
+          "pct_of_source": 85.7143
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 4,
+          "source_label": "4_C2",
+          "target_label": "5_C0",
+          "value": 1,
+          "pct_of_source": 14.2857
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 7,
+          "source_label": "4_C1",
+          "target_label": "5_C3",
+          "value": 2,
+          "pct_of_source": 4.4444
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 4,
+          "source_label": "4_C1",
+          "target_label": "5_C0",
+          "value": 2,
+          "pct_of_source": 4.4444
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 6,
+          "source_label": "5_C3",
+          "target_label": "6_C2",
+          "value": 30,
+          "pct_of_source": 96.7742
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 5,
+          "source_label": "5_C1",
+          "target_label": "6_C1",
+          "value": 39,
+          "pct_of_source": 95.122
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 4,
+          "source_label": "5_C1",
+          "target_label": "6_C0",
+          "value": 1,
+          "pct_of_source": 2.439
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 4,
+          "source_label": "5_C0",
+          "target_label": "6_C0",
+          "value": 35,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 3,
+          "target_node_id": 5,
+          "source_label": "5_C3",
+          "target_label": "6_C1",
+          "value": 1,
+          "pct_of_source": 3.2258
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 4,
+          "source_label": "5_C2",
+          "target_label": "6_C0",
+          "value": 6,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 6,
+          "source_label": "5_C1",
+          "target_label": "6_C2",
+          "value": 1,
+          "pct_of_source": 2.439
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 5,
+          "source_label": "6_C2",
+          "target_label": "7_C2",
+          "value": 31,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 4,
+          "source_label": "6_C1",
+          "target_label": "7_C1",
+          "value": 38,
+          "pct_of_source": 95.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "6_C0",
+          "target_label": "7_C0",
+          "value": 41,
+          "pct_of_source": 97.619
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 4,
+          "source_label": "6_C0",
+          "target_label": "7_C1",
+          "value": 1,
+          "pct_of_source": 2.381
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "6_C1",
+          "target_label": "7_C0",
+          "value": 1,
+          "pct_of_source": 2.5
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 5,
+          "source_label": "6_C1",
+          "target_label": "7_C2",
+          "value": 1,
+          "pct_of_source": 2.5
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 4,
+          "source_label": "7_C2",
+          "target_label": "8_C1",
+          "value": 31,
+          "pct_of_source": 96.875
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 4,
+          "source_label": "7_C1",
+          "target_label": "8_C1",
+          "value": 29,
+          "pct_of_source": 74.359
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "7_C0",
+          "target_label": "8_C0",
+          "value": 42,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "7_C1",
+          "target_label": "8_C0",
+          "value": 10,
+          "pct_of_source": 25.641
+        },
+        {
+          "source_node_id": 2,
+          "target_node_id": 3,
+          "source_label": "7_C2",
+          "target_label": "8_C0",
+          "value": 1,
+          "pct_of_source": 3.125
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "8_C1",
+          "target_label": "9_C1",
+          "value": 56,
+          "pct_of_source": 93.3333
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "8_C0",
+          "target_label": "9_C0",
+          "value": 53,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "8_C1",
+          "target_label": "9_C0",
+          "value": 4,
+          "pct_of_source": 6.6667
         }
       ]
     }
