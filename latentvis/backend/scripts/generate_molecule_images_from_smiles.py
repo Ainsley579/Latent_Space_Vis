@@ -65,7 +65,11 @@ def main() -> int:
         print("Missing {} - run the pipeline first so it writes real_id_to_smiles.json.".format(json_path))
         return 1
 
-    id_to_smiles = json.loads(json_path.read_text(encoding="utf-8"))
+    raw = json.loads(json_path.read_text(encoding="utf-8"))
+    if isinstance(raw, list):
+        id_to_smiles = {str(r["real_id"]): r["smiles"] for r in raw if isinstance(r, dict) and "real_id" in r and "smiles" in r}
+    else:
+        id_to_smiles = {str(k): v for k, v in raw.items()}
     out_dir = args.case_dir / "molecule_images"
     out_dir.mkdir(parents=True, exist_ok=True)
 

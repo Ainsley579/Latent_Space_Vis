@@ -320,6 +320,46 @@ def load_from_directory(
     }
 
 
+def load_real_id_smiles_both_splits(pt_path: Union[str, Path]) -> List[Dict[str, str]]:
+    """
+    Load real_id and SMILES for both test and train splits from an ESOL-format .pt file.
+    Returns a list of {"real_id": str, "smiles": str, "split": "test"|"train"} for frontend use.
+    """
+    if not _TORCH_AVAILABLE:
+        raise ImportError("PyTorch is required to load .pt files")
+    path = Path(pt_path)
+    try:
+        raw = torch.load(str(path), map_location="cpu", weights_only=False)
+    except TypeError:
+        raw = torch.load(str(path), map_location="cpu")
+    if not isinstance(raw, dict):
+        return []
+    rows = []
+    for split_name in ("test", "train"):
+        real_ids = None
+        smiles_list = None
+        for epoch_key, epoch_data in raw.items():
+            if not isinstance(epoch_data, dict) or split_name not in epoch_data:
+                continue
+            split_data = epoch_data[split_name]
+            if not isinstance(split_data, dict):
+                continue
+            if "id" in split_data:
+                real_ids = list(split_data["id"])
+            smiles_list = split_data.get("smiles") if isinstance(split_data.get("smiles"), (list, tuple)) else None
+            if real_ids is not None and smiles_list is not None and len(smiles_list) == len(real_ids):
+                break
+        if real_ids is None or smiles_list is None or len(smiles_list) != len(real_ids):
+            continue
+        for i in range(len(real_ids)):
+            rows.append({
+                "real_id": str(real_ids[i]),
+                "smiles": str(smiles_list[i]),
+                "split": split_name,
+            })
+    return rows
+
+
 def load_embedding_input(
     path: Union[str, Path],
     model_name: Optional[str] = None,

@@ -66,7 +66,27 @@ def _epoch_column(headers):
     return None
 
 
-def compute_stats(csv_path: Path):
+def _reorder_layer_columns(layer_cols, preferred_layer_order):
+    """Return layer_cols reordered so preferred_layer_order (layer names without _cluster) come first.
+    Must match all_sankey layer key order so transition stats (cell-to-cell %) match.
+    """
+    if not preferred_layer_order:
+        return layer_cols
+    layer_names = [c.replace("_cluster", "") for c in layer_cols]
+    seen = set()
+    reordered = []
+    for p in preferred_layer_order:
+        col = p + "_cluster"
+        if col in layer_cols and p not in seen:
+            reordered.append(col)
+            seen.add(p)
+    for name in layer_names:
+        if name not in seen:
+            reordered.append(name + "_cluster")
+    return reordered
+
+
+def compute_stats(csv_path, preferred_layer_order=None):
     """Read CSV and return by_epoch and by_layer transition stats.
 
     - by_epoch: within same epoch, for each consecutive layer pair (model order), count how many
@@ -74,6 +94,7 @@ def compute_stats(csv_path: Path):
       from_layer column vs to_layer column (normalized so 0 and '0' are equal).
     - by_layer: within same layer, for each consecutive epoch pair, count how many real_ids
       have a different cluster in the next epoch. Same real_id compared across two epoch rows.
+    Layer order must match all_sankey.json so cell-to-cell change percentages align.
     """
     with csv_path.open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -82,6 +103,7 @@ def compute_stats(csv_path: Path):
     if not rows:
         return {"by_epoch": [], "by_layer": []}
     layer_cols = _layer_columns(headers)
+    layer_cols = _reorder_layer_columns(layer_cols, preferred_layer_order)
     epoch_col = _epoch_column(headers)
     if not layer_cols:
         return {"by_epoch": [], "by_layer": []}
@@ -161,13 +183,43 @@ def compute_stats(csv_path: Path):
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser(
+        description="Compute layer/epoch transition stats. Layer order must match all_sankey.json."
+    )
+    ap.add_argument(
+        "--layer-order",
+        type=str,
+        default="",
+        help="Comma-separated layer order (model order), e.g. fingerprint,gnn_layer_1,gnn_layer_2,gnn_layer_3,ffn_layer_1,ffn_layer_2. Use same order as all_sankey. If omitted, CSV header order is used (correct when CSV from current pipeline).",
+    )
+    ap.add_argument(
+        "--layer-order-chemeleon",
+        type=str,
+        default="",
+        help="Override layer order for chemeleon only (9 layers). If set, used instead of --layer-order for chemeleon.",
+    )
+    args = ap.parse_args()
+    preferred_by_case = {}
+    if args.layer_order:
+        preferred_by_case["chemprop"] = [s.strip() for s in args.layer_order.split(",") if s.strip()]
+    if args.layer_order_chemeleon:
+        preferred_by_case["chemeleon"] = [s.strip() for s in args.layer_order_chemeleon.split(",") if s.strip()]
+    if not preferred_by_case:
+        preferred_by_case = {"chemprop": None, "chemeleon": None}
+    else:
+        # If only --layer-order given, use it for chemeleon too (extra layers appended by _reorder_layer_columns).
+        if "chemeleon" not in preferred_by_case and "chemprop" in preferred_by_case:
+            preferred_by_case["chemeleon"] = preferred_by_case["chemprop"]
+
     for case in CASES:
         for split in ("test", "train", ""):
             case_dir = (DATA_ROOT / case / split) if split else (DATA_ROOT / case)
             if not case_dir.is_dir():
                 continue
+            preferred = preferred_by_case.get(case)
             for method, csv_path in _find_assignment_csvs(case_dir):
-                stats = compute_stats(csv_path)
+                stats = compute_stats(csv_path, preferred_layer_order=preferred)
                 out_dir = csv_path.parent
                 (out_dir / "layer_transition_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
                 (out_dir / "layer_transition_by_epoch.json").write_text(

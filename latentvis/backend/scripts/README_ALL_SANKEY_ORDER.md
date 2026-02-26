@@ -2,6 +2,17 @@
 
 The frontend reads **layer order** from `all_sankey.json`: the key order of `data.layer` is the canonical layer order and must match the **model's layer order**.
 
+**When you change all_sankey (or layer order), all of the following must stay in sync:**
+
+| Output | Script / code | How it stays in model order |
+|--------|----------------|-----------------------------|
+| `all_sankey.json` | `run_pipeline_from_embeddings.py`, `materialize_sankey_compat_files.py` | Pipeline uses `layer_keys` from loader; materialize uses CSV column order or `--layer-order`. |
+| `layer_transition_*.json` | `compute_layer_transition_stats.py` | Consecutive layer pairs (cell-to-cell % change) must match all_sankey order. Use `--layer-order` (and `--layer-order-chemeleon`) when running on existing data. |
+| `sankey_samples.json`, `*_sankey_samples.json` | Pipeline, materialize | Built from same `layer_keys` / `layers` as all_sankey. |
+| `vertical_model_samples_*.json` | Materialize, Flask compat | Layers from all_sankey key order or materialize `layers`. |
+
+Re-run **reorder_all_sankey_keys.py** on existing all_sankey, then **compute_layer_transition_stats.py** with the same `--layer-order`, and (if needed) **materialize_sankey_compat_files.py** with `--layer-order`.
+
 ## Existing files (already updated)
 
 All `all_sankey.json` under `frontend/public/data` for **chemprop**, **chemeleon**, and **dimenet** (where applicable) have been reordered so that `"layer"` keys follow model order:
@@ -36,3 +47,18 @@ python3 scripts/reorder_all_sankey_keys.py <path/to/all_sankey.json> \
 ```
 
 Or use `--layer-order-from-csv` to take the order from the same case's `clustering_metrics/cluster_assignments_with_real_id.csv`.
+
+## Layer transition stats (must match all_sankey order)
+
+Cell-to-cell change percentages (`layer_transition_by_epoch.json`, `layer_transition_by_layer.json`) are computed for **consecutive** layers in the order you specify. That order must match `all_sankey.json` so the frontend’s “from layer A to layer B” matches the stats.
+
+After reordering all_sankey (or when using old CSVs with wrong column order), run:
+
+```bash
+# Chemprop (6 layers) and chemeleon (9 layers)
+python3 scripts/compute_layer_transition_stats.py \
+  --layer-order "fingerprint,gnn_layer_1,gnn_layer_2,gnn_layer_3,ffn_layer_1,ffn_layer_2" \
+  --layer-order-chemeleon "fingerprint,gnn_layer_1,gnn_layer_2,gnn_layer_3,gnn_layer_4,gnn_layer_5,gnn_layer_6,ffn_layer_1,ffn_layer_2"
+```
+
+When the pipeline has just run, the CSV is already in model order, so you can run the script without `--layer-order`.
