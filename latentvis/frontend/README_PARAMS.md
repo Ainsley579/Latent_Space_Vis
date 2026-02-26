@@ -60,27 +60,23 @@ This doc summarizes how the frontend should interact with the updated backend an
   - Runs RDKit MCS on those M members only.
   - Writes results to `substructures/cluster_substructures.json` with the same schema as before.
 
-### 3. Layer ordering in Sankey
+### 3. Layer ordering in Sankey (all_sankey.json)
 
-- For Chemprop/Chemeleon `.pt` inputs, the backend now preserves **layer order** as defined in the model:
-  - `embedding_loader.load_embedding_input` no longer sorts `layer_keys` alphabetically for this case.
-  - Instead, it records layers in the order they appear under `split["embeddings"]` for each epoch.
-- The pipeline and Sankey output (`sankey/all_sankey.json`) respect this ordering, so:
-  - `Object.keys(data.layer)` in the frontend will already be in **model layer order**, not alphabetical.
-  - No extra sorting is needed on the frontend; just use the key order as-is.
+- The backend keeps **layer order** equal to the **model’s layer order** everywhere:
+  - `embedding_loader`: for ESOL `.pt` files, layers follow the order in `split["embeddings"]`; for other inputs, first-seen order (no alphabetical sort).
+  - The pipeline writes `sankey/all_sankey.json` (and `sankey_current/all_sankey.json`) with the `"layer"` object’s keys in this **model order**.
+- The frontend should **read layer order from `all_sankey.json`**: use the key order of `data.layer` (e.g. `Object.keys(data.layer)`) as the canonical layer order. No extra sorting; the JSON is already in model order.
 
 ### 4. Transition stats: horizontal vs vertical (optional)
 
 - The backend script `backend/scripts/compute_layer_transition_stats.py` reads
-  `clustering_metrics/cluster_assignments_with_real_id.csv` and can write **three** files per method:
+  `clustering_metrics/cluster_assignments_with_real_id.csv` and writes **three** files per method:
   - `layer_transition_stats.json` — combined `{ by_epoch, by_layer }` (backward compatible).
-  - `layer_transition_by_epoch.json` — **horizontal** transitions:
-    - within a fixed epoch, consecutive layers `from_layer → to_layer`.
-  - `layer_transition_by_layer.json` — **vertical** transitions:
-    - within a fixed layer, consecutive epochs `from_epoch → to_epoch`.
+  - `layer_transition_by_epoch.json` — **horizontal**: within a fixed epoch, consecutive layers (model order) `from_layer → to_layer`.
+  - `layer_transition_by_layer.json` — **vertical**: within a fixed layer, consecutive epochs `from_epoch → to_epoch`.
+- **Correctness:** For each stat we compare the **same real_id** across the two cells (same point, two cluster assignments). “Changed” = cluster ID in the source cell ≠ cluster ID in the target cell. Cluster values are normalized (e.g. `0` and `"0"` count as the same) so that `n_changed` and `pct_changed` are correct (e.g. 10 changed out of 120, not 110). Layer order is the CSV header order (model order); epoch order is numeric.
 - For interactive `/generate-range` calls, these transition stats are **skipped by default** to keep runtime low.
-  They can be recomputed on demand by running the script directly or by passing
-  `compute_transition_stats: true` in the JSON body if the backend exposes this option.
+  Recompute by running the script or passing `compute_transition_stats: true` if the backend exposes it.
 
 ### 5. Baseline vs. current results (originals never overwritten)
 

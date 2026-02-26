@@ -41,6 +41,25 @@ def _layer_columns(headers):
     return [h for h in headers if h.endswith("_cluster") and h != "epoch"]
 
 
+def _normalize_cluster_value(val):
+    """Normalize cluster ID for comparison so that 0 and '0' and ' 0 ' are equal. Returns a comparable value."""
+    if val is None:
+        return None
+    s = str(val).strip()
+    if s == "" or s.lower() == "nan":
+        return None
+    try:
+        return int(float(s))
+    except (ValueError, TypeError):
+        return s
+
+
+def _cluster_eq(a, b):
+    """True if both are None or both are the same cluster ID (after normalization)."""
+    na, nb = _normalize_cluster_value(a), _normalize_cluster_value(b)
+    return na == nb
+
+
 def _epoch_column(headers):
     if "epoch" in headers:
         return "epoch"
@@ -48,23 +67,30 @@ def _epoch_column(headers):
 
 
 def compute_stats(csv_path: Path):
-    """Read CSV and return by_epoch and by_layer transition stats."""
+    """Read CSV and return by_epoch and by_layer transition stats.
+
+    - by_epoch: within same epoch, for each consecutive layer pair (model order), count how many
+      real_ids have a different cluster in the next layer. Same real_id = same row; compare
+      from_layer column vs to_layer column (normalized so 0 and '0' are equal).
+    - by_layer: within same layer, for each consecutive epoch pair, count how many real_ids
+      have a different cluster in the next epoch. Same real_id compared across two epoch rows.
+    """
     with csv_path.open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         rows = list(reader)
+        headers = list(reader.fieldnames or [])
     if not rows:
         return {"by_epoch": [], "by_layer": []}
-    headers = list(reader.fieldnames or [])
     layer_cols = _layer_columns(headers)
     epoch_col = _epoch_column(headers)
     if not layer_cols:
         return {"by_epoch": [], "by_layer": []}
 
+    # by_epoch: within same epoch, same real_id; compare cluster in consecutive layers (model order).
     by_epoch = []
     for i in range(len(layer_cols) - 1):
         from_l = layer_cols[i]
         to_l = layer_cols[i + 1]
-        # Per epoch: among rows with same epoch, count where from_l != to_l
         from_key = from_l.replace("_cluster", "")
         to_key = to_l.replace("_cluster", "")
         if epoch_col:
@@ -77,7 +103,8 @@ def compute_stats(csv_path: Path):
             for ep in sorted(epochs_seen, key=lambda x: (int(x) if str(x).isdigit() else x)):
                 subset = [r for r in rows if r.get(epoch_col) == ep]
                 n_total = len(subset)
-                n_changed = sum(1 for r in subset if r.get(from_l) != r.get(to_l))
+                # Changed = same real_id has different cluster in to_layer vs from_layer (normalized comparison).
+                n_changed = sum(1 for r in subset if not _cluster_eq(r.get(from_l), r.get(to_l)))
                 pct = (100.0 * n_changed / n_total) if n_total else 0.0
                 by_epoch.append({
                     "epoch": ep,
@@ -89,7 +116,7 @@ def compute_stats(csv_path: Path):
                 })
         else:
             n_total = len(rows)
-            n_changed = sum(1 for r in rows if r.get(from_l) != r.get(to_l))
+            n_changed = sum(1 for r in rows if not _cluster_eq(r.get(from_l), r.get(to_l)))
             pct = (100.0 * n_changed / n_total) if n_total else 0.0
             by_epoch.append({
                 "epoch": None,
@@ -100,9 +127,9 @@ def compute_stats(csv_path: Path):
                 "pct_changed": round(pct, 2),
             })
 
+    # by_layer: within same layer, same real_id; compare cluster in consecutive epochs (epoch order).
     by_layer = []
     if epoch_col:
-        # For each layer, for each consecutive epoch pair, count real_ids that changed
         real_ids = sorted(set(r.get("real_id") for r in rows if r.get("real_id") is not None))
         epochs_sorted = sorted(set(r.get(epoch_col) for r in rows if r.get(epoch_col) is not None),
                                key=lambda x: (int(x) if str(x).isdigit() else x))
@@ -111,12 +138,15 @@ def compute_stats(csv_path: Path):
             for j in range(len(epochs_sorted) - 1):
                 e_from = epochs_sorted[j]
                 e_to = epochs_sorted[j + 1]
-                # Build real_id -> cluster for epoch e_from and e_to
                 from_vals = {r["real_id"]: r.get(layer_col) for r in rows if r.get(epoch_col) == e_from}
                 to_vals = {r["real_id"]: r.get(layer_col) for r in rows if r.get(epoch_col) == e_to}
                 common_ids = [rid for rid in real_ids if rid in from_vals and rid in to_vals]
                 n_total = len(common_ids)
-                n_changed = sum(1 for rid in common_ids if from_vals.get(rid) != to_vals.get(rid))
+                # Changed = same real_id has different cluster in to_epoch vs from_epoch (normalized comparison).
+                n_changed = sum(
+                    1 for rid in common_ids
+                    if not _cluster_eq(from_vals.get(rid), to_vals.get(rid))
+                )
                 pct = (100.0 * n_changed / n_total) if n_total else 0.0
                 by_layer.append({
                     "layer": layer_key,

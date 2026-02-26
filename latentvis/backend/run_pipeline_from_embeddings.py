@@ -500,6 +500,7 @@ def run_pipeline(
         topk_dir.mkdir(parents=True, exist_ok=True)
         (topk_dir / "cluster_representatives.json").write_text(json.dumps(topk_list, indent=2))
         (topk_dir / "cluster_sorted_members.json").write_text(json.dumps(sorted_members_list, indent=2))
+        # all_sankey key order: epoch_keys and layer_keys (model order). Frontend reads layer order from this JSON.
         all_sankey = {"epoch": {}, "layer": {}}
         for ek in epoch_keys:
             edges = []
