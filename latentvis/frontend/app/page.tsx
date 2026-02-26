@@ -160,7 +160,7 @@ export default function Home() {
       version
     );
   };
-  const buildScatterPath = (
+  const buildScatterPaths = (
     model: string,
     layer: string,
     projection: "pca" | "mds" | "umap" | "tsne",
@@ -169,10 +169,16 @@ export default function Home() {
     version: number = dataRefreshKey
   ) => {
     const base = `${model}_${layer}`;
-    const file = `${base}_${projection}.json`;
-    const url = `/data/${dataset}/scatterplot/${file}`;
-    const sep = url.includes("?") ? "&" : "?";
-    return `${url}${sep}v=${version}`;
+    const xyFile = `${base}_${projection}_xy.json`;
+    const clusterFile = `${base}_${projection}_cluster.json`;
+    const xyUrl = `/data/${dataset}/scatterplot/${xyFile}`;
+    const clusterUrl = `/data/${dataset}/scatterplot/${clusterFile}`;
+    const sepXY = xyUrl.includes("?") ? "&" : "?";
+    const sepCluster = clusterUrl.includes("?") ? "&" : "?";
+    return {
+      xy: `${xyUrl}${sepXY}v=${version}`,
+      cluster: `${clusterUrl}${sepCluster}v=${version}`,
+    };
   };
   const syncSankeyPaths = (
     model: string,
@@ -191,7 +197,10 @@ export default function Home() {
   const [selectedLayer, setSelectedLayer] = useState("fingerprint");
   const [selectedModel, setSelectedModel] = useState("0");
   const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
-  const [scatterPath, setScatterPath] = useState("/data/chemprop/scatterplot/0_fingerprint_pca.json");
+  const [scatterPaths, setScatterPaths] = useState({
+    xy: "/data/chemprop/scatterplot/0_fingerprint_pca_xy.json",
+    cluster: "/data/chemprop/scatterplot/0_fingerprint_pca_cluster.json",
+  });
   const scatterOverrideUrlRef = useRef<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
@@ -634,7 +643,7 @@ export default function Home() {
       URL.revokeObjectURL(scatterOverrideUrlRef.current);
       scatterOverrideUrlRef.current = null;
     }
-    setScatterPath(buildScatterPath(selectedModel, selectedLayer, scatterProjection));
+    setScatterPaths(buildScatterPaths(selectedModel, selectedLayer, scatterProjection));
   }, [datasetBase, selectedModel, selectedLayer, scatterProjection]);
 
   useEffect(() => {
@@ -1272,7 +1281,8 @@ export default function Home() {
                   className="flex-1 min-h-0 w-full bg-white"
                 >
                   <ScatterPlot
-                    dataPath={scatterPath}
+                    dataPathXY={scatterPaths.xy}
+                    dataPathCluster={scatterPaths.cluster}
                     activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
                     activeIds={showSearchResultsInMembers ? searchResultIds : selectedIds}
                     highlightId={hoveredId}
@@ -1563,8 +1573,8 @@ export default function Home() {
                     setSelectedModel(defaults.model);
                     setSelectedLayer(defaults.layer);
                     syncSankeyPaths(defaults.model, defaults.layer, next, nextClustering);
-                    setScatterPath(
-                      buildScatterPath(
+                    setScatterPaths(
+                      buildScatterPaths(
                         defaults.model,
                         defaults.layer,
                         scatterProjection,
@@ -1587,8 +1597,8 @@ export default function Home() {
                     setSelectedModel(defaults.model);
                     setSelectedLayer(defaults.layer);
                     syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, next);
-                    setScatterPath(
-                      buildScatterPath(defaults.model, defaults.layer, scatterProjection, selectedDataset, next)
+                    setScatterPaths(
+                      buildScatterPaths(defaults.model, defaults.layer, scatterProjection, selectedDataset, next)
                     );
                     setSelectedNode(null);
                     setSelectedIds(null);

@@ -12,7 +12,8 @@ type ScatterPoint = {
 };
 
 type ScatterPlotProps = {
-  dataPath: string;
+  dataPathXY: string;
+  dataPathCluster: string;
   activeCluster?: number | null;
   activeIds?: string[] | null;
   highlightId?: string | null;
@@ -26,7 +27,8 @@ type ScatterPlotProps = {
 };
 
 export default function ScatterPlot({
-  dataPath,
+  dataPathXY,
+  dataPathCluster,
   activeCluster,
   activeIds,
   highlightId,
@@ -223,16 +225,42 @@ export default function ScatterPlot({
       }
     }
 
-    fetch(dataPath)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch scatter data");
+    Promise.all([
+      fetch(dataPathXY).then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch scatter XY data");
         return res.json();
-      })
-      .then((json: ScatterPoint[]) => {
-        lastRows = json;
-        const clusterIds = Array.from(new Set(json.map((d) => d.cluster_id))).sort((a, b) => a - b);
+      }),
+      fetch(dataPathCluster).then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch scatter cluster data");
+        return res.json();
+      }),
+    ])
+      .then(([xyJson, clusterJson]) => {
+        const xyRows = Array.isArray(xyJson) ? xyJson : [];
+        const clusterRows = Array.isArray(clusterJson) ? clusterJson : [];
+        const clusterById = new Map<string, number>();
+        clusterRows.forEach((d: any) => {
+          const id = String(d?.real_id ?? "");
+          if (!id) return;
+          clusterById.set(id, Number(d?.cluster_id ?? 0) || 0);
+        });
+        const merged: ScatterPoint[] = xyRows
+          .map((d: any) => {
+            const id = String(d?.real_id ?? "");
+            if (!id) return null;
+            return {
+              real_id: id,
+              x: Number(d?.x ?? 0) || 0,
+              y: Number(d?.y ?? 0) || 0,
+              cluster_id: clusterById.get(id) ?? 0,
+            } as ScatterPoint;
+          })
+          .filter((d: ScatterPoint | null): d is ScatterPoint => !!d);
+
+        lastRows = merged;
+        const clusterIds = Array.from(new Set(merged.map((d) => d.cluster_id))).sort((a, b) => a - b);
         const idsByCluster: Record<number, string[]> = {};
-        json.forEach((d) => {
+        merged.forEach((d) => {
           const cid = d.cluster_id;
           if (!idsByCluster[cid]) idsByCluster[cid] = [];
           idsByCluster[cid].push(String(d.real_id));
@@ -255,7 +283,8 @@ export default function ScatterPlot({
       ro.disconnect();
     };
   }, [
-    dataPath,
+    dataPathXY,
+    dataPathCluster,
     activeCluster,
     activeIds,
     highlightId,

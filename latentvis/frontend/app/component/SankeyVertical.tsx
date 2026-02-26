@@ -670,18 +670,17 @@ export default function SankeyVertical({
       sampleSel
         .attr("opacity", (d) => {
           const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
-          const isHighlight = (!!highlightId && d.id === highlightId) || highlightSet.has(d.id);
-          return isHighlight ? 1 : baseOpacity(d);
+          const isHovered = !!highlightId && d.id === highlightId;
+          const isSearchHit = highlightSet.has(d.id);
+          return (isHovered || isSearchHit) ? 1 : baseOpacity(d);
         })
         .attr("stroke", (d) => {
-          const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
-          const isHighlight = (!!highlightId && d.id === highlightId) || highlightSet.has(d.id);
-          return isHighlight ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
+          const isHovered = !!highlightId && d.id === highlightId;
+          return isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
         })
         .attr("stroke-width", (d) => {
-          const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
-          const isHighlight = (!!highlightId && d.id === highlightId) || highlightSet.has(d.id);
-          return isHighlight ? 2 : 1.1;
+          const isHovered = !!highlightId && d.id === highlightId;
+          return isHovered ? 2 : 1.1;
         });
 
       // Keep labels above links/nodes.
@@ -784,17 +783,18 @@ export default function SankeyVertical({
     const lines = Array.from(svg.querySelectorAll("g.sample-trajectories line[data-id]")) as SVGLineElement[];
     lines.forEach((line) => {
       const id = line.getAttribute("data-id") || "";
-      const isHighlight = (!!highlightId && id === highlightId) || highlightSet.has(id);
+      const isHovered = !!highlightId && id === highlightId;
+      const isSearchHit = highlightSet.has(id);
       const opacity = highlightSet.size > 0
-        ? (highlightSet.has(id) ? 1 : 0)
-        : isHighlight
+        ? (isSearchHit ? 1 : 0)
+        : isHovered
           ? 1
           : activeName
             ? (samplesForActive.has(id) ? 0.8 : 0)
             : 0;
       line.setAttribute("opacity", String(opacity));
-      line.setAttribute("stroke", isHighlight ? HIGHLIGHT_RED : SANKEY_LINK_COLOR);
-      line.setAttribute("stroke-width", isHighlight ? "2" : "1.1");
+      line.setAttribute("stroke", isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR);
+      line.setAttribute("stroke-width", isHovered ? "2" : "1.1");
     });
   }, [displayActiveNode, highlightId, highlightIds, mode, modelKey, layerKey]);
 
