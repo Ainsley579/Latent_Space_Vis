@@ -65,8 +65,8 @@ function sanitizePathKey(value: string) {
 export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
   const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("pgmeans");
-  const [generatedSankeyPayload, setGeneratedSankeyPayload] = useState<GeneratedSankeyPayload | null>(null);
-  const [generatedRuntimePayload, setGeneratedRuntimePayload] = useState<GeneratedRuntimePayload | null>(null);
+  const [generatedSankeyPayloads, setGeneratedSankeyPayloads] = useState<Record<string, GeneratedSankeyPayload>>({});
+  const [generatedRuntimePayloads, setGeneratedRuntimePayloads] = useState<Record<string, GeneratedRuntimePayload>>({});
   const generatedSankeyBlobUrlsRef = useRef<Map<string, string>>(new Map());
   const datasetBaseFor = (
     dataset: DatasetKey,
@@ -90,14 +90,12 @@ export default function Home() {
     generatedSankeyBlobUrlsRef.current.set(cacheKey, url);
     return url;
   };
-  const generatedMatchesCurrent =
-    !!generatedSankeyPayload &&
-    generatedSankeyPayload.dataset === selectedDataset &&
-    generatedSankeyPayload.clustering === selectedClustering;
-  const generatedRuntimeMatchesCurrent =
-    !!generatedRuntimePayload &&
-    generatedRuntimePayload.dataset === selectedDataset &&
-    generatedRuntimePayload.clustering === selectedClustering;
+  const runtimeKeyFor = (dataset: DatasetKey, clustering: ClusteringKey) => `${dataset}::${clustering}`;
+  const currentRuntimeKey = runtimeKeyFor(selectedDataset, selectedClustering);
+  const generatedSankeyPayload = generatedSankeyPayloads[currentRuntimeKey] ?? null;
+  const generatedRuntimePayload = generatedRuntimePayloads[currentRuntimeKey] ?? null;
+  const generatedMatchesCurrent = !!generatedSankeyPayload;
+  const generatedRuntimeMatchesCurrent = !!generatedRuntimePayload;
   const apiBase = (process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001").replace(/\/+$/, "");
   const withVersion = (url: string, version: number = sankeyRefreshKey) => {
     const sep = url.includes("?") ? "&" : "?";
@@ -113,7 +111,7 @@ export default function Home() {
       generatedSankeyPayload.dataset === dataset &&
       generatedSankeyPayload.clustering === clustering
     ) {
-      return buildGeneratedSankeyBlobUrl("all_sankey", generatedSankeyPayload.allSankey);
+      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:all_sankey`, generatedSankeyPayload.allSankey);
     }
     return withVersion(`${datasetBaseFor(dataset, clustering)}/sankey/all_sankey.json`, version);
   };
@@ -129,7 +127,7 @@ export default function Home() {
       generatedSankeyPayload.clustering === clustering
     ) {
       const rows = generatedSankeyPayload.modelSamples?.[model] ?? [];
-      return buildGeneratedSankeyBlobUrl(`model:${model}`, rows);
+      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:model:${model}`, rows);
     }
     return withVersion(
       `${datasetBaseFor(dataset, clustering)}/sankey/${sanitizePathKey(model)}_sankey_samples.json`,
@@ -148,7 +146,7 @@ export default function Home() {
       generatedSankeyPayload.clustering === clustering
     ) {
       const rows = generatedSankeyPayload.verticalSamplesByLayer?.[layer] ?? [];
-      return buildGeneratedSankeyBlobUrl(`vertical:${layer}`, rows);
+      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:vertical:${layer}`, rows);
     }
     return withVersion(
       `${datasetBaseFor(dataset, clustering)}/sankey/vertical_model_samples_${sanitizePathKey(layer)}.json`,
@@ -476,19 +474,6 @@ export default function Home() {
     setLastSearchCount(null);
   }, [selectedDataset, selectedClustering]);
 
-  useEffect(() => {
-    if (!generatedMatchesCurrent) {
-      revokeGeneratedSankeyBlobUrls();
-      setGeneratedSankeyPayload(null);
-    }
-  }, [selectedDataset, selectedClustering]);
-
-  useEffect(() => {
-    if (!generatedRuntimeMatchesCurrent) {
-      setGeneratedRuntimePayload(null);
-    }
-  }, [selectedDataset, selectedClustering]);
-
   async function generateFromRange(minValue: number, maxValue: number) {
     if (isGeneratingRange) return;
     setIsGeneratingRange(true);
@@ -515,29 +500,36 @@ export default function Home() {
         throw new Error("Generate API missing payload for selected dataset");
       }
       revokeGeneratedSankeyBlobUrls();
-      setGeneratedSankeyPayload({
+      const key = runtimeKeyFor(selectedDataset, selectedClustering);
+      setGeneratedSankeyPayloads((prev) => ({
+        ...prev,
+        [key]: {
         dataset: selectedDataset,
         clustering: selectedClustering,
         allSankey: casePayload.all_sankey ?? { epoch: {}, layer: {} },
         modelSamples: (casePayload.model_samples ?? {}) as Record<string, SankeySampleRow[]>,
         verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<string, SankeySampleRow[]>,
-      });
+        },
+      }));
       const runId = String(json?.run_id ?? "");
       if (runId) {
-        setGeneratedRuntimePayload({
-          dataset: selectedDataset,
-          clustering: selectedClustering,
-          runId,
-          topkRepresentatives: Array.isArray(casePayload.topk_representatives)
-            ? casePayload.topk_representatives
-            : [],
-          clusterSortedMembers: Array.isArray(casePayload.cluster_sorted_members)
-            ? casePayload.cluster_sorted_members
-            : [],
-          substructures: Array.isArray(casePayload.substructures)
-            ? casePayload.substructures
-            : [],
-        });
+        setGeneratedRuntimePayloads((prev) => ({
+          ...prev,
+          [key]: {
+            dataset: selectedDataset,
+            clustering: selectedClustering,
+            runId,
+            topkRepresentatives: Array.isArray(casePayload.topk_representatives)
+              ? casePayload.topk_representatives
+              : [],
+            clusterSortedMembers: Array.isArray(casePayload.cluster_sorted_members)
+              ? casePayload.cluster_sorted_members
+              : [],
+            substructures: Array.isArray(casePayload.substructures)
+              ? casePayload.substructures
+              : [],
+          },
+        }));
       }
       setTopkData(
         Array.isArray(casePayload.topk_representatives) ? casePayload.topk_representatives : []
@@ -603,29 +595,36 @@ export default function Home() {
         throw new Error("Generate API missing payload for selected dataset");
       }
       revokeGeneratedSankeyBlobUrls();
-      setGeneratedSankeyPayload({
+      const key = runtimeKeyFor(selectedDataset, "agglomerative");
+      setGeneratedSankeyPayloads((prev) => ({
+        ...prev,
+        [key]: {
         dataset: selectedDataset,
         clustering: "agglomerative",
         allSankey: casePayload.all_sankey ?? { epoch: {}, layer: {} },
         modelSamples: (casePayload.model_samples ?? {}) as Record<string, SankeySampleRow[]>,
         verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<string, SankeySampleRow[]>,
-      });
+        },
+      }));
       const runId = String(json?.run_id ?? "");
       if (runId) {
-        setGeneratedRuntimePayload({
-          dataset: selectedDataset,
-          clustering: "agglomerative",
-          runId,
-          topkRepresentatives: Array.isArray(casePayload.topk_representatives)
-            ? casePayload.topk_representatives
-            : [],
-          clusterSortedMembers: Array.isArray(casePayload.cluster_sorted_members)
-            ? casePayload.cluster_sorted_members
-            : [],
-          substructures: Array.isArray(casePayload.substructures)
-            ? casePayload.substructures
-            : [],
-        });
+        setGeneratedRuntimePayloads((prev) => ({
+          ...prev,
+          [key]: {
+            dataset: selectedDataset,
+            clustering: "agglomerative",
+            runId,
+            topkRepresentatives: Array.isArray(casePayload.topk_representatives)
+              ? casePayload.topk_representatives
+              : [],
+            clusterSortedMembers: Array.isArray(casePayload.cluster_sorted_members)
+              ? casePayload.cluster_sorted_members
+              : [],
+            substructures: Array.isArray(casePayload.substructures)
+              ? casePayload.substructures
+              : [],
+          },
+        }));
       }
       setTopkData(
         Array.isArray(casePayload.topk_representatives) ? casePayload.topk_representatives : []
