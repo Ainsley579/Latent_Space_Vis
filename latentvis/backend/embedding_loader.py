@@ -79,31 +79,36 @@ def _infer_epoch_layer_keys(
 ) -> Tuple[List[str], List[str], Dict[Tuple[str, str], np.ndarray]]:
     """
     Infer epoch and layer keys from paths like ["epoch_0", "layer_0"] or ["emb"], ["0","emb"].
-    Returns (epoch_keys, layer_keys, cells dict).
+    Returns (epoch_keys, layer_keys, cells dict). Preserves first-seen order (model order from .pt).
     """
     cells = {}
-    epoch_set = set()
-    layer_set = set()
+    epoch_list: List[str] = []
+    layer_list: List[str] = []
+    epoch_seen = set()
+    layer_seen = set()
 
     for path, arr in paths_with_arrays:
         if len(path) >= 2:
-            # Assume first level = epoch, second = layer (or vice versa; we try both)
             a, b = path[0], path[1]
-            epoch_set.add(a)
-            layer_set.add(b)
+            if a not in epoch_seen:
+                epoch_list.append(a)
+                epoch_seen.add(a)
+            if b not in layer_seen:
+                layer_list.append(b)
+                layer_seen.add(b)
             cells[(a, b)] = arr
         elif len(path) == 1:
-            # Single key: treat as layer, epoch = "default"
-            layer_set.add(path[0])
-            epoch_set.add("default")
+            if "default" not in epoch_seen:
+                epoch_list.append("default")
+                epoch_seen.add("default")
+            if path[0] not in layer_seen:
+                layer_list.append(path[0])
+                layer_seen.add(path[0])
             cells[("default", path[0])] = arr
         else:
             continue
 
-    # If we only have one epoch, use "default" or the only one
-    epoch_keys = sorted(epoch_set)
-    layer_keys = sorted(layer_set)
-    return epoch_keys, layer_keys, cells
+    return epoch_list, layer_list, cells
 
 
 def load_single_pt(pt_path: Path, preferred_split: Optional[str] = None) -> Dict[str, Any]:
@@ -277,7 +282,8 @@ def load_from_directory(
             else:
                 arr = _flatten_2d(np.load(str(path)))
             cells[(model_name, layer_name)] = arr
-        layer_keys = sorted(set(k[1] for k in cells))
+        # Preserve layer order from layer_file_map (model order)
+        layer_keys = [k for k in layer_file_map if (model_name, k) in cells]
     else:
         cells = {}
         for f in sorted(dir_path.iterdir()):
@@ -293,7 +299,13 @@ def load_from_directory(
             else:
                 arr = _flatten_2d(np.load(str(f)))
             cells[(model_name, layer_name)] = arr
-        layer_keys = sorted(set(k[1] for k in cells))
+        # First-seen order from directory iteration (no alphabetical sort)
+        layer_keys = []
+        seen = set()
+        for k in (k1 for _, k1 in cells):
+            if k not in seen:
+                layer_keys.append(k)
+                seen.add(k)
 
     if not cells:
         raise ValueError(f"No embedding files found in {dir_path}")

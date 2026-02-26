@@ -46,7 +46,7 @@ echo "Input: $INPUT"
 echo "Output: $OUTPUT_DIR"
 echo ""
 
-# Run full pipeline: all epochs, skip t-SNE for speed, all 3 clustering methods
+# Run full pipeline: all epochs, all four scatter projections (pca/mds/umap/tsne), all 3 clustering methods
 python3 run_pipeline_from_embeddings.py \
   --input "$INPUT" \
   --output-dir "$OUTPUT_DIR" \
@@ -93,7 +93,7 @@ This directory contains pipeline output for the **chemprop** case: embeddings fr
 | `scatterplot/{epoch}_{layer}_pca.json` | PCA projection. |
 | `scatterplot/{epoch}_{layer}_mds.json` | MDS projection. |
 | `scatterplot/{epoch}_{layer}_umap.json` | UMAP projection. |
-| `scatterplot/{epoch}_{layer}_tsne.json` | t-SNE projection (or PCA when --skip-tsne). |
+| `scatterplot/{epoch}_{layer}_tsne.json` | t-SNE projection. |
 | `topk/cluster_representatives.json` | Per (epoch, layer, cluster): top-k closest/farthest real_ids. |
 | `topk/cluster_sorted_members.json` | Per (epoch, layer, cluster): full list of real_ids sorted by distance to center. |
 | `bic_aic/{epoch}_{layer}.json` | BIC/AIC curves for GMM model selection. |
