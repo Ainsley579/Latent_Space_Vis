@@ -55,18 +55,25 @@ function sanitizePathKey(value: string) {
 
 export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
+  const [selectedDataSplit, setSelectedDataSplit] = useState<"test" | "train">("test");
+  const [substructureMaxMembers, setSubstructureMaxMembers] = useState<number>(32);
   const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("pgmeans");
   const [generatedSankeyPayload, setGeneratedSankeyPayload] = useState<GeneratedSankeyPayload | null>(null);
   const generatedSankeyBlobUrlsRef = useRef<Map<string, string>>(new Map());
   const datasetBaseFor = (
     dataset: DatasetKey,
-    clustering: ClusteringKey = selectedClustering
+    clustering: ClusteringKey = selectedClustering,
+    dataSplit: "test" | "train" = selectedDataSplit,
   ) => {
-    if (clustering === "pgmeans") return `/data/${dataset}`;
-    return `/data/${dataset}/clustering/${clustering}`;
+    const splitSegment = dataSplit === "train" ? "/train" : "";
+    if (clustering === "pgmeans") return `/data/${dataset}${splitSegment}`;
+    return `/data/${dataset}${splitSegment}/clustering/${clustering}`;
   };
-  const datasetBase = datasetBaseFor(selectedDataset, selectedClustering);
-  const assetBase = `/data/${selectedDataset}`;
+  const datasetBase = datasetBaseFor(selectedDataset, selectedClustering, selectedDataSplit);
+  const assetBase =
+    selectedDataSplit === "train"
+      ? `/data/${selectedDataset}/train`
+      : `/data/${selectedDataset}`;
   const revokeGeneratedSankeyBlobUrls = () => {
     generatedSankeyBlobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
     generatedSankeyBlobUrlsRef.current.clear();
@@ -140,16 +147,20 @@ export default function Home() {
       version
     );
   };
+  const [useCurrentScatter, setUseCurrentScatter] = useState(false);
+
   const buildScatterPath = (
     model: string,
     layer: string,
     projection: "pca" | "mds" | "umap" | "tsne",
     dataset: DatasetKey = selectedDataset,
-    clustering: ClusteringKey = selectedClustering
+    clustering: ClusteringKey = selectedClustering,
+    dataSplit: "test" | "train" = selectedDataSplit,
   ) => {
     const base = `${model}_${layer}`;
     const file = `${base}_${projection}.json`;
-    return `${datasetBaseFor(dataset, clustering)}/scatterplot/${file}`;
+    const dir = useCurrentScatter ? "scatterplot_current" : "scatterplot";
+    return `${datasetBaseFor(dataset, clustering, dataSplit)}/${dir}/${file}`;
   };
   const syncSankeyPaths = (
     model: string,
@@ -410,7 +421,8 @@ export default function Home() {
   }
 
   useEffect(() => {
-    fetch(`/data/${selectedDataset}/real_id_to_smiles.json`)
+    const splitSegment = selectedDataSplit === "train" ? "/train" : "";
+    fetch(`/data/${selectedDataset}${splitSegment}/real_id_to_smiles.json`)
       .then((res) => {
         if (res.status === 404) return {};
         if (!res.ok) throw new Error("Failed to load real_id_to_smiles.json");
@@ -434,7 +446,7 @@ export default function Home() {
         console.error(err);
         setSmilesByRealId({});
       });
-  }, [selectedDataset]);
+  }, [selectedDataset, selectedDataSplit]);
 
   useEffect(() => {
     setSearchResultIds([]);
@@ -466,6 +478,8 @@ export default function Home() {
           max: maxValue,
           dataset: selectedDataset,
           clustering: clusteringParam,
+          substructure_max_members: substructureMaxMembers,
+          data_split: selectedDataSplit,
         }),
       });
       if (!res.ok) {
@@ -478,6 +492,7 @@ export default function Home() {
         body: JSON.stringify({
           dataset: selectedDataset,
           clustering: selectedClustering,
+          data_split: selectedDataSplit,
           include_payload: true,
           write_files: false,
         }),
@@ -500,6 +515,7 @@ export default function Home() {
       });
       setSankeyRefreshKey((k: number) => k + 1);
       setDataRefreshKey((k: number) => k + 1);
+      setUseCurrentScatter(true);
       setGenerateStatusText("Generate finished.");
     } catch (err) {
       console.error("Failed to call generate-range API:", err);
@@ -530,6 +546,8 @@ export default function Home() {
           clustering: "agglomerative",
           k,
           linkage: config.linkage,
+          substructure_max_members: substructureMaxMembers,
+          data_split: selectedDataSplit,
         }),
       });
       if (!res.ok) {
@@ -543,6 +561,7 @@ export default function Home() {
       setScatterPath(buildScatterPath(selectedModel, selectedLayer, scatterProjection));
       setSankeyRefreshKey((prev: number) => prev + 1);
       setDataRefreshKey((prev: number) => prev + 1);
+      setUseCurrentScatter(true);
       setGenerateStatusText(
         `All cells updated: k=${json?.k ?? k}, linkage=${config.linkage}. Substructures and cluster order refreshed.`
       );
@@ -977,6 +996,10 @@ export default function Home() {
             gridTemplateRows: `${topRowPct}% ${midRowPct}% ${bottomRowPct}%`,
           }}
         >
+          <div className="absolute top-2 right-3 z-40 px-2 py-0.5 rounded bg-white/90 border border-zinc-300 text-[11px] text-zinc-700 shadow-sm pointer-events-none">
+            <span className="font-semibold mr-1">{selectedDataset}</span>
+            <span>· {selectedDataSplit === "train" ? "train split" : "test split (baseline)"}</span>
+          </div>
           <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "1 / 2" }}>
             <div
               id="sankey2d"
@@ -1483,15 +1506,40 @@ export default function Home() {
                         defaults.layer,
                         scatterProjection,
                         next,
-                        nextClustering
+                        nextClustering,
+                        selectedDataSplit,
                       )
                     );
+                    setUseCurrentScatter(false);
                     setSelectedNode(null);
                     setSelectedIds(null);
                     setCellSelected(false);
                     setActiveSankeyRows([]);
                   }}
                   datasetOptions={DATASET_OPTIONS_UI}
+                  dataSplit={selectedDataSplit}
+                  onDataSplitChange={(split) => {
+                    setSelectedDataSplit(split);
+                    const defaults = DATASET_DEFAULTS[selectedDataset];
+                    syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, selectedClustering);
+                    setScatterPath(
+                      buildScatterPath(
+                        defaults.model,
+                        defaults.layer,
+                        scatterProjection,
+                        selectedDataset,
+                        selectedClustering,
+                        split,
+                      )
+                    );
+                    setUseCurrentScatter(false);
+                    setSelectedNode(null);
+                    setSelectedIds(null);
+                    setCellSelected(false);
+                    setActiveSankeyRows([]);
+                  }}
+                  substructureMaxMembers={substructureMaxMembers}
+                  onSubstructureMaxMembersChange={setSubstructureMaxMembers}
                   clustering={selectedClustering}
                   clusteringOptions={CLUSTERING_OPTIONS}
                   onClusteringChange={(c) => {
@@ -1502,8 +1550,16 @@ export default function Home() {
                     setSelectedLayer(defaults.layer);
                     syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, next);
                     setScatterPath(
-                      buildScatterPath(defaults.model, defaults.layer, scatterProjection, selectedDataset, next)
+                      buildScatterPath(
+                        defaults.model,
+                        defaults.layer,
+                        scatterProjection,
+                        selectedDataset,
+                        next,
+                        selectedDataSplit,
+                      )
                     );
+                    setUseCurrentScatter(false);
                     setSelectedNode(null);
                     setSelectedIds(null);
                     setCellSelected(false);

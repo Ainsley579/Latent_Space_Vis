@@ -6,6 +6,10 @@ type SyncControlPanelProps = {
   dataset: string;
   onDatasetChange: (dataset: string) => void;
   datasetOptions: string[];
+  dataSplit?: "test" | "train";
+  onDataSplitChange?: (split: "test" | "train") => void;
+  substructureMaxMembers?: number;
+  onSubstructureMaxMembersChange?: (value: number) => void;
   clustering?: string;
   clusteringOptions?: Array<{ value: string; label: string }>;
   onClusteringChange?: (clustering: string) => void;
@@ -31,6 +35,10 @@ export default function SyncControlPanel({
   dataset,
   onDatasetChange,
   datasetOptions,
+  dataSplit,
+  onDataSplitChange,
+  substructureMaxMembers,
+  onSubstructureMaxMembersChange,
   clustering,
   clusteringOptions = [],
   onClusteringChange,
@@ -87,6 +95,37 @@ export default function SyncControlPanel({
           ))}
         </select>
       </div>
+      {onDataSplitChange && (
+        <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
+          <label className="text-[10px] text-zinc-700 shrink-0">DATA SPLIT</label>
+          <select
+            className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
+            value={dataSplit ?? "test"}
+            onChange={(e) => onDataSplitChange(e.target.value as "test" | "train")}
+          >
+            <option value="test">test (default)</option>
+            <option value="train">train</option>
+          </select>
+        </div>
+      )}
+      {onSubstructureMaxMembersChange && (
+        <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
+          <label className="text-[10px] text-zinc-700 shrink-0">SUBSTRUCTURE M</label>
+          <input
+            type="number"
+            min={1}
+            max={200}
+            step={1}
+            className="h-6 w-16 px-1 text-xs border border-zinc-300 rounded bg-white"
+            value={substructureMaxMembers ?? 32}
+            onChange={(e) => {
+              const val = Number(e.target.value) || 0;
+              const clamped = Math.max(1, Math.min(200, val));
+              onSubstructureMaxMembersChange(clamped);
+            }}
+          />
+        </div>
+      )}
       {clustering && clusteringOptions.length > 0 && onClusteringChange && (
         <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
           <label className="text-[10px] text-zinc-700 shrink-0">CLUSTERING</label>

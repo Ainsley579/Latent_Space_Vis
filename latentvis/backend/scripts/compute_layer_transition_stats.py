@@ -136,11 +136,23 @@ def main():
         if not case_dir.is_dir():
             continue
         for method, csv_path in _find_assignment_csvs(case_dir):
-            out_path = csv_path.parent / "layer_transition_stats.json"
             stats = compute_stats(csv_path)
-            out_path.write_text(json.dumps(stats, indent=2), encoding="utf-8")
-            print("Wrote %s (%s): by_epoch=%s by_layer=%s" % (
-                out_path, method, len(stats["by_epoch"]), len(stats["by_layer"])))
+            out_dir = csv_path.parent
+            # Combined view (backward compatible)
+            (out_dir / "layer_transition_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
+            # Split views for horizontal (by_epoch) and vertical (by_layer) transitions
+            (out_dir / "layer_transition_by_epoch.json").write_text(
+                json.dumps({"by_epoch": stats["by_epoch"]}, indent=2),
+                encoding="utf-8",
+            )
+            (out_dir / "layer_transition_by_layer.json").write_text(
+                json.dumps({"by_layer": stats["by_layer"]}, indent=2),
+                encoding="utf-8",
+            )
+            print(
+                "Wrote %s (method=%s): by_epoch=%s by_layer=%s"
+                % (out_dir, method, len(stats["by_epoch"]), len(stats["by_layer"]))
+            )
 
 
 if __name__ == "__main__":

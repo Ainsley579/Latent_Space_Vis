@@ -106,7 +106,7 @@ def _infer_epoch_layer_keys(
     return epoch_keys, layer_keys, cells
 
 
-def load_single_pt(pt_path: Path) -> Dict[str, Any]:
+def load_single_pt(pt_path: Path, preferred_split: Optional[str] = None) -> Dict[str, Any]:
     """
     Load a single .pt file and normalize to cells + epoch_keys + layer_keys.
 
@@ -128,12 +128,22 @@ def load_single_pt(pt_path: Path) -> Dict[str, Any]:
         raise ValueError("No tensors/arrays found in .pt file")
 
     # Esol/chemprop/chemeleon: epoch -> split (train/val/test) -> "embeddings" -> layer_name -> tensor
-    # Use a single split so n_samples is consistent (prefer "test", then "val", then "train")
+    # Use a single split so n_samples is consistent (prefer "test", then "val", then "train").
+    # Preserve layer order as it appears in the .pt file instead of sorting alphabetically, so
+    # frontend layer ordering matches the model's natural layer order.
     if isinstance(raw, dict):
-        for split_name in ("test", "val", "train"):
+        # Esol/chemprop/chemeleon: epoch -> split (train/val/test) -> "embeddings" -> layer_name -> tensor
+        # Use a single split so n_samples is consistent.
+        # Default preference keeps existing behavior: test -> val -> train.
+        split_order = ["test", "val", "train"]
+        if preferred_split:
+            pref = str(preferred_split).strip().lower()
+            if pref in split_order:
+                split_order = [pref] + [s for s in split_order if s != pref]
+        for split_name in split_order:
             cells_esol = {}
             epoch_set = set()
-            layer_set = set()
+            layer_order: List[str] = []
             real_ids = None
             smiles_list = None
             for epoch_key, epoch_data in raw.items():
@@ -150,7 +160,8 @@ def load_single_pt(pt_path: Path) -> Dict[str, Any]:
                         arr = _flatten_2d(_to_numpy(tensor))
                         cells_esol[(str(epoch_key), str(layer_key))] = arr
                         epoch_set.add(str(epoch_key))
-                        layer_set.add(str(layer_key))
+                        if layer_key not in layer_order:
+                            layer_order.append(str(layer_key))
                 if real_ids is None and "id" in split_data:
                     real_ids = list(split_data["id"])
                 # SMILES from same split (aligned with real_ids) for substructure MCS
@@ -163,10 +174,11 @@ def load_single_pt(pt_path: Path) -> Dict[str, Any]:
                 return {
                     "cells": cells_esol,
                     "epoch_keys": sorted(epoch_set),
-                    "layer_keys": sorted(layer_set),
+                    "layer_keys": layer_order,
                     "n_samples": n_s,
                     "real_ids": real_ids,
                     "id_to_smiles": id_to_smiles,
+                    "data_split": split_name,
                 }
             # else try next split
         # Fall through to other handling
@@ -300,6 +312,7 @@ def load_embedding_input(
     path: Union[str, Path],
     model_name: Optional[str] = None,
     layer_file_map: Optional[Dict[str, str]] = None,
+    data_split: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Main entry: load from a single .pt file or a directory.
@@ -314,7 +327,7 @@ def load_embedding_input(
 
     if path.is_file():
         if path.suffix.lower() == ".pt":
-            return load_single_pt(path)
+            return load_single_pt(path, preferred_split=data_split)
         raise ValueError("Single file must be .pt")
     else:
         return load_from_directory(
