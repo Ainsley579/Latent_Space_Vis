@@ -262,66 +262,6 @@
     }
   },
   "layer": {
-    "ffn_layer_1": {
-      "type": "spatial_layer",
-      "layer": "ffn_layer_1",
-      "edges": [
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "0_C1",
-          "target_label": "1_C1",
-          "value": 55,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "0_C0",
-          "target_label": "1_C0",
-          "value": 55,
-          "pct_of_source": 94.8276
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "0_C0",
-          "target_label": "1_C1",
-          "value": 3,
-          "pct_of_source": 5.1724
-        }
-      ]
-    },
-    "ffn_layer_2": {
-      "type": "spatial_layer",
-      "layer": "ffn_layer_2",
-      "edges": [
-        {
-          "source_node_id": 1,
-          "target_node_id": 3,
-          "source_label": "0_C1",
-          "target_label": "1_C1",
-          "value": 54,
-          "pct_of_source": 100.0
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 2,
-          "source_label": "0_C0",
-          "target_label": "1_C0",
-          "value": 53,
-          "pct_of_source": 89.8305
-        },
-        {
-          "source_node_id": 0,
-          "target_node_id": 3,
-          "source_label": "0_C0",
-          "target_label": "1_C1",
-          "value": 6,
-          "pct_of_source": 10.1695
-        }
-      ]
-    },
     "fingerprint": {
       "type": "spatial_layer",
       "layer": "fingerprint",
@@ -455,6 +395,66 @@
           "target_label": "1_C0",
           "value": 1,
           "pct_of_source": 4.3478
+        }
+      ]
+    },
+    "ffn_layer_1": {
+      "type": "spatial_layer",
+      "layer": "ffn_layer_1",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "0_C1",
+          "target_label": "1_C1",
+          "value": 55,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "0_C0",
+          "target_label": "1_C0",
+          "value": 55,
+          "pct_of_source": 94.8276
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "0_C0",
+          "target_label": "1_C1",
+          "value": 3,
+          "pct_of_source": 5.1724
+        }
+      ]
+    },
+    "ffn_layer_2": {
+      "type": "spatial_layer",
+      "layer": "ffn_layer_2",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "0_C1",
+          "target_label": "1_C1",
+          "value": 54,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "0_C0",
+          "target_label": "1_C0",
+          "value": 53,
+          "pct_of_source": 89.8305
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "0_C0",
+          "target_label": "1_C1",
+          "value": 6,
+          "pct_of_source": 10.1695
         }
       ]
     }
