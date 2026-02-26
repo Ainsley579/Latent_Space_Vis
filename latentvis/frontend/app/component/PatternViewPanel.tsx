@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import SmilesStructure from "./SmilesStructure";
 
 type SelectedNode = { model: string; layer: string; cluster: number };
 
@@ -22,14 +23,12 @@ type SubstructureRow = {
 type PatternViewPanelProps = {
   selectedNode: SelectedNode | null;
   substructures: SubstructureRow[];
-  resolveSubstructureImage: (model: string, layer: string, cluster: number, group: "knn" | "kfn") => string;
   clusterBadgeColor: (cluster: number) => string;
 };
 
 export default function PatternViewPanel({
   selectedNode,
   substructures,
-  resolveSubstructureImage,
   clusterBadgeColor,
 }: PatternViewPanelProps) {
   const substructureEntry = useMemo(() => {
@@ -71,20 +70,12 @@ export default function PatternViewPanel({
                 {entry && (
                   <div className="flex flex-col gap-1">
                     <div className="relative w-full">
-                      <img
-                        key={`${selectedNode.model}-${selectedNode.layer}-${selectedNode.cluster}-${group}`}
-                        src={resolveSubstructureImage(selectedNode.model, selectedNode.layer, selectedNode.cluster, group)}
-                        alt={`${group} substructure`}
-                        className="w-full max-h-36 object-contain border border-zinc-200 bg-white"
-                        onLoad={(e) => {
-                          const target = e.currentTarget as HTMLImageElement;
-                          target.style.display = "block";
-                        }}
-                        onError={(e) => {
-                          const target = e.currentTarget as HTMLImageElement;
-                          target.style.display = "none";
-                        }}
-                      />
+                      <div className="w-full max-h-36 h-36 object-contain border border-zinc-200 bg-white">
+                        <SmilesStructure
+                          smiles={entry.mcs_smiles}
+                          className="w-full h-full"
+                        />
+                      </div>
                       {group !== "knn" && (
                         <div
                           className="absolute top-1 right-1 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"

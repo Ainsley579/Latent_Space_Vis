@@ -5,6 +5,7 @@ import SankeyHorizontal from "./component/SankeyHorizontal";
 import SankeyVertical from "./component/SankeyVertical";
 import ScatterPlot from "./component/ScatterPlot";
 import TopkNearestPanel from "./component/TopkNearestPanel";
+import SmilesStructure from "./component/SmilesStructure";
 import StructureEditorPanel from "./component/StructureEditorPanel";
 import SyncControlPanel from "./component/SyncControlPanel";
 import { CLUSTER_COLORS } from "./theme/colors";
@@ -42,6 +43,9 @@ type GeneratedRuntimePayload = {
   clusterSortedMembers: any[];
   substructures: any[];
 };
+type HoverPreviewState =
+  | { kind: "image"; src: string; left: number; top: number }
+  | { kind: "smiles"; smiles: string; left: number; top: number };
 
 type DatasetKey = "dimenet" | "chemprop" | "chemeleon";
 type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan";
@@ -193,7 +197,7 @@ export default function Home() {
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [hoverLock, setHoverLock] = useState(false);
-  const [hoverPreview, setHoverPreview] = useState<{ src: string; left: number; top: number } | null>(null);
+  const [hoverPreview, setHoverPreview] = useState<HoverPreviewState | null>(null);
   const [imageMap, setImageMap] = useState<Record<string, Record<string, string>> | null>(null);
   const [substructures, setSubstructures] = useState<
     {
@@ -954,15 +958,9 @@ export default function Home() {
     return `${assetBase}/molecule_images/${key}_${imageType}.png`;
   }
 
-  function resolveSubstructureImage(
-    model: string,
-    layer: string,
-    cluster: number,
-    group: "knn" | "kfn",
-  ) {
-    const safeModel = model.replace(/[^a-zA-Z0-9_-]/g, "_");
-    const safeLayer = layer.replace(/[^a-zA-Z0-9_-]/g, "_");
-    return `${assetBase}/substructures/images/${safeModel}_${safeLayer}_cluster${cluster}_${group}.png`;
+  function getSmilesById(realId: string | number): string | null {
+    const key = String(realId).trim().toLowerCase();
+    return smilesByRealId[key] ?? null;
   }
 
   function clusterBadgeColor(cluster: number) {
@@ -971,20 +969,34 @@ export default function Home() {
     return CLUSTER_COLORS[idx];
   }
 
-  function showHoverPreviewAt(src: string, anchor?: DOMRect) {
-    if (!showLargeHoverPreview) return;
+  function getPreviewAnchorPosition(anchor?: DOMRect) {
     const W = largeHoverPreviewSize;
     const H = largeHoverPreviewSize;
     const PAD = 8;
     if (!anchor) {
-      setHoverPreview({ src, left: window.innerWidth - W - 16, top: window.innerHeight - H - 16 });
-      return;
+      return { left: window.innerWidth - W - 16, top: window.innerHeight - H - 16 };
     }
     let left = anchor.left + (anchor.width - W) / 2;
     let top = anchor.top + (anchor.height - H) / 2;
     left = Math.max(PAD, Math.min(left, window.innerWidth - W - PAD));
     top = Math.max(PAD, Math.min(top, window.innerHeight - H - PAD));
-    setHoverPreview({ src, left, top });
+    return { left, top };
+  }
+
+  function showHoverPreviewAt(src: string, anchor?: DOMRect) {
+    if (!showLargeHoverPreview) return;
+    const { left, top } = getPreviewAnchorPosition(anchor);
+    setHoverPreview({ kind: "image", src, left, top });
+  }
+
+  function showSmilesPreviewAt(smiles: string | null, anchor?: DOMRect) {
+    if (!showLargeHoverPreview) return;
+    if (!smiles || !smiles.trim()) {
+      setHoverPreview(null);
+      return;
+    }
+    const { left, top } = getPreviewAnchorPosition(anchor);
+    setHoverPreview({ kind: "smiles", smiles, left, top });
   }
 
   const LEFT_COL_RATIO_IN_WORKSPACE = 45 / 55;
@@ -1160,8 +1172,7 @@ export default function Home() {
                 onToggleHoverId={(id) => setHoveredId((prev) => (prev === id ? null : id))}
                 onSelectHoverId={(id) => toggleLockedHighlight(id)}
                 onHoverIdChange={(id) => setHoverFromMouse(id)}
-                resolveImageSrc={resolveImageSrc}
-                resolveSubstructureImage={resolveSubstructureImage}
+                getSmilesById={getSmilesById}
                 substructureByCluster={substructureByCluster}
                 clusterBadgeColor={clusterBadgeColor}
                 onClusterSelect={(cluster) => {
@@ -1172,10 +1183,10 @@ export default function Home() {
                   setSuppressScatterCluster(false);
                   setCellSelected(true);
                 }}
-                onImagePreviewStart={(src, anchor) => showHoverPreviewAt(src, anchor)}
-                onImagePreviewEnd={() => setHoverPreview(null)}
                 hideTopk={workspaceWidthPct >= 79.5}
                 largePreviewOn={showLargeHoverPreview}
+                onSmilesPreviewStart={(smiles, anchor) => showSmilesPreviewAt(smiles, anchor)}
+                onSmilesPreviewEnd={() => setHoverPreview(null)}
                 bookmarkedIds={bookmarkedIds}
                 onToggleBookmark={toggleBookmark}
               />
@@ -1437,38 +1448,29 @@ export default function Home() {
                                   <div
                                     key={`instance-${id}`}
                                     className="relative w-full max-w-[180px] aspect-square mx-auto"
-                                    onMouseEnter={() => setHoverFromMouse(String(id))}
-                                    onMouseLeave={() => setHoverFromMouse(null)}
+                                    onMouseEnter={(e) => {
+                                      setHoverFromMouse(String(id));
+                                      showSmilesPreviewAt(
+                                        getSmilesById(id),
+                                        e.currentTarget.getBoundingClientRect()
+                                      );
+                                    }}
+                                    onMouseLeave={() => {
+                                      setHoverFromMouse(null);
+                                      setHoverPreview(null);
+                                    }}
                                     onClick={() => toggleLockedHighlight(String(id))}
                                   >
                                     <div
-                                      className="absolute inset-0 z-[1]"
-                                      onMouseEnter={(e: ReactMouseEvent<HTMLDivElement>) =>
-                                        showHoverPreviewAt(
-                                          resolveImageSrc(id, "ligand"),
-                                          (e.currentTarget as HTMLDivElement).getBoundingClientRect(),
-                                        )
-                                      }
-                                      onMouseLeave={() => setHoverPreview(null)}
-                                    />
-                                    <img
-                                      src={resolveImageSrc(id, "ligand")}
-                                      alt={`ligand ${id}`}
                                       className={
-                                        "w-full h-full object-contain bg-white border " +
+                                        "w-full h-full bg-white border p-1 " +
                                         (!showLargeHoverPreview && hoveredId === String(id)
                                           ? "border-red-500 border-2"
                                           : "border-zinc-200")
                                       }
-                                      onLoad={(e) => {
-                                        const target = e.currentTarget as HTMLImageElement;
-                                        target.style.display = "block";
-                                      }}
-                                      onError={(e) => {
-                                        const target = e.currentTarget as HTMLImageElement;
-                                        target.style.display = "none";
-                                      }}
-                                    />
+                                    >
+                                      <SmilesStructure smiles={getSmilesById(id)} className="w-full h-full" />
+                                    </div>
                                     {selectedNode && !showSearchResultsInMembers && (
                                       <div
                                         className="absolute top-0.5 left-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
@@ -1626,12 +1628,18 @@ export default function Home() {
             className="fixed z-[10000] pointer-events-none bg-white/95 border border-zinc-300 rounded shadow-xl p-2"
             style={{ left: hoverPreview.left, top: hoverPreview.top }}
           >
-            <img
-              src={hoverPreview.src}
-              alt="large preview"
-              style={{ width: `${largeHoverPreviewSize}px`, height: `${largeHoverPreviewSize}px` }}
-              className="object-contain bg-white"
-            />
+            {hoverPreview.kind === "image" ? (
+              <img
+                src={hoverPreview.src}
+                alt="large preview"
+                style={{ width: `${largeHoverPreviewSize}px`, height: `${largeHoverPreviewSize}px` }}
+                className="object-contain bg-white"
+              />
+            ) : (
+              <div style={{ width: `${largeHoverPreviewSize}px`, height: `${largeHoverPreviewSize}px` }} className="bg-white">
+                <SmilesStructure smiles={hoverPreview.smiles} className="w-full h-full" />
+              </div>
+            )}
           </div>
         )}
         

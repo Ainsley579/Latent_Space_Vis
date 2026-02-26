@@ -1,105 +1,133 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 type SmilesStructureProps = {
-  smiles: string;
+  smiles: string | null | undefined;
   width?: number;
   height?: number;
   className?: string;
 };
 
+const OCL_CDN =
+  "https://www.lactame.com/lib/openchemlib/5.2.0/openchemlib-minimal.js";
+
+let oclLoadPromise: Promise<any> | null = null;
+
+function loadOCL(): Promise<any> {
+  if (typeof window === "undefined") return Promise.reject(new Error("no_window"));
+  const w = window as any;
+  if (w.OCL) return Promise.resolve(w.OCL);
+  if (oclLoadPromise) return oclLoadPromise;
+
+  oclLoadPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>("script[data-ocl='1']");
+    if (existing) {
+      existing.addEventListener("load", () => resolve((window as any).OCL), { once: true });
+      existing.addEventListener("error", () => reject(new Error("ocl_load_failed")), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = OCL_CDN;
+    script.async = true;
+    script.defer = true;
+    script.setAttribute("data-ocl", "1");
+    script.onload = () => {
+      const ocl = (window as any).OCL;
+      if (!ocl) reject(new Error("ocl_missing"));
+      else resolve(ocl);
+    };
+    script.onerror = () => reject(new Error("ocl_load_failed"));
+    document.head.appendChild(script);
+  });
+
+  return oclLoadPromise;
+}
+
 export default function SmilesStructure({
   smiles,
-  width = 180,
-  height = 180,
+  width = 220,
+  height = 220,
   className = "",
 }: SmilesStructureProps) {
-  const canvasId = `smiles_canvas_${useId().replace(/:/g, "_")}`;
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [renderFailed, setRenderFailed] = useState(false);
-  const [remoteFailed, setRemoteFailed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [svgMarkup, setSvgMarkup] = useState<string>("");
 
   useEffect(() => {
-    let cancelled = false;
-    setRenderFailed(false);
+    const s = String(smiles ?? "").trim();
+    if (!s) {
+      setError("null");
+      setSvgMarkup("");
+      return;
+    }
 
-    async function render() {
-      const canvas = canvasRef.current;
-      if (!canvas || !smiles) {
-        setRenderFailed(true);
-        return;
-      }
-
+    let alive = true;
+    (async () => {
       try {
-        const mod = await import("smiles-drawer");
-        const SmilesDrawer: any = (mod as any).default ?? mod;
-        const drawer = new SmilesDrawer.Drawer({
-          width,
-          height,
-          compactDrawing: true,
-          terminalCarbons: true,
-          explicitHydrogens: false,
-        });
-
-        SmilesDrawer.parse(
-          smiles,
-          (tree: unknown) => {
-            if (cancelled) return;
-            try {
-              drawer.draw(tree, canvasId, "light", false);
-            } catch {
-              if (!cancelled) setRenderFailed(true);
-            }
-          },
-          () => {
-            if (!cancelled) setRenderFailed(true);
-          },
+        const OCL = await loadOCL();
+        const candidates = Array.from(
+          new Set([
+            s,
+            s.replace(/:/g, "="),
+            s.replace(/:/g, ""),
+          ].filter((x) => x.length > 0))
         );
+
+        let ok = false;
+        let svg = "";
+        for (const c of candidates) {
+          try {
+            const mol = OCL.Molecule.fromSmiles(c);
+            svg = mol.toSVG(width, height, "", { suppressCIPParity: true });
+            if (svg && svg.includes("<svg")) {
+              ok = true;
+              break;
+            }
+          } catch {
+            ok = false;
+          }
+          if (ok) break;
+        }
+
+        if (!alive) return;
+        setSvgMarkup(ok ? svg : "");
+        setError(ok ? null : "null");
       } catch {
-        if (!cancelled) setRenderFailed(true);
+        if (!alive) return;
+        setSvgMarkup("");
+        setError("null");
       }
-    }
+    })();
 
-    void render();
     return () => {
-      cancelled = true;
+      alive = false;
     };
-  }, [smiles, width, height, canvasId]);
+  }, [smiles, width, height]);
 
-  if (renderFailed) {
-    const remoteUrl = `https://cactus.nci.nih.gov/chemical/structure/${encodeURIComponent(smiles)}/image`;
-    if (!remoteFailed) {
-      return (
-        <img
-          src={remoteUrl}
-          alt="substructure"
-          className={`w-full h-full object-contain bg-white border border-zinc-200 ${className}`}
-          onError={() => setRemoteFailed(true)}
-        />
-      );
-    }
+  if (error) {
     return (
-      <div className={`w-full h-full bg-white border border-zinc-200 p-2 flex items-center justify-center ${className}`}>
-        <svg width="86" height="86" viewBox="0 0 86 86" aria-hidden="true" className="text-zinc-400">
-          <g fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M30 18h26l13 22-13 22H30L17 40z" />
-            <path d="M30 18l13 22-13 22" />
-            <path d="M56 18L43 40l13 22" />
-            <circle cx="43" cy="40" r="2.5" fill="currentColor" />
-          </g>
-        </svg>
+      <div
+        className={`w-full h-full flex items-center justify-center text-sm text-zinc-400 ${className}`}
+      >
+        null
       </div>
     );
   }
 
   return (
-    <canvas
-      ref={canvasRef}
-      id={canvasId}
-      width={width}
-      height={height}
-      className={`w-full h-full bg-white ${className}`}
-    />
+    <>
+      <div
+        className={`smiles-structure-root ${className}`}
+        style={{ width: "100%", height: "100%", background: "white" }}
+        dangerouslySetInnerHTML={{ __html: svgMarkup }}
+      />
+      <style jsx global>{`
+        .smiles-structure-root svg {
+          width: 100% !important;
+          height: 100% !important;
+          display: block;
+        }
+      `}</style>
+    </>
   );
 }

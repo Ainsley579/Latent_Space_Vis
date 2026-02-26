@@ -1,0 +1,2 @@
+declare module "smiles-drawer";
+
