@@ -199,6 +199,9 @@ export default function SankeyView({
   const [maxInstanceValue, setMaxInstanceValue] = useState(DEFAULT_MAX_INSTANCE);
   const [fmiData, setFmiData] = useState<Array<{ layer: string; fmi: number; cspa: number }>>([]);
   const [rowMetricData, setRowMetricData] = useState<Array<{ model: string; fmi: number; cspa: number }>>([]);
+  const [showBaseSankey, setShowBaseSankey] = useState(true);
+  const [showCellBackground, setShowCellBackground] = useState(true);
+  const [showGapHeatmap, setShowGapHeatmap] = useState(true);
   const [layout, setLayout] = useState<{
     rowNames: string[];
     colNames: string[];
@@ -360,7 +363,7 @@ export default function SankeyView({
             g.append("rect")
               .attr("width", cellW)
               .attr("height", cellH)
-              .attr("fill", cellBgColor(cellCount))
+              .attr("fill", showCellBackground ? cellBgColor(cellCount) : "white")
               .attr("stroke", "#888")
               .attr("data-cluster-count", cellCount);
 
@@ -486,9 +489,9 @@ export default function SankeyView({
           .clamp(true);
         const horizontalGapColor = SWAP_AXES ? greenGapColor : redGapColor;
         const verticalGapColor = SWAP_AXES ? redGapColor : greenGapColor;
-        const gapHeatmap = gRoot.append("g").attr("class", "cell-gap-heatmap");
-
-        if (!SWAP_AXES) {
+        if (showGapHeatmap) {
+          const gapHeatmap = gRoot.append("g").attr("class", "cell-gap-heatmap");
+          if (!SWAP_AXES) {
           // Horizontal gaps: layer-to-layer transitions for each epoch (by_epoch)
           ROW_NAMES.forEach((epoch, rowIdx) => {
             for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
@@ -531,7 +534,7 @@ export default function SankeyView({
                 .text(`${layer}: ${fromEpoch} -> ${toEpoch}, ${pct.toFixed(2)}%`);
             }
           });
-        } else {
+          } else {
           // Horizontal gaps: epoch-to-epoch transitions for each layer (by_layer)
           COLUMN_NAMES.forEach((layer, rowIdx) => {
             for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
@@ -574,6 +577,7 @@ export default function SankeyView({
                 .text(`${epoch}: ${fromLayer} -> ${toLayer}, ${pct.toFixed(2)}%`);
             }
           });
+          }
         }
 
         const nodeLookup = new Map<string, { rowName: string; columnName: string; idx: number; node: any }>();
@@ -653,9 +657,12 @@ export default function SankeyView({
             .attr("data-value", +edgeValue || 0);
         }
 
-        // column-links (per layer) -> vertical inside a column
-        const linkGroup = gRoot.append("g").attr("class", "links column-links");
-        Object.keys(data.layer || {}).forEach((columnKey) => {
+        let linkGroup: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
+        let linkGroup2: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
+        if (showBaseSankey) {
+          // column-links (per layer) -> vertical inside a column
+          linkGroup = gRoot.append("g").attr("class", "links column-links");
+          Object.keys(data.layer || {}).forEach((columnKey) => {
           const columnObj = data.layer[columnKey];
           if (COLUMN_INDEX.get(columnKey) == null) return;
 
@@ -740,11 +747,11 @@ export default function SankeyView({
             const p = appendLinkPath(linkGroup as any, pathD, edge.value, strokeW, SANKEY_2D_COLUMN_LINK_COLOR, 0.3);
             p.attr("data-column", columnKey);
           });
-        });
+          });
 
-        // row-links (per epoch/model) -> horizontal inside a row
-        const linkGroup2 = gRoot.append("g").attr("class", "links row-links");
-        Object.keys(data.epoch || {}).forEach((rowKey) => {
+          // row-links (per epoch/model) -> horizontal inside a row
+          linkGroup2 = gRoot.append("g").attr("class", "links row-links");
+          Object.keys(data.epoch || {}).forEach((rowKey) => {
           const rowObj = data.epoch[rowKey];
           if (ROW_INDEX.get(rowKey) == null) return;
 
@@ -815,45 +822,48 @@ export default function SankeyView({
             const p2 = appendLinkPath(linkGroup2 as any, pathD, edge.value, strokeW, SANKEY_2D_ROW_LINK_COLOR, 0.2);
             p2.attr("data-row", rowKey);
           });
-        });
+          });
+        }
 
         // draw nodes after links so they are on top
-        nodeDrawQueue.forEach(({ g, rowName, columnName, nodesForCell }) => {
-          g.selectAll("rect.bar")
-            .data(nodesForCell)
-            .enter()
-            .append("rect")
-            .attr("class", "bar")
-            .attr("x", (_d: any, i: number) => (x(i) as number) + nodeBarOffset)
-            .attr("y", (d: any) => innerH - y(d.previous))
-            .attr("width", nodeBarWidth)
-            .attr("height", (d: any) => innerH - y(d.value))
-            .attr("fill", "#aaa")
-            .attr("data-row", rowName)
-            .attr("data-column", columnName)
-            .attr("data-cluster", (d: any) => {
-              const c = d?.cluster;
-              if (c !== null && c !== undefined && c !== "") return Number(c);
-              const label = String(d?.label ?? "");
-              const i = label.lastIndexOf("_C");
-              if (i === -1) return "";
-              return Number(label.slice(i + 2));
-            })
-            .style("cursor", "pointer")
-            .on("click", (event: any, d: any) => {
-              event.stopPropagation();
-              const c = d?.cluster;
-              let cluster = c !== null && c !== undefined && c !== "" ? Number(c) : NaN;
-              if (Number.isNaN(cluster)) {
+        if (showBaseSankey) {
+          nodeDrawQueue.forEach(({ g, rowName, columnName, nodesForCell }) => {
+            g.selectAll("rect.bar")
+              .data(nodesForCell)
+              .enter()
+              .append("rect")
+              .attr("class", "bar")
+              .attr("x", (_d: any, i: number) => (x(i) as number) + nodeBarOffset)
+              .attr("y", (d: any) => innerH - y(d.previous))
+              .attr("width", nodeBarWidth)
+              .attr("height", (d: any) => innerH - y(d.value))
+              .attr("fill", "#aaa")
+              .attr("data-row", rowName)
+              .attr("data-column", columnName)
+              .attr("data-cluster", (d: any) => {
+                const c = d?.cluster;
+                if (c !== null && c !== undefined && c !== "") return Number(c);
                 const label = String(d?.label ?? "");
                 const i = label.lastIndexOf("_C");
-                if (i !== -1) cluster = Number(label.slice(i + 2));
-              }
-              if (!Number.isNaN(cluster)) {
-                onNodeSelect?.({ model: rowName, layer: columnName, cluster });
-              }
-            });
-        });
+                if (i === -1) return "";
+                return Number(label.slice(i + 2));
+              })
+              .style("cursor", "pointer")
+              .on("click", (event: any, d: any) => {
+                event.stopPropagation();
+                const c = d?.cluster;
+                let cluster = c !== null && c !== undefined && c !== "" ? Number(c) : NaN;
+                if (Number.isNaN(cluster)) {
+                  const label = String(d?.label ?? "");
+                  const i = label.lastIndexOf("_C");
+                  if (i !== -1) cluster = Number(label.slice(i + 2));
+                }
+                if (!Number.isNaN(cluster)) {
+                  onNodeSelect?.({ model: rowName, layer: columnName, cluster });
+                }
+              });
+          });
+        }
 
         // slider + mode controls
         const minRange = document.getElementById("minRange") as HTMLInputElement | null;
@@ -1091,7 +1101,7 @@ export default function SankeyView({
         console.error("Failed to build chart:", err);
         container.innerHTML = "<div style='color: red'>Failed to load visualization data.</div>";
       });
-  }, [dataPath, transitionStatsPath]);
+  }, [dataPath, transitionStatsPath, showBaseSankey, showCellBackground, showGapHeatmap]);
 
   useEffect(() => {
     const container = chartRef.current;
@@ -1493,6 +1503,27 @@ export default function SankeyView({
           <button id="btnColumn">Column</button>
           <button id="btnRow">Row</button>
           <button id="btnSwap">Swap X/Y</button>
+          <button
+            type="button"
+            onClick={() => setShowBaseSankey((v) => !v)}
+            style={{ fontWeight: showBaseSankey ? 600 : 400 }}
+          >
+            Sankey
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowCellBackground((v) => !v)}
+            style={{ fontWeight: showCellBackground ? 600 : 400 }}
+          >
+            Cell BG
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowGapHeatmap((v) => !v)}
+            style={{ fontWeight: showGapHeatmap ? 600 : 400 }}
+          >
+            Gap Heat
+          </button>
         </div>
       </div>
       {/* FMI/CSPA panel is temporarily hidden, keep code for future use.
