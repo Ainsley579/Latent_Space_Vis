@@ -42,6 +42,7 @@ type GeneratedRuntimePayload = {
   topkRepresentatives: any[];
   clusterSortedMembers: any[];
   substructures: any[];
+  scatterClusterByCell: Record<string, Array<{ real_id: string | number; cluster_id: number }>>;
 };
 type HoverPreviewState =
   | { kind: "image"; src: string; left: number; top: number }
@@ -172,12 +173,21 @@ export default function Home() {
     const xyFile = `${base}_${projection}_xy.json`;
     const clusterFile = `${base}_${projection}_cluster.json`;
     const xyUrl = `/data/${dataset}/scatterplot/${xyFile}`;
-    const clusterUrl = `/data/${dataset}/scatterplot/${clusterFile}`;
+    const runtimePayload = generatedRuntimePayloads[runtimeKeyFor(dataset, clustering)] ?? null;
+    const cellKey = `${model}__${layer}`;
+    const overrideRows =
+      runtimePayload?.scatterClusterByCell?.[cellKey] &&
+      Array.isArray(runtimePayload.scatterClusterByCell[cellKey])
+        ? runtimePayload.scatterClusterByCell[cellKey]
+        : null;
+    const clusterUrl = overrideRows
+      ? buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:scatter_cluster:${cellKey}`, overrideRows)
+      : `/data/${dataset}/scatterplot/${clusterFile}`;
     const sepXY = xyUrl.includes("?") ? "&" : "?";
-    const sepCluster = clusterUrl.includes("?") ? "&" : "?";
+    const sepCluster = clusterUrl.startsWith("blob:") ? "" : (clusterUrl.includes("?") ? "&" : "?");
     return {
       xy: `${xyUrl}${sepXY}v=${version}`,
-      cluster: `${clusterUrl}${sepCluster}v=${version}`,
+      cluster: clusterUrl.startsWith("blob:") ? clusterUrl : `${clusterUrl}${sepCluster}v=${version}`,
     };
   };
   const syncSankeyPaths = (
@@ -529,6 +539,11 @@ export default function Home() {
             substructures: Array.isArray(casePayload.substructures)
               ? casePayload.substructures
               : [],
+            scatterClusterByCell:
+              casePayload?.scatter_cluster_by_cell &&
+              typeof casePayload.scatter_cluster_by_cell === "object"
+                ? casePayload.scatter_cluster_by_cell
+                : {},
           },
         }));
       }
@@ -612,6 +627,11 @@ export default function Home() {
             substructures: Array.isArray(casePayload.substructures)
               ? casePayload.substructures
               : [],
+            scatterClusterByCell:
+              casePayload?.scatter_cluster_by_cell &&
+              typeof casePayload.scatter_cluster_by_cell === "object"
+                ? casePayload.scatter_cluster_by_cell
+                : {},
           },
         }));
       }
@@ -644,7 +664,7 @@ export default function Home() {
       scatterOverrideUrlRef.current = null;
     }
     setScatterPaths(buildScatterPaths(selectedModel, selectedLayer, scatterProjection));
-  }, [datasetBase, selectedModel, selectedLayer, scatterProjection]);
+  }, [datasetBase, selectedModel, selectedLayer, scatterProjection, generatedRuntimePayloads]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Iterable
 
@@ -151,6 +152,37 @@ def _materialize_compat_sankey_files(
     if not isinstance(samples, list):
         samples = []
 
+    compat = _build_compat_payload_from_sankey(all_sankey, samples)
+    models = compat["models"]
+    layers = compat["layers"]
+    model_rows = compat["model_samples"]
+    by_layer = compat["vertical_samples_by_layer"]
+    all_vertical = compat["vertical_samples"]
+
+    if write_files:
+        for m in models:
+            _write_json(sankey_dir / f"{m}_sankey_samples.json", model_rows.get(m, []))
+
+    if write_files:
+        _write_json(sankey_dir / "vertical_model_samples.json", all_vertical)
+        for l in layers:
+            _write_json(sankey_dir / f"vertical_model_samples_{l}.json", by_layer.get(l, []))
+
+    return {
+        "models": len(models),
+        "layers": len(layers),
+        "sankey_samples": len(samples),
+        "vertical_samples": len(all_vertical),
+        "all_sankey": all_sankey,
+        "model_samples": model_rows,
+        "vertical_samples_by_layer": by_layer,
+    }
+
+
+def _build_compat_payload_from_sankey(
+    all_sankey: Dict[str, object],
+    samples: List[Dict[str, object]],
+) -> Dict[str, object]:
     models = _ordered_models(
         list((all_sankey.get("epoch") or {}).keys())
         + [str(r.get("from_model", "")).strip() for r in samples]
@@ -162,7 +194,6 @@ def _materialize_compat_sankey_files(
         + [str(r.get("to_layer", "")).strip() for r in samples]
     )
 
-    # model -> rows
     model_rows: Dict[str, List[Dict[str, object]]] = {m: [] for m in models}
     for row in samples:
         fm = str(row.get("from_model", "")).strip()
@@ -172,12 +203,6 @@ def _materialize_compat_sankey_files(
         elif fm:
             model_rows.setdefault(fm, []).append(row)
 
-    if write_files:
-        # Write per-model files.
-        for m in models:
-            _write_json(sankey_dir / f"{m}_sankey_samples.json", model_rows.get(m, []))
-
-    # Build per-real-id cluster assignments per model/layer from sample rows.
     assignments: Dict[Tuple[str, str], Dict[str, int]] = {}
     for row in samples:
         rid = str(row.get("real_id", "")).strip()
@@ -226,19 +251,79 @@ def _materialize_compat_sankey_files(
                 all_vertical.append(item)
                 by_layer.setdefault(layer, []).append(item)
 
-    if write_files:
-        _write_json(sankey_dir / "vertical_model_samples.json", all_vertical)
-        for l in layers:
-            _write_json(sankey_dir / f"vertical_model_samples_{l}.json", by_layer.get(l, []))
+    return {
+        "models": models,
+        "layers": layers,
+        "model_samples": model_rows,
+        "vertical_samples": all_vertical,
+        "vertical_samples_by_layer": by_layer,
+    }
+
+
+def _build_scatter_cluster_by_cell_from_samples(
+    samples: List[Dict[str, object]],
+) -> Dict[str, List[Dict[str, object]]]:
+    # key: "<model>__<layer>" -> [{"real_id": ..., "cluster_id": ...}, ...]
+    by_cell: Dict[str, Dict[str, int]] = {}
+    for row in samples:
+        rid = str(row.get("real_id", "")).strip()
+        if not rid:
+            continue
+        fm = str(row.get("from_model", "")).strip()
+        tm = str(row.get("to_model", "")).strip()
+        fl = str(row.get("from_layer", "")).strip()
+        tl = str(row.get("to_layer", "")).strip()
+        try:
+            fc = int(row.get("from_cluster"))
+            tc = int(row.get("to_cluster"))
+        except Exception:
+            continue
+
+        if fm and fl:
+            key = f"{fm}__{fl}"
+            by_cell.setdefault(key, {})[rid] = fc
+        if tm and tl:
+            key = f"{tm}__{tl}"
+            by_cell.setdefault(key, {})[rid] = tc
+
+    out: Dict[str, List[Dict[str, object]]] = {}
+    for cell_key, rid_map in by_cell.items():
+        rows = [{"real_id": rid, "cluster_id": int(cid)} for rid, cid in rid_map.items()]
+        out[cell_key] = rows
+    return out
+
+
+def _load_generated_case_payload(base: Path) -> Dict[str, object]:
+    sankey_dir = base / "sankey_current"
+    topk_dir = base / "topk_current"
+    sub_dir = base / "substructures_current"
+
+    all_sankey = _read_json(sankey_dir / "all_sankey.json", {"epoch": {}, "layer": {}})
+    samples = _read_json(sankey_dir / "sankey_samples.json", [])
+    if not isinstance(samples, list):
+        samples = []
+
+    compat = _build_compat_payload_from_sankey(all_sankey, samples)
+    scatter_cluster_by_cell = _build_scatter_cluster_by_cell_from_samples(samples)
+
+    topk_reps = _read_json(topk_dir / "cluster_representatives.json", [])
+    cluster_sorted = _read_json(topk_dir / "cluster_sorted_members.json", [])
+    substructures = _read_json(sub_dir / "cluster_substructures.json", [])
+    if not isinstance(topk_reps, list):
+        topk_reps = []
+    if not isinstance(cluster_sorted, list):
+        cluster_sorted = []
+    if not isinstance(substructures, list):
+        substructures = []
 
     return {
-        "models": len(models),
-        "layers": len(layers),
-        "sankey_samples": len(samples),
-        "vertical_samples": len(all_vertical),
         "all_sankey": all_sankey,
-        "model_samples": model_rows,
-        "vertical_samples_by_layer": by_layer,
+        "model_samples": compat["model_samples"],
+        "vertical_samples_by_layer": compat["vertical_samples_by_layer"],
+        "topk_representatives": topk_reps,
+        "cluster_sorted_members": cluster_sorted,
+        "substructures": substructures,
+        "scatter_cluster_by_cell": scatter_cluster_by_cell,
     }
 
 
@@ -420,6 +505,7 @@ def generate_range():
         return ("", 204)
 
     payload = request.get_json(silent=True) or {}
+    include_payload = bool(payload.get("include_payload", False))
     min_value = payload.get("min")
     max_value = payload.get("max")
     k_fixed = payload.get("k")
@@ -557,6 +643,9 @@ def generate_range():
     summary = {dataset: {"status": "done", "updated": updated}}
 
     out = {"ok": True, "min": k_min, "max": k_max, "dataset": dataset, "clustering": clustering, "summary": summary}
+    if include_payload:
+        out["payload"] = {dataset: _load_generated_case_payload(base)}
+        out["run_id"] = str(int(time.time() * 1000))
     if n_clusters_override is not None:
         out["k"] = n_clusters_override
         out["linkage"] = linkage_override
