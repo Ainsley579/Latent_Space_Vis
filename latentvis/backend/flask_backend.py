@@ -2,8 +2,11 @@
 
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Iterable
 
@@ -67,11 +70,12 @@ def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[
     - DATA_ROOT/<case>/train/...
     """
     method = (clustering or DEFAULT_CLUSTERING).strip().lower()
+    # "pgmeans" is represented as "gmm" in backend APIs, but its files live under split roots.
+    if method not in ("pgmeans", "gmm"):
+        # For agglomerative/hdbscan, always use the original clustering folders.
+        return DATA_ROOT / case / "clustering" / method
     split = _normalize_split(data_split) or "test"
-    root = DATA_ROOT / case / split
-    if method == "pgmeans":
-        return root
-    return root / "clustering" / method
+    return DATA_ROOT / case / split
 
 
 def _ordered_models(models: Iterable[str]) -> List[str]:
@@ -151,6 +155,37 @@ def _materialize_compat_sankey_files(
     if not isinstance(samples, list):
         samples = []
 
+    compat = _build_compat_payload_from_sankey(all_sankey, samples)
+    models = compat["models"]
+    layers = compat["layers"]
+    model_rows = compat["model_samples"]
+    by_layer = compat["vertical_samples_by_layer"]
+    all_vertical = compat["vertical_samples"]
+
+    if write_files:
+        for m in models:
+            _write_json(sankey_dir / f"{m}_sankey_samples.json", model_rows.get(m, []))
+
+    if write_files:
+        _write_json(sankey_dir / "vertical_model_samples.json", all_vertical)
+        for l in layers:
+            _write_json(sankey_dir / f"vertical_model_samples_{l}.json", by_layer.get(l, []))
+
+    return {
+        "models": len(models),
+        "layers": len(layers),
+        "sankey_samples": len(samples),
+        "vertical_samples": len(all_vertical),
+        "all_sankey": all_sankey,
+        "model_samples": model_rows,
+        "vertical_samples_by_layer": by_layer,
+    }
+
+
+def _build_compat_payload_from_sankey(
+    all_sankey: Dict[str, object],
+    samples: List[Dict[str, object]],
+) -> Dict[str, object]:
     models = _ordered_models(
         list((all_sankey.get("epoch") or {}).keys())
         + [str(r.get("from_model", "")).strip() for r in samples]
@@ -162,7 +197,6 @@ def _materialize_compat_sankey_files(
         + [str(r.get("to_layer", "")).strip() for r in samples]
     )
 
-    # model -> rows
     model_rows: Dict[str, List[Dict[str, object]]] = {m: [] for m in models}
     for row in samples:
         fm = str(row.get("from_model", "")).strip()
@@ -172,12 +206,6 @@ def _materialize_compat_sankey_files(
         elif fm:
             model_rows.setdefault(fm, []).append(row)
 
-    if write_files:
-        # Write per-model files.
-        for m in models:
-            _write_json(sankey_dir / f"{m}_sankey_samples.json", model_rows.get(m, []))
-
-    # Build per-real-id cluster assignments per model/layer from sample rows.
     assignments: Dict[Tuple[str, str], Dict[str, int]] = {}
     for row in samples:
         rid = str(row.get("real_id", "")).strip()
@@ -226,19 +254,79 @@ def _materialize_compat_sankey_files(
                 all_vertical.append(item)
                 by_layer.setdefault(layer, []).append(item)
 
-    if write_files:
-        _write_json(sankey_dir / "vertical_model_samples.json", all_vertical)
-        for l in layers:
-            _write_json(sankey_dir / f"vertical_model_samples_{l}.json", by_layer.get(l, []))
+    return {
+        "models": models,
+        "layers": layers,
+        "model_samples": model_rows,
+        "vertical_samples": all_vertical,
+        "vertical_samples_by_layer": by_layer,
+    }
+
+
+def _build_scatter_cluster_by_cell_from_samples(
+    samples: List[Dict[str, object]],
+) -> Dict[str, List[Dict[str, object]]]:
+    # key: "<model>__<layer>" -> [{"real_id": ..., "cluster_id": ...}, ...]
+    by_cell: Dict[str, Dict[str, int]] = {}
+    for row in samples:
+        rid = str(row.get("real_id", "")).strip()
+        if not rid:
+            continue
+        fm = str(row.get("from_model", "")).strip()
+        tm = str(row.get("to_model", "")).strip()
+        fl = str(row.get("from_layer", "")).strip()
+        tl = str(row.get("to_layer", "")).strip()
+        try:
+            fc = int(row.get("from_cluster"))
+            tc = int(row.get("to_cluster"))
+        except Exception:
+            continue
+
+        if fm and fl:
+            key = f"{fm}__{fl}"
+            by_cell.setdefault(key, {})[rid] = fc
+        if tm and tl:
+            key = f"{tm}__{tl}"
+            by_cell.setdefault(key, {})[rid] = tc
+
+    out: Dict[str, List[Dict[str, object]]] = {}
+    for cell_key, rid_map in by_cell.items():
+        rows = [{"real_id": rid, "cluster_id": int(cid)} for rid, cid in rid_map.items()]
+        out[cell_key] = rows
+    return out
+
+
+def _load_generated_case_payload(base: Path) -> Dict[str, object]:
+    sankey_dir = base / "sankey_current"
+    topk_dir = base / "topk_current"
+    sub_dir = base / "substructures_current"
+
+    all_sankey = _read_json(sankey_dir / "all_sankey.json", {"epoch": {}, "layer": {}})
+    samples = _read_json(sankey_dir / "sankey_samples.json", [])
+    if not isinstance(samples, list):
+        samples = []
+
+    compat = _build_compat_payload_from_sankey(all_sankey, samples)
+    scatter_cluster_by_cell = _build_scatter_cluster_by_cell_from_samples(samples)
+
+    topk_reps = _read_json(topk_dir / "cluster_representatives.json", [])
+    cluster_sorted = _read_json(topk_dir / "cluster_sorted_members.json", [])
+    substructures = _read_json(sub_dir / "cluster_substructures.json", [])
+    if not isinstance(topk_reps, list):
+        topk_reps = []
+    if not isinstance(cluster_sorted, list):
+        cluster_sorted = []
+    if not isinstance(substructures, list):
+        substructures = []
 
     return {
-        "models": len(models),
-        "layers": len(layers),
-        "sankey_samples": len(samples),
-        "vertical_samples": len(all_vertical),
         "all_sankey": all_sankey,
-        "model_samples": model_rows,
-        "vertical_samples_by_layer": by_layer,
+        "model_samples": compat["model_samples"],
+        "vertical_samples_by_layer": compat["vertical_samples_by_layer"],
+        "topk_representatives": topk_reps,
+        "cluster_sorted_members": cluster_sorted,
+        "substructures": substructures,
+        "scatter_cluster_by_cell": scatter_cluster_by_cell,
     }
 
 
@@ -248,7 +336,7 @@ def _search_smiles_substructure_in_case(case: str, smiles_query: str):
     (query is a substructure; all IDs that contain it are returned).
     Uses RDKit HasSubstructMatch. Returns (matches, error_message).
     """
-    case_dir = DATA_ROOT / case
+    case_dir = DATA_ROOT / case / "test"
     mapping_path = case_dir / "real_id_to_smiles.json"
     if not mapping_path.is_file():
         return [], None
@@ -424,6 +512,9 @@ def generate_range():
         return ("", 204)
 
     payload = request.get_json(silent=True) or {}
+    include_payload = bool(payload.get("include_payload", False))
+    # Always run in non-persistent mode: generate data for frontend payload only.
+    persist = False
     min_value = payload.get("min")
     max_value = payload.get("max")
     k_fixed = payload.get("k")
@@ -484,8 +575,14 @@ def generate_range():
         return jsonify({"ok": False, "error": "embedding_not_found", "detail": str(input_path)}), 404
 
     split_norm = _normalize_split(data_split) or "test"
-    case_dir = DATA_ROOT / dataset / split_norm
-    case_dir.mkdir(parents=True, exist_ok=True)
+    temp_root: Optional[Path] = None
+    if persist:
+        case_dir = DATA_ROOT / dataset / split_norm
+        case_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        temp_root = Path(tempfile.mkdtemp(prefix=f"latentvis_generate_{dataset}_{clustering}_"))
+        case_dir = temp_root / dataset / split_norm
+        case_dir.mkdir(parents=True, exist_ok=True)
 
     try:
         from run_pipeline_from_embeddings import run_pipeline
@@ -508,9 +605,13 @@ def generate_range():
             verbose_dr=False,
         )
         if not ok:
+            if temp_root is not None:
+                shutil.rmtree(temp_root, ignore_errors=True)
             return jsonify({"ok": False, "error": "pipeline_failed"}), 500
     except Exception as e:
         print(f"[flask-backend] generate-range pipeline failed: {e}", flush=True)
+        if temp_root is not None:
+            shutil.rmtree(temp_root, ignore_errors=True)
         return jsonify({"ok": False, "error": "pipeline_failed", "detail": str(e)}), 500
 
     # Base dir where pipeline wrote outputs for this method (root for gmm, clustering/<method> for others)
@@ -542,7 +643,7 @@ def generate_range():
     # Optional: recompute layer-to-layer and epoch-to-epoch transition stats for updated cluster assignments.
     # This is disabled by default for generate-range to keep response time low; run the script manually
     # or from a dedicated job if transition stats are needed.
-    if bool(payload.get("compute_transition_stats")):
+    if persist and bool(payload.get("compute_transition_stats")):
         transition_script = _BACKEND_DIR / "scripts" / "compute_layer_transition_stats.py"
         if transition_script.is_file():
             try:
@@ -561,9 +662,17 @@ def generate_range():
     summary = {dataset: {"status": "done", "updated": updated}}
 
     out = {"ok": True, "min": k_min, "max": k_max, "dataset": dataset, "clustering": clustering, "summary": summary}
+    if include_payload:
+        out["payload"] = {dataset: _load_generated_case_payload(base)}
+        out["run_id"] = str(int(time.time() * 1000))
     if n_clusters_override is not None:
         out["k"] = n_clusters_override
         out["linkage"] = linkage_override
+    out["persist"] = persist
+    if not persist:
+        out["note"] = "Generated in temporary backend workspace; no files were written to public/data."
+    if temp_root is not None:
+        shutil.rmtree(temp_root, ignore_errors=True)
     return jsonify(out)
 
 
@@ -953,7 +1062,8 @@ def _parse_bool(v, default=False) -> bool:
 
 
 def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[str, str]:
-    mapping_path = DATA_ROOT / dataset / "real_id_to_smiles.json"
+    split = _normalize_split(data_split) or "test"
+    mapping_path = DATA_ROOT / dataset / split / "real_id_to_smiles.json"
     if not mapping_path.is_file():
         return {}
     try:
@@ -1106,11 +1216,13 @@ def substructures_cluster_topm():
         except (TypeError, ValueError):
             return jsonify({"ok": False, "error": "invalid_m"}), 400
 
-    if clustering == "pgmeans":
-        clustering = "gmm"
     case_dir = _case_dir(dataset, clustering, data_split)
     topk_subdir = "topk_current" if use_current else "topk"
     sorted_path = case_dir / topk_subdir / "cluster_sorted_members.json"
+    if topk_subdir == "topk_current" and not sorted_path.is_file():
+        # Fallback for runs/materializations that only have static topk files.
+        sorted_path = case_dir / "topk" / "cluster_sorted_members.json"
+        use_current = False
     if not sorted_path.is_file():
         return jsonify({"ok": False, "error": "sorted_members_not_found", "path": str(sorted_path)}), 404
 

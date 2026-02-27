@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
+import { useState } from "react";
+import SmilesStructure from "./SmilesStructure";
 
 type TopkNearestRow = {
   cluster_id: number;
-  top_k_closest_real_ids: number[];
+  top_k_closest_real_ids: Array<string | number>;
 };
 
 type ClusterSubstructureData = {
@@ -22,17 +23,19 @@ type TopkNearestPanelProps = {
   onToggleHoverId: (id: string) => void;
   onSelectHoverId: (id: string) => void;
   onHoverIdChange: (id: string | null) => void;
-  resolveImageSrc: (realId: string | number, imageType: string) => string;
-  resolveSubstructureImage: (model: string, layer: string, cluster: number, group: "knn" | "kfn") => string;
+  getSmilesById: (realId: string | number) => string | null;
   substructureByCluster: Record<number, ClusterSubstructureData>;
   clusterBadgeColor: (cluster: number) => string;
   onClusterSelect?: (cluster: number) => void;
-  onImagePreviewStart?: (src: string, anchor?: DOMRect) => void;
-  onImagePreviewEnd?: () => void;
   hideTopk?: boolean;
   largePreviewOn?: boolean;
+  onSmilesPreviewStart?: (smiles: string | null, anchor?: DOMRect) => void;
+  onSmilesPreviewEnd?: () => void;
   bookmarkedIds: Set<string>;
   onToggleBookmark: (id: string) => void;
+  knnTopm: "5" | "10" | "20" | "all";
+  onKnnTopmChange: (value: "5" | "10" | "20" | "all") => void;
+  isKnnTopmLoading?: boolean;
 };
 
 export default function TopkNearestPanel({
@@ -44,36 +47,31 @@ export default function TopkNearestPanel({
   onToggleHoverId,
   onSelectHoverId,
   onHoverIdChange,
-  resolveImageSrc,
-  resolveSubstructureImage,
+  getSmilesById,
   substructureByCluster,
   clusterBadgeColor,
   onClusterSelect,
-  onImagePreviewStart,
-  onImagePreviewEnd,
   hideTopk = false,
   largePreviewOn = true,
+  onSmilesPreviewStart,
+  onSmilesPreviewEnd,
   bookmarkedIds,
   onToggleBookmark,
+  knnTopm,
+  onKnnTopmChange,
+  isKnnTopmLoading = false,
 }: TopkNearestPanelProps) {
   const PAGE_SIZE = 5;
   const [pageByCluster, setPageByCluster] = useState<Record<number, number>>({});
-  const [failedSubImages, setFailedSubImages] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    setPageByCluster((prev) => {
-      const next: Record<number, number> = {};
-      rows.forEach((row) => {
-        const totalPages = Math.max(1, Math.ceil(row.top_k_closest_real_ids.length / PAGE_SIZE));
-        const prevPage = prev[row.cluster_id] ?? 0;
-        next[row.cluster_id] = Math.min(prevPage, totalPages - 1);
-      });
-      return next;
-    });
-  }, [rows]);
 
   return (
-    <div className="w-full h-full p-2 box-border overflow-auto">
+    <div
+      className="w-full h-full p-2 box-border overflow-auto"
+      onMouseLeave={() => {
+        onHoverIdChange(null);
+        onSmilesPreviewEnd?.();
+      }}
+    >
       {rows.length === 0 && (
         <div className="text-sm text-zinc-500">
           No top-k nearest data for {selectedModel} / {selectedLayer}.
@@ -84,7 +82,22 @@ export default function TopkNearestPanel({
           <div className="flex items-center gap-2 w-full min-w-0">
             <div className="shrink-0 w-6" />
             <div className={"flex-1 min-w-0 grid items-center " + (hideTopk ? "grid-cols-1" : "grid-cols-[1fr_14px_5fr]")}>
-              <div className="text-xs font-semibold text-zinc-700 text-center">KNN</div>
+              <div className="text-xs font-semibold text-zinc-700 text-center">
+                <span>Top-k Substructure</span>
+                <label className="ml-1 inline-flex items-center gap-1 text-[11px] font-normal text-zinc-600">
+                  <select
+                    className="rounded border border-zinc-300 bg-white px-1 py-0.5 text-[11px]"
+                    value={knnTopm}
+                    onChange={(e) => onKnnTopmChange(e.target.value as "5" | "10" | "20" | "all")}
+                  >
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="all">all</option>
+                  </select>
+                  {isKnnTopmLoading && <span className="text-zinc-500">...</span>}
+                </label>
+              </div>
               {!hideTopk && <div />}
               {!hideTopk && (
                 <div className="text-sm font-semibold text-zinc-700 text-left">Top-k Nearest by Cluster</div>
@@ -93,14 +106,11 @@ export default function TopkNearestPanel({
           </div>
           {rows.map((row) => {
             const subData = substructureByCluster[row.cluster_id] ?? { knn: false, kfn: false, knnSmiles: null, knnSmarts: null };
-            const subKey = `${selectedModel}__${selectedLayer}__${row.cluster_id}__knn`;
-            const subSrc = resolveSubstructureImage(selectedModel, selectedLayer, row.cluster_id, "knn");
-            const showSubImage = subData.knn && !failedSubImages[subKey];
             const totalPages = Math.max(1, Math.ceil(row.top_k_closest_real_ids.length / PAGE_SIZE));
             const page = Math.min(pageByCluster[row.cluster_id] ?? 0, totalPages - 1);
             const start = page * PAGE_SIZE;
             const pageIds = row.top_k_closest_real_ids.slice(start, start + PAGE_SIZE);
-            const paddedPageIds: Array<number | null> = [...pageIds];
+            const paddedPageIds: Array<string | number | null> = [...pageIds];
             while (paddedPageIds.length < PAGE_SIZE) paddedPageIds.push(null);
 
             return (
@@ -120,16 +130,8 @@ export default function TopkNearestPanel({
                 <div className={"flex-1 min-w-0 grid items-start " + (hideTopk ? "grid-cols-1" : "grid-cols-[1fr_14px_5fr]")}>
                   <div
                     className="relative w-full max-w-[180px] aspect-square mx-auto"
-                    onMouseEnter={
-                      showSubImage
-                        ? (e: ReactMouseEvent<HTMLDivElement>) =>
-                            onImagePreviewStart?.(
-                              subSrc,
-                              (e.currentTarget as HTMLDivElement).getBoundingClientRect(),
-                            )
-                        : undefined
-                    }
-                    onMouseLeave={showSubImage ? () => onImagePreviewEnd?.() : undefined}
+                    onMouseEnter={(e) => onSmilesPreviewStart?.(subData.knnSmiles, e.currentTarget.getBoundingClientRect())}
+                    onMouseLeave={() => onSmilesPreviewEnd?.()}
                   >
                     {subData.knn ? (
                       <div
@@ -138,20 +140,10 @@ export default function TopkNearestPanel({
                           (selectedCluster === row.cluster_id ? "border-black" : "border-zinc-200")
                         }
                       >
-                        {showSubImage ? (
-                          <img
-                            src={subSrc}
-                            alt={`KNN substructure ${row.cluster_id}`}
-                            className="w-full h-full object-contain"
-                            onError={() => {
-                              setFailedSubImages((prev) => ({ ...prev, [subKey]: true }));
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-sm text-zinc-400">
-                            null
-                          </div>
-                        )}
+                        <SmilesStructure
+                          smiles={subData.knnSmiles}
+                          className="w-full h-full"
+                        />
                       </div>
                     ) : (
                       <div
@@ -170,8 +162,25 @@ export default function TopkNearestPanel({
                       <div
                         key={`nearest-${row.cluster_id}-${page}-${idx}-${id ?? "blank"}`}
                         className="relative w-full max-w-[180px] aspect-square mx-auto"
-                        onMouseEnter={id == null ? undefined : () => onHoverIdChange(String(id))}
-                        onMouseLeave={id == null ? undefined : () => onHoverIdChange(null)}
+                        onMouseEnter={
+                          id == null
+                            ? undefined
+                            : (e) => {
+                                onHoverIdChange(String(id));
+                                onSmilesPreviewStart?.(
+                                  getSmilesById(id),
+                                  e.currentTarget.getBoundingClientRect()
+                                );
+                              }
+                        }
+                        onMouseLeave={
+                          id == null
+                            ? undefined
+                            : () => {
+                                onHoverIdChange(null);
+                                onSmilesPreviewEnd?.();
+                              }
+                        }
                         onClick={id == null ? undefined : () => onSelectHoverId(String(id))}
                       >
                         {id == null ? (
@@ -186,35 +195,17 @@ export default function TopkNearestPanel({
                         ) : (
                           <>
                             <div
-                              className="absolute inset-0 z-[1]"
-                              onMouseEnter={(e: ReactMouseEvent<HTMLDivElement>) =>
-                                onImagePreviewStart?.(
-                                  resolveImageSrc(id, "ligand"),
-                                  (e.currentTarget as HTMLDivElement).getBoundingClientRect(),
-                                )
-                              }
-                              onMouseLeave={() => onImagePreviewEnd?.()}
-                            />
-                            <img
-                              src={resolveImageSrc(id, "ligand")}
-                              alt={`ligand ${id}`}
                               className={
-                                `w-full h-full object-contain bg-white border ` +
+                                `w-full h-full bg-white border p-1 ` +
                                 (!largePreviewOn && hoveredId === String(id)
                                   ? "border-red-500 border-2"
                                   : selectedCluster === row.cluster_id
                                     ? "border-black"
                                     : "border-zinc-200")
                               }
-                              onLoad={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
-                                target.style.display = "block";
-                              }}
-                              onError={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
-                                target.style.display = "none";
-                              }}
-                            />
+                            >
+                              <SmilesStructure smiles={getSmilesById(id)} className="w-full h-full" />
+                            </div>
                             <div
                               className="absolute top-0.5 left-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
                               style={{ backgroundColor: clusterBadgeColor(row.cluster_id) }}
@@ -266,9 +257,11 @@ export default function TopkNearestPanel({
                         type="button"
                         className="px-1.5 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
                         disabled={page <= 0}
-                        onClick={() =>
-                          setPageByCluster((prev) => ({ ...prev, [row.cluster_id]: Math.max(0, page - 1) }))
-                        }
+                        onClick={() => {
+                          setPageByCluster((prev) => ({ ...prev, [row.cluster_id]: Math.max(0, page - 1) }));
+                          onHoverIdChange(null);
+                          onSmilesPreviewEnd?.();
+                        }}
                       >
                         Prev
                       </button>
@@ -279,12 +272,14 @@ export default function TopkNearestPanel({
                         type="button"
                         className="px-1.5 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
                         disabled={page >= totalPages - 1}
-                        onClick={() =>
+                        onClick={() => {
                           setPageByCluster((prev) => ({
                             ...prev,
                             [row.cluster_id]: Math.min(totalPages - 1, page + 1),
-                          }))
-                        }
+                          }));
+                          onHoverIdChange(null);
+                          onSmilesPreviewEnd?.();
+                        }}
                       >
                         Next
                       </button>

@@ -94,9 +94,109 @@ function inferSequenceFromRows(
   return order;
 }
 
+function canonicalLayerKey(name: string): string {
+  if (/^fnn_layer_/.test(name)) return name.replace(/^fnn_layer_/, "ffn_layer_");
+  return name;
+}
+
+function normalizeAdjacentRows(
+  rows: SampleRow[],
+  mode: "layer" | "model",
+  preferredOrder: string[]
+): SampleRow[] {
+  const sequence = inferSequenceFromRows(rows, mode, preferredOrder);
+  const idxMap = new Map(
+    sequence.map((k, i) => [mode === "layer" ? canonicalLayerKey(k) : k, i])
+  );
+  const out: SampleRow[] = [];
+
+  rows.forEach((r) => {
+    const rawFrom = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
+    const rawTo = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
+    if (!rawFrom || !rawTo) return;
+    const fromKey = mode === "layer" ? canonicalLayerKey(rawFrom) : rawFrom;
+    const toKey = mode === "layer" ? canonicalLayerKey(rawTo) : rawTo;
+    const fi = idxMap.get(fromKey);
+    const ti = idxMap.get(toKey);
+    if (fi == null || ti == null) return;
+    if (Math.abs(ti - fi) !== 1) return;
+
+    if (fi <= ti) {
+      out.push({
+        ...r,
+        from_layer: mode === "layer" ? fromKey : r.from_layer,
+        to_layer: mode === "layer" ? toKey : r.to_layer,
+      });
+      return;
+    }
+
+    out.push({
+      ...r,
+      from_layer: r.to_layer as string,
+      to_layer: r.from_layer as string,
+      from_model: r.to_model,
+      to_model: r.from_model,
+      from_cluster: r.to_cluster,
+      to_cluster: r.from_cluster,
+    });
+  });
+  return out;
+}
+
+function synthesizeMissingAdjacentRows(
+  rows: SampleRow[],
+  mode: "layer" | "model",
+  preferredOrder: string[]
+): SampleRow[] {
+  const sequence = inferSequenceFromRows(rows, mode, preferredOrder);
+  if (sequence.length < 2) return [];
+  const keyOf = (r: SampleRow, dir: "from" | "to") =>
+    mode === "model"
+      ? (dir === "from" ? r.from_model ?? r.from_layer : r.to_model ?? r.to_layer)
+      : (dir === "from" ? r.from_layer : r.to_layer);
+
+  const edgePairCount = new Map<string, number>();
+  const assignmentsById = new Map<
+    string,
+    Map<string, { cluster: number; model?: string; layer?: string }>
+  >();
+  rows.forEach((r) => {
+    const fk = keyOf(r, "from");
+    const tk = keyOf(r, "to");
+    if (!fk || !tk) return;
+    const pair = `${fk}->${tk}`;
+    edgePairCount.set(pair, (edgePairCount.get(pair) ?? 0) + 1);
+    const rid = String(r.real_id);
+    if (!assignmentsById.has(rid)) assignmentsById.set(rid, new Map());
+    const amap = assignmentsById.get(rid)!;
+    amap.set(fk, { cluster: r.from_cluster, model: r.from_model, layer: r.from_layer });
+    amap.set(tk, { cluster: r.to_cluster, model: r.to_model, layer: r.to_layer });
+  });
+
+  const out: SampleRow[] = [];
+  for (let i = 0; i < sequence.length - 1; i++) {
+    const fromKey = sequence[i];
+    const toKey = sequence[i + 1];
+    if ((edgePairCount.get(`${fromKey}->${toKey}`) ?? 0) > 0) continue;
+    assignmentsById.forEach((amap, rid) => {
+      const fromAssign = amap.get(fromKey);
+      const toAssign = amap.get(toKey);
+      if (!fromAssign || !toAssign) return;
+      out.push({
+        real_id: rid,
+        from_layer: mode === "layer" ? fromKey : (fromAssign.layer ?? rows[0]?.from_layer ?? ""),
+        to_layer: mode === "layer" ? toKey : (toAssign.layer ?? rows[0]?.to_layer ?? ""),
+        from_model: mode === "model" ? fromKey : (fromAssign.model ?? rows[0]?.from_model),
+        to_model: mode === "model" ? toKey : (toAssign.model ?? rows[0]?.to_model),
+        from_cluster: fromAssign.cluster,
+        to_cluster: toAssign.cluster,
+      });
+    });
+  }
+  return out;
+}
+
 const LAYER_ORDER = [
-  "ffn_layer_1",
-  "ffn_layer_2",
   "fingerprint",
   "gnn_layer_1",
   "gnn_layer_2",
@@ -104,6 +204,10 @@ const LAYER_ORDER = [
   "gnn_layer_4",
   "gnn_layer_5",
   "gnn_layer_6",
+  "ffn_layer_1",
+  "ffn_layer_2",
+  "fnn_layer_1",
+  "fnn_layer_2",
   "emb",
   "output_block_0",
   "output_block_1",
@@ -253,7 +357,11 @@ export default function SankeyHorizontal({
       const height = Math.max(1, container.clientHeight);
 
       const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
-      const graph = buildGraph(lastRows);
+      const order = mode === "model" ? MODEL_ORDER : LAYER_ORDER;
+      const renderRows = normalizeAdjacentRows(lastRows, mode, order);
+      const syntheticRows = synthesizeMissingAdjacentRows(renderRows, mode, order);
+      const graphRows = syntheticRows.length > 0 ? [...renderRows, ...syntheticRows] : renderRows;
+      const graph = buildGraph(graphRows);
 
       const NODE_W = 12;
       const CELL_W = 120;
@@ -279,14 +387,15 @@ export default function SankeyHorizontal({
 
       // enforce x positions by layer order to align with SankeyView columns
       const presentLayers = new Set<string>();
-      lastRows.forEach((r) => {
+      graphRows.forEach((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
         presentLayers.add(fromKey);
         presentLayers.add(toKey);
       });
-      const order = mode === "model" ? MODEL_ORDER : LAYER_ORDER;
-      const layers = inferSequenceFromRows(lastRows, mode, order).filter((l) => presentLayers.has(l));
+      const layers = inferSequenceFromRows(renderRows, mode, order).filter((l) =>
+        presentLayers.has(l)
+      );
       const layerIndex = new Map(layers.map((l, i) => [l, i]));
       const centerOffset = CELL_MARGIN_LEFT + INNER_W / 2;
       const isSynced = !!syncTransform;
@@ -385,7 +494,7 @@ export default function SankeyHorizontal({
 
       // build per-sample trajectories with per-node y offsets (spread inside node height)
       const nodeSamples = new Map<string, Set<string>>();
-      lastRows.forEach((r) => {
+      graphRows.forEach((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
         const srcName = `${fromKey}_${r.from_cluster}`;
@@ -419,7 +528,7 @@ export default function SankeyHorizontal({
       });
 
       const sampleLines: Array<{ id: string; x1: number; y1: number; x2: number; y2: number }> = [];
-      lastRows.forEach((r) => {
+      graphRows.forEach((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
         const srcName = `${fromKey}_${r.from_cluster}`;
@@ -542,18 +651,17 @@ export default function SankeyHorizontal({
       sampleSel
         .attr("opacity", (d) => {
           const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
-          const isHighlight = (!!highlightId && d.id === highlightId) || highlightSet.has(d.id);
-          return isHighlight ? 1 : baseOpacity(d);
+          const isHovered = !!highlightId && d.id === highlightId;
+          const isSearchHit = highlightSet.has(d.id);
+          return (isHovered || isSearchHit) ? 1 : baseOpacity(d);
         })
         .attr("stroke", (d) => {
-          const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
-          const isHighlight = (!!highlightId && d.id === highlightId) || highlightSet.has(d.id);
-          return isHighlight ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
+          const isHovered = !!highlightId && d.id === highlightId;
+          return isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
         })
         .attr("stroke-width", (d) => {
-          const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
-          const isHighlight = (!!highlightId && d.id === highlightId) || highlightSet.has(d.id);
-          return isHighlight ? 2.2 : 1.2;
+          const isHovered = !!highlightId && d.id === highlightId;
+          return isHovered ? 2.2 : 1.2;
         });
 
       // Re-apply current transform right after redraw so viewport state is preserved.
@@ -644,17 +752,18 @@ export default function SankeyHorizontal({
     const lines = Array.from(svg.querySelectorAll("g.sample-trajectories line[data-id]")) as SVGLineElement[];
     lines.forEach((line) => {
       const id = line.getAttribute("data-id") || "";
-      const isHighlight = (!!highlightId && id === highlightId) || highlightSet.has(id);
+      const isHovered = !!highlightId && id === highlightId;
+      const isSearchHit = highlightSet.has(id);
       const opacity = highlightSet.size > 0
-        ? (highlightSet.has(id) ? 1 : 0)
-        : isHighlight
+        ? (isSearchHit ? 1 : 0)
+        : isHovered
           ? 1
           : activeName
             ? (samplesForActive.has(id) ? 0.8 : 0)
             : 0;
       line.setAttribute("opacity", String(opacity));
-      line.setAttribute("stroke", isHighlight ? HIGHLIGHT_RED : SANKEY_LINK_COLOR);
-      line.setAttribute("stroke-width", isHighlight ? "2.2" : "1.2");
+      line.setAttribute("stroke", isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR);
+      line.setAttribute("stroke-width", isHovered ? "2.2" : "1.2");
     });
 
     const svgSel = d3.select(svg);

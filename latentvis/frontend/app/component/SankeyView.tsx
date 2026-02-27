@@ -113,8 +113,6 @@ function sortRowKeys(keys: string[]): string[] {
 }
 
 const PREFERRED_LAYER_ORDER = [
-  "ffn_layer_1",
-  "ffn_layer_2",
   "fingerprint",
   "gnn_layer_1",
   "gnn_layer_2",
@@ -122,6 +120,10 @@ const PREFERRED_LAYER_ORDER = [
   "gnn_layer_4",
   "gnn_layer_5",
   "gnn_layer_6",
+  "ffn_layer_1",
+  "ffn_layer_2",
+  "fnn_layer_1",
+  "fnn_layer_2",
   "emb",
   "output_block_0",
   "output_block_1",
@@ -166,6 +168,7 @@ function sortLayerKeys(keys: string[]): string[] {
 type SankeyViewProps = {
   dataPath?: string;
   metricsPath?: string;
+  transitionStatsPath?: string;
   onModelSelect?: (modelKey: string) => void;
   onTransform?: (t: { x: number; y: number; scale: number }) => void;
   externalTransform?: { x: number; y: number; scale: number };
@@ -180,6 +183,7 @@ type SankeyViewProps = {
 export default function SankeyView({
   dataPath = "/data/dimenet/sankey/all_sankey.json",
   metricsPath = "/data/dimenet/bic_aic/avg_fmi_cspa_by_layer.json",
+  transitionStatsPath = "/data/chemprop/clustering_metrics/layer_transition_stats.json",
   onModelSelect,
   onTransform,
   externalTransform,
@@ -197,11 +201,17 @@ export default function SankeyView({
   const [maxInstanceValue, setMaxInstanceValue] = useState(DEFAULT_MAX_INSTANCE);
   const [fmiData, setFmiData] = useState<Array<{ layer: string; fmi: number; cspa: number }>>([]);
   const [rowMetricData, setRowMetricData] = useState<Array<{ model: string; fmi: number; cspa: number }>>([]);
+  const [showSankeyPaths, setShowSankeyPaths] = useState(true);
+  const [showSankeyNodes, setShowSankeyNodes] = useState(true);
+  const [showCellBackground, setShowCellBackground] = useState(true);
+  const [showGapHeatmap, setShowGapHeatmap] = useState(true);
   const [layout, setLayout] = useState<{
     rowNames: string[];
     colNames: string[];
     cellW: number;
     cellH: number;
+    cellStepX: number;
+    cellStepY: number;
     innerW: number;
     innerH: number;
     margin: { top: number; left: number; right: number; bottom: number };
@@ -212,6 +222,7 @@ export default function SankeyView({
     const container = chartRef.current;
     if (!container) return;
     container.innerHTML = "";
+    let cancelled = false;
 
     const urlParams = new URLSearchParams(window.location.search);
     let SWAP_AXES = urlParams.get("swap") === "1";
@@ -233,12 +244,18 @@ export default function SankeyView({
       window.location.href = next;
     }
 
-    fetch(dataPath)
-      .then((res) => {
+    Promise.all([
+      fetch(dataPath).then((res) => {
         if (!res.ok) throw new Error("Failed to fetch all_sankey.json");
         return res.json();
-      })
-      .then((rawData) => {
+      }),
+      fetch(transitionStatsPath)
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null),
+    ])
+      .then(([rawData, transitionJson]) => {
+        if (cancelled || chartRef.current !== container) return;
+        container.innerHTML = "";
         const data = normalizeSankeyData(rawData);
         const ROW_NAMES: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
         const COLUMN_NAMES: string[] = sortLayerKeys(Object.keys(data?.layer || {}));
@@ -251,18 +268,29 @@ export default function SankeyView({
         const X_NAMES = SWAP_AXES ? ROW_NAMES : COLUMN_NAMES;
         const Y_NAMES = SWAP_AXES ? COLUMN_NAMES : ROW_NAMES;
 
-        function cellOrigin(rowName: string, columnName: string, cellW: number, cellH: number) {
+        function cellOrigin(rowName: string, columnName: string, stepX: number, stepY: number) {
           const col = SWAP_AXES ? (ROW_INDEX.get(rowName) ?? 0) : (COLUMN_INDEX.get(columnName) ?? 0);
           const row = SWAP_AXES ? (COLUMN_INDEX.get(columnName) ?? 0) : (ROW_INDEX.get(rowName) ?? 0);
-          return { col, row, x: col * cellW, y: row * cellH };
+          return { col, row, x: col * stepX, y: row * stepY };
         }
 
         const margin = { top: 20, left: 0, right: 0, bottom: 20 };
         const CELL_W = 120;
         const CELL_H = 150;
+        const CELL_GAP = 10;
+        const cellStepX = CELL_W + CELL_GAP;
+        const cellStepY = CELL_H + CELL_GAP;
 
-        const width = margin.left + margin.right + CELL_W * X_NAMES.length;
-        const height = margin.top + margin.bottom + CELL_H * Y_NAMES.length;
+        const width =
+          margin.left +
+          margin.right +
+          CELL_W * X_NAMES.length +
+          Math.max(0, X_NAMES.length - 1) * CELL_GAP;
+        const height =
+          margin.top +
+          margin.bottom +
+          CELL_H * Y_NAMES.length +
+          Math.max(0, Y_NAMES.length - 1) * CELL_GAP;
 
         const svg = d3
           .select(container)
@@ -288,11 +316,41 @@ export default function SankeyView({
           colNames: X_NAMES,
           cellW,
           cellH,
+          cellStepX,
+          cellStepY,
           innerW,
           innerH,
           margin,
           cellMargin,
         });
+
+        const cellClusterCount = new Map<string, number>();
+        ROW_NAMES.forEach((rowName) => {
+          COLUMN_NAMES.forEach((columnName) => {
+            const nodesForCell = (data.epoch?.[rowName]?.nodes?.[columnName] || []) as any[];
+            const ids = new Set<number>();
+            nodesForCell.forEach((n: any) => {
+              const c =
+                n?.cluster != null && n?.cluster !== ""
+                  ? Number(n.cluster)
+                  : parseClusterFromLabel(String(n?.label ?? ""));
+              if (Number.isFinite(c)) ids.add(c);
+            });
+            cellClusterCount.set(`${rowName}|${columnName}`, ids.size || nodesForCell.length || 0);
+          });
+        });
+        const clusterCounts = Array.from(cellClusterCount.values());
+        const minCellCluster = clusterCounts.length ? Math.min(...clusterCounts) : 0;
+        const maxCellCluster = clusterCounts.length ? Math.max(...clusterCounts) : 1;
+        const cellBgColor = d3
+          .scaleLinear<string>()
+          .domain(
+            minCellCluster === maxCellCluster
+              ? [minCellCluster, minCellCluster + 1]
+              : [minCellCluster, maxCellCluster]
+          )
+          .range(["#eff6ff", "#46518C"])
+          .clamp(true);
 
         const cells: d3.Selection<SVGGElement, any, any, any>[] = [];
         let lockedCell: { rowName: string; columnName: string } | null = null;
@@ -304,10 +362,16 @@ export default function SankeyView({
             const g = gRoot
               .append("g")
               .attr("id", `cell-${rowName}-${columnName}`)
-              .attr("transform", `translate(${col * cellW}, ${row * cellH})`)
+              .attr("transform", `translate(${col * cellStepX}, ${row * cellStepY})`)
               .datum({ rowName, columnName, col, row });
 
-            g.append("rect").attr("width", cellW).attr("height", cellH).attr("fill", "white").attr("stroke", "#888");
+            const cellCount = cellClusterCount.get(`${rowName}|${columnName}`) ?? 0;
+            g.append("rect")
+              .attr("width", cellW)
+              .attr("height", cellH)
+              .attr("fill", showCellBackground ? cellBgColor(cellCount) : "white")
+              .attr("stroke", "#888")
+              .attr("data-cluster-count", cellCount);
 
             const innerG = g.append("g").attr("transform", `translate(${cellMargin.left}, ${cellMargin.top})`);
             cells.push(innerG);
@@ -389,6 +453,144 @@ export default function SankeyView({
         const nodeBarWidth = Math.min(x.bandwidth(), MAX_NODE_BAR_WIDTH);
         const nodeBarOffset = (x.bandwidth() - nodeBarWidth) / 2;
 
+        const transitionEntriesByEpoch: Array<{
+          epoch: string;
+          from_layer: string;
+          to_layer: string;
+          pct_changed: number;
+        }> = Array.isArray((transitionJson as any)?.by_epoch) ? (transitionJson as any).by_epoch : [];
+        const transitionEntriesByLayer: Array<{
+          layer: string;
+          from_epoch: string;
+          to_epoch: string;
+          pct_changed: number;
+        }> = Array.isArray((transitionJson as any)?.by_layer) ? (transitionJson as any).by_layer : [];
+        const pctByEpochTransition = new Map<string, number>();
+        transitionEntriesByEpoch.forEach((d) => {
+          const epoch = String(d?.epoch ?? "").trim();
+          const fromLayer = String(d?.from_layer ?? "").trim();
+          const toLayer = String(d?.to_layer ?? "").trim();
+          const pct = Number(d?.pct_changed ?? 0);
+          if (!epoch || !fromLayer || !toLayer || !Number.isFinite(pct)) return;
+          pctByEpochTransition.set(`${epoch}|${fromLayer}|${toLayer}`, Math.max(0, pct));
+        });
+        const pctByLayerTransition = new Map<string, number>();
+        transitionEntriesByLayer.forEach((d) => {
+          const layer = String(d?.layer ?? "").trim();
+          const fromEpoch = String(d?.from_epoch ?? "").trim();
+          const toEpoch = String(d?.to_epoch ?? "").trim();
+          const pct = Number(d?.pct_changed ?? 0);
+          if (!layer || !fromEpoch || !toEpoch || !Number.isFinite(pct)) return;
+          pctByLayerTransition.set(`${layer}|${fromEpoch}|${toEpoch}`, Math.max(0, pct));
+        });
+        const maxGapPct = Math.max(
+          1,
+          ...Array.from(pctByEpochTransition.values()),
+          ...Array.from(pctByLayerTransition.values())
+        );
+        const redGapColor = d3
+          .scaleLinear<string>()
+          .domain([0, maxGapPct])
+          .range(["#f3f4f6", "#7f1d1d"])
+          .clamp(true);
+        const greenGapColor = d3
+          .scaleLinear<string>()
+          .domain([0, maxGapPct])
+          .range(["#f0fdf4", "#166534"])
+          .clamp(true);
+        const horizontalGapColor = SWAP_AXES ? greenGapColor : redGapColor;
+        const verticalGapColor = SWAP_AXES ? redGapColor : greenGapColor;
+        if (showGapHeatmap) {
+          const gapHeatmap = gRoot.append("g").attr("class", "cell-gap-heatmap");
+          if (!SWAP_AXES) {
+          // Horizontal gaps: layer-to-layer transitions for each epoch (by_epoch)
+          ROW_NAMES.forEach((epoch, rowIdx) => {
+            for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
+              const fromLayer = COLUMN_NAMES[i];
+              const toLayer = COLUMN_NAMES[i + 1];
+              const pct = pctByEpochTransition.get(`${epoch}|${fromLayer}|${toLayer}`) ?? 0;
+              const xGap = i * cellStepX + cellW;
+              const yGap = rowIdx * cellStepY;
+              gapHeatmap
+                .append("rect")
+                .attr("x", xGap)
+                .attr("y", yGap)
+                .attr("width", CELL_GAP)
+                .attr("height", cellH)
+                .attr("fill", horizontalGapColor(pct))
+                .attr("stroke", "#ffffff")
+                .attr("stroke-width", 0.7)
+                .append("title")
+                .text(`${epoch}: ${fromLayer} -> ${toLayer}, ${pct.toFixed(2)}%`);
+            }
+          });
+          // Vertical gaps: epoch-to-epoch transitions for each layer (by_layer)
+          COLUMN_NAMES.forEach((layer, colIdx) => {
+            for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
+              const fromEpoch = ROW_NAMES[i];
+              const toEpoch = ROW_NAMES[i + 1];
+              const pct = pctByLayerTransition.get(`${layer}|${fromEpoch}|${toEpoch}`) ?? 0;
+              const xGap = colIdx * cellStepX;
+              const yGap = i * cellStepY + cellH;
+              gapHeatmap
+                .append("rect")
+                .attr("x", xGap)
+                .attr("y", yGap)
+                .attr("width", cellW)
+                .attr("height", CELL_GAP)
+                .attr("fill", verticalGapColor(pct))
+                .attr("stroke", "#ffffff")
+                .attr("stroke-width", 0.7)
+                .append("title")
+                .text(`${layer}: ${fromEpoch} -> ${toEpoch}, ${pct.toFixed(2)}%`);
+            }
+          });
+          } else {
+          // Horizontal gaps: epoch-to-epoch transitions for each layer (by_layer)
+          COLUMN_NAMES.forEach((layer, rowIdx) => {
+            for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
+              const fromEpoch = ROW_NAMES[i];
+              const toEpoch = ROW_NAMES[i + 1];
+              const pct = pctByLayerTransition.get(`${layer}|${fromEpoch}|${toEpoch}`) ?? 0;
+              const xGap = i * cellStepX + cellW;
+              const yGap = rowIdx * cellStepY;
+              gapHeatmap
+                .append("rect")
+                .attr("x", xGap)
+                .attr("y", yGap)
+                .attr("width", CELL_GAP)
+                .attr("height", cellH)
+                .attr("fill", horizontalGapColor(pct))
+                .attr("stroke", "#ffffff")
+                .attr("stroke-width", 0.7)
+                .append("title")
+                .text(`${layer}: ${fromEpoch} -> ${toEpoch}, ${pct.toFixed(2)}%`);
+            }
+          });
+          // Vertical gaps: layer-to-layer transitions for each epoch (by_epoch)
+          ROW_NAMES.forEach((epoch, colIdx) => {
+            for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
+              const fromLayer = COLUMN_NAMES[i];
+              const toLayer = COLUMN_NAMES[i + 1];
+              const pct = pctByEpochTransition.get(`${epoch}|${fromLayer}|${toLayer}`) ?? 0;
+              const xGap = colIdx * cellStepX;
+              const yGap = i * cellStepY + cellH;
+              gapHeatmap
+                .append("rect")
+                .attr("x", xGap)
+                .attr("y", yGap)
+                .attr("width", cellW)
+                .attr("height", CELL_GAP)
+                .attr("fill", verticalGapColor(pct))
+                .attr("stroke", "#ffffff")
+                .attr("stroke-width", 0.7)
+                .append("title")
+                .text(`${epoch}: ${fromLayer} -> ${toLayer}, ${pct.toFixed(2)}%`);
+            }
+          });
+          }
+        }
+
         const nodeLookup = new Map<string, { rowName: string; columnName: string; idx: number; node: any }>();
         const nodeIdLookup = new Map<string, { rowName: string; columnName: string; idx: number; node: any }>();
 
@@ -398,17 +600,31 @@ export default function SankeyView({
           return label.slice(0, i);
         }
 
+        function canonicalLayerName(name: string): string {
+          if (/^fnn_layer_/.test(name)) return name.replace(/^fnn_layer_/, "ffn_layer_");
+          return name;
+        }
+
+        function layerNameAliases(name: string): string[] {
+          const out = new Set<string>([name, canonicalLayerName(name)]);
+          if (/^ffn_layer_/.test(name)) out.add(name.replace(/^ffn_layer_/, "fnn_layer_"));
+          if (/^fnn_layer_/.test(name)) out.add(name.replace(/^fnn_layer_/, "ffn_layer_"));
+          return Array.from(out);
+        }
+
         function lookupNode(
           rowName: string,
           columnName: string,
           label: string,
           nodeId: number | undefined
         ): { rowName: string; columnName: string; idx: number; node: any } | null {
-          const byLabel = nodeLookup.get(`${rowName}|${columnName}|${label}`);
-          if (byLabel) return byLabel;
-          if (nodeId !== undefined) {
-            const byId = nodeIdLookup.get(`${rowName}|${columnName}|${String(nodeId)}`);
-            if (byId) return byId;
+          for (const colName of layerNameAliases(columnName)) {
+            const byLabel = nodeLookup.get(`${rowName}|${colName}|${label}`);
+            if (byLabel) return byLabel;
+            if (nodeId !== undefined) {
+              const byId = nodeIdLookup.get(`${rowName}|${colName}|${String(nodeId)}`);
+              if (byId) return byId;
+            }
           }
           return null;
         }
@@ -466,9 +682,41 @@ export default function SankeyView({
             .attr("data-value", +edgeValue || 0);
         }
 
-        // column-links (per layer) -> vertical inside a column
-        const linkGroup = gRoot.append("g").attr("class", "links column-links");
-        Object.keys(data.layer || {}).forEach((columnKey) => {
+        function buildGreedyBridgeLinks(
+          sourceNodes: any[],
+          targetNodes: any[]
+        ): Array<{ sourceIdx: number; targetIdx: number; value: number }> {
+          const src = sourceNodes
+            .map((n, i) => ({ i, cluster: Number(n?.id ?? i), rem: Math.max(0, Number(n?.value ?? 0)) }))
+            .filter((d) => d.rem > 0)
+            .sort((a, b) => a.cluster - b.cluster);
+          const tgt = targetNodes
+            .map((n, i) => ({ i, cluster: Number(n?.id ?? i), rem: Math.max(0, Number(n?.value ?? 0)) }))
+            .filter((d) => d.rem > 0)
+            .sort((a, b) => a.cluster - b.cluster);
+
+          const out: Array<{ sourceIdx: number; targetIdx: number; value: number }> = [];
+          let si = 0;
+          let ti = 0;
+          while (si < src.length && ti < tgt.length) {
+            const amount = Math.min(src[si].rem, tgt[ti].rem);
+            if (amount > 0) {
+              out.push({ sourceIdx: src[si].i, targetIdx: tgt[ti].i, value: amount });
+              src[si].rem -= amount;
+              tgt[ti].rem -= amount;
+            }
+            if (src[si].rem <= 1e-9) si += 1;
+            if (tgt[ti].rem <= 1e-9) ti += 1;
+          }
+          return out;
+        }
+
+        let linkGroup: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
+        let linkGroup2: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
+        if (showSankeyPaths) {
+          // column-links (per layer) -> vertical inside a column
+          linkGroup = gRoot.append("g").attr("class", "links column-links");
+          Object.keys(data.layer || {}).forEach((columnKey) => {
           const columnObj = data.layer[columnKey];
           if (COLUMN_INDEX.get(columnKey) == null) return;
 
@@ -506,8 +754,8 @@ export default function SankeyView({
                 ? { source: sourceInfo, target: targetInfo }
                 : { source: targetInfo, target: sourceInfo };
 
-            const srcO = cellOrigin(forwardColumn.source.rowName, columnKey, cellW, cellH);
-            const tgtO = cellOrigin(forwardColumn.target.rowName, columnKey, cellW, cellH);
+            const srcO = cellOrigin(forwardColumn.source.rowName, columnKey, cellStepX, cellStepY);
+            const tgtO = cellOrigin(forwardColumn.target.rowName, columnKey, cellStepX, cellStepY);
 
             const srcIdx = forwardColumn.source.idx;
             const tgtIdx = forwardColumn.target.idx;
@@ -553,25 +801,28 @@ export default function SankeyView({
             const p = appendLinkPath(linkGroup as any, pathD, edge.value, strokeW, SANKEY_2D_COLUMN_LINK_COLOR, 0.3);
             p.attr("data-column", columnKey);
           });
-        });
+          });
 
-        // row-links (per epoch/model) -> horizontal inside a row
-        const linkGroup2 = gRoot.append("g").attr("class", "links row-links");
-        Object.keys(data.epoch || {}).forEach((rowKey) => {
+          // row-links (per epoch/model) -> horizontal inside a row
+          linkGroup2 = gRoot.append("g").attr("class", "links row-links");
+          Object.keys(data.epoch || {}).forEach((rowKey) => {
           const rowObj = data.epoch[rowKey];
           if (ROW_INDEX.get(rowKey) == null) return;
+          const acceptedPairSet = new Set<string>();
 
           (rowObj.edges || []).forEach((edge: any) => {
             const sLabelRaw = String(edge.source_label ?? "");
             const tLabelRaw = String(edge.target_label ?? "");
-            const sColRaw = columnFromLabel(sLabelRaw);
-            const tColRaw = columnFromLabel(tLabelRaw);
+            const sColRaw = canonicalLayerName(columnFromLabel(sLabelRaw));
+            const tColRaw = canonicalLayerName(columnFromLabel(tLabelRaw));
             const sourceInfo = lookupNode(rowKey, sColRaw, sLabelRaw, edge.source_node_id);
             const targetInfo = lookupNode(rowKey, tColRaw, tLabelRaw, edge.target_node_id);
 
             if (!sourceInfo || !targetInfo) return;
-            const srcColIdxRaw = COLUMN_INDEX.get(sourceInfo.columnName);
-            const tgtColIdxRaw = COLUMN_INDEX.get(targetInfo.columnName);
+            const sourceColCanonical = canonicalLayerName(sourceInfo.columnName);
+            const targetColCanonical = canonicalLayerName(targetInfo.columnName);
+            const srcColIdxRaw = COLUMN_INDEX.get(sourceColCanonical);
+            const tgtColIdxRaw = COLUMN_INDEX.get(targetColCanonical);
             if (srcColIdxRaw == null || tgtColIdxRaw == null) return;
             // Strict adjacency only: previous layer <-> next layer.
             if (Math.abs(tgtColIdxRaw - srcColIdxRaw) !== 1) return;
@@ -580,9 +831,12 @@ export default function SankeyView({
               tgtColIdxRaw > srcColIdxRaw
                 ? { source: sourceInfo, target: targetInfo }
                 : { source: targetInfo, target: sourceInfo };
+            const forwardSrcCol = canonicalLayerName(forwardRow.source.columnName);
+            const forwardTgtCol = canonicalLayerName(forwardRow.target.columnName);
+            acceptedPairSet.add(`${forwardSrcCol}->${forwardTgtCol}`);
 
-            const srcO = cellOrigin(rowKey, forwardRow.source.columnName, cellW, cellH);
-            const tgtO = cellOrigin(rowKey, forwardRow.target.columnName, cellW, cellH);
+            const srcO = cellOrigin(rowKey, forwardSrcCol, cellStepX, cellStepY);
+            const tgtO = cellOrigin(rowKey, forwardTgtCol, cellStepX, cellStepY);
 
             const srcIdx = forwardRow.source.idx;
             const tgtIdx = forwardRow.target.idx;
@@ -628,45 +882,119 @@ export default function SankeyView({
             const p2 = appendLinkPath(linkGroup2 as any, pathD, edge.value, strokeW, SANKEY_2D_ROW_LINK_COLOR, 0.2);
             p2.attr("data-row", rowKey);
           });
-        });
+
+          // Ensure every adjacent layer pair has ordered paths.
+          // If raw edges have none for a pair, synthesize a complete conservative bridge
+          // from both sides' node masses (cluster-wise), not a single coarse link.
+          for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
+            const fromCol = COLUMN_NAMES[i];
+            const toCol = COLUMN_NAMES[i + 1];
+            const pairKey = `${fromCol}->${toCol}`;
+            if (acceptedPairSet.has(pairKey)) continue;
+
+            const srcNodes = ((rowObj?.nodes?.[fromCol] || []) as any[]).filter((n) => (n?.value ?? 0) > 0);
+            const tgtNodes = ((rowObj?.nodes?.[toCol] || []) as any[]).filter((n) => (n?.value ?? 0) > 0);
+            if (srcNodes.length === 0 || tgtNodes.length === 0) continue;
+
+            const bridges = buildGreedyBridgeLinks(srcNodes, tgtNodes);
+            const srcO = cellOrigin(rowKey, fromCol, cellStepX, cellStepY);
+            const tgtO = cellOrigin(rowKey, toCol, cellStepX, cellStepY);
+
+            bridges.forEach((bridge) => {
+              const srcIdx = bridge.sourceIdx;
+              const tgtIdx = bridge.targetIdx;
+              const srcNode = srcNodes[srcIdx];
+              const tgtNode = tgtNodes[tgtIdx];
+              const srcBand = x(srcIdx);
+              const tgtBand = x(tgtIdx);
+              if (srcBand == null || tgtBand == null) return;
+
+              const sPrev = srcNode.previous ?? 0;
+              const sVal = srcNode.value ?? 0;
+              const tPrev = tgtNode.previous ?? 0;
+              const tVal = tgtNode.value ?? 0;
+              const sBarY = innerH - y(sPrev);
+              const sBarH = innerH - y(sVal);
+              const tBarY = innerH - y(tPrev);
+              const tBarH = innerH - y(tVal);
+
+              let pathD = "";
+              if (!SWAP_AXES) {
+                const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
+                const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
+                const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
+                const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
+                const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
+                pathD = `M ${srcCenterX},${srcCenterY}
+                     C ${srcCenterX + dx},${srcCenterY}
+                       ${tgtCenterX - dx},${tgtCenterY}
+                       ${tgtCenterX},${tgtCenterY}`;
+              } else {
+                const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
+                const srcCenterY = srcO.y + cellMargin.top + sBarY + Math.max(0, sBarH);
+                const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
+                const tgtCenterY = tgtO.y + cellMargin.top + tBarY;
+                const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
+                pathD = `M ${srcCenterX},${srcCenterY}
+                     C ${srcCenterX},${srcCenterY + dy}
+                       ${tgtCenterX},${tgtCenterY - dy}
+                       ${tgtCenterX},${tgtCenterY}`;
+              }
+
+              const syntheticW = Math.max(0.8, linkWidthScale(bridge.value));
+              const synthetic = appendLinkPath(
+                linkGroup2 as any,
+                pathD,
+                bridge.value,
+                syntheticW,
+                SANKEY_2D_ROW_LINK_COLOR,
+                0.14
+              );
+              synthetic.attr("data-row", rowKey).attr("data-synthetic", "1");
+            });
+          }
+          });
+        }
 
         // draw nodes after links so they are on top
-        nodeDrawQueue.forEach(({ g, rowName, columnName, nodesForCell }) => {
-          g.selectAll("rect.bar")
-            .data(nodesForCell)
-            .enter()
-            .append("rect")
-            .attr("class", "bar")
-            .attr("x", (_d: any, i: number) => (x(i) as number) + nodeBarOffset)
-            .attr("y", (d: any) => innerH - y(d.previous))
-            .attr("width", nodeBarWidth)
-            .attr("height", (d: any) => innerH - y(d.value))
-            .attr("fill", "#aaa")
-            .attr("data-row", rowName)
-            .attr("data-column", columnName)
-            .attr("data-cluster", (d: any) => {
-              const c = d?.cluster;
-              if (c !== null && c !== undefined && c !== "") return Number(c);
-              const label = String(d?.label ?? "");
-              const i = label.lastIndexOf("_C");
-              if (i === -1) return "";
-              return Number(label.slice(i + 2));
-            })
-            .style("cursor", "pointer")
-            .on("click", (event: any, d: any) => {
-              event.stopPropagation();
-              const c = d?.cluster;
-              let cluster = c !== null && c !== undefined && c !== "" ? Number(c) : NaN;
-              if (Number.isNaN(cluster)) {
+        if (showSankeyNodes) {
+          nodeDrawQueue.forEach(({ g, rowName, columnName, nodesForCell }) => {
+            g.selectAll("rect.bar")
+              .data(nodesForCell)
+              .enter()
+              .append("rect")
+              .attr("class", "bar")
+              .attr("x", (_d: any, i: number) => (x(i) as number) + nodeBarOffset)
+              .attr("y", (d: any) => innerH - y(d.previous))
+              .attr("width", nodeBarWidth)
+              .attr("height", (d: any) => innerH - y(d.value))
+              .attr("fill", "#aaa")
+              .attr("data-row", rowName)
+              .attr("data-column", columnName)
+              .attr("data-cluster", (d: any) => {
+                const c = d?.cluster;
+                if (c !== null && c !== undefined && c !== "") return Number(c);
                 const label = String(d?.label ?? "");
                 const i = label.lastIndexOf("_C");
-                if (i !== -1) cluster = Number(label.slice(i + 2));
-              }
-              if (!Number.isNaN(cluster)) {
-                onNodeSelect?.({ model: rowName, layer: columnName, cluster });
-              }
-            });
-        });
+                if (i === -1) return "";
+                return Number(label.slice(i + 2));
+              })
+              .style("cursor", "pointer")
+              .on("click", (event: any, d: any) => {
+                event.stopPropagation();
+                const c = d?.cluster;
+                let cluster = c !== null && c !== undefined && c !== "" ? Number(c) : NaN;
+                if (Number.isNaN(cluster)) {
+                  const label = String(d?.label ?? "");
+                  const i = label.lastIndexOf("_C");
+                  if (i !== -1) cluster = Number(label.slice(i + 2));
+                }
+                if (!Number.isNaN(cluster)) {
+                  onNodeSelect?.({ model: rowName, layer: columnName, cluster });
+                }
+              });
+          });
+        }
 
         // slider + mode controls
         const minRange = document.getElementById("minRange") as HTMLInputElement | null;
@@ -901,10 +1229,15 @@ export default function SankeyView({
         // legends moved outside zoomed canvas
       })
       .catch((err) => {
+        if (cancelled || chartRef.current !== container) return;
         console.error("Failed to build chart:", err);
         container.innerHTML = "<div style='color: red'>Failed to load visualization data.</div>";
       });
-  }, [dataPath]);
+    return () => {
+      cancelled = true;
+      if (chartRef.current === container) container.innerHTML = "";
+    };
+  }, [dataPath, transitionStatsPath, showSankeyPaths, showSankeyNodes, showCellBackground, showGapHeatmap]);
 
   useEffect(() => {
     const container = chartRef.current;
@@ -1079,7 +1412,7 @@ export default function SankeyView({
           const x =
             transform.x +
             transform.scale *
-              (layout.margin.left + i * layout.cellW + layout.cellMargin.left + layout.innerW / 2);
+              (layout.margin.left + i * layout.cellStepX + layout.cellMargin.left + layout.innerW / 2);
           const fmi = fmiByLayer.get(name);
           const cspa = cspaByLayer.get(name);
           if (fmi == null || cspa == null) return null;
@@ -1217,7 +1550,7 @@ export default function SankeyView({
       layout.rowNames.forEach((name, i) => {
         const y =
           transform.y +
-          transform.scale * (layout.margin.top + i * layout.cellH + layout.cellMargin.top + layout.innerH / 2);
+          transform.scale * (layout.margin.top + i * layout.cellStepY + layout.cellMargin.top + layout.innerH / 2);
         const fmi = fmiByModel.get(name);
         const cspa = cspaByModel.get(name);
         if (fmi == null || cspa == null) return;
@@ -1306,6 +1639,34 @@ export default function SankeyView({
           <button id="btnColumn">Column</button>
           <button id="btnRow">Row</button>
           <button id="btnSwap">Swap X/Y</button>
+          <button
+            type="button"
+            onClick={() => setShowSankeyPaths((v) => !v)}
+            style={{ fontWeight: showSankeyPaths ? 600 : 400 }}
+          >
+            Paths
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSankeyNodes((v) => !v)}
+            style={{ fontWeight: showSankeyNodes ? 600 : 400 }}
+          >
+            Nodes
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowCellBackground((v) => !v)}
+            style={{ fontWeight: showCellBackground ? 600 : 400 }}
+          >
+            Cell BG
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowGapHeatmap((v) => !v)}
+            style={{ fontWeight: showGapHeatmap ? 600 : 400 }}
+          >
+            Gap Heat
+          </button>
         </div>
       </div>
       {/* FMI/CSPA panel is temporarily hidden, keep code for future use.
@@ -1333,49 +1694,41 @@ export default function SankeyView({
             {layout && (
               <>
                 <div className="absolute left-0 top-0 right-0 h-5 pointer-events-none bg-white/90 z-10 overflow-hidden">
-                  <div
-                    className="absolute top-0 h-5"
-                    style={{
-                      left: transform.x + transform.scale * layout.margin.left + 24,
-                      width: transform.scale * layout.cellW * layout.colNames.length,
-                      display: "grid",
-                      gridTemplateColumns: `repeat(${Math.max(1, layout.colNames.length)}, minmax(0, 1fr))`,
-                      alignItems: "center",
-                    }}
-                  >
-                    {layout.colNames.map((name) => (
-                      <div key={name} className="text-sm text-zinc-700 text-center whitespace-nowrap">
-                        {toShortLayerName(name)}
-                      </div>
-                    ))}
-                  </div>
+                  {layout.colNames.map((name, i) => (
+                    <div
+                      key={name}
+                      className="absolute top-0 h-5 text-sm text-zinc-700 text-center whitespace-nowrap"
+                      style={{
+                        left:
+                          transform.x +
+                          transform.scale *
+                            (layout.margin.left + i * layout.cellStepX + layout.cellMargin.left + layout.innerW / 2) +
+                          24,
+                        transform: "translateX(-50%)",
+                      }}
+                    >
+                      {toShortLayerName(name)}
+                    </div>
+                  ))}
                 </div>
                 <div className="absolute left-0 top-0 bottom-0 w-10 pointer-events-none bg-white/90 z-10 overflow-hidden">
-                  <div
-                    className="absolute left-0 w-10"
-                    style={{
-                      top: transform.y + transform.scale * layout.margin.top,
-                      height: transform.scale * layout.cellH * layout.rowNames.length,
-                      display: "grid",
-                      gridTemplateRows: `repeat(${Math.max(1, layout.rowNames.length)}, minmax(0, 1fr))`,
-                      justifyItems: "start",
-                      alignItems: "center",
-                      paddingLeft: 2,
-                    }}
-                  >
-                    {layout.rowNames.map((name) => (
-                      <div
-                        key={name}
-                        className="text-sm text-zinc-700 whitespace-nowrap"
-                        style={{
-                          writingMode: "vertical-lr",
-                          textOrientation: "mixed",
-                        }}
-                      >
-                        {toShortLayerName(name)}
-                      </div>
-                    ))}
-                  </div>
+                  {layout.rowNames.map((name, i) => (
+                    <div
+                      key={name}
+                      className="absolute left-[2px] text-sm text-zinc-700 whitespace-nowrap"
+                      style={{
+                        top:
+                          transform.y +
+                          transform.scale *
+                            (layout.margin.top + i * layout.cellStepY + layout.cellMargin.top + layout.innerH / 2),
+                        transform: "translateY(-50%)",
+                        writingMode: "vertical-lr",
+                        textOrientation: "mixed",
+                      }}
+                    >
+                      {toShortLayerName(name)}
+                    </div>
+                  ))}
                 </div>
               </>
             )}
