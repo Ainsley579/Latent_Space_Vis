@@ -75,17 +75,20 @@ export default function Home() {
   const [generatedSankeyPayloads, setGeneratedSankeyPayloads] = useState<Record<string, GeneratedSankeyPayload>>({});
   const [generatedRuntimePayloads, setGeneratedRuntimePayloads] = useState<Record<string, GeneratedRuntimePayload>>({});
   const generatedSankeyBlobUrlsRef = useRef<Map<string, string>>(new Map());
-  const datasetRootFor = (dataset: DatasetKey) => `/data/${dataset}/test`;
+  const datasetRootFor = (
+    dataset: DatasetKey,
+    clustering: ClusteringKey = selectedClustering
+  ) => (clustering === "pgmeans" ? `/data/${dataset}/test` : `/data/${dataset}`);
   const datasetBaseFor = (
     dataset: DatasetKey,
     clustering: ClusteringKey = selectedClustering
   ) => {
-    const root = datasetRootFor(dataset);
+    const root = datasetRootFor(dataset, clustering);
     if (clustering === "pgmeans") return root;
     return `${root}/clustering/${clustering}`;
   };
   const datasetBase = datasetBaseFor(selectedDataset, selectedClustering);
-  const assetBase = datasetRootFor(selectedDataset);
+  const assetBase = datasetRootFor(selectedDataset, selectedClustering);
   const shouldUseCurrentSuffix = (dataset: DatasetKey, clustering: ClusteringKey) =>
     dataset === "chemprop" && clustering === "pgmeans";
   const sectionBaseFor = (

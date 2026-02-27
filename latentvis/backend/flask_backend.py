@@ -68,15 +68,11 @@ def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[
     - DATA_ROOT/<case>/train/...
     """
     method = (clustering or DEFAULT_CLUSTERING).strip().lower()
+    if method != "pgmeans":
+        # For agglomerative/hdbscan, always use the original clustering folders.
+        return DATA_ROOT / case / "clustering" / method
     split = _normalize_split(data_split) or "test"
-    root = DATA_ROOT / case / split
-    # Backward compatibility: some datasets were materialized directly under DATA_ROOT/<case>/...
-    # If split-prefixed root does not exist, fall back to the legacy root.
-    if not root.exists():
-        root = DATA_ROOT / case
-    if method == "pgmeans":
-        return root
-    return root / "clustering" / method
+    return DATA_ROOT / case / split
 
 
 def _ordered_models(models: Iterable[str]) -> List[str]:
