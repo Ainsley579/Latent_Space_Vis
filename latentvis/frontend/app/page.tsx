@@ -1068,6 +1068,10 @@ export default function Home() {
     setClusterPage((prev) => Math.min(prev, Math.max(0, clusterTotalPages - 1)));
   }, [clusterTotalPages]);
 
+  useEffect(() => {
+    setHoverPreview(null);
+  }, [clusterPage, clusterPageSize, selectedNode?.model, selectedNode?.layer, selectedNode?.cluster, showSearchResultsInMembers]);
+
   function resolveImageSrc(realId: string | number, imageType: string) {
     const key = sanitizePathKey(String(realId).trim());
     return `${assetBase}/molecule_images/${key}_${imageType}.png`;
@@ -1541,6 +1545,7 @@ export default function Home() {
                                     onChange={(e) => {
                                       setClusterPage(0);
                                       setClusterPageSize(Number(e.target.value));
+                                      setHoverPreview(null);
                                     }}
                                   >
                                     {[1, 5, 10, 20, 50].map((size) => (
@@ -1550,25 +1555,37 @@ export default function Home() {
                                     ))}
                                   </select>
                                 </div>
-                                <button
-                                  type="button"
-                                  className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
-                                  disabled={clusterPage <= 0}
-                                  onClick={() => setClusterPage((p) => Math.max(0, p - 1))}
-                                >
-                                  Prev
-                                </button>
-                                <button
-                                  type="button"
-                                  className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
-                                  disabled={clusterPage >= clusterTotalPages - 1}
-                                  onClick={() => setClusterPage((p) => Math.min(clusterTotalPages - 1, p + 1))}
-                                >
-                                  Next
-                                </button>
+                                  <button
+                                    type="button"
+                                    className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
+                                    disabled={clusterPage <= 0}
+                                  onClick={() => {
+                                    setClusterPage((p) => Math.max(0, p - 1));
+                                    setHoverPreview(null);
+                                  }}
+                                  >
+                                    Prev
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="px-2 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
+                                    disabled={clusterPage >= clusterTotalPages - 1}
+                                  onClick={() => {
+                                    setClusterPage((p) => Math.min(clusterTotalPages - 1, p + 1));
+                                    setHoverPreview(null);
+                                  }}
+                                  >
+                                    Next
+                                  </button>
                               </div>
                             </div>
-                            <div className="flex-1 min-h-0 overflow-auto pr-1">
+                            <div
+                              className="flex-1 min-h-0 overflow-auto pr-1"
+                              onMouseLeave={() => {
+                                setHoverFromMouse(null);
+                                setHoverPreview(null);
+                              }}
+                            >
                               <div className="grid grid-cols-5 gap-1">
                                 {clusterPagedIds.map((id) => (
                                   <div

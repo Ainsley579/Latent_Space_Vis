@@ -83,9 +83,8 @@ export default function TopkNearestPanel({
             <div className="shrink-0 w-6" />
             <div className={"flex-1 min-w-0 grid items-center " + (hideTopk ? "grid-cols-1" : "grid-cols-[1fr_14px_5fr]")}>
               <div className="text-xs font-semibold text-zinc-700 text-center">
-                <span>KNN</span>
+                <span>Top-k Substructure</span>
                 <label className="ml-1 inline-flex items-center gap-1 text-[11px] font-normal text-zinc-600">
-                  <span>m</span>
                   <select
                     className="rounded border border-zinc-300 bg-white px-1 py-0.5 text-[11px]"
                     value={knnTopm}
