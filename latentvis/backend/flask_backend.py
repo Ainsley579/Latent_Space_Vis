@@ -2,8 +2,10 @@
 
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Iterable
@@ -510,6 +512,8 @@ def generate_range():
 
     payload = request.get_json(silent=True) or {}
     include_payload = bool(payload.get("include_payload", False))
+    # Always run in non-persistent mode: generate data for frontend payload only.
+    persist = False
     min_value = payload.get("min")
     max_value = payload.get("max")
     k_fixed = payload.get("k")
@@ -570,8 +574,14 @@ def generate_range():
         return jsonify({"ok": False, "error": "embedding_not_found", "detail": str(input_path)}), 404
 
     split_norm = _normalize_split(data_split) or "test"
-    case_dir = DATA_ROOT / dataset / split_norm
-    case_dir.mkdir(parents=True, exist_ok=True)
+    temp_root: Optional[Path] = None
+    if persist:
+        case_dir = DATA_ROOT / dataset / split_norm
+        case_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        temp_root = Path(tempfile.mkdtemp(prefix=f"latentvis_generate_{dataset}_{clustering}_"))
+        case_dir = temp_root / dataset / split_norm
+        case_dir.mkdir(parents=True, exist_ok=True)
 
     try:
         from run_pipeline_from_embeddings import run_pipeline
@@ -594,9 +604,13 @@ def generate_range():
             verbose_dr=False,
         )
         if not ok:
+            if temp_root is not None:
+                shutil.rmtree(temp_root, ignore_errors=True)
             return jsonify({"ok": False, "error": "pipeline_failed"}), 500
     except Exception as e:
         print(f"[flask-backend] generate-range pipeline failed: {e}", flush=True)
+        if temp_root is not None:
+            shutil.rmtree(temp_root, ignore_errors=True)
         return jsonify({"ok": False, "error": "pipeline_failed", "detail": str(e)}), 500
 
     # Base dir where pipeline wrote outputs for this method (root for gmm, clustering/<method> for others)
@@ -628,7 +642,7 @@ def generate_range():
     # Optional: recompute layer-to-layer and epoch-to-epoch transition stats for updated cluster assignments.
     # This is disabled by default for generate-range to keep response time low; run the script manually
     # or from a dedicated job if transition stats are needed.
-    if bool(payload.get("compute_transition_stats")):
+    if persist and bool(payload.get("compute_transition_stats")):
         transition_script = _BACKEND_DIR / "scripts" / "compute_layer_transition_stats.py"
         if transition_script.is_file():
             try:
@@ -653,6 +667,11 @@ def generate_range():
     if n_clusters_override is not None:
         out["k"] = n_clusters_override
         out["linkage"] = linkage_override
+    out["persist"] = persist
+    if not persist:
+        out["note"] = "Generated in temporary backend workspace; no files were written to public/data."
+    if temp_root is not None:
+        shutil.rmtree(temp_root, ignore_errors=True)
     return jsonify(out)
 
 

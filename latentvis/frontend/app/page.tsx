@@ -558,31 +558,29 @@ export default function Home() {
         verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<string, SankeySampleRow[]>,
         },
       }));
-      const runId = String(json?.run_id ?? "");
-      if (runId) {
-        setGeneratedRuntimePayloads((prev) => ({
-          ...prev,
-          [key]: {
-            dataset: selectedDataset,
-            clustering: selectedClustering,
-            runId,
-            topkRepresentatives: Array.isArray(casePayload.topk_representatives)
-              ? casePayload.topk_representatives
-              : [],
-            clusterSortedMembers: Array.isArray(casePayload.cluster_sorted_members)
-              ? casePayload.cluster_sorted_members
-              : [],
-            substructures: Array.isArray(casePayload.substructures)
-              ? casePayload.substructures
-              : [],
-            scatterClusterByCell:
-              casePayload?.scatter_cluster_by_cell &&
-              typeof casePayload.scatter_cluster_by_cell === "object"
-                ? casePayload.scatter_cluster_by_cell
-                : {},
-          },
-        }));
-      }
+      const runId = String(json?.run_id ?? `${Date.now()}`);
+      setGeneratedRuntimePayloads((prev) => ({
+        ...prev,
+        [key]: {
+          dataset: selectedDataset,
+          clustering: selectedClustering,
+          runId,
+          topkRepresentatives: Array.isArray(casePayload.topk_representatives)
+            ? casePayload.topk_representatives
+            : [],
+          clusterSortedMembers: Array.isArray(casePayload.cluster_sorted_members)
+            ? casePayload.cluster_sorted_members
+            : [],
+          substructures: Array.isArray(casePayload.substructures)
+            ? casePayload.substructures
+            : [],
+          scatterClusterByCell:
+            casePayload?.scatter_cluster_by_cell &&
+            typeof casePayload.scatter_cluster_by_cell === "object"
+              ? casePayload.scatter_cluster_by_cell
+              : {},
+        },
+      }));
       setTopkData(
         Array.isArray(casePayload.topk_representatives) ? casePayload.topk_representatives : []
       );
@@ -646,31 +644,29 @@ export default function Home() {
         verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<string, SankeySampleRow[]>,
         },
       }));
-      const runId = String(json?.run_id ?? "");
-      if (runId) {
-        setGeneratedRuntimePayloads((prev) => ({
-          ...prev,
-          [key]: {
-            dataset: selectedDataset,
-            clustering: "agglomerative",
-            runId,
-            topkRepresentatives: Array.isArray(casePayload.topk_representatives)
-              ? casePayload.topk_representatives
-              : [],
-            clusterSortedMembers: Array.isArray(casePayload.cluster_sorted_members)
-              ? casePayload.cluster_sorted_members
-              : [],
-            substructures: Array.isArray(casePayload.substructures)
-              ? casePayload.substructures
-              : [],
-            scatterClusterByCell:
-              casePayload?.scatter_cluster_by_cell &&
-              typeof casePayload.scatter_cluster_by_cell === "object"
-                ? casePayload.scatter_cluster_by_cell
-                : {},
-          },
-        }));
-      }
+      const runId = String(json?.run_id ?? `${Date.now()}`);
+      setGeneratedRuntimePayloads((prev) => ({
+        ...prev,
+        [key]: {
+          dataset: selectedDataset,
+          clustering: "agglomerative",
+          runId,
+          topkRepresentatives: Array.isArray(casePayload.topk_representatives)
+            ? casePayload.topk_representatives
+            : [],
+          clusterSortedMembers: Array.isArray(casePayload.cluster_sorted_members)
+            ? casePayload.cluster_sorted_members
+            : [],
+          substructures: Array.isArray(casePayload.substructures)
+            ? casePayload.substructures
+            : [],
+          scatterClusterByCell:
+            casePayload?.scatter_cluster_by_cell &&
+            typeof casePayload.scatter_cluster_by_cell === "object"
+              ? casePayload.scatter_cluster_by_cell
+              : {},
+        },
+      }));
       setTopkData(
         Array.isArray(casePayload.topk_representatives) ? casePayload.topk_representatives : []
       );
