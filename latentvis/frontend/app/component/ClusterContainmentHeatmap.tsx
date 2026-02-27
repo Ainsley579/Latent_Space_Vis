@@ -41,7 +41,7 @@ export default function ClusterContainmentHeatmap({
   const [tip, setTip] = useState<{ x: number; y: number; text: string } | null>(null);
   const plotRef = useRef<HTMLDivElement | null>(null);
   const [plotSize, setPlotSize] = useState({ width: 1, height: 1 });
-  const leftPad = 120;
+  const leftPad = 88;
   const topPad = 36;
   const rightPad = 8;
   const bottomPad = 8;
@@ -77,7 +77,7 @@ export default function ClusterContainmentHeatmap({
     const observer = new ResizeObserver(updateSize);
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [loading, error, userClusterIds.length, ourClusterIds.length, matrix.length]);
 
   if (loading) {
     return <div className="w-full h-full flex items-center justify-center text-xs text-zinc-500">Computing containment...</div>;
@@ -95,17 +95,17 @@ export default function ClusterContainmentHeatmap({
       <div ref={plotRef} className="flex-1 min-h-0 w-full h-full overflow-hidden">
         <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
           <text x={leftPad + (ourClusterIds.length * cellW) / 2} y={14} textAnchor="middle" fontSize={11} fill="#52525b">
-            Our Clusters (Backend)
+            Auto Generated Clusters
           </text>
           <text
-            x={14}
+            x={20}
             y={topPad + (userClusterIds.length * cellH) / 2}
             textAnchor="middle"
             fontSize={11}
             fill="#52525b"
-            transform={`rotate(-90, 14, ${topPad + (userClusterIds.length * cellH) / 2})`}
+            transform={`rotate(-90, 20, ${topPad + (userClusterIds.length * cellH) / 2})`}
           >
-            User Clusters (Uploaded)
+            User Clusters
           </text>
 
           {ourClusterIds.map((cid, c) => (
@@ -132,7 +132,7 @@ export default function ClusterContainmentHeatmap({
               const entry = entryByPair.get(`${uCid}|${oCid}`);
               const count = entry?.count ?? 0;
               const userName = userLabelFor(uCid);
-              const msg = `Our cluster ${oCid} contains ${pct.toFixed(2)}% of user cluster \"${userName}\" (count: ${count}).`;
+              const msg = `Auto generated cluster ${oCid} contains ${pct.toFixed(2)}% of user cluster \"${userName}\" (count: ${count}).`;
               return (
                 <rect
                   key={`${uCid}-${oCid}`}
