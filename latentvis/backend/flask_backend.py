@@ -338,7 +338,11 @@ def _search_smiles_substructure_in_case(case: str, smiles_query: str):
     if not mapping_path.is_file():
         return [], None
     try:
-        mapping = json.loads(mapping_path.read_text(encoding="utf-8"))
+        raw = json.loads(mapping_path.read_text(encoding="utf-8"))
+        if isinstance(raw, list):
+            mapping = {str(r["real_id"]): r["smiles"] for r in raw if isinstance(r, dict) and "real_id" in r and "smiles" in r}
+        else:
+            mapping = {str(k): v for k, v in raw.items()}
     except Exception as e:
         print("[flask-backend] failed to load %s: %s" % (mapping_path, e), flush=True)
         return [], None
@@ -1086,7 +1090,10 @@ def recluster_agglomerative():
     if smiles_path.is_file():
         try:
             raw = json.loads(smiles_path.read_text(encoding="utf-8"))
-            id_to_smiles = {str(k): v for k, v in raw.items()}
+            if isinstance(raw, list):
+                id_to_smiles = {str(r["real_id"]): r["smiles"] for r in raw if isinstance(r, dict) and "real_id" in r and "smiles" in r}
+            else:
+                id_to_smiles = {str(k): v for k, v in raw.items()}
         except Exception as e:
             print("[flask-backend] recluster load smiles failed: %s" % e, flush=True)
 

@@ -95,5 +95,11 @@ if [[ -f "$OUTPUT_DIR/real_id_to_smiles.json" ]]; then
   python3 "$BACKEND_DIR/scripts/generate_molecule_images_from_smiles.py" --case-dir "$OUTPUT_DIR" || true
 fi
 
+# Layer transition stats (Sankey-consistent) for all case/split dirs
+CHEMPROP_ORDER="fingerprint,gnn_layer_1,gnn_layer_2,gnn_layer_3,ffn_layer_1,ffn_layer_2"
+CHEMELEON_ORDER="fingerprint,gnn_layer_1,gnn_layer_2,gnn_layer_3,gnn_layer_4,gnn_layer_5,gnn_layer_6,ffn_layer_1,ffn_layer_2"
+echo "Running compute_layer_transition_stats (Sankey-aligned)..."
+python3 "$SCRIPT_DIR/compute_layer_transition_stats.py" --layer-order "$CHEMPROP_ORDER" --layer-order-chemeleon "$CHEMELEON_ORDER" || true
+
 exit 0
 
