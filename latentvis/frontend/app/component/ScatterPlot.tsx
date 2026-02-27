@@ -476,6 +476,8 @@ export default function ScatterPlot({
         <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto whitespace-nowrap">
         {projection && (
           <>
+            <span className="text-sm font-semibold text-zinc-700">Scatterplot</span>
+            <span className="text-[11px] text-zinc-600">Method:</span>
             <select
               value={projection}
               onChange={(e) => onProjectionChange?.(e.target.value as "pca" | "mds" | "umap" | "tsne")}
@@ -499,13 +501,6 @@ export default function ScatterPlot({
             e.currentTarget.value = "";
           }}
         />
-        <button
-          type="button"
-          className="px-1.5 py-0.5 text-[11px] leading-4 rounded border border-zinc-300 bg-white text-zinc-700"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          upload
-        </button>
         <button
           type="button"
           className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
@@ -532,6 +527,13 @@ export default function ScatterPlot({
         </button>
         {labelFileName && <span className="text-[11px] text-zinc-500 truncate max-w-[200px]">{labelFileName}</span>}
         {labelLoadError && <span className="text-[11px] text-red-600 truncate max-w-[240px]">{labelLoadError}</span>}
+        <button
+          type="button"
+          className="ml-auto px-0 py-0 text-[11px] leading-4 text-blue-600 underline decoration-1 underline-offset-2 hover:text-blue-700 hover:decoration-2 transition-colors cursor-pointer"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          upload
+        </button>
         </div>
       </div>
       <div ref={containerRef} className="w-full flex-1 min-h-0" />
