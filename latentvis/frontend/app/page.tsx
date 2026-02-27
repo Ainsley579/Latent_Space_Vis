@@ -173,6 +173,7 @@ export default function Home() {
     const xyFile = `${base}_${projection}_xy.json`;
     const clusterFile = `${base}_${projection}_cluster.json`;
     const xyUrl = `/data/${dataset}/scatterplot/${xyFile}`;
+    const clusterBase = datasetBaseFor(dataset, clustering);
     const runtimePayload = generatedRuntimePayloads[runtimeKeyFor(dataset, clustering)] ?? null;
     const cellKey = `${model}__${layer}`;
     const overrideRows =
@@ -182,7 +183,7 @@ export default function Home() {
         : null;
     const clusterUrl = overrideRows
       ? buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:scatter_cluster:${cellKey}`, overrideRows)
-      : `/data/${dataset}/scatterplot/${clusterFile}`;
+      : `${clusterBase}/scatterplot/${clusterFile}`;
     const sepXY = xyUrl.includes("?") ? "&" : "?";
     const sepCluster = clusterUrl.startsWith("blob:") ? "" : (clusterUrl.includes("?") ? "&" : "?");
     return {
@@ -1350,6 +1351,7 @@ export default function Home() {
                       setSuppressScatterCluster(false);
                     }}
                     resolveImageSrc={resolveImageSrc}
+                    getSmilesById={getSmilesById}
                   />
                 </div>
               </div>

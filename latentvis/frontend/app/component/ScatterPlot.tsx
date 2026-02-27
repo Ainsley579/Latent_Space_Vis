@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { CLUSTER_COLORS, HIGHLIGHT_RED } from "../theme/colors";
+import { renderSmilesSvg } from "./SmilesStructure";
 
 type ScatterPoint = {
   real_id: string;
@@ -24,6 +25,7 @@ type ScatterPlotProps = {
   onClusterSelect?: (sel: { model?: string; layer?: string; cluster: number; real_ids: string[] }) => void;
   onClearSelection?: () => void;
   resolveImageSrc?: (realId: string | number, imageType: string) => string;
+  getSmilesById?: (realId: string | number) => string | null;
 };
 
 export default function ScatterPlot({
@@ -39,6 +41,7 @@ export default function ScatterPlot({
   onClusterSelect,
   onClearSelection,
   resolveImageSrc,
+  getSmilesById,
 }: ScatterPlotProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const onPointSelectRef = useRef(onPointSelect);
@@ -82,16 +85,15 @@ export default function ScatterPlot({
       .style("border-radius", "6px")
       .style("z-index", "9999");
 
-    const tooltipImg = tooltip
-      .append("img")
-      .attr("alt", "ligand")
+    const tooltipSvgWrap = tooltip
+      .append("div")
       .style("display", "block")
       .style("width", "300px")
       .style("height", "300px")
-      .style("object-fit", "contain")
-      .on("error", function () {
-        d3.select(this).style("display", "none");
-      });
+      .style("background", "white")
+      .style("position", "relative")
+      .style("overflow", "hidden");
+    let hoverToken = 0;
 
     function draw() {
       if (!container || !lastRows) return;
@@ -143,11 +145,25 @@ export default function ScatterPlot({
         .attr("stroke-width", (d) => (highlightId && String(d.real_id) === highlightId ? 1.8 : 0.9))
         .style("cursor", "pointer")
         .on("mouseover", (event, d) => {
-          const imgSrc = resolveImageSrc
-            ? resolveImageSrc(String(d.real_id), "ligand")
-            : `/molecule_images/${String(d.real_id)}_ligand.png`;
+          const token = ++hoverToken;
+          const smiles = getSmilesById?.(String(d.real_id)) ?? null;
           onPointHoverIdChangeRef.current?.(String(d.real_id));
-          tooltipImg.style("display", "block").attr("src", imgSrc);
+          tooltipSvgWrap.html(`<div style="width:300px;height:300px;display:flex;align-items:center;justify-content:center;color:#a1a1aa;font-size:14px;">loading</div>`);
+          if (smiles) {
+            void renderSmilesSvg(smiles, 300, 300).then((svg) => {
+              if (token !== hoverToken) return;
+              if (svg) {
+                tooltipSvgWrap.html(svg);
+              } else {
+                tooltipSvgWrap.html(`<div style="width:300px;height:300px;display:flex;align-items:center;justify-content:center;color:#a1a1aa;font-size:14px;">null</div>`);
+              }
+            }).catch(() => {
+              if (token !== hoverToken) return;
+              tooltipSvgWrap.html(`<div style="width:300px;height:300px;display:flex;align-items:center;justify-content:center;color:#a1a1aa;font-size:14px;">null</div>`);
+            });
+          } else {
+            tooltipSvgWrap.html(`<div style="width:300px;height:300px;display:flex;align-items:center;justify-content:center;color:#a1a1aa;font-size:14px;">null</div>`);
+          }
           tooltip.style("display", "block");
           positionTooltip(event.clientX, event.clientY);
         })
@@ -155,6 +171,7 @@ export default function ScatterPlot({
           positionTooltip(event.clientX, event.clientY);
         })
         .on("mouseout", () => {
+          hoverToken += 1;
           onPointHoverIdChangeRef.current?.(null);
           tooltip.style("display", "none");
         })
@@ -290,6 +307,7 @@ export default function ScatterPlot({
     highlightId,
     modelKey,
     layerKey,
+    getSmilesById,
   ]);
 
   return (

@@ -44,6 +44,43 @@ function loadOCL(): Promise<any> {
   return oclLoadPromise;
 }
 
+function normalizeSmilesSvgMarkup(svg: string): string {
+  const style =
+    "position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:120%;height:120%;display:block;";
+  if (!svg.includes("<svg")) return svg;
+  if (svg.includes("data-smiles-svg='1'")) return svg;
+  return svg.replace(
+    /<svg\b([^>]*)>/i,
+    (_m, attrs) => `<svg data-smiles-svg="1" ${attrs} style="${style}">`
+  );
+}
+
+export async function renderSmilesSvg(
+  smiles: string | null | undefined,
+  width: number,
+  height: number
+): Promise<string | null> {
+  const s = String(smiles ?? "").trim();
+  if (!s) return null;
+  const OCL = await loadOCL();
+  const candidates = Array.from(
+    new Set(
+      [s, s.replace(/:/g, "="), s.replace(/:/g, "")].filter((x) => x.length > 0)
+    )
+  );
+
+  for (const c of candidates) {
+    try {
+      const mol = OCL.Molecule.fromSmiles(c);
+      const svg = mol.toSVG(width, height, "", { suppressCIPParity: true });
+      if (svg && svg.includes("<svg")) return normalizeSmilesSvgMarkup(svg);
+    } catch {
+      // try next candidate
+    }
+  }
+  return null;
+}
+
 export default function SmilesStructure({
   smiles,
   width = 220,
@@ -64,33 +101,11 @@ export default function SmilesStructure({
     let alive = true;
     (async () => {
       try {
-        const OCL = await loadOCL();
-        const candidates = Array.from(
-          new Set([
-            s,
-            s.replace(/:/g, "="),
-            s.replace(/:/g, ""),
-          ].filter((x) => x.length > 0))
-        );
-
-        let ok = false;
-        let svg = "";
-        for (const c of candidates) {
-          try {
-            const mol = OCL.Molecule.fromSmiles(c);
-            svg = mol.toSVG(width, height, "", { suppressCIPParity: true });
-            if (svg && svg.includes("<svg")) {
-              ok = true;
-              break;
-            }
-          } catch {
-            ok = false;
-          }
-          if (ok) break;
-        }
+        const svg = await renderSmilesSvg(s, width, height);
+        const ok = !!svg;
 
         if (!alive) return;
-        setSvgMarkup(ok ? svg : "");
+        setSvgMarkup(ok ? (svg as string) : "");
         setError(ok ? null : "null");
       } catch {
         if (!alive) return;
@@ -118,7 +133,7 @@ export default function SmilesStructure({
     <>
       <div
         className={`smiles-structure-root ${className}`}
-        style={{ width: "100%", height: "100%", background: "white" }}
+        style={{ width: "100%", height: "100%", background: "white", position: "relative", overflow: "hidden" }}
         dangerouslySetInnerHTML={{ __html: svgMarkup }}
       />
       <style jsx global>{`
