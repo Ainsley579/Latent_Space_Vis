@@ -222,6 +222,7 @@ export default function SankeyView({
     const container = chartRef.current;
     if (!container) return;
     container.innerHTML = "";
+    let cancelled = false;
 
     const urlParams = new URLSearchParams(window.location.search);
     let SWAP_AXES = urlParams.get("swap") === "1";
@@ -253,6 +254,8 @@ export default function SankeyView({
         .catch(() => null),
     ])
       .then(([rawData, transitionJson]) => {
+        if (cancelled || chartRef.current !== container) return;
+        container.innerHTML = "";
         const data = normalizeSankeyData(rawData);
         const ROW_NAMES: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
         const COLUMN_NAMES: string[] = sortLayerKeys(Object.keys(data?.layer || {}));
@@ -1226,9 +1229,14 @@ export default function SankeyView({
         // legends moved outside zoomed canvas
       })
       .catch((err) => {
+        if (cancelled || chartRef.current !== container) return;
         console.error("Failed to build chart:", err);
         container.innerHTML = "<div style='color: red'>Failed to load visualization data.</div>";
       });
+    return () => {
+      cancelled = true;
+      if (chartRef.current === container) container.innerHTML = "";
+    };
   }, [dataPath, transitionStatsPath, showSankeyPaths, showSankeyNodes, showCellBackground, showGapHeatmap]);
 
   useEffect(() => {

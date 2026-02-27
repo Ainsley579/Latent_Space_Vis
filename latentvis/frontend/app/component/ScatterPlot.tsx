@@ -12,9 +12,13 @@ type ScatterPoint = {
   cluster_id: number;
 };
 
+type ColorMode = "cluster" | "label";
+
 type ScatterPlotProps = {
   dataPathXY: string;
   dataPathCluster: string;
+  projection?: "pca" | "mds" | "umap" | "tsne";
+  onProjectionChange?: (next: "pca" | "mds" | "umap" | "tsne") => void;
   activeCluster?: number | null;
   activeIds?: string[] | null;
   highlightId?: string | null;
@@ -31,6 +35,8 @@ type ScatterPlotProps = {
 export default function ScatterPlot({
   dataPathXY,
   dataPathCluster,
+  projection,
+  onProjectionChange,
   activeCluster,
   activeIds,
   highlightId,
@@ -44,6 +50,7 @@ export default function ScatterPlot({
   getSmilesById,
 }: ScatterPlotProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const rowsRef = useRef<ScatterPoint[] | null>(null);
   const onPointSelectRef = useRef(onPointSelect);
   const onPointHoverIdChangeRef = useRef(onPointHoverIdChange);
@@ -53,6 +60,103 @@ export default function ScatterPlot({
   const layerKeyRef = useRef(layerKey);
   const [legendClusters, setLegendClusters] = useState<number[]>([]);
   const [legendClusterIds, setLegendClusterIds] = useState<Record<number, string[]>>({});
+  const [colorMode, setColorMode] = useState<ColorMode>("cluster");
+  const [labelById, setLabelById] = useState<Record<string, string>>({});
+  const [labelBySmiles, setLabelBySmiles] = useState<Record<string, string>>({});
+  const [labelColors, setLabelColors] = useState<Record<string, string>>({});
+  const [labelLegend, setLabelLegend] = useState<string[]>([]);
+  const [labelFileName, setLabelFileName] = useState<string>("");
+  const [labelLoadError, setLabelLoadError] = useState<string | null>(null);
+
+  function buildLabelColors(labels: string[]): Record<string, string> {
+    const uniq = Array.from(new Set(labels.map((x) => String(x).trim()).filter((x) => x.length > 0))).sort((a, b) =>
+      a.localeCompare(b)
+    );
+    const out: Record<string, string> = {};
+    const total = Math.max(1, uniq.length);
+    uniq.forEach((label, idx) => {
+      out[label] = d3.interpolateTurbo((idx + 0.5) / total);
+    });
+    return out;
+  }
+
+  function resolveBaseFill(id: string, cluster: number): string {
+    if (colorMode === "label") {
+      const direct = labelById[String(id).trim()];
+      if (direct) return labelColors[direct] ?? "#9ca3af";
+      const smiles = getSmilesByIdRef.current?.(String(id));
+      if (smiles) {
+        const bySmiles = labelBySmiles[String(smiles).trim()];
+        if (bySmiles) return labelColors[bySmiles] ?? "#9ca3af";
+      }
+      return "#9ca3af";
+    }
+    return CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length];
+  }
+
+  function handleLabelFileUpload(file: File) {
+    setLabelLoadError(null);
+    file
+      .text()
+      .then((text) => {
+        const rows = d3.csvParse(text);
+        if (!rows.length) throw new Error("CSV is empty.");
+        const columns = rows.columns ?? [];
+        const labelCol = columns.find((c) => c.trim().toLowerCase() === "label");
+        if (!labelCol) throw new Error("CSV must contain a 'label' column.");
+
+        const idCol =
+          columns.find((c) => c.trim().toLowerCase() === "real_id") ??
+          columns.find((c) => c.trim().toLowerCase() === "id") ??
+          columns.find((c) => c.trim().toLowerCase() === "realid") ??
+          columns.find((c) => c.trim().toLowerCase() === "mol_id");
+        const smilesCol = columns.find((c) => c.trim().toLowerCase() === "smiles");
+
+        const nextLabelById: Record<string, string> = {};
+        const nextLabelBySmiles: Record<string, string> = {};
+        if (smilesCol) {
+          rows.forEach((row) => {
+            const smiles = String((row as Record<string, unknown>)[smilesCol] ?? "").trim();
+            const label = String((row as Record<string, unknown>)[labelCol] ?? "").trim();
+            if (!smiles || !label) return;
+            nextLabelBySmiles[smiles] = label;
+          });
+        }
+        if (idCol) {
+          rows.forEach((row) => {
+            const id = String((row as Record<string, unknown>)[idCol] ?? "").trim();
+            const label = String((row as Record<string, unknown>)[labelCol] ?? "").trim();
+            if (!id || !label) return;
+            nextLabelById[id] = label;
+          });
+        } else {
+          const points = rowsRef.current ?? [];
+          if (points.length !== rows.length) {
+            throw new Error("Missing id column. Please provide 'real_id' or 'id'.");
+          }
+          rows.forEach((row, idx) => {
+            const id = String(points[idx]?.real_id ?? "").trim();
+            const label = String((row as Record<string, unknown>)[labelCol] ?? "").trim();
+            if (!id || !label) return;
+            nextLabelById[id] = label;
+          });
+        }
+
+        const labels = Array.from(new Set([...Object.values(nextLabelById), ...Object.values(nextLabelBySmiles)]));
+        if (!labels.length) throw new Error("No valid id-label rows found.");
+        const colors = buildLabelColors(labels);
+        const legend = Object.keys(colors).sort((a, b) => a.localeCompare(b));
+        setLabelById(nextLabelById);
+        setLabelBySmiles(nextLabelBySmiles);
+        setLabelColors(colors);
+        setLabelLegend(legend);
+        setLabelFileName(file.name);
+        setColorMode("label");
+      })
+      .catch((err) => {
+        setLabelLoadError(err instanceof Error ? err.message : String(err));
+      });
+  }
 
   useEffect(() => {
     onPointSelectRef.current = onPointSelect;
@@ -109,6 +213,12 @@ export default function ScatterPlot({
       .style("background", "white")
       .style("position", "relative")
       .style("overflow", "hidden");
+    const tooltipMeta = tooltip
+      .append("div")
+      .style("margin-top", "6px")
+      .style("font-size", "11px")
+      .style("line-height", "1.3")
+      .style("color", "#374151");
     let hoverToken = 0;
 
     function draw() {
@@ -130,12 +240,6 @@ export default function ScatterPlot({
       const x = d3.scaleLinear().domain(xExtent).range([0, innerW]).nice();
       const y = d3.scaleLinear().domain(yExtent).range([innerH, 0]).nice();
 
-      const maxCluster = d3.max(lastRows, (d) => d.cluster_id) ?? 0;
-      const color = d3
-        .scaleOrdinal<number, string>()
-        .domain(d3.range(maxCluster + 1))
-        .range(CLUSTER_COLORS);
-
       const circles = g.append("g")
         .selectAll("circle")
         .data(lastRows)
@@ -143,17 +247,18 @@ export default function ScatterPlot({
         .append("circle")
         .attr("data-id", (d) => String(d.real_id))
         .attr("data-cluster", (d) => String(d.cluster_id))
-        .attr("data-base-fill", (d) => color(Math.max(0, d.cluster_id)))
+        .attr("data-base-fill", (d) => resolveBaseFill(String(d.real_id), d.cluster_id))
         .attr("cx", (d) => x(d.x))
         .attr("cy", (d) => y(d.y))
         .attr("r", 3.2)
-        .attr("fill", (d) => color(Math.max(0, d.cluster_id)))
+        .attr("fill", (d) => resolveBaseFill(String(d.real_id), d.cluster_id))
         .attr("fill-opacity", 0.75)
         .attr("stroke", "none")
         .attr("stroke-width", 0.9)
         .style("cursor", "pointer")
         .on("mouseover", (event, d) => {
           const token = ++hoverToken;
+          tooltipMeta.html(`<div><b>ID:</b> ${String(d.real_id)}</div>`);
           const smiles = getSmilesByIdRef.current?.(String(d.real_id)) ?? null;
           onPointHoverIdChangeRef.current?.(String(d.real_id));
           tooltipSvgWrap.html(`<div style="width:300px;height:300px;display:flex;align-items:center;justify-content:center;color:#a1a1aa;font-size:14px;">loading</div>`);
@@ -312,7 +417,9 @@ export default function ScatterPlot({
     circles.forEach((el) => {
       const id = el.getAttribute("data-id") || "";
       const cluster = Number(el.getAttribute("data-cluster") || "0");
-      const baseFill = el.getAttribute("data-base-fill") || CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length];
+      const computedBaseFill = resolveBaseFill(id, cluster);
+      el.setAttribute("data-base-fill", computedBaseFill);
+      const baseFill = computedBaseFill;
       const isHovered = !!highlightId && id === String(highlightId);
       const inActiveIds = !!activeIdSet && activeIdSet.has(id);
 
@@ -361,39 +468,121 @@ export default function ScatterPlot({
           .style("pointer-events", "none");
       }
     }
-  }, [activeCluster, activeIds, highlightId]);
+  }, [activeCluster, activeIds, highlightId, colorMode, labelById, labelBySmiles, labelColors]);
 
   return (
     <div className="w-full h-full flex flex-col">
+      <div className="shrink-0 border-b border-zinc-200 bg-white/90 px-1.5 py-1">
+        <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto whitespace-nowrap">
+        {projection && (
+          <>
+            <select
+              value={projection}
+              onChange={(e) => onProjectionChange?.(e.target.value as "pca" | "mds" | "umap" | "tsne")}
+              className="text-[11px] leading-4 border border-zinc-300 rounded px-1.5 py-0.5 bg-white text-zinc-800"
+            >
+              <option value="pca">PCA</option>
+              <option value="mds">MDS</option>
+              <option value="umap">UMAP</option>
+              <option value="tsne">t-SNE</option>
+            </select>
+          </>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleLabelFileUpload(file);
+            e.currentTarget.value = "";
+          }}
+        />
+        <button
+          type="button"
+          className="px-1.5 py-0.5 text-[11px] leading-4 rounded border border-zinc-300 bg-white text-zinc-700"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          upload
+        </button>
+        <button
+          type="button"
+          className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
+            colorMode === "cluster" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-zinc-300 text-zinc-700 bg-white"
+          }`}
+          onClick={() => setColorMode("cluster")}
+        >
+          cluster
+        </button>
+        <button
+          type="button"
+          className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
+            colorMode === "label" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-zinc-300 text-zinc-700 bg-white"
+          } disabled:opacity-50`}
+          onClick={() => setColorMode("label")}
+          disabled={Object.keys(labelById).length === 0 && Object.keys(labelBySmiles).length === 0}
+          title={
+            Object.keys(labelById).length === 0 && Object.keys(labelBySmiles).length === 0
+              ? "Upload a CSV with label column first"
+              : "Use uploaded label colors"
+          }
+        >
+          labelled
+        </button>
+        {labelFileName && <span className="text-[11px] text-zinc-500 truncate max-w-[200px]">{labelFileName}</span>}
+        {labelLoadError && <span className="text-[11px] text-red-600 truncate max-w-[240px]">{labelLoadError}</span>}
+        </div>
+      </div>
       <div ref={containerRef} className="w-full flex-1 min-h-0" />
       <div className="shrink-0 border-t border-zinc-200 bg-white/90 px-2 py-1 overflow-x-auto overflow-y-hidden">
-        <div className="flex flex-nowrap gap-x-3 gap-y-1 min-w-max">
-          {legendClusters.map((clusterId) => (
-            <button
-              key={clusterId}
-              type="button"
-              className="flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0 m-0"
-              onClick={() =>
-                onClusterSelect?.({
-                  model: modelKey,
-                  layer: layerKey,
-                  cluster: clusterId,
-                  real_ids: legendClusterIds[clusterId] ?? [],
-                })
-              }
-            >
-              <span
-                className="inline-block w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: CLUSTER_COLORS[clusterId % CLUSTER_COLORS.length] }}
-              />
-              <span
-                className={`text-xs ${activeCluster != null && clusterId === activeCluster ? "text-red-600 font-bold" : "text-zinc-700"}`}
+        {colorMode === "cluster" && (
+          <div className="flex flex-nowrap gap-x-3 gap-y-1 min-w-max">
+            {legendClusters.map((clusterId) => (
+              <button
+                key={clusterId}
+                type="button"
+                className="flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0 m-0"
+                onClick={() =>
+                  onClusterSelect?.({
+                    model: modelKey,
+                    layer: layerKey,
+                    cluster: clusterId,
+                    real_ids: legendClusterIds[clusterId] ?? [],
+                  })
+                }
               >
-                {clusterId}
-              </span>
-            </button>
-          ))}
-        </div>
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: CLUSTER_COLORS[clusterId % CLUSTER_COLORS.length] }}
+                />
+                <span
+                  className={`text-xs ${
+                    activeCluster != null && clusterId === activeCluster ? "text-red-600 font-bold" : "text-zinc-700"
+                  }`}
+                >
+                  {clusterId}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+        {colorMode === "label" && (
+          <div className="flex flex-nowrap gap-x-3 gap-y-1 min-w-max">
+            {labelLegend.map((label) => (
+              <div key={label} className="flex items-center gap-1">
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: labelColors[label] ?? "#9ca3af" }}
+                />
+                <span className="text-xs text-zinc-700">{label}</span>
+              </div>
+            ))}
+            {labelLegend.length === 0 && (
+              <span className="text-xs text-zinc-500">Upload a CSV with `label` and `real_id`/`id` columns.</span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

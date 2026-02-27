@@ -1382,19 +1382,6 @@ export default function Home() {
           <div className="p-1 box-border" style={{ gridColumn: "1 / 3", gridRow: "3 / 4" }}>
             <div ref={bottomSplitHostRef} className="w-full h-full flex min-w-0">
               <div className="h-full min-w-0 flex flex-col border border-zinc-400" style={{ width: `${bottomSplitPct}%` }}>
-                <div className="flex items-center gap-2 py-1 px-1 border-b border-zinc-200 bg-zinc-50 shrink-0">
-                  <span className="text-xs font-medium text-zinc-600">Projection:</span>
-                  <select
-                    value={scatterProjection}
-                    onChange={(e) => setScatterProjection(e.target.value as typeof scatterProjection)}
-                    className="text-xs border border-zinc-300 rounded px-2 py-1 bg-white text-zinc-800"
-                  >
-                    <option value="pca">PCA</option>
-                    <option value="mds">MDS</option>
-                    <option value="umap">UMAP</option>
-                    <option value="tsne">t-SNE</option>
-                  </select>
-                </div>
                 <div
                   id="scatterplot"
                   className="flex-1 min-h-0 w-full bg-white"
@@ -1402,6 +1389,8 @@ export default function Home() {
                   <ScatterPlot
                     dataPathXY={scatterPaths.xy}
                     dataPathCluster={scatterPaths.cluster}
+                    projection={scatterProjection}
+                    onProjectionChange={(next) => setScatterProjection(next)}
                     activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
                     activeIds={showSearchResultsInMembers ? searchResultIds : selectedIds}
                     highlightId={hoveredId}
