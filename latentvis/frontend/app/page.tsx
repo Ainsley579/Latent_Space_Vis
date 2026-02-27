@@ -44,6 +44,8 @@ type GeneratedRuntimePayload = {
   substructures: any[];
   scatterClusterByCell: Record<string, Array<{ real_id: string | number; cluster_id: number }>>;
 };
+
+type KnnTopmOption = "5" | "10" | "20" | "all";
 type HoverPreviewState =
   | { kind: "image"; src: string; left: number; top: number }
   | { kind: "smiles"; smiles: string; left: number; top: number };
@@ -226,14 +228,16 @@ export default function Home() {
       cluster_id: number;
       group: "knn" | "kfn";
       k: number;
-      real_ids: number[];
+      real_ids: Array<string | number>;
       valid_molecules: number;
-      missing_real_ids: number[];
-      invalid_smiles_real_ids: number[];
+      missing_real_ids: Array<string | number>;
+      invalid_smiles_real_ids: Array<string | number>;
       mcs_smarts: string | null;
       mcs_smiles: string | null;
     }[]
   >([]);
+  const [knnTopm, setKnnTopm] = useState<KnnTopmOption>("5");
+  const [isKnnTopmLoading, setIsKnnTopmLoading] = useState(false);
   const [cellSelected, setCellSelected] = useState(false);
   const [swapAxes, setSwapAxes] = useState(false);
   const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
@@ -877,6 +881,54 @@ export default function Home() {
       });
   }, [datasetBase, dataRefreshKey, generatedRuntimeMatchesCurrent, generatedRuntimePayload]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchCellTopm = async () => {
+      setIsKnnTopmLoading(true);
+      try {
+        const body = {
+          dataset: selectedDataset,
+          clustering: selectedClustering,
+          epoch: selectedModel,
+          layer: selectedLayer,
+          cluster_id: "all",
+          m: knnTopm,
+          group: "knn",
+          use_current: true,
+        };
+        const doRequest = async (path: string) =>
+          fetch(`${apiBase}${path}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          });
+
+        let res = await doRequest("/substructures/cluster-topm");
+        if (res.status === 404) {
+          res = await doRequest("/substructures/cell-topm");
+        }
+        if (!res.ok) throw new Error(`topm failed: ${res.status}`);
+        const json = await res.json();
+        const rows = Array.isArray(json?.rows) ? json.rows : [];
+        setSubstructures((prev) => {
+          const next = prev.filter(
+            (d) =>
+              !(String(d.model_type) === String(selectedModel) && String(d.layer_name) === String(selectedLayer) && d.group === "knn")
+          );
+          return [...next, ...rows];
+        });
+      } catch (err) {
+        if ((err as Error)?.name === "AbortError") return;
+        console.error("Failed to refresh knn top-m substructures:", err);
+      } finally {
+        if (!controller.signal.aborted) setIsKnnTopmLoading(false);
+      }
+    };
+    fetchCellTopm();
+    return () => controller.abort();
+  }, [apiBase, selectedDataset, selectedClustering, selectedModel, selectedLayer, knnTopm]);
+
   const topkNearestRows = useMemo(() => {
     return topkData
       .filter((d) => d.model_type === selectedModel && d.layer_name === selectedLayer)
@@ -1230,6 +1282,9 @@ export default function Home() {
                 onSmilesPreviewEnd={() => setHoverPreview(null)}
                 bookmarkedIds={bookmarkedIds}
                 onToggleBookmark={toggleBookmark}
+                knnTopm={knnTopm}
+                onKnnTopmChange={setKnnTopm}
+                isKnnTopmLoading={isKnnTopmLoading}
               />
             </div>
           </div>

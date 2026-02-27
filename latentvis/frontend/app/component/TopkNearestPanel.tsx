@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import SmilesStructure from "./SmilesStructure";
 
 type TopkNearestRow = {
@@ -33,6 +33,9 @@ type TopkNearestPanelProps = {
   onSmilesPreviewEnd?: () => void;
   bookmarkedIds: Set<string>;
   onToggleBookmark: (id: string) => void;
+  knnTopm: "5" | "10" | "20" | "all";
+  onKnnTopmChange: (value: "5" | "10" | "20" | "all") => void;
+  isKnnTopmLoading?: boolean;
 };
 
 export default function TopkNearestPanel({
@@ -54,21 +57,12 @@ export default function TopkNearestPanel({
   onSmilesPreviewEnd,
   bookmarkedIds,
   onToggleBookmark,
+  knnTopm,
+  onKnnTopmChange,
+  isKnnTopmLoading = false,
 }: TopkNearestPanelProps) {
   const PAGE_SIZE = 5;
   const [pageByCluster, setPageByCluster] = useState<Record<number, number>>({});
-
-  useEffect(() => {
-    setPageByCluster((prev) => {
-      const next: Record<number, number> = {};
-      rows.forEach((row) => {
-        const totalPages = Math.max(1, Math.ceil(row.top_k_closest_real_ids.length / PAGE_SIZE));
-        const prevPage = prev[row.cluster_id] ?? 0;
-        next[row.cluster_id] = Math.min(prevPage, totalPages - 1);
-      });
-      return next;
-    });
-  }, [rows]);
 
   return (
     <div className="w-full h-full p-2 box-border overflow-auto">
@@ -82,7 +76,23 @@ export default function TopkNearestPanel({
           <div className="flex items-center gap-2 w-full min-w-0">
             <div className="shrink-0 w-6" />
             <div className={"flex-1 min-w-0 grid items-center " + (hideTopk ? "grid-cols-1" : "grid-cols-[1fr_14px_5fr]")}>
-              <div className="text-xs font-semibold text-zinc-700 text-center">KNN</div>
+              <div className="text-xs font-semibold text-zinc-700 text-center">
+                <span>KNN</span>
+                <label className="ml-1 inline-flex items-center gap-1 text-[11px] font-normal text-zinc-600">
+                  <span>m</span>
+                  <select
+                    className="rounded border border-zinc-300 bg-white px-1 py-0.5 text-[11px]"
+                    value={knnTopm}
+                    onChange={(e) => onKnnTopmChange(e.target.value as "5" | "10" | "20" | "all")}
+                  >
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="all">all</option>
+                  </select>
+                  {isKnnTopmLoading && <span className="text-zinc-500">...</span>}
+                </label>
+              </div>
               {!hideTopk && <div />}
               {!hideTopk && (
                 <div className="text-sm font-semibold text-zinc-700 text-left">Top-k Nearest by Cluster</div>

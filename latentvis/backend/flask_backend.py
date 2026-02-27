@@ -70,6 +70,10 @@ def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[
     method = (clustering or DEFAULT_CLUSTERING).strip().lower()
     split = _normalize_split(data_split) or "test"
     root = DATA_ROOT / case / split
+    # Backward compatibility: some datasets were materialized directly under DATA_ROOT/<case>/...
+    # If split-prefixed root does not exist, fall back to the legacy root.
+    if not root.exists():
+        root = DATA_ROOT / case
     if method == "pgmeans":
         return root
     return root / "clustering" / method
@@ -1195,11 +1199,13 @@ def substructures_cluster_topm():
         except (TypeError, ValueError):
             return jsonify({"ok": False, "error": "invalid_m"}), 400
 
-    if clustering == "pgmeans":
-        clustering = "gmm"
     case_dir = _case_dir(dataset, clustering, data_split)
     topk_subdir = "topk_current" if use_current else "topk"
     sorted_path = case_dir / topk_subdir / "cluster_sorted_members.json"
+    if topk_subdir == "topk_current" and not sorted_path.is_file():
+        # Fallback for runs/materializations that only have static topk files.
+        sorted_path = case_dir / "topk" / "cluster_sorted_members.json"
+        use_current = False
     if not sorted_path.is_file():
         return jsonify({"ok": False, "error": "sorted_members_not_found", "path": str(sorted_path)}), 404
 
