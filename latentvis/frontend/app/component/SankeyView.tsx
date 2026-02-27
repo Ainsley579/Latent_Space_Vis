@@ -1633,8 +1633,8 @@ export default function SankeyView({
           <button id="btnSwap">Swap X/Y</button>
           <button
             type="button"
-            onClick={() => setShowBaseSankey((v) => !v)}
-            style={{ fontWeight: showBaseSankey ? 600 : 400 }}
+            onClick={() => setShowSankeyPaths((v) => !v)}
+            style={{ fontWeight: showSankeyPaths ? 600 : 400 }}
           >
             Paths
           </button>

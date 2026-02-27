@@ -156,56 +156,42 @@ function synthesizeMissingAdjacentRows(
       : (dir === "from" ? r.from_layer ?? r.from_model : r.to_layer ?? r.to_model);
 
   const edgePairCount = new Map<string, number>();
-  const bucket = new Map<string, Map<number, number>>();
+  const assignmentsById = new Map<
+    string,
+    Map<string, { cluster: number; model?: string; layer?: string }>
+  >();
   rows.forEach((r) => {
     const fk = keyOf(r, "from");
     const tk = keyOf(r, "to");
     if (!fk || !tk) return;
     const pair = `${fk}->${tk}`;
     edgePairCount.set(pair, (edgePairCount.get(pair) ?? 0) + 1);
-    if (!bucket.has(fk)) bucket.set(fk, new Map());
-    if (!bucket.has(tk)) bucket.set(tk, new Map());
-    bucket.get(fk)!.set(r.from_cluster, (bucket.get(fk)!.get(r.from_cluster) ?? 0) + 1);
-    bucket.get(tk)!.set(r.to_cluster, (bucket.get(tk)!.get(r.to_cluster) ?? 0) + 1);
+    const rid = String(r.real_id);
+    if (!assignmentsById.has(rid)) assignmentsById.set(rid, new Map());
+    const amap = assignmentsById.get(rid)!;
+    amap.set(fk, { cluster: r.from_cluster, model: r.from_model, layer: r.from_layer });
+    amap.set(tk, { cluster: r.to_cluster, model: r.to_model, layer: r.to_layer });
   });
 
   const out: SampleRow[] = [];
-  let sid = 0;
   for (let i = 0; i < sequence.length - 1; i++) {
     const fromKey = sequence[i];
     const toKey = sequence[i + 1];
     if ((edgePairCount.get(`${fromKey}->${toKey}`) ?? 0) > 0) continue;
-    const sMap = new Map(bucket.get(fromKey) ?? []);
-    const tMap = new Map(bucket.get(toKey) ?? []);
-    if (sMap.size === 0 || tMap.size === 0) continue;
-    const sList = Array.from(sMap.entries())
-      .map(([cluster, cnt]) => ({ cluster, rem: cnt }))
-      .sort((a, b) => a.cluster - b.cluster);
-    const tList = Array.from(tMap.entries())
-      .map(([cluster, cnt]) => ({ cluster, rem: cnt }))
-      .sort((a, b) => a.cluster - b.cluster);
-    let si = 0;
-    let ti = 0;
-    while (si < sList.length && ti < tList.length) {
-      const v = Math.min(sList[si].rem, tList[ti].rem);
-      if (v > 0) {
-        for (let k = 0; k < v; k++) {
-          out.push({
-            real_id: `__synthetic__${fromKey}__${toKey}__${sid++}`,
-            from_layer: mode === "layer" ? fromKey : rows[0]?.from_layer,
-            to_layer: mode === "layer" ? toKey : rows[0]?.to_layer,
-            from_model: mode === "model" ? fromKey : rows[0]?.from_model,
-            to_model: mode === "model" ? toKey : rows[0]?.to_model,
-            from_cluster: sList[si].cluster,
-            to_cluster: tList[ti].cluster,
-          });
-        }
-        sList[si].rem -= v;
-        tList[ti].rem -= v;
-      }
-      if (sList[si].rem <= 0) si++;
-      if (tList[ti].rem <= 0) ti++;
-    }
+    assignmentsById.forEach((amap, rid) => {
+      const fromAssign = amap.get(fromKey);
+      const toAssign = amap.get(toKey);
+      if (!fromAssign || !toAssign) return;
+      out.push({
+        real_id: rid,
+        from_layer: mode === "layer" ? fromKey : (fromAssign.layer ?? rows[0]?.from_layer),
+        to_layer: mode === "layer" ? toKey : (toAssign.layer ?? rows[0]?.to_layer),
+        from_model: mode === "model" ? fromKey : (fromAssign.model ?? rows[0]?.from_model),
+        to_model: mode === "model" ? toKey : (toAssign.model ?? rows[0]?.to_model),
+        from_cluster: fromAssign.cluster,
+        to_cluster: toAssign.cluster,
+      });
+    });
   }
   return out;
 }
@@ -557,7 +543,7 @@ export default function SankeyVertical({
         });
 
       const nodeSamples = new Map<string, Set<string>>();
-      rowsReal.forEach((r) => {
+      rows.forEach((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
         const src = `${fromKey}_${r.from_cluster}`;
@@ -582,7 +568,7 @@ export default function SankeyVertical({
         });
       });
 
-      const sampleLines = rowsReal.flatMap((r) => {
+      const sampleLines = rows.flatMap((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
         const src = `${fromKey}_${r.from_cluster}`;
