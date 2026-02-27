@@ -1114,6 +1114,12 @@ export default function Home() {
     setHoverPreview({ kind: "smiles", smiles, left, top });
   }
 
+  useEffect(() => {
+    if (!showLargeHoverPreview) {
+      setHoverPreview(null);
+    }
+  }, [showLargeHoverPreview]);
+
   const LEFT_COL_RATIO_IN_WORKSPACE = 45 / 55;
   const MID_COL_RATIO_IN_WORKSPACE = 10 / 55;
   const TOP_ROW_RATIO_IN_WORKSPACE = 40 / 60;

@@ -65,7 +65,13 @@ export default function TopkNearestPanel({
   const [pageByCluster, setPageByCluster] = useState<Record<number, number>>({});
 
   return (
-    <div className="w-full h-full p-2 box-border overflow-auto">
+    <div
+      className="w-full h-full p-2 box-border overflow-auto"
+      onMouseLeave={() => {
+        onHoverIdChange(null);
+        onSmilesPreviewEnd?.();
+      }}
+    >
       {rows.length === 0 && (
         <div className="text-sm text-zinc-500">
           No top-k nearest data for {selectedModel} / {selectedLayer}.
@@ -252,9 +258,11 @@ export default function TopkNearestPanel({
                         type="button"
                         className="px-1.5 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
                         disabled={page <= 0}
-                        onClick={() =>
-                          setPageByCluster((prev) => ({ ...prev, [row.cluster_id]: Math.max(0, page - 1) }))
-                        }
+                        onClick={() => {
+                          setPageByCluster((prev) => ({ ...prev, [row.cluster_id]: Math.max(0, page - 1) }));
+                          onHoverIdChange(null);
+                          onSmilesPreviewEnd?.();
+                        }}
                       >
                         Prev
                       </button>
@@ -265,12 +273,14 @@ export default function TopkNearestPanel({
                         type="button"
                         className="px-1.5 py-0.5 border border-zinc-300 rounded disabled:opacity-40"
                         disabled={page >= totalPages - 1}
-                        onClick={() =>
+                        onClick={() => {
                           setPageByCluster((prev) => ({
                             ...prev,
                             [row.cluster_id]: Math.min(totalPages - 1, page + 1),
-                          }))
-                        }
+                          }));
+                          onHoverIdChange(null);
+                          onSmilesPreviewEnd?.();
+                        }}
                       >
                         Next
                       </button>
