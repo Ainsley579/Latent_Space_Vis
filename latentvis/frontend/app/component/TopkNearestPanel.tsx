@@ -4,7 +4,7 @@ import SmilesStructure from "./SmilesStructure";
 
 type TopkNearestRow = {
   cluster_id: number;
-  top_k_closest_real_ids: number[];
+  top_k_closest_real_ids: Array<string | number>;
 };
 
 type ClusterSubstructureData = {
@@ -105,7 +105,7 @@ export default function TopkNearestPanel({
             const page = Math.min(pageByCluster[row.cluster_id] ?? 0, totalPages - 1);
             const start = page * PAGE_SIZE;
             const pageIds = row.top_k_closest_real_ids.slice(start, start + PAGE_SIZE);
-            const paddedPageIds: Array<number | null> = [...pageIds];
+            const paddedPageIds: Array<string | number | null> = [...pageIds];
             while (paddedPageIds.length < PAGE_SIZE) paddedPageIds.push(null);
 
             return (

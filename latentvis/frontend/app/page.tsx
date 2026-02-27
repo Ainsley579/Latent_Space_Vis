@@ -930,10 +930,32 @@ export default function Home() {
   }, [apiBase, selectedDataset, selectedClustering, selectedModel, selectedLayer, knnTopm]);
 
   const topkNearestRows = useMemo(() => {
+    const mLimit = knnTopm === "all" ? null : Number(knnTopm);
+    const sortedByCluster = new Map<number, Array<string | number>>();
+    clusterSortedMembers.forEach((d) => {
+      if (String(d.model_type) !== String(selectedModel) || String(d.layer_name) !== String(selectedLayer)) return;
+      if (!Array.isArray(d.sorted_real_ids)) return;
+      sortedByCluster.set(Number(d.cluster_id), d.sorted_real_ids);
+    });
     return topkData
       .filter((d) => d.model_type === selectedModel && d.layer_name === selectedLayer)
-      .sort((a, b) => a.cluster_id - b.cluster_id);
-  }, [topkData, selectedModel, selectedLayer]);
+      .sort((a, b) => a.cluster_id - b.cluster_id)
+      .map((d) => {
+        const sortedIds = sortedByCluster.get(Number(d.cluster_id));
+        if (!sortedIds || sortedIds.length === 0) {
+          return {
+            ...d,
+            top_k_closest_real_ids:
+              mLimit == null ? d.top_k_closest_real_ids : d.top_k_closest_real_ids.slice(0, mLimit),
+          };
+        }
+        const displayIds = mLimit == null ? sortedIds : sortedIds.slice(0, mLimit);
+        return {
+          ...d,
+          top_k_closest_real_ids: displayIds,
+        };
+      });
+  }, [topkData, clusterSortedMembers, selectedModel, selectedLayer, knnTopm]);
 
 
   const substructureByCluster = useMemo(() => {
