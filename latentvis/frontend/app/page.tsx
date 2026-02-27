@@ -8,6 +8,7 @@ import TopkNearestPanel from "./component/TopkNearestPanel";
 import SmilesStructure from "./component/SmilesStructure";
 import StructureEditorPanel from "./component/StructureEditorPanel";
 import SyncControlPanel from "./component/SyncControlPanel";
+import ClusterContainmentHeatmap from "./component/ClusterContainmentHeatmap";
 import { CLUSTER_COLORS } from "./theme/colors";
 
 type SankeySampleRow = {
@@ -43,6 +44,24 @@ type GeneratedRuntimePayload = {
   clusterSortedMembers: any[];
   substructures: any[];
   scatterClusterByCell: Record<string, Array<{ real_id: string | number; cluster_id: number }>>;
+};
+
+type UploadedUserClustering = {
+  fileName: string;
+  labelNames: string[];
+  rows: Array<{ real_id: string; user_cluster_id: number }>;
+};
+
+type ClusterContainmentPayload = {
+  user_cluster_ids: number[];
+  our_cluster_ids: number[];
+  matrix: number[][];
+  entries: Array<{
+    user_cluster_id: number;
+    our_cluster_id: number;
+    count: number;
+    percentage_of_user_cluster: number;
+  }>;
 };
 
 type KnnTopmOption = "5" | "10" | "20" | "all";
@@ -296,6 +315,10 @@ export default function Home() {
   const [showSearchResultsInMembers, setShowSearchResultsInMembers] = useState(false);
   const [lastSearchCount, setLastSearchCount] = useState<number | null>(null);
   const [bottomSplitPct, setBottomSplitPct] = useState(35);
+  const [uploadedUserClustering, setUploadedUserClustering] = useState<UploadedUserClustering | null>(null);
+  const [clusterContainment, setClusterContainment] = useState<ClusterContainmentPayload | null>(null);
+  const [clusterContainmentLoading, setClusterContainmentLoading] = useState(false);
+  const [clusterContainmentError, setClusterContainmentError] = useState<string | null>(null);
   const memberListRef = useRef<HTMLDivElement | null>(null);
 
   const [workspaceWidthPct, setWorkspaceWidthPct] = useState(80);
@@ -520,6 +543,65 @@ export default function Home() {
     setShowSearchResultsInMembers(false);
     setLastSearchCount(null);
   }, [selectedDataset, selectedClustering]);
+
+  useEffect(() => {
+    if (!uploadedUserClustering || uploadedUserClustering.rows.length === 0) {
+      setClusterContainment(null);
+      setClusterContainmentError(null);
+      setClusterContainmentLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setClusterContainmentLoading(true);
+    setClusterContainmentError(null);
+    fetch(`${apiBase}/cluster-containment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        dataset: selectedDataset,
+        epoch: selectedModel,
+        layer: selectedLayer,
+        clustering: selectedClustering,
+        use_current:
+          generatedRuntimeMatchesCurrent ||
+          shouldUseCurrentSuffix(selectedDataset, selectedClustering),
+        user_clustering: uploadedUserClustering.rows,
+      }),
+    })
+      .then(async (res) => {
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json?.ok) {
+          throw new Error(json?.error ? String(json.error) : `cluster-containment failed: ${res.status}`);
+        }
+        return json as ClusterContainmentPayload;
+      })
+      .then((json) => {
+        setClusterContainment({
+          user_cluster_ids: Array.isArray(json.user_cluster_ids) ? json.user_cluster_ids : [],
+          our_cluster_ids: Array.isArray(json.our_cluster_ids) ? json.our_cluster_ids : [],
+          matrix: Array.isArray(json.matrix) ? json.matrix : [],
+          entries: Array.isArray(json.entries) ? json.entries : [],
+        });
+      })
+      .catch((err) => {
+        if ((err as Error)?.name === "AbortError") return;
+        setClusterContainment(null);
+        setClusterContainmentError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setClusterContainmentLoading(false);
+      });
+    return () => controller.abort();
+  }, [
+    apiBase,
+    uploadedUserClustering,
+    selectedDataset,
+    selectedClustering,
+    selectedModel,
+    selectedLayer,
+    generatedRuntimeMatchesCurrent,
+  ]);
 
   async function generateFromRange(minValue: number, maxValue: number) {
     if (isGeneratingRange) return;
@@ -1428,6 +1510,7 @@ export default function Home() {
                     dataPathCluster={scatterPaths.cluster}
                     projection={scatterProjection}
                     onProjectionChange={(next) => setScatterProjection(next)}
+                    onUserClusteringUpload={(payload) => setUploadedUserClustering(payload)}
                     activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
                     activeIds={showSearchResultsInMembers ? searchResultIds : selectedIds}
                     highlightId={hoveredId}
@@ -1485,10 +1568,21 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <div className="h-full min-w-0 flex-1">
+              <div className="h-full min-w-0 flex-1 flex gap-1">
+                <div className="h-full min-w-[240px] w-[28%] border border-zinc-400 bg-white">
+                  <ClusterContainmentHeatmap
+                    loading={clusterContainmentLoading}
+                    error={clusterContainmentError}
+                    userClusterIds={clusterContainment?.user_cluster_ids ?? []}
+                    ourClusterIds={clusterContainment?.our_cluster_ids ?? []}
+                    matrix={clusterContainment?.matrix ?? []}
+                    entries={clusterContainment?.entries ?? []}
+                    userClusterLabelNames={uploadedUserClustering?.labelNames ?? []}
+                  />
+                </div>
                 <div
                   id="bottomPanel1"
-                  className="w-full h-full border border-zinc-400 bg-white"
+                  className="w-full h-full border border-zinc-400 bg-white min-w-0 flex-1"
                 >
                   <div className="w-full h-full p-2 box-border overflow-hidden">
                     {!selectedNode && !showSearchResultsInMembers && (

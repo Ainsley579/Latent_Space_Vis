@@ -30,6 +30,13 @@ type ScatterPlotProps = {
   onClearSelection?: () => void;
   resolveImageSrc?: (realId: string | number, imageType: string) => string;
   getSmilesById?: (realId: string | number) => string | null;
+  onUserClusteringUpload?: (
+    payload: {
+      fileName: string;
+      labelNames: string[];
+      rows: Array<{ real_id: string; user_cluster_id: number }>;
+    } | null
+  ) => void;
 };
 
 export default function ScatterPlot({
@@ -48,6 +55,7 @@ export default function ScatterPlot({
   onClearSelection,
   resolveImageSrc,
   getSmilesById,
+  onUserClusteringUpload,
 }: ScatterPlotProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -68,6 +76,26 @@ export default function ScatterPlot({
   const [labelFileName, setLabelFileName] = useState<string>("");
   const [labelLoadError, setLabelLoadError] = useState<string | null>(null);
 
+  function idLookupKeys(raw: string): string[] {
+    const s = String(raw ?? "").trim();
+    if (!s) return [];
+    const keys = new Set<string>([s]);
+    if (/^-?\d+(\.0+)?$/.test(s)) {
+      const n = Number(s);
+      if (Number.isFinite(n)) keys.add(String(Math.trunc(n)));
+    }
+    return Array.from(keys);
+  }
+
+  function lookupLabelById(map: Record<string, string>, rawId: string): string | undefined {
+    const keys = idLookupKeys(rawId);
+    for (let i = 0; i < keys.length; i += 1) {
+      const hit = map[keys[i]];
+      if (hit) return hit;
+    }
+    return undefined;
+  }
+
   function buildLabelColors(labels: string[]): Record<string, string> {
     const uniq = Array.from(new Set(labels.map((x) => String(x).trim()).filter((x) => x.length > 0))).sort((a, b) =>
       a.localeCompare(b)
@@ -82,7 +110,7 @@ export default function ScatterPlot({
 
   function resolveBaseFill(id: string, cluster: number): string {
     if (colorMode === "label") {
-      const direct = labelById[String(id).trim()];
+      const direct = lookupLabelById(labelById, id);
       if (direct) return labelColors[direct] ?? "#9ca3af";
       const smiles = getSmilesByIdRef.current?.(String(id));
       if (smiles) {
@@ -127,7 +155,9 @@ export default function ScatterPlot({
             const id = String((row as Record<string, unknown>)[idCol] ?? "").trim();
             const label = String((row as Record<string, unknown>)[labelCol] ?? "").trim();
             if (!id || !label) return;
-            nextLabelById[id] = label;
+            idLookupKeys(id).forEach((k) => {
+              nextLabelById[k] = label;
+            });
           });
         } else {
           const points = rowsRef.current ?? [];
@@ -138,23 +168,47 @@ export default function ScatterPlot({
             const id = String(points[idx]?.real_id ?? "").trim();
             const label = String((row as Record<string, unknown>)[labelCol] ?? "").trim();
             if (!id || !label) return;
-            nextLabelById[id] = label;
+            idLookupKeys(id).forEach((k) => {
+              nextLabelById[k] = label;
+            });
           });
         }
 
         const labels = Array.from(new Set([...Object.values(nextLabelById), ...Object.values(nextLabelBySmiles)]));
         if (!labels.length) throw new Error("No valid id-label rows found.");
-        const colors = buildLabelColors(labels);
-        const legend = Object.keys(colors).sort((a, b) => a.localeCompare(b));
+        const legend = labels.sort((a, b) => a.localeCompare(b));
+        const colors = buildLabelColors(legend);
+        const labelToCluster = new Map<string, number>();
+        legend.forEach((name, idx) => labelToCluster.set(name, idx));
+        const points = rowsRef.current ?? [];
+        const userRows: Array<{ real_id: string; user_cluster_id: number }> = [];
+        points.forEach((pt) => {
+          const rid = String(pt.real_id);
+          let label = lookupLabelById(nextLabelById, rid);
+          if (!label) {
+            const smiles = getSmilesByIdRef.current?.(rid);
+            if (smiles) label = nextLabelBySmiles[String(smiles).trim()];
+          }
+          if (!label) return;
+          const cid = labelToCluster.get(label);
+          if (cid == null) return;
+          userRows.push({ real_id: rid, user_cluster_id: cid });
+        });
         setLabelById(nextLabelById);
         setLabelBySmiles(nextLabelBySmiles);
         setLabelColors(colors);
         setLabelLegend(legend);
         setLabelFileName(file.name);
         setColorMode("label");
+        onUserClusteringUpload?.({
+          fileName: file.name,
+          labelNames: legend,
+          rows: userRows,
+        });
       })
       .catch((err) => {
         setLabelLoadError(err instanceof Error ? err.message : String(err));
+        onUserClusteringUpload?.(null);
       });
   }
 
