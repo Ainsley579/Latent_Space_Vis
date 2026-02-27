@@ -44,9 +44,13 @@ export default function ScatterPlot({
   getSmilesById,
 }: ScatterPlotProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const rowsRef = useRef<ScatterPoint[] | null>(null);
   const onPointSelectRef = useRef(onPointSelect);
   const onPointHoverIdChangeRef = useRef(onPointHoverIdChange);
   const onClearSelectionRef = useRef(onClearSelection);
+  const getSmilesByIdRef = useRef(getSmilesById);
+  const modelKeyRef = useRef(modelKey);
+  const layerKeyRef = useRef(layerKey);
   const [legendClusters, setLegendClusters] = useState<number[]>([]);
   const [legendClusterIds, setLegendClusterIds] = useState<Record<number, string[]>>({});
 
@@ -61,6 +65,18 @@ export default function ScatterPlot({
   useEffect(() => {
     onClearSelectionRef.current = onClearSelection;
   }, [onClearSelection]);
+
+  useEffect(() => {
+    getSmilesByIdRef.current = getSmilesById;
+  }, [getSmilesById]);
+
+  useEffect(() => {
+    modelKeyRef.current = modelKey;
+  }, [modelKey]);
+
+  useEffect(() => {
+    layerKeyRef.current = layerKey;
+  }, [layerKey]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -120,33 +136,25 @@ export default function ScatterPlot({
         .domain(d3.range(maxCluster + 1))
         .range(CLUSTER_COLORS);
 
-      const activeIdSet = activeIds ? new Set(activeIds) : null;
       const circles = g.append("g")
         .selectAll("circle")
         .data(lastRows)
         .enter()
         .append("circle")
+        .attr("data-id", (d) => String(d.real_id))
+        .attr("data-cluster", (d) => String(d.cluster_id))
+        .attr("data-base-fill", (d) => color(Math.max(0, d.cluster_id)))
         .attr("cx", (d) => x(d.x))
         .attr("cy", (d) => y(d.y))
-        .attr("r", (d) => (highlightId && String(d.real_id) === highlightId ? 5.2 : 3.2))
-        .attr("fill", (d) => (highlightId && String(d.real_id) === highlightId ? "#f59e0b" : color(Math.max(0, d.cluster_id))))
-        .attr("fill-opacity", (d) => {
-          if (highlightId && String(d.real_id) === highlightId) return 1;
-          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? 1 : 0.22;
-          if (activeCluster == null) return 0.75;
-          return d.cluster_id === activeCluster ? 1 : 0.22;
-        })
-        .attr("stroke", (d) => {
-          if (highlightId && String(d.real_id) === highlightId) return "#dc2626";
-          if (activeIdSet) return activeIdSet.has(String(d.real_id)) ? "#dc2626" : "none";
-          if (activeCluster == null) return "none";
-          return d.cluster_id === activeCluster ? "#dc2626" : "none";
-        })
-        .attr("stroke-width", (d) => (highlightId && String(d.real_id) === highlightId ? 1.8 : 0.9))
+        .attr("r", 3.2)
+        .attr("fill", (d) => color(Math.max(0, d.cluster_id)))
+        .attr("fill-opacity", 0.75)
+        .attr("stroke", "none")
+        .attr("stroke-width", 0.9)
         .style("cursor", "pointer")
         .on("mouseover", (event, d) => {
           const token = ++hoverToken;
-          const smiles = getSmilesById?.(String(d.real_id)) ?? null;
+          const smiles = getSmilesByIdRef.current?.(String(d.real_id)) ?? null;
           onPointHoverIdChangeRef.current?.(String(d.real_id));
           tooltipSvgWrap.html(`<div style="width:300px;height:300px;display:flex;align-items:center;justify-content:center;color:#a1a1aa;font-size:14px;">loading</div>`);
           if (smiles) {
@@ -178,28 +186,14 @@ export default function ScatterPlot({
         .on("click", (event, d) => {
           event.stopPropagation();
           onPointSelectRef.current?.({
-            model: modelKey,
-            layer: layerKey,
+            model: modelKeyRef.current,
+            layer: layerKeyRef.current,
             cluster: d.cluster_id,
             real_id: String(d.real_id),
           });
         });
 
-      if (highlightId) {
-        const hit = lastRows.find((d) => String(d.real_id) === highlightId);
-        if (hit) {
-          const star = d3.symbol().type(d3.symbolStar).size(180);
-          const clusterColor = color(Math.max(0, hit.cluster_id));
-          g.append("path")
-            .attr("d", star)
-            .attr("transform", `translate(${x(hit.x)},${y(hit.y)})`)
-            .attr("fill", clusterColor)
-            .attr("stroke", HIGHLIGHT_RED)
-            .attr("stroke-width", 1.2)
-            .attr("opacity", 0.95)
-            .style("pointer-events", "none");
-        }
-      }
+      // Hover star is updated in a separate effect and rendered inside the same circle group.
 
       const extent: [[number, number], [number, number]] = [
         [margin.left, margin.top],
@@ -275,6 +269,7 @@ export default function ScatterPlot({
           .filter((d: ScatterPoint | null): d is ScatterPoint => !!d);
 
         lastRows = merged;
+        rowsRef.current = merged;
         const clusterIds = Array.from(new Set(merged.map((d) => d.cluster_id))).sort((a, b) => a - b);
         const idsByCluster: Record<number, string[]> = {};
         merged.forEach((d) => {
@@ -302,13 +297,71 @@ export default function ScatterPlot({
   }, [
     dataPathXY,
     dataPathCluster,
-    activeCluster,
-    activeIds,
-    highlightId,
-    modelKey,
-    layerKey,
-    getSmilesById,
   ]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const svg = container.querySelector("svg");
+    if (!svg) return;
+    const rows = rowsRef.current;
+    if (!rows) return;
+
+    const activeIdSet = activeIds ? new Set(activeIds.map((x) => String(x))) : null;
+    const circles = Array.from(svg.querySelectorAll("circle[data-id]")) as SVGCircleElement[];
+    circles.forEach((el) => {
+      const id = el.getAttribute("data-id") || "";
+      const cluster = Number(el.getAttribute("data-cluster") || "0");
+      const baseFill = el.getAttribute("data-base-fill") || CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length];
+      const isHovered = !!highlightId && id === String(highlightId);
+      const inActiveIds = !!activeIdSet && activeIdSet.has(id);
+
+      el.setAttribute("r", isHovered ? "5.2" : "3.2");
+      el.setAttribute("fill", isHovered ? "#f59e0b" : baseFill);
+      if (isHovered) {
+        el.setAttribute("fill-opacity", "1");
+        el.setAttribute("stroke", "#dc2626");
+        el.setAttribute("stroke-width", "1.8");
+      } else if (activeIdSet) {
+        el.setAttribute("fill-opacity", inActiveIds ? "1" : "0.22");
+        el.setAttribute("stroke", inActiveIds ? "#dc2626" : "none");
+        el.setAttribute("stroke-width", "0.9");
+      } else if (activeCluster == null) {
+        el.setAttribute("fill-opacity", "0.75");
+        el.setAttribute("stroke", "none");
+        el.setAttribute("stroke-width", "0.9");
+      } else {
+        const match = cluster === activeCluster;
+        el.setAttribute("fill-opacity", match ? "1" : "0.22");
+        el.setAttribute("stroke", match ? "#dc2626" : "none");
+        el.setAttribute("stroke-width", "0.9");
+      }
+    });
+
+    d3.select(svg).selectAll("path.hover-star-overlay-path").remove();
+    if (highlightId) {
+      const targetId = String(highlightId);
+      const hitCircle = circles.find((c) => (c.getAttribute("data-id") || "") === targetId);
+      if (hitCircle && hitCircle.parentElement) {
+        const cx = Number(hitCircle.getAttribute("cx") || "0");
+        const cy = Number(hitCircle.getAttribute("cy") || "0");
+        const fillColor =
+          hitCircle.getAttribute("data-base-fill") ||
+          CLUSTER_COLORS[Math.max(0, Number(hitCircle.getAttribute("data-cluster") || "0")) % CLUSTER_COLORS.length];
+        const star = d3.symbol().type(d3.symbolStar).size(180);
+        d3.select(hitCircle.parentElement)
+          .append("path")
+          .attr("class", "hover-star-overlay-path")
+          .attr("d", star)
+          .attr("transform", `translate(${cx},${cy})`)
+          .attr("fill", fillColor)
+          .attr("stroke", HIGHLIGHT_RED)
+          .attr("stroke-width", 1.2)
+          .attr("opacity", 0.95)
+          .style("pointer-events", "none");
+      }
+    }
+  }, [activeCluster, activeIds, highlightId]);
 
   return (
     <div className="w-full h-full flex flex-col">
