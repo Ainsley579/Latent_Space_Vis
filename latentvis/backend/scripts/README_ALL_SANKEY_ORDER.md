@@ -48,9 +48,9 @@ python3 scripts/reorder_all_sankey_keys.py <path/to/all_sankey.json> \
 
 Or use `--layer-order-from-csv` to take the order from the same case's `clustering_metrics/cluster_assignments_with_real_id.csv`.
 
-## Layer transition stats (must match all_sankey order)
+## Layer transition stats (Sankey-consistent percentages)
 
-Cell-to-cell change percentages (`layer_transition_by_epoch.json`, `layer_transition_by_layer.json`) are computed for **consecutive** layers in the order you specify. That order must match `all_sankey.json` so the frontend’s “from layer A to layer B” matches the stats.
+The percentage is computed from the same flow logic as the Sankey (outflow from each source cluster). Cell-to-cell change percentages (`layer_transition_by_epoch.json`, `layer_transition_by_layer.json`) are computed for **consecutive** layers in the order you specify. That order must match `all_sankey.json` so the frontend’s “from layer A to layer B” matches the stats.
 
 After reordering all_sankey (or when using old CSVs with wrong column order), run:
 

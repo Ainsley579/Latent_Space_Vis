@@ -86,15 +86,41 @@ def _reorder_layer_columns(layer_cols, preferred_layer_order):
     return reordered
 
 
+def _transition_matrix_and_outflow(rows, from_col, to_col):
+    """
+    Build (source_cluster, target_cluster) -> count from rows; then compute Sankey-consistent
+    'changed' count: for each source cluster, outflow = src_tot - max(target count).
+    Returns (n_changed, n_total) so pct_changed matches Sankey outflow.
+    """
+    counts = {}
+    for r in rows:
+        c0 = _normalize_cluster_value(r.get(from_col))
+        c1 = _normalize_cluster_value(r.get(to_col))
+        if c0 is None or c1 is None:
+            continue
+        key = (c0, c1)
+        counts[key] = counts.get(key, 0) + 1
+    if not counts:
+        return 0, 0
+    n_total = sum(counts.values())
+    n_changed = 0
+    src_totals = {}
+    for (c0, c1), val in counts.items():
+        src_totals[c0] = src_totals.get(c0, 0) + val
+    for c0, src_tot in src_totals.items():
+        max_to = max((counts.get((c0, c1), 0) for c1 in set(c1 for (c0_, c1) in counts if c0_ == c0)), default=0)
+        n_changed += src_tot - max_to
+    return n_changed, n_total
+
+
 def compute_stats(csv_path, preferred_layer_order=None):
     """Read CSV and return by_epoch and by_layer transition stats.
 
-    - by_epoch: within same epoch, for each consecutive layer pair (model order), count how many
-      real_ids have a different cluster in the next layer. Same real_id = same row; compare
-      from_layer column vs to_layer column (normalized so 0 and '0' are equal).
-    - by_layer: within same layer, for each consecutive epoch pair, count how many real_ids
-      have a different cluster in the next epoch. Same real_id compared across two epoch rows.
-    Layer order must match all_sankey.json so cell-to-cell change percentages align.
+    Percentages are computed from the same flow logic as Sankey: for each source cluster,
+    'changed' = outflow = (total from source) - (max flow to any single target). So if
+    most points from a cluster go to one target (no split), change is small; if they
+    split across many targets, change is large. This matches the Sankey visualization.
+    Layer order must match all_sankey.json.
     """
     with csv_path.open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -108,7 +134,7 @@ def compute_stats(csv_path, preferred_layer_order=None):
     if not layer_cols:
         return {"by_epoch": [], "by_layer": []}
 
-    # by_epoch: within same epoch, same real_id; compare cluster in consecutive layers (model order).
+    # by_epoch: same logic as Sankey edges (layer A -> layer B). Changed = outflow from each source cluster.
     by_epoch = []
     for i in range(len(layer_cols) - 1):
         from_l = layer_cols[i]
@@ -124,9 +150,7 @@ def compute_stats(csv_path, preferred_layer_order=None):
                 epochs_seen.add(ep)
             for ep in sorted(epochs_seen, key=lambda x: (int(x) if str(x).isdigit() else x)):
                 subset = [r for r in rows if r.get(epoch_col) == ep]
-                n_total = len(subset)
-                # Changed = same real_id has different cluster in to_layer vs from_layer (normalized comparison).
-                n_changed = sum(1 for r in subset if not _cluster_eq(r.get(from_l), r.get(to_l)))
+                n_changed, n_total = _transition_matrix_and_outflow(subset, from_l, to_l)
                 pct = (100.0 * n_changed / n_total) if n_total else 0.0
                 by_epoch.append({
                     "epoch": ep,
@@ -137,8 +161,7 @@ def compute_stats(csv_path, preferred_layer_order=None):
                     "pct_changed": round(pct, 2),
                 })
         else:
-            n_total = len(rows)
-            n_changed = sum(1 for r in rows if not _cluster_eq(r.get(from_l), r.get(to_l)))
+            n_changed, n_total = _transition_matrix_and_outflow(rows, from_l, to_l)
             pct = (100.0 * n_changed / n_total) if n_total else 0.0
             by_epoch.append({
                 "epoch": None,
@@ -149,7 +172,7 @@ def compute_stats(csv_path, preferred_layer_order=None):
                 "pct_changed": round(pct, 2),
             })
 
-    # by_layer: within same layer, same real_id; compare cluster in consecutive epochs (epoch order).
+    # by_layer: same logic (epoch A -> epoch B). Changed = outflow from each source cluster.
     by_layer = []
     if epoch_col:
         real_ids = sorted(set(r.get("real_id") for r in rows if r.get("real_id") is not None))
@@ -162,12 +185,14 @@ def compute_stats(csv_path, preferred_layer_order=None):
                 e_to = epochs_sorted[j + 1]
                 from_vals = {r["real_id"]: r.get(layer_col) for r in rows if r.get(epoch_col) == e_from}
                 to_vals = {r["real_id"]: r.get(layer_col) for r in rows if r.get(epoch_col) == e_to}
-                common_ids = [rid for rid in real_ids if rid in from_vals and rid in to_vals]
-                n_total = len(common_ids)
-                # Changed = same real_id has different cluster in to_epoch vs from_epoch (normalized comparison).
-                n_changed = sum(
-                    1 for rid in common_ids
-                    if not _cluster_eq(from_vals.get(rid), to_vals.get(rid))
+                # Build rows for this (e_from, e_to) pair: list of {from_col, to_col} for common real_ids
+                pair_rows = []
+                for rid in real_ids:
+                    if rid not in from_vals or rid not in to_vals:
+                        continue
+                    pair_rows.append({layer_col + "_from": from_vals[rid], layer_col + "_to": to_vals[rid]})
+                n_changed, n_total = _transition_matrix_and_outflow(
+                    pair_rows, layer_col + "_from", layer_col + "_to"
                 )
                 pct = (100.0 * n_changed / n_total) if n_total else 0.0
                 by_layer.append({
