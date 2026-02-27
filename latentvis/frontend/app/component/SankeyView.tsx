@@ -468,7 +468,7 @@ export default function SankeyView({
           const toLayer = String(d?.to_layer ?? "").trim();
           const pct = Number(d?.pct_changed ?? 0);
           if (!epoch || !fromLayer || !toLayer || !Number.isFinite(pct)) return;
-          pctByEpochTransition.set(`${epoch}|${fromLayer}|${toLayer}`, Math.max(0, Math.min(100, pct)));
+          pctByEpochTransition.set(`${epoch}|${fromLayer}|${toLayer}`, Math.max(0, pct));
         });
         const pctByLayerTransition = new Map<string, number>();
         transitionEntriesByLayer.forEach((d) => {
@@ -477,16 +477,21 @@ export default function SankeyView({
           const toEpoch = String(d?.to_epoch ?? "").trim();
           const pct = Number(d?.pct_changed ?? 0);
           if (!layer || !fromEpoch || !toEpoch || !Number.isFinite(pct)) return;
-          pctByLayerTransition.set(`${layer}|${fromEpoch}|${toEpoch}`, Math.max(0, Math.min(100, pct)));
+          pctByLayerTransition.set(`${layer}|${fromEpoch}|${toEpoch}`, Math.max(0, pct));
         });
+        const maxGapPct = Math.max(
+          1,
+          ...Array.from(pctByEpochTransition.values()),
+          ...Array.from(pctByLayerTransition.values())
+        );
         const redGapColor = d3
           .scaleLinear<string>()
-          .domain([0, 100])
+          .domain([0, maxGapPct])
           .range(["#f3f4f6", "#7f1d1d"])
           .clamp(true);
         const greenGapColor = d3
           .scaleLinear<string>()
-          .domain([0, 100])
+          .domain([0, maxGapPct])
           .range(["#f0fdf4", "#166534"])
           .clamp(true);
         const horizontalGapColor = SWAP_AXES ? greenGapColor : redGapColor;
