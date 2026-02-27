@@ -47,8 +47,8 @@ type GeneratedRuntimePayload = {
 
 type KnnTopmOption = "5" | "10" | "20" | "all";
 type HoverPreviewState =
-  | { kind: "image"; src: string; left: number; top: number }
-  | { kind: "smiles"; smiles: string; left: number; top: number };
+  | { kind: "image"; src: string; left: number; top: number; source?: "topk" | "members" | "other" }
+  | { kind: "smiles"; smiles: string; left: number; top: number; source?: "topk" | "members" | "other" };
 
 type DatasetKey = "dimenet" | "chemprop" | "chemeleon";
 type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan";
@@ -293,6 +293,7 @@ export default function Home() {
   const [showSearchResultsInMembers, setShowSearchResultsInMembers] = useState(false);
   const [lastSearchCount, setLastSearchCount] = useState<number | null>(null);
   const [bottomSplitPct, setBottomSplitPct] = useState(35);
+  const memberListRef = useRef<HTMLDivElement | null>(null);
 
   const [workspaceWidthPct, setWorkspaceWidthPct] = useState(80);
   const [workspaceHeightPct, setWorkspaceHeightPct] = useState(70);
@@ -1118,20 +1119,24 @@ export default function Home() {
     return { left, top };
   }
 
-  function showHoverPreviewAt(src: string, anchor?: DOMRect) {
+  function showHoverPreviewAt(src: string, anchor?: DOMRect, source: "topk" | "members" | "other" = "other") {
     if (!showLargeHoverPreview) return;
     const { left, top } = getPreviewAnchorPosition(anchor);
-    setHoverPreview({ kind: "image", src, left, top });
+    setHoverPreview({ kind: "image", src, left, top, source });
   }
 
-  function showSmilesPreviewAt(smiles: string | null, anchor?: DOMRect) {
+  function showSmilesPreviewAt(
+    smiles: string | null,
+    anchor?: DOMRect,
+    source: "topk" | "members" | "other" = "other"
+  ) {
     if (!showLargeHoverPreview) return;
     if (!smiles || !smiles.trim()) {
       setHoverPreview(null);
       return;
     }
     const { left, top } = getPreviewAnchorPosition(anchor);
-    setHoverPreview({ kind: "smiles", smiles, left, top });
+    setHoverPreview({ kind: "smiles", smiles, left, top, source });
   }
 
   useEffect(() => {
@@ -1139,6 +1144,23 @@ export default function Home() {
       setHoverPreview(null);
     }
   }, [showLargeHoverPreview]);
+
+  useEffect(() => {
+    if (!hoverPreview || hoverPreview.source !== "members") return;
+    const onPointerMove = (ev: PointerEvent) => {
+      const host = memberListRef.current;
+      if (!host) return;
+      const rect = host.getBoundingClientRect();
+      const inside =
+        ev.clientX >= rect.left &&
+        ev.clientX <= rect.right &&
+        ev.clientY >= rect.top &&
+        ev.clientY <= rect.bottom;
+      if (!inside) setHoverPreview(null);
+    };
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onPointerMove);
+  }, [hoverPreview]);
 
   const LEFT_COL_RATIO_IN_WORKSPACE = 45 / 55;
   const MID_COL_RATIO_IN_WORKSPACE = 10 / 55;
@@ -1326,7 +1348,7 @@ export default function Home() {
                 }}
                 hideTopk={workspaceWidthPct >= 79.5}
                 largePreviewOn={showLargeHoverPreview}
-                onSmilesPreviewStart={(smiles, anchor) => showSmilesPreviewAt(smiles, anchor)}
+                onSmilesPreviewStart={(smiles, anchor) => showSmilesPreviewAt(smiles, anchor, "topk")}
                 onSmilesPreviewEnd={() => setHoverPreview(null)}
                 bookmarkedIds={bookmarkedIds}
                 onToggleBookmark={toggleBookmark}
@@ -1585,6 +1607,7 @@ export default function Home() {
                               </div>
                             </div>
                             <div
+                              ref={memberListRef}
                               className="flex-1 min-h-0 overflow-auto pr-1"
                               onMouseLeave={() => {
                                 setHoverFromMouse(null);
@@ -1600,7 +1623,8 @@ export default function Home() {
                                       setHoverFromMouse(String(id));
                                       showSmilesPreviewAt(
                                         getSmilesById(id),
-                                        e.currentTarget.getBoundingClientRect()
+                                        e.currentTarget.getBoundingClientRect(),
+                                        "members"
                                       );
                                     }}
                                     onMouseLeave={() => {
