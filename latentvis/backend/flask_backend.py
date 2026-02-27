@@ -1033,6 +1033,256 @@ def _substructures_for_cell(X, real_ids, labels, epoch, layer, id_to_smiles, k_r
     return substruct_list
 
 
+def _parse_bool(v, default=False) -> bool:
+    if isinstance(v, bool):
+        return v
+    if v is None:
+        return default
+    return str(v).strip().lower() in ("1", "true", "yes", "on")
+
+
+def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[str, str]:
+    mapping_path = DATA_ROOT / dataset / "real_id_to_smiles.json"
+    if not mapping_path.is_file():
+        return {}
+    try:
+        raw = json.loads(mapping_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+    split_norm = _normalize_split(data_split)
+    out: Dict[str, str] = {}
+    if isinstance(raw, list):
+        for row in raw:
+            if not isinstance(row, dict):
+                continue
+            rid = row.get("real_id")
+            smi = row.get("smiles")
+            if rid is None or smi is None:
+                continue
+            if split_norm:
+                row_split = _normalize_split(row.get("split"))
+                if row_split is not None and row_split != split_norm:
+                    continue
+            out[str(rid)] = str(smi)
+        return out
+    if isinstance(raw, dict):
+        return {str(k): str(v) for k, v in raw.items()}
+    return {}
+
+
+def _mcs_for_real_ids(real_ids: List[object], id_to_smiles: Dict[str, str]) -> Dict[str, object]:
+    try:
+        from rdkit import Chem
+    except Exception:
+        return {
+            "valid_molecules": 0,
+            "missing_real_ids": [str(x) for x in real_ids],
+            "invalid_smiles_real_ids": [],
+            "mcs_smarts": None,
+            "mcs_smiles": None,
+            "mcs_note": "RDKit unavailable",
+        }
+    try:
+        from mcs_common import common_substructure_smarts_smiles
+    except Exception:
+        common_substructure_smarts_smiles = None
+
+    missing: List[str] = []
+    invalid: List[str] = []
+    mols = []
+    seen_canonical = set()
+    for rid in real_ids:
+        rid_str = str(rid)
+        smi = id_to_smiles.get(rid_str)
+        if not smi:
+            missing.append(rid_str)
+            continue
+        mol = Chem.MolFromSmiles(smi)
+        if mol is None:
+            invalid.append(rid_str)
+            continue
+        canonical = Chem.MolToSmiles(mol, canonical=True)
+        if canonical in seen_canonical:
+            continue
+        seen_canonical.add(canonical)
+        mols.append(mol)
+
+    smiles_list = [Chem.MolToSmiles(m, canonical=True) for m in mols]
+    if common_substructure_smarts_smiles and smiles_list:
+        mcs_smarts, mcs_smiles = common_substructure_smarts_smiles(
+            smiles_list,
+            timeout_s=30,
+            ring_matches_ring_only=True,
+            complete_rings_only=True,
+            match_valences=True,
+            atom_compare="elements",
+            bond_compare="order",
+        )
+    else:
+        mcs_smarts, mcs_smiles = None, None
+
+    mcs_note = None
+    if not smiles_list:
+        mcs_note = "No valid molecules for MCS"
+    elif mcs_smarts is None and mcs_smiles is None:
+        mcs_note = "No common substructure found"
+    elif missing:
+        mcs_note = "Missing SMILES for {} real_id(s)".format(len(missing))
+    return {
+        "valid_molecules": len(mols),
+        "missing_real_ids": missing,
+        "invalid_smiles_real_ids": invalid,
+        "mcs_smarts": mcs_smarts,
+        "mcs_smiles": mcs_smiles,
+        "mcs_note": mcs_note,
+    }
+
+
+@app.route("/substructures/cluster-topm", methods=["GET", "POST", "OPTIONS"])
+@app.route("/substructures/cell-topm", methods=["GET", "POST", "OPTIONS"])
+def substructures_cluster_topm():
+    """
+    Return top-m substructures from sorted cluster members for a single cell (epoch, layer).
+    - If cluster_id is provided: return that single cluster.
+    - If cluster_id is omitted or "all": return all clusters in the cell.
+    Supports GET query or POST JSON with: dataset, epoch, layer, m,
+    optional: cluster_id, group (knn|kfn|both), clustering, data_split, use_current.
+    """
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    payload = request.get_json(silent=True) or {}
+    args = request.args
+
+    def pick(name: str, default=None):
+        if request.method == "GET":
+            return args.get(name, default)
+        return payload.get(name, args.get(name, default))
+
+    dataset = pick("dataset")
+    epoch = pick("epoch")
+    layer = pick("layer")
+    cluster_id_raw = pick("cluster_id")
+    m_raw = pick("m", 32)
+    group = str(pick("group", "both")).strip().lower()
+    clustering = str(pick("clustering", DEFAULT_CLUSTERING)).strip().lower()
+    data_split = pick("data_split") or pick("preferred_split")
+    use_current = _parse_bool(pick("use_current", True), default=True)
+
+    if dataset not in DEFAULT_CASES:
+        return jsonify({"ok": False, "error": "invalid_dataset"}), 400
+    if epoch is None or layer is None:
+        return jsonify({"ok": False, "error": "missing_args"}), 400
+    if group not in ("knn", "kfn", "both"):
+        return jsonify({"ok": False, "error": "invalid_group"}), 400
+    cluster_all = False
+    cluster_id = None
+    if cluster_id_raw is None or (isinstance(cluster_id_raw, str) and cluster_id_raw.strip().lower() == "all"):
+        cluster_all = True
+    else:
+        try:
+            cluster_id = int(cluster_id_raw)
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "invalid_cluster_id"}), 400
+    m_all = False
+    if isinstance(m_raw, str) and m_raw.strip().lower() == "all":
+        m_all = True
+        m = None
+    else:
+        try:
+            m = max(1, min(500, int(m_raw)))
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "invalid_m"}), 400
+
+    if clustering == "pgmeans":
+        clustering = "gmm"
+    case_dir = _case_dir(dataset, clustering, data_split)
+    topk_subdir = "topk_current" if use_current else "topk"
+    sorted_path = case_dir / topk_subdir / "cluster_sorted_members.json"
+    if not sorted_path.is_file():
+        return jsonify({"ok": False, "error": "sorted_members_not_found", "path": str(sorted_path)}), 404
+
+    rows = _read_json(sorted_path, [])
+    if not isinstance(rows, list):
+        rows = []
+
+    targets = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if str(row.get("model_type")) != str(epoch):
+            continue
+        if str(row.get("layer_name")) != str(layer):
+            continue
+        try:
+            row_cluster = int(row.get("cluster_id"))
+        except (TypeError, ValueError):
+            continue
+        if cluster_all or row_cluster == cluster_id:
+            targets.append(row)
+
+    if not targets:
+        if cluster_all:
+            return jsonify({"ok": False, "error": "cell_not_found"}), 404
+        return jsonify({"ok": False, "error": "cluster_not_found"}), 404
+
+    id_to_smiles = _load_id_to_smiles(dataset, data_split=data_split)
+    out_rows = []
+    cluster_summary = []
+    for target in targets:
+        row_cluster = int(target.get("cluster_id"))
+        sorted_real_ids = target.get("sorted_real_ids") or []
+        if not isinstance(sorted_real_ids, list):
+            sorted_real_ids = []
+
+        m_use = len(sorted_real_ids) if m_all else min(m, len(sorted_real_ids))
+        knn_ids = [str(x) for x in sorted_real_ids[:m_use]]
+        kfn_ids = [str(x) for x in list(reversed(sorted_real_ids[-m_use:]))]
+        cluster_summary.append({
+            "cluster_id": row_cluster,
+            "total_members": len(sorted_real_ids),
+            "m": int(m_use),
+        })
+        for grp in ("knn", "kfn"):
+            if group != "both" and group != grp:
+                continue
+            ids = knn_ids if grp == "knn" else kfn_ids
+            mcs = _mcs_for_real_ids(ids, id_to_smiles)
+            out_rows.append({
+                "layer_name": str(layer),
+                "model_type": str(epoch),
+                "cluster_id": row_cluster,
+                "group": grp,
+                "k": int(m_use),
+                "real_ids": ids,
+                "valid_molecules": mcs["valid_molecules"],
+                "missing_real_ids": mcs["missing_real_ids"],
+                "invalid_smiles_real_ids": mcs["invalid_smiles_real_ids"],
+                "mcs_smarts": mcs["mcs_smarts"],
+                "mcs_smiles": mcs["mcs_smiles"],
+                "mcs_note": mcs["mcs_note"],
+            })
+
+    cluster_summary = sorted(cluster_summary, key=lambda x: x["cluster_id"])
+    out_rows = sorted(out_rows, key=lambda x: (int(x["cluster_id"]), 0 if x["group"] == "knn" else 1))
+
+    return jsonify({
+        "ok": True,
+        "dataset": dataset,
+        "clustering": clustering,
+        "data_split": _normalize_split(data_split) or "test",
+        "use_current": use_current,
+        "epoch": str(epoch),
+        "layer": str(layer),
+        "cluster_id": "all" if cluster_all else int(cluster_id),
+        "cluster_count": len(cluster_summary),
+        "m_requested": "all" if m_all else int(m),
+        "clusters": cluster_summary,
+        "rows": out_rows,
+    })
+
+
 @app.route("/recluster-agglomerative", methods=["POST", "OPTIONS"])
 def recluster_agglomerative():
     """Re-run Agglomerative clustering for a single cell (epoch, layer). Frontend sends dataset, epoch, layer, k, linkage.
