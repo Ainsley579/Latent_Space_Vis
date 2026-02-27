@@ -337,7 +337,7 @@ def _search_smiles_substructure_in_case(case: str, smiles_query: str):
     (query is a substructure; all IDs that contain it are returned).
     Uses RDKit HasSubstructMatch. Returns (matches, error_message).
     """
-    case_dir = DATA_ROOT / case
+    case_dir = DATA_ROOT / case / "test"
     mapping_path = case_dir / "real_id_to_smiles.json"
     if not mapping_path.is_file():
         return [], None
@@ -1046,7 +1046,8 @@ def _parse_bool(v, default=False) -> bool:
 
 
 def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[str, str]:
-    mapping_path = DATA_ROOT / dataset / "real_id_to_smiles.json"
+    split = _normalize_split(data_split) or "test"
+    mapping_path = DATA_ROOT / dataset / split / "real_id_to_smiles.json"
     if not mapping_path.is_file():
         return {}
     try:
