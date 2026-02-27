@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: latentvis-backend
+    env: python
+    rootDir: latentvis/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 2 -b 0.0.0.0:$PORT flask_backend:app
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.10
