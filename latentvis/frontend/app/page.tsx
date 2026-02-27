@@ -460,7 +460,18 @@ export default function Home() {
       })
       .then((json) => {
         const out: Record<string, string> = {};
-        if (json && typeof json === "object" && !Array.isArray(json)) {
+        if (Array.isArray(json)) {
+          json.forEach((row) => {
+            if (!row || typeof row !== "object") return;
+            const rid = String((row as any).real_id ?? "").trim();
+            if (!rid) return;
+            const smiles = typeof (row as any).smiles === "string" ? (row as any).smiles : "";
+            out[rid] = smiles;
+            out[rid.trim()] = smiles;
+            out[rid.toLowerCase()] = smiles;
+            out[rid.trim().toLowerCase()] = smiles;
+          });
+        } else if (json && typeof json === "object") {
           Object.entries(json as Record<string, unknown>).forEach(([k, v]) => {
             const key = String(k);
             const smiles = typeof v === "string" ? v : "";

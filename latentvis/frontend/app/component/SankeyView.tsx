@@ -201,7 +201,8 @@ export default function SankeyView({
   const [maxInstanceValue, setMaxInstanceValue] = useState(DEFAULT_MAX_INSTANCE);
   const [fmiData, setFmiData] = useState<Array<{ layer: string; fmi: number; cspa: number }>>([]);
   const [rowMetricData, setRowMetricData] = useState<Array<{ model: string; fmi: number; cspa: number }>>([]);
-  const [showBaseSankey, setShowBaseSankey] = useState(true);
+  const [showSankeyPaths, setShowSankeyPaths] = useState(true);
+  const [showSankeyNodes, setShowSankeyNodes] = useState(true);
   const [showCellBackground, setShowCellBackground] = useState(true);
   const [showGapHeatmap, setShowGapHeatmap] = useState(true);
   const [layout, setLayout] = useState<{
@@ -709,7 +710,7 @@ export default function SankeyView({
 
         let linkGroup: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
         let linkGroup2: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
-        if (showBaseSankey) {
+        if (showSankeyPaths) {
           // column-links (per layer) -> vertical inside a column
           linkGroup = gRoot.append("g").attr("class", "links column-links");
           Object.keys(data.layer || {}).forEach((columnKey) => {
@@ -953,7 +954,7 @@ export default function SankeyView({
         }
 
         // draw nodes after links so they are on top
-        if (showBaseSankey) {
+        if (showSankeyNodes) {
           nodeDrawQueue.forEach(({ g, rowName, columnName, nodesForCell }) => {
             g.selectAll("rect.bar")
               .data(nodesForCell)
@@ -1228,7 +1229,7 @@ export default function SankeyView({
         console.error("Failed to build chart:", err);
         container.innerHTML = "<div style='color: red'>Failed to load visualization data.</div>";
       });
-  }, [dataPath, transitionStatsPath, showBaseSankey, showCellBackground, showGapHeatmap]);
+  }, [dataPath, transitionStatsPath, showSankeyPaths, showSankeyNodes, showCellBackground, showGapHeatmap]);
 
   useEffect(() => {
     const container = chartRef.current;
@@ -1635,7 +1636,14 @@ export default function SankeyView({
             onClick={() => setShowBaseSankey((v) => !v)}
             style={{ fontWeight: showBaseSankey ? 600 : 400 }}
           >
-            Sankey
+            Paths
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSankeyNodes((v) => !v)}
+            style={{ fontWeight: showSankeyNodes ? 600 : 400 }}
+          >
+            Nodes
           </button>
           <button
             type="button"
