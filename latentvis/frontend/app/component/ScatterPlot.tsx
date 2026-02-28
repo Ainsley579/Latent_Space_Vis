@@ -404,23 +404,17 @@ export default function ScatterPlot({
     };
 
     const fetchScatterJson = async (url: string, kind: "xy" | "cluster") => {
-      const res = await fetch(url);
-      if (res.ok) return res.json();
-
-      if (url.startsWith("blob:")) {
-        throw new Error(`Failed to fetch scatter ${kind} data`);
-      }
-
       const legacyUrl = buildLegacyScatterUrl(url, kind);
-      if (!legacyUrl || legacyUrl === url) {
-        throw new Error(`Failed to fetch scatter ${kind} data`);
+      if (!url.startsWith("blob:") && legacyUrl && legacyUrl !== url) {
+        const legacyRes = await fetch(legacyUrl);
+        if (legacyRes.ok) return legacyRes.json();
       }
 
-      const legacyRes = await fetch(legacyUrl);
-      if (!legacyRes.ok) {
+      const res = await fetch(url);
+      if (!res.ok) {
         throw new Error(`Failed to fetch scatter ${kind} data`);
       }
-      return legacyRes.json();
+      return res.json();
     };
 
     Promise.all([

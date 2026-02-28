@@ -117,7 +117,7 @@ export default function Home() {
     dataset: DatasetKey,
     clustering: ClusteringKey,
     dataSplit: DataSplitKey = selectedDataSplit
-  ) => dataset === "chemprop" && clustering === "pgmeans" && dataSplit === "test";
+  ) => false;
   const sectionBaseFor = (
     section: "sankey" | "scatterplot" | "topk" | "substructures" | "clustering_metrics",
     dataset: DatasetKey = selectedDataset,
@@ -582,9 +582,7 @@ export default function Home() {
         layer: selectedLayer,
         clustering: selectedClustering,
         data_split: selectedDataSplit,
-        use_current:
-          generatedRuntimeMatchesCurrent ||
-          shouldUseCurrentSuffix(selectedDataset, selectedClustering, selectedDataSplit),
+        use_current: generatedRuntimeMatchesCurrent,
         user_clustering: uploadedUserClustering.rows,
       }),
     })
@@ -1010,6 +1008,8 @@ export default function Home() {
     const fetchCellTopm = async () => {
       setIsKnnTopmLoading(true);
       try {
+        const useCurrent =
+          generatedRuntimeMatchesCurrent;
         const body = {
           dataset: selectedDataset,
           clustering: selectedClustering,
@@ -1019,7 +1019,7 @@ export default function Home() {
           cluster_id: "all",
           m: knnTopm,
           group: "knn",
-          use_current: true,
+          use_current: useCurrent,
         };
         const doRequest = async (path: string) =>
           fetch(`${apiBase}${path}`, {
@@ -1036,12 +1036,50 @@ export default function Home() {
         if (!res.ok) throw new Error(`topm failed: ${res.status}`);
         const json = await res.json();
         const rows = Array.isArray(json?.rows) ? json.rows : [];
+        const normalizedRows = rows.map((row) => {
+          const r = (row ?? {}) as Record<string, unknown>;
+          const groupRaw = String(r.group ?? "knn").toLowerCase();
+          const group: "knn" | "kfn" = groupRaw === "kfn" ? "kfn" : "knn";
+          return {
+            model_type: String(r.model_type ?? r.model ?? r.epoch ?? selectedModel),
+            layer_name: String(r.layer_name ?? r.layer ?? selectedLayer),
+            cluster_id: Number(r.cluster_id ?? r.cluster ?? -1),
+            group,
+            k: Number(r.k ?? knnTopm),
+            real_ids: Array.isArray(r.real_ids) ? (r.real_ids as Array<string | number>) : [],
+            valid_molecules: Number(r.valid_molecules ?? 0),
+            missing_real_ids: Array.isArray(r.missing_real_ids) ? (r.missing_real_ids as Array<string | number>) : [],
+            invalid_smiles_real_ids: Array.isArray(r.invalid_smiles_real_ids)
+              ? (r.invalid_smiles_real_ids as Array<string | number>)
+              : [],
+            mcs_smarts: (r.mcs_smarts ?? r.smarts ?? null) as string | null,
+            mcs_smiles: (r.mcs_smiles ?? r.mcs_smile ?? r.smiles ?? null) as string | null,
+          };
+        });
+
+        console.log("[topm] refreshed rows", {
+          dataset: selectedDataset,
+          split: selectedDataSplit,
+          clustering: selectedClustering,
+          model: selectedModel,
+          layer: selectedLayer,
+          m: knnTopm,
+          total: normalizedRows.length,
+          nonNullSmiles: normalizedRows.filter((r) => r.group === "knn" && r.mcs_smiles != null).length,
+          nonNullSmarts: normalizedRows.filter((r) => r.group === "knn" && r.mcs_smarts != null).length,
+          sample: normalizedRows.slice(0, 2),
+        });
+
         setSubstructures((prev) => {
           const next = prev.filter(
             (d) =>
-              !(String(d.model_type) === String(selectedModel) && String(d.layer_name) === String(selectedLayer) && d.group === "knn")
+              !(
+                String(d.model_type) === String(selectedModel) &&
+                String(d.layer_name) === String(selectedLayer) &&
+                d.group === "knn"
+              )
           );
-          return [...next, ...rows];
+          return [...next, ...normalizedRows];
         });
       } catch (err) {
         if ((err as Error)?.name === "AbortError") return;
@@ -1052,7 +1090,16 @@ export default function Home() {
     };
     fetchCellTopm();
     return () => controller.abort();
-  }, [apiBase, selectedDataset, selectedClustering, selectedDataSplit, selectedModel, selectedLayer, knnTopm]);
+  }, [
+    apiBase,
+    selectedDataset,
+    selectedClustering,
+    selectedDataSplit,
+    selectedModel,
+    selectedLayer,
+    knnTopm,
+    generatedRuntimeMatchesCurrent,
+  ]);
 
   const topkNearestRows = useMemo(() => {
     const mLimit = knnTopm === "all" ? null : Number(knnTopm);
