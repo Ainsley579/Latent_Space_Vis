@@ -19,6 +19,7 @@
 #SBATCH -A m636
 #SBATCH -o /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/logs/slurm/chemprop_pipeline_%j.out
 #SBATCH -e /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/logs/slurm/chemprop_pipeline_%j.err
+#SBATCH --signal=B:USR1@300
 
 set -e
 BACKEND_DIR="/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend"
@@ -35,6 +36,12 @@ if [[ ! -d "$(dirname "$FRONTEND_DATA")" ]]; then echo "ERROR: Frontend base dir
 
 cd "$BACKEND_DIR" || { echo "ERROR: cd $BACKEND_DIR failed"; exit 1; }
 
+resubmit_self() {
+  echo "Resubmitting job script: $SCRIPT_DIR/submit_chemprop_full.slurm"
+  sbatch "$SCRIPT_DIR/submit_chemprop_full.slurm"
+}
+trap 'echo "Received USR1 (near time limit)."; resubmit_self; exit 0' USR1
+
 module load conda
 conda activate latentvis
 
@@ -47,6 +54,7 @@ echo "Output: $OUTPUT_DIR"
 echo ""
 
 # Run full pipeline: all epochs, all four scatter projections (pca/mds/umap/tsne), all 3 clustering methods
+set +e
 python3 run_pipeline_from_embeddings.py \
   --input "$INPUT" \
   --output-dir "$OUTPUT_DIR" \
@@ -56,6 +64,7 @@ python3 run_pipeline_from_embeddings.py \
   --data-split test
 
 EXIT=$?
+set -e
 echo ""
 echo "Pipeline exit code: $EXIT"
 
@@ -73,7 +82,7 @@ echo "Job finished at $(date -Iseconds)"
 if [[ $EXIT -ne 0 ]] || [[ $COMPLETE -eq 0 ]]; then
   echo ""
   echo "Pipeline incomplete or failed. Auto-resubmitting..."
-  sbatch "$SCRIPT_DIR/submit_chemprop_full.slurm"
+  resubmit_self
   exit 1
 fi
 

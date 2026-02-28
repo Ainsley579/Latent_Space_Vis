@@ -134,6 +134,7 @@ def reduce_embedding(
     When input has only 1 feature (or effective rank 1), returns 2D with second
     dimension spread (not a line) so scatter plots are visible.
     """
+    method = method.lower()
     n_samples, n_features = X.shape[0], X.shape[1]
     if n_samples < 2:
         out = np.zeros((n_samples, 2), dtype=np.float64)
@@ -141,12 +142,23 @@ def reduce_embedding(
             out[:, 0] = X.ravel()
         return out
     if n_features < 2:
-        # Single feature: use x = feature, y = spread (so not a single line)
+        # Single feature: keep method-specific 2D layouts so projections are not identical.
         out = np.zeros((n_samples, 2), dtype=np.float64)
-        out[:, 0] = X.ravel()
-        out[:, 1] = np.linspace(-1.0, 1.0, n_samples)
+        x = X.ravel().astype(np.float64, copy=False)
+        out[:, 0] = x
+        t = np.linspace(-1.0, 1.0, n_samples)
+        if method == "pca":
+            out[:, 1] = t
+        elif method == "mds":
+            out[:, 1] = np.sin(np.linspace(0.0, np.pi, n_samples))
+        elif method == "umap":
+            out[:, 1] = np.cos(np.linspace(0.0, np.pi, n_samples))
+        elif method == "tsne":
+            rs = np.random.RandomState(random_state)
+            out[:, 1] = t + rs.normal(0.0, 0.03, size=n_samples)
+        else:
+            raise ValueError(f"Unknown method: {method}")
         return out
-    method = method.lower()
     result = None
     if method == "pca":
         result = reduce_pca(X, random_state=random_state, **kwargs)

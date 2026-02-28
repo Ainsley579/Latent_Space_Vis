@@ -3,8 +3,8 @@
     "real_id": "1,1,1,2-Tetrachloroethane",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -12,8 +12,8 @@
     "real_id": "1,1,1,2-Tetrachloroethane",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -21,8 +21,8 @@
     "real_id": "1,1,1,2-Tetrachloroethane",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -30,8 +30,8 @@
     "real_id": "1,1,1,2-Tetrachloroethane",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -39,904 +39,49 @@
     "real_id": "1,1,1,2-Tetrachloroethane",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2,3,4-Tetrahydronapthalene",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2,3,4-Tetrahydronapthalene",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2,3,4-Tetrahydronapthalene",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2,3,4-Tetrahydronapthalene",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2,3,4-Tetrahydronapthalene",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2,4-Trichlorobenzene",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2,4-Trichlorobenzene",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2,4-Trichlorobenzene",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2,4-Trichlorobenzene",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2,4-Trichlorobenzene",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2-Dibromoethane",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2-Dibromoethane",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2-Dibromoethane",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2-Dibromoethane",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2-Dibromoethane",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2-Propylene oxide",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2-Propylene oxide",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2-Propylene oxide",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2-Propylene oxide",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,2-Propylene oxide",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,3,5-Trimethylbenzene ",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,3,5-Trimethylbenzene ",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,3,5-Trimethylbenzene ",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,3,5-Trimethylbenzene ",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1,3,5-Trimethylbenzene ",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1-Bromooctane",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1-Bromooctane",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1-Bromooctane",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1-Bromooctane",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1-Bromooctane",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1-Nonanol",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1-Nonanol",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1-Nonanol",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1-Nonanol",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "1-Nonanol",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2',3,4,5-PCB",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2',3,4,5-PCB",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2',3,4,5-PCB",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2',3,4,5-PCB",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2',3,4,5-PCB",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2,5-Trimethylhexane",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2,5-Trimethylhexane",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2,5-Trimethylhexane",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2,5-Trimethylhexane",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2,5-Trimethylhexane",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2-Dimethyl-1-butanol",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2-Dimethyl-1-butanol",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2-Dimethyl-1-butanol",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2-Dimethyl-1-butanol",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,2-Dimethyl-1-butanol",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3,3',4,4'6-PCB",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3,3',4,4'6-PCB",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3,3',4,4'6-PCB",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3,3',4,4'6-PCB",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3,3',4,4'6-PCB",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3,6-Trichlorophenol",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3,6-Trichlorophenol",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3,6-Trichlorophenol",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3,6-Trichlorophenol",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3,6-Trichlorophenol",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3-Dimethylnaphthalene",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3-Dimethylnaphthalene",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3-Dimethylnaphthalene",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3-Dimethylnaphthalene",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,3-Dimethylnaphthalene",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,4-Dichlorophenol ",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,4-Dichlorophenol ",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,4-Dichlorophenol ",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,4-Dichlorophenol ",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2,4-Dichlorophenol ",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Ethyl-1-butanol",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Ethyl-1-butanol",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Ethyl-1-butanol",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Ethyl-1-butanol",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Ethyl-1-butanol",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Ethylhexanal",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Ethylhexanal",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Ethylhexanal",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Ethylhexanal",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Ethylhexanal",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Isopropyltoluene",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Isopropyltoluene",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Isopropyltoluene",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Isopropyltoluene",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Isopropyltoluene",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylheptane",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylheptane",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylheptane",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylheptane",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylheptane",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylpentane",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylpentane",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylpentane",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylpentane",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylpentane",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylphenanthrene",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "2-Methylphenanthrene",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylphenanthrene",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "2-Methylphenanthrene",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
+    "real_id": "1,2,3,4-Tetrahydronapthalene",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "2-Methylphenanthrene",
+    "real_id": "1,2,3,4-Tetrahydronapthalene",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,2,3,4-Tetrahydronapthalene",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,2,3,4-Tetrahydronapthalene",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,2,3,4-Tetrahydronapthalene",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 0,
@@ -945,52 +90,277 @@
     "to_model": "75"
   },
   {
-    "real_id": "2-Pentanol",
+    "real_id": "1,2,4-Trichlorobenzene",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "2-Pentanol",
+    "real_id": "1,2,4-Trichlorobenzene",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "2-Pentanol",
+    "real_id": "1,2,4-Trichlorobenzene",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "2-Pentanol",
+    "real_id": "1,2,4-Trichlorobenzene",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,2,4-Trichlorobenzene",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,2-Dibromoethane",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
     "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,2-Dibromoethane",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,2-Dibromoethane",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,2-Dibromoethane",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,2-Dibromoethane",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "2-Pentanol",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
+    "real_id": "1,2-Propylene oxide",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
     "from_cluster": 1,
-    "to_cluster": 3,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "2-methylpteridine",
+    "real_id": "1,2-Propylene oxide",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,2-Propylene oxide",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,2-Propylene oxide",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,2-Propylene oxide",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,3,5-Trimethylbenzene ",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,3,5-Trimethylbenzene ",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,3,5-Trimethylbenzene ",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,3,5-Trimethylbenzene ",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1,3,5-Trimethylbenzene ",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1-Bromooctane",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1-Bromooctane",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1-Bromooctane",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1-Bromooctane",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1-Bromooctane",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1-Nonanol",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1-Nonanol",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1-Nonanol",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1-Nonanol",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "1-Nonanol",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,2',3,4,5-PCB",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
     "from_cluster": 0,
@@ -999,7 +369,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "2-methylpteridine",
+    "real_id": "2,2',3,4,5-PCB",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
     "from_cluster": 1,
@@ -1008,7 +378,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "2-methylpteridine",
+    "real_id": "2,2',3,4,5-PCB",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
     "from_cluster": 1,
@@ -1017,7 +387,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "2-methylpteridine",
+    "real_id": "2,2',3,4,5-PCB",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
     "from_cluster": 1,
@@ -1026,11 +396,641 @@
     "to_model": "75"
   },
   {
-    "real_id": "2-methylpteridine",
+    "real_id": "2,2',3,4,5-PCB",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 1,
-    "to_cluster": 3,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,2,5-Trimethylhexane",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,2,5-Trimethylhexane",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,2,5-Trimethylhexane",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,2,5-Trimethylhexane",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,2,5-Trimethylhexane",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,2-Dimethyl-1-butanol",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,2-Dimethyl-1-butanol",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,2-Dimethyl-1-butanol",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,2-Dimethyl-1-butanol",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,2-Dimethyl-1-butanol",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3,3',4,4'6-PCB",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3,3',4,4'6-PCB",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 1,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3,3',4,4'6-PCB",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 1,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3,3',4,4'6-PCB",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 1,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3,3',4,4'6-PCB",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3,6-Trichlorophenol",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3,6-Trichlorophenol",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3,6-Trichlorophenol",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3,6-Trichlorophenol",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3,6-Trichlorophenol",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3-Dimethylnaphthalene",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3-Dimethylnaphthalene",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3-Dimethylnaphthalene",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3-Dimethylnaphthalene",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,3-Dimethylnaphthalene",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,4-Dichlorophenol ",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,4-Dichlorophenol ",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,4-Dichlorophenol ",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,4-Dichlorophenol ",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2,4-Dichlorophenol ",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Ethyl-1-butanol",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Ethyl-1-butanol",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Ethyl-1-butanol",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Ethyl-1-butanol",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Ethyl-1-butanol",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Ethylhexanal",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Ethylhexanal",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Ethylhexanal",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Ethylhexanal",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Ethylhexanal",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Isopropyltoluene",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Isopropyltoluene",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Isopropyltoluene",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Isopropyltoluene",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Isopropyltoluene",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylheptane",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylheptane",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylheptane",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylheptane",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylheptane",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylpentane",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylpentane",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylpentane",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylpentane",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylpentane",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylphenanthrene",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylphenanthrene",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylphenanthrene",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylphenanthrene",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Methylphenanthrene",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Pentanol",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Pentanol",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Pentanol",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Pentanol",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-Pentanol",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-methylpteridine",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-methylpteridine",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-methylpteridine",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-methylpteridine",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "2-methylpteridine",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1038,8 +1038,8 @@
     "real_id": "2-pyrrolidone",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1047,8 +1047,8 @@
     "real_id": "2-pyrrolidone",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1056,8 +1056,8 @@
     "real_id": "2-pyrrolidone",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1065,8 +1065,8 @@
     "real_id": "2-pyrrolidone",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1074,8 +1074,8 @@
     "real_id": "2-pyrrolidone",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1083,8 +1083,8 @@
     "real_id": "3,4-Dichlorophenol",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1092,8 +1092,8 @@
     "real_id": "3,4-Dichlorophenol",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1101,8 +1101,8 @@
     "real_id": "3,4-Dichlorophenol",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1110,8 +1110,8 @@
     "real_id": "3,4-Dichlorophenol",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1119,8 +1119,8 @@
     "real_id": "3,4-Dichlorophenol",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1128,8 +1128,8 @@
     "real_id": "3,4-Dimethylphenol",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1137,8 +1137,8 @@
     "real_id": "3,4-Dimethylphenol",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1146,8 +1146,8 @@
     "real_id": "3,4-Dimethylphenol",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1155,8 +1155,8 @@
     "real_id": "3,4-Dimethylphenol",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1164,7 +1164,7 @@
     "real_id": "3,4-Dimethylphenol",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -1173,7 +1173,7 @@
     "real_id": "3-Butanoyloxymethylphenytoin",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 3,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -1218,8 +1218,8 @@
     "real_id": "3-Hexanol",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1227,8 +1227,8 @@
     "real_id": "3-Hexanol",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1236,8 +1236,8 @@
     "real_id": "3-Hexanol",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1245,8 +1245,8 @@
     "real_id": "3-Hexanol",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1254,76 +1254,31 @@
     "real_id": "3-Hexanol",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "3-Methylcholanthrene",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "3-Methylcholanthrene",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "3-Methylcholanthrene",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "3-Methylcholanthrene",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "3-Methylcholanthrene",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "3-Octanol",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "3-Octanol",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "3-Octanol",
+    "real_id": "3-Methylcholanthrene",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "3-Methylcholanthrene",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 1,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "3-Methylcholanthrene",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
     "from_cluster": 1,
@@ -1332,11 +1287,56 @@
     "to_model": "75"
   },
   {
-    "real_id": "3-Octanol",
+    "real_id": "3-Methylcholanthrene",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
     "from_cluster": 1,
-    "to_cluster": 4,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "3-Methylcholanthrene",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "3-Octanol",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "3-Octanol",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "3-Octanol",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "3-Octanol",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1344,7 +1344,7 @@
     "real_id": "3-Octanol",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -1353,8 +1353,8 @@
     "real_id": "4-Bromotoluene",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1362,8 +1362,8 @@
     "real_id": "4-Bromotoluene",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1371,8 +1371,8 @@
     "real_id": "4-Bromotoluene",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1380,8 +1380,8 @@
     "real_id": "4-Bromotoluene",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1389,8 +1389,8 @@
     "real_id": "4-Bromotoluene",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1398,67 +1398,22 @@
     "real_id": "5,6,7,8-tetrahydro-2-naphthol",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "5,6,7,8-tetrahydro-2-naphthol",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "5,6,7,8-tetrahydro-2-naphthol",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
     "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "5,6,7,8-tetrahydro-2-naphthol",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "5,6,7,8-tetrahydro-2-naphthol",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "5-(3-Methyl-2-butenyl)-5-ethylbarbital",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "5-(3-Methyl-2-butenyl)-5-ethylbarbital",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "5-(3-Methyl-2-butenyl)-5-ethylbarbital",
+    "real_id": "5,6,7,8-tetrahydro-2-naphthol",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "5,6,7,8-tetrahydro-2-naphthol",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
     "from_cluster": 0,
@@ -1467,6 +1422,51 @@
     "to_model": "75"
   },
   {
+    "real_id": "5,6,7,8-tetrahydro-2-naphthol",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "5,6,7,8-tetrahydro-2-naphthol",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "5-(3-Methyl-2-butenyl)-5-ethylbarbital",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "5-(3-Methyl-2-butenyl)-5-ethylbarbital",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "5-(3-Methyl-2-butenyl)-5-ethylbarbital",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
     "real_id": "5-(3-Methyl-2-butenyl)-5-ethylbarbital",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
@@ -1480,7 +1480,7 @@
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1489,7 +1489,7 @@
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1497,7 +1497,7 @@
     "real_id": "5-Ethyl-5-phenylbarbital",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -1525,7 +1525,7 @@
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1533,8 +1533,8 @@
     "real_id": "5-Nonanone",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1542,8 +1542,8 @@
     "real_id": "5-Nonanone",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1551,8 +1551,8 @@
     "real_id": "5-Nonanone",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1560,8 +1560,8 @@
     "real_id": "5-Nonanone",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1569,8 +1569,8 @@
     "real_id": "5-Nonanone",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1578,8 +1578,8 @@
     "real_id": "Acenapthylene",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 0,
-    "to_cluster": 3,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1587,8 +1587,8 @@
     "real_id": "Acenapthylene",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1596,8 +1596,8 @@
     "real_id": "Acenapthylene",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1605,8 +1605,8 @@
     "real_id": "Acenapthylene",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1614,7 +1614,7 @@
     "real_id": "Acenapthylene",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -1623,8 +1623,8 @@
     "real_id": "Acephate",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1632,8 +1632,8 @@
     "real_id": "Acephate",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1641,8 +1641,8 @@
     "real_id": "Acephate",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1650,8 +1650,8 @@
     "real_id": "Acephate",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1659,8 +1659,8 @@
     "real_id": "Acephate",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1668,8 +1668,8 @@
     "real_id": "Anthracene",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 0,
-    "to_cluster": 4,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1677,8 +1677,8 @@
     "real_id": "Anthracene",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1686,8 +1686,8 @@
     "real_id": "Anthracene",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1695,7 +1695,7 @@
     "real_id": "Anthracene",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -1713,7 +1713,7 @@
     "real_id": "Atratone",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 0,
+    "from_cluster": 1,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -1723,7 +1723,7 @@
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
     "from_cluster": 0,
-    "to_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1731,8 +1731,8 @@
     "real_id": "Atratone",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1740,8 +1740,8 @@
     "real_id": "Atratone",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1749,7 +1749,7 @@
     "real_id": "Atratone",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -1758,8 +1758,8 @@
     "real_id": "Benzaldehyde",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1767,8 +1767,8 @@
     "real_id": "Benzaldehyde",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1776,8 +1776,8 @@
     "real_id": "Benzaldehyde",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1785,8 +1785,8 @@
     "real_id": "Benzaldehyde",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1794,7 +1794,7 @@
     "real_id": "Benzaldehyde",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -1803,8 +1803,8 @@
     "real_id": "Benzamide",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1812,8 +1812,8 @@
     "real_id": "Benzamide",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1821,8 +1821,8 @@
     "real_id": "Benzamide",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1830,8 +1830,8 @@
     "real_id": "Benzamide",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1839,7 +1839,7 @@
     "real_id": "Benzamide",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -1849,57 +1849,12 @@
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Benzo(e)pyrene",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Benzo(e)pyrene",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Benzo(e)pyrene",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Benzo(e)pyrene",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Benzylchloride",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "Benzylchloride",
+    "real_id": "Benzo(e)pyrene",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
     "from_cluster": 1,
@@ -1908,7 +1863,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "Benzylchloride",
+    "real_id": "Benzo(e)pyrene",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
     "from_cluster": 1,
@@ -1917,29 +1872,74 @@
     "to_model": "75"
   },
   {
-    "real_id": "Benzylchloride",
+    "real_id": "Benzo(e)pyrene",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
     "from_cluster": 1,
-    "to_cluster": 4,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Benzo(e)pyrene",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
     "real_id": "Benzylchloride",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "Bibenzyl ",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
+    "real_id": "Benzylchloride",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
     "from_cluster": 0,
-    "to_cluster": 3,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Benzylchloride",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Benzylchloride",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Benzylchloride",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Bibenzyl ",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1947,8 +1947,8 @@
     "real_id": "Bibenzyl ",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1956,8 +1956,8 @@
     "real_id": "Bibenzyl ",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1965,8 +1965,8 @@
     "real_id": "Bibenzyl ",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1974,7 +1974,7 @@
     "real_id": "Bibenzyl ",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -1983,8 +1983,8 @@
     "real_id": "Bromobenzene",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -1992,8 +1992,8 @@
     "real_id": "Bromobenzene",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2001,8 +2001,8 @@
     "real_id": "Bromobenzene",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2010,8 +2010,8 @@
     "real_id": "Bromobenzene",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2019,8 +2019,8 @@
     "real_id": "Bromobenzene",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2028,8 +2028,8 @@
     "real_id": "Carbophenthion",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2037,8 +2037,8 @@
     "real_id": "Carbophenthion",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2046,8 +2046,8 @@
     "real_id": "Carbophenthion",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2055,7 +2055,7 @@
     "real_id": "Carbophenthion",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -2073,7 +2073,7 @@
     "real_id": "Chlorimuron-ethyl (ph 7)",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 3,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -2118,8 +2118,8 @@
     "real_id": "Chlorodibromethane",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2127,8 +2127,8 @@
     "real_id": "Chlorodibromethane",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2136,8 +2136,8 @@
     "real_id": "Chlorodibromethane",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2145,8 +2145,8 @@
     "real_id": "Chlorodibromethane",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2154,7 +2154,7 @@
     "real_id": "Chlorodibromethane",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -2163,8 +2163,8 @@
     "real_id": "Chlorothalonil",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2172,8 +2172,8 @@
     "real_id": "Chlorothalonil",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2181,8 +2181,8 @@
     "real_id": "Chlorothalonil",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2190,7 +2190,7 @@
     "real_id": "Chlorothalonil",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -2208,8 +2208,8 @@
     "real_id": "Chlorthalidone",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2217,7 +2217,7 @@
     "real_id": "Chlorthalidone",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -2253,8 +2253,8 @@
     "real_id": "Cholanthrene",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 2,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2262,8 +2262,8 @@
     "real_id": "Cholanthrene",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2271,8 +2271,8 @@
     "real_id": "Cholanthrene",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2280,8 +2280,8 @@
     "real_id": "Cholanthrene",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2289,8 +2289,8 @@
     "real_id": "Cholanthrene",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2298,8 +2298,8 @@
     "real_id": "Cypermethrin",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 3,
-    "to_cluster": 2,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2307,8 +2307,8 @@
     "real_id": "Cypermethrin",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2316,8 +2316,8 @@
     "real_id": "Cypermethrin",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2325,8 +2325,8 @@
     "real_id": "Cypermethrin",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2334,8 +2334,8 @@
     "real_id": "Cypermethrin",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2344,7 +2344,7 @@
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2352,8 +2352,8 @@
     "real_id": "Dienestrol",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2361,8 +2361,8 @@
     "real_id": "Dienestrol",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2370,7 +2370,7 @@
     "real_id": "Dienestrol",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -2388,8 +2388,8 @@
     "real_id": "Diethyl sulfide",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2397,8 +2397,8 @@
     "real_id": "Diethyl sulfide",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2406,8 +2406,8 @@
     "real_id": "Diethyl sulfide",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2415,8 +2415,8 @@
     "real_id": "Diethyl sulfide",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2424,7 +2424,7 @@
     "real_id": "Diethyl sulfide",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -2433,7 +2433,7 @@
     "real_id": "Dioxacarb",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 0,
+    "from_cluster": 1,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -2461,7 +2461,7 @@
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
     "from_cluster": 0,
-    "to_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2469,7 +2469,7 @@
     "real_id": "Dioxacarb",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -2478,8 +2478,8 @@
     "real_id": "Erythritol",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2487,7 +2487,7 @@
     "real_id": "Erythritol",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -2506,7 +2506,7 @@
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
     "from_cluster": 0,
-    "to_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2514,8 +2514,8 @@
     "real_id": "Erythritol",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2523,13 +2523,103 @@
     "real_id": "Ethyl acetate",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
     "real_id": "Ethyl acetate",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Ethyl acetate",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Ethyl acetate",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Ethyl acetate",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Ethyl pentanoate",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Ethyl pentanoate",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Ethyl pentanoate",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Ethyl pentanoate",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Ethyl pentanoate",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Flucythrinate",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Flucythrinate",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
     "from_cluster": 1,
@@ -2538,7 +2628,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "Ethyl acetate",
+    "real_id": "Flucythrinate",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
     "from_cluster": 1,
@@ -2547,7 +2637,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "Ethyl acetate",
+    "real_id": "Flucythrinate",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
     "from_cluster": 1,
@@ -2556,25 +2646,25 @@
     "to_model": "75"
   },
   {
-    "real_id": "Ethyl acetate",
+    "real_id": "Flucythrinate",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 1,
-    "to_cluster": 3,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "Ethyl pentanoate",
+    "real_id": "Fluvalinate",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "Ethyl pentanoate",
+    "real_id": "Fluvalinate",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
     "from_cluster": 1,
@@ -2583,7 +2673,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "Ethyl pentanoate",
+    "real_id": "Fluvalinate",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
     "from_cluster": 1,
@@ -2592,7 +2682,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "Ethyl pentanoate",
+    "real_id": "Fluvalinate",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
     "from_cluster": 1,
@@ -2601,101 +2691,11 @@
     "to_model": "75"
   },
   {
-    "real_id": "Ethyl pentanoate",
+    "real_id": "Fluvalinate",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 1,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Flucythrinate",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 3,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Flucythrinate",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Flucythrinate",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Flucythrinate",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Flucythrinate",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Fluvalinate",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 3,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Fluvalinate",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Fluvalinate",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Fluvalinate",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Fluvalinate",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2703,7 +2703,7 @@
     "real_id": "Inosine",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 0,
+    "from_cluster": 1,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -2748,8 +2748,8 @@
     "real_id": "Iodofenphos",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2757,8 +2757,8 @@
     "real_id": "Iodofenphos",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2766,8 +2766,8 @@
     "real_id": "Iodofenphos",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2775,7 +2775,7 @@
     "real_id": "Iodofenphos",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -2793,8 +2793,8 @@
     "real_id": "Isopentyl formate",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2802,8 +2802,8 @@
     "real_id": "Isopentyl formate",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2811,8 +2811,8 @@
     "real_id": "Isopentyl formate",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2820,8 +2820,8 @@
     "real_id": "Isopentyl formate",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2829,7 +2829,7 @@
     "real_id": "Isopentyl formate",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -2838,8 +2838,8 @@
     "real_id": "Isopropyl formate",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2847,8 +2847,8 @@
     "real_id": "Isopropyl formate",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2856,8 +2856,8 @@
     "real_id": "Isopropyl formate",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2865,8 +2865,8 @@
     "real_id": "Isopropyl formate",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2874,8 +2874,8 @@
     "real_id": "Isopropyl formate",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2883,8 +2883,8 @@
     "real_id": "Menthone",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2892,8 +2892,8 @@
     "real_id": "Menthone",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2901,8 +2901,8 @@
     "real_id": "Menthone",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2910,8 +2910,8 @@
     "real_id": "Menthone",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2919,15 +2919,6 @@
     "real_id": "Menthone",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Metronidazole",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
     "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
@@ -2935,10 +2926,19 @@
   },
   {
     "real_id": "Metronidazole",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Metronidazole",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2946,8 +2946,8 @@
     "real_id": "Metronidazole",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2955,8 +2955,8 @@
     "real_id": "Metronidazole",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2964,7 +2964,7 @@
     "real_id": "Metronidazole",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -2973,8 +2973,8 @@
     "real_id": "Monolinuron",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 0,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2982,8 +2982,8 @@
     "real_id": "Monolinuron",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -2991,8 +2991,8 @@
     "real_id": "Monolinuron",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3000,8 +3000,8 @@
     "real_id": "Monolinuron",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3009,8 +3009,8 @@
     "real_id": "Monolinuron",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3055,7 +3055,7 @@
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3063,8 +3063,8 @@
     "real_id": "P,P'-DDD",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3072,8 +3072,8 @@
     "real_id": "P,P'-DDD",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3081,8 +3081,8 @@
     "real_id": "P,P'-DDD",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3090,8 +3090,8 @@
     "real_id": "P,P'-DDD",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3099,8 +3099,8 @@
     "real_id": "P,P'-DDD",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3108,8 +3108,8 @@
     "real_id": "Permethrin",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 2,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3117,8 +3117,8 @@
     "real_id": "Permethrin",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3126,8 +3126,8 @@
     "real_id": "Permethrin",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3135,8 +3135,8 @@
     "real_id": "Permethrin",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3144,8 +3144,8 @@
     "real_id": "Permethrin",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3153,8 +3153,8 @@
     "real_id": "Phenol",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3162,8 +3162,8 @@
     "real_id": "Phenol",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3171,8 +3171,8 @@
     "real_id": "Phenol",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3180,8 +3180,8 @@
     "real_id": "Phenol",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3189,8 +3189,8 @@
     "real_id": "Phenol",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3198,8 +3198,8 @@
     "real_id": "Progesterone",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 2,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3207,8 +3207,8 @@
     "real_id": "Progesterone",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 4,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3216,8 +3216,8 @@
     "real_id": "Progesterone",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3225,7 +3225,7 @@
     "real_id": "Progesterone",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -3243,53 +3243,53 @@
     "real_id": "Propoxur",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Propoxur",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Propoxur",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Propoxur",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Propoxur",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
     "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "Propoxur",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Propoxur",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Propoxur",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Propoxur",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
     "real_id": "Propyl butyrate",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3297,8 +3297,8 @@
     "real_id": "Propyl butyrate",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3306,8 +3306,8 @@
     "real_id": "Propyl butyrate",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3315,8 +3315,8 @@
     "real_id": "Propyl butyrate",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3324,8 +3324,8 @@
     "real_id": "Propyl butyrate",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3333,8 +3333,8 @@
     "real_id": "Propyl formate",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3342,8 +3342,8 @@
     "real_id": "Propyl formate",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3351,8 +3351,8 @@
     "real_id": "Propyl formate",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3360,8 +3360,8 @@
     "real_id": "Propyl formate",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3369,15 +3369,6 @@
     "real_id": "Propyl formate",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Pyrazon",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
     "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
@@ -3385,10 +3376,19 @@
   },
   {
     "real_id": "Pyrazon",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Pyrazon",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3396,8 +3396,8 @@
     "real_id": "Pyrazon",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3405,8 +3405,8 @@
     "real_id": "Pyrazon",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3414,8 +3414,8 @@
     "real_id": "Pyrazon",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3423,8 +3423,8 @@
     "real_id": "Pyridine",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3432,8 +3432,8 @@
     "real_id": "Pyridine",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3441,8 +3441,8 @@
     "real_id": "Pyridine",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3450,8 +3450,8 @@
     "real_id": "Pyridine",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3459,8 +3459,8 @@
     "real_id": "Pyridine",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3469,7 +3469,7 @@
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3477,7 +3477,7 @@
     "real_id": "RTI 12",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -3513,8 +3513,8 @@
     "real_id": "RTI 13",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3522,7 +3522,7 @@
     "real_id": "RTI 13",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -3559,39 +3559,39 @@
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "RTI 19",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "RTI 19",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "RTI 19",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
     "real_id": "RTI 19",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "RTI 19",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "RTI 19",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "RTI 19",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 0,
@@ -3603,7 +3603,7 @@
     "real_id": "Raffinose",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 3,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -3613,7 +3613,7 @@
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
     "from_cluster": 0,
-    "to_cluster": 3,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3621,8 +3621,8 @@
     "real_id": "Raffinose",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 3,
-    "to_cluster": 3,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3630,8 +3630,8 @@
     "real_id": "Raffinose",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 3,
-    "to_cluster": 3,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3639,8 +3639,8 @@
     "real_id": "Raffinose",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 3,
-    "to_cluster": 3,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3648,8 +3648,8 @@
     "real_id": "Santonin",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3657,7 +3657,7 @@
     "real_id": "Santonin",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -3693,8 +3693,8 @@
     "real_id": "Terbacil",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 4,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3702,8 +3702,8 @@
     "real_id": "Terbacil",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3711,8 +3711,8 @@
     "real_id": "Terbacil",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3720,8 +3720,8 @@
     "real_id": "Terbacil",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3729,8 +3729,8 @@
     "real_id": "Terbacil",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3738,8 +3738,8 @@
     "real_id": "Terbufos",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3747,8 +3747,8 @@
     "real_id": "Terbufos",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3756,8 +3756,8 @@
     "real_id": "Terbufos",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3765,7 +3765,7 @@
     "real_id": "Terbufos",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -3783,8 +3783,8 @@
     "real_id": "Testosterone",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 2,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3792,8 +3792,8 @@
     "real_id": "Testosterone",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 4,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3801,8 +3801,8 @@
     "real_id": "Testosterone",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3810,7 +3810,7 @@
     "real_id": "Testosterone",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -3828,8 +3828,8 @@
     "real_id": "Tetrafluthrin",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 2,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3837,8 +3837,8 @@
     "real_id": "Tetrafluthrin",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3846,8 +3846,8 @@
     "real_id": "Tetrafluthrin",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3855,8 +3855,8 @@
     "real_id": "Tetrafluthrin",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3864,8 +3864,8 @@
     "real_id": "Tetrafluthrin",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3873,7 +3873,7 @@
     "real_id": "Trichlomethiazide",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -3910,7 +3910,7 @@
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -3918,13 +3918,103 @@
     "real_id": "Trichloromethane",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
     "real_id": "Trichloromethane",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Trichloromethane",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Trichloromethane",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Trichloromethane",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Trifluralin",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Trifluralin",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Trifluralin",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Trifluralin",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Trifluralin",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Triphenylene",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "Triphenylene",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
     "from_cluster": 1,
@@ -3933,7 +4023,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "Trichloromethane",
+    "real_id": "Triphenylene",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
     "from_cluster": 1,
@@ -3942,7 +4032,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "Trichloromethane",
+    "real_id": "Triphenylene",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
     "from_cluster": 1,
@@ -3951,155 +4041,65 @@
     "to_model": "75"
   },
   {
-    "real_id": "Trichloromethane",
+    "real_id": "Triphenylene",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "chloralose",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "chloralose",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "chloralose",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "chloralose",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "chloralose",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "Trifluralin",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Trifluralin",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Trifluralin",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Trifluralin",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Trifluralin",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 0,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Triphenylene",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 0,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Triphenylene",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Triphenylene",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Triphenylene",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "Triphenylene",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "chloralose",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "chloralose",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 0,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "chloralose",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 0,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "chloralose",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 0,
-    "to_cluster": 0,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "chloralose",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 0,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
     "real_id": "chlorquinox",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4107,8 +4107,8 @@
     "real_id": "chlorquinox",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4116,8 +4116,8 @@
     "real_id": "chlorquinox",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4125,7 +4125,7 @@
     "real_id": "chlorquinox",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -4143,8 +4143,8 @@
     "real_id": "cis-2-Pentene",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4152,8 +4152,8 @@
     "real_id": "cis-2-Pentene",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4161,8 +4161,8 @@
     "real_id": "cis-2-Pentene",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4170,8 +4170,8 @@
     "real_id": "cis-2-Pentene",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4179,7 +4179,7 @@
     "real_id": "cis-2-Pentene",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -4188,8 +4188,8 @@
     "real_id": "cyclobarbital",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4197,7 +4197,7 @@
     "real_id": "cyclobarbital",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -4225,7 +4225,7 @@
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4233,8 +4233,8 @@
     "real_id": "cycloheximide",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4242,7 +4242,7 @@
     "real_id": "cycloheximide",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -4270,7 +4270,7 @@
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4278,8 +4278,8 @@
     "real_id": "deoxycorticosterone acetate",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 3,
-    "to_cluster": 2,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4287,8 +4287,8 @@
     "real_id": "deoxycorticosterone acetate",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 4,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4296,8 +4296,8 @@
     "real_id": "deoxycorticosterone acetate",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4305,7 +4305,7 @@
     "real_id": "deoxycorticosterone acetate",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -4323,139 +4323,49 @@
     "real_id": "ethyl cinnamate",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "ethyl cinnamate",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "ethyl cinnamate",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "ethyl cinnamate",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "ethyl cinnamate",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
     "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
   {
-    "real_id": "ethyl cinnamate",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "ethyl cinnamate",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "ethyl cinnamate",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "ethyl cinnamate",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
     "real_id": "hexacosane",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "hexacosane",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "hexacosane",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "hexacosane",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "hexacosane",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 5,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "hydantoin",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "hydantoin",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "hydantoin",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "hydantoin",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "hydantoin",
-    "from_layer": "ffn_layer_1",
-    "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "nifuroxime",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
     "from_cluster": 0,
@@ -4464,7 +4374,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "nifuroxime",
+    "real_id": "hexacosane",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
     "from_cluster": 1,
@@ -4473,7 +4383,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "nifuroxime",
+    "real_id": "hexacosane",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
     "from_cluster": 1,
@@ -4482,7 +4392,7 @@
     "to_model": "75"
   },
   {
-    "real_id": "nifuroxime",
+    "real_id": "hexacosane",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
     "from_cluster": 1,
@@ -4491,10 +4401,100 @@
     "to_model": "75"
   },
   {
-    "real_id": "nifuroxime",
+    "real_id": "hexacosane",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "hydantoin",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "hydantoin",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "hydantoin",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "hydantoin",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "hydantoin",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
+    "to_cluster": 1,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "nifuroxime",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "nifuroxime",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "nifuroxime",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "nifuroxime",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "nifuroxime",
+    "from_layer": "ffn_layer_1",
+    "to_layer": "ffn_layer_2",
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -4503,7 +4503,7 @@
     "real_id": "nitrofurantoin",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 0,
+    "from_cluster": 1,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -4540,7 +4540,7 @@
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4548,8 +4548,8 @@
     "real_id": "norbormide",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 3,
-    "to_cluster": 2,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4557,8 +4557,8 @@
     "real_id": "norbormide",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4566,8 +4566,8 @@
     "real_id": "norbormide",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4575,8 +4575,8 @@
     "real_id": "norbormide",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4584,8 +4584,8 @@
     "real_id": "norbormide",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 2,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4593,8 +4593,8 @@
     "real_id": "norflurazon",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4602,8 +4602,8 @@
     "real_id": "norflurazon",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4611,8 +4611,8 @@
     "real_id": "norflurazon",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4620,7 +4620,7 @@
     "real_id": "norflurazon",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -4639,39 +4639,39 @@
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "osthole",
-    "from_layer": "gnn_layer_2",
-    "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "osthole",
-    "from_layer": "gnn_layer_3",
-    "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "osthole",
-    "from_layer": "fingerprint",
-    "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
   {
     "real_id": "osthole",
+    "from_layer": "gnn_layer_2",
+    "to_layer": "gnn_layer_3",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "osthole",
+    "from_layer": "gnn_layer_3",
+    "to_layer": "fingerprint",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "osthole",
+    "from_layer": "fingerprint",
+    "to_layer": "ffn_layer_1",
+    "from_cluster": 0,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "osthole",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
     "from_cluster": 0,
@@ -4683,8 +4683,8 @@
     "real_id": "p-Bromoiodobenzene",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4692,8 +4692,8 @@
     "real_id": "p-Bromoiodobenzene",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4701,8 +4701,8 @@
     "real_id": "p-Bromoiodobenzene",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4710,8 +4710,8 @@
     "real_id": "p-Bromoiodobenzene",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4719,7 +4719,7 @@
     "real_id": "p-Bromoiodobenzene",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -4728,8 +4728,8 @@
     "real_id": "p-Fluoroacetanilide",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4737,8 +4737,8 @@
     "real_id": "p-Fluoroacetanilide",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4746,8 +4746,8 @@
     "real_id": "p-Fluoroacetanilide",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4755,8 +4755,8 @@
     "real_id": "p-Fluoroacetanilide",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4764,15 +4764,6 @@
     "real_id": "p-Fluoroacetanilide",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "p-Nitrophenol",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
     "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
@@ -4780,10 +4771,19 @@
   },
   {
     "real_id": "p-Nitrophenol",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "p-Nitrophenol",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4791,8 +4791,8 @@
     "real_id": "p-Nitrophenol",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4800,8 +4800,8 @@
     "real_id": "p-Nitrophenol",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4809,7 +4809,7 @@
     "real_id": "p-Nitrophenol",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -4818,8 +4818,8 @@
     "real_id": "p-Toluenesulfonamide ",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 1,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4827,8 +4827,8 @@
     "real_id": "p-Toluenesulfonamide ",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4836,8 +4836,8 @@
     "real_id": "p-Toluenesulfonamide ",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4845,8 +4845,8 @@
     "real_id": "p-Toluenesulfonamide ",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4854,15 +4854,6 @@
     "real_id": "p-Toluenesulfonamide ",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 1,
-    "from_model": "75",
-    "to_model": "75"
-  },
-  {
-    "real_id": "piperonal",
-    "from_layer": "gnn_layer_1",
-    "to_layer": "gnn_layer_2",
     "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
@@ -4870,10 +4861,19 @@
   },
   {
     "real_id": "piperonal",
+    "from_layer": "gnn_layer_1",
+    "to_layer": "gnn_layer_2",
+    "from_cluster": 1,
+    "to_cluster": 0,
+    "from_model": "75",
+    "to_model": "75"
+  },
+  {
+    "real_id": "piperonal",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4881,8 +4881,8 @@
     "real_id": "piperonal",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4890,8 +4890,8 @@
     "real_id": "piperonal",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4899,7 +4899,7 @@
     "real_id": "piperonal",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -4909,7 +4909,7 @@
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
     "from_cluster": 0,
-    "to_cluster": 4,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4917,7 +4917,7 @@
     "real_id": "probarbital",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -4936,7 +4936,7 @@
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
     "from_cluster": 0,
-    "to_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4944,7 +4944,7 @@
     "real_id": "probarbital",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
+    "from_cluster": 0,
     "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
@@ -4953,8 +4953,8 @@
     "real_id": "tetrachloroguaiacol",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4962,8 +4962,8 @@
     "real_id": "tetrachloroguaiacol",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4971,8 +4971,8 @@
     "real_id": "tetrachloroguaiacol",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4980,8 +4980,8 @@
     "real_id": "tetrachloroguaiacol",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -4989,7 +4989,7 @@
     "real_id": "tetrachloroguaiacol",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -4998,8 +4998,8 @@
     "real_id": "trans-2-Pentene ",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 2,
-    "to_cluster": 3,
+    "from_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -5007,8 +5007,8 @@
     "real_id": "trans-2-Pentene ",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 3,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -5016,8 +5016,8 @@
     "real_id": "trans-2-Pentene ",
     "from_layer": "gnn_layer_3",
     "to_layer": "fingerprint",
-    "from_cluster": 1,
-    "to_cluster": 1,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -5025,8 +5025,8 @@
     "real_id": "trans-2-Pentene ",
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
-    "from_cluster": 1,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -5034,8 +5034,8 @@
     "real_id": "trans-2-Pentene ",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   },
@@ -5043,8 +5043,8 @@
     "real_id": "vamidothion",
     "from_layer": "gnn_layer_1",
     "to_layer": "gnn_layer_2",
-    "from_cluster": 4,
-    "to_cluster": 4,
+    "from_cluster": 0,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -5052,7 +5052,7 @@
     "real_id": "vamidothion",
     "from_layer": "gnn_layer_2",
     "to_layer": "gnn_layer_3",
-    "from_cluster": 4,
+    "from_cluster": 0,
     "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
@@ -5071,7 +5071,7 @@
     "from_layer": "fingerprint",
     "to_layer": "ffn_layer_1",
     "from_cluster": 0,
-    "to_cluster": 1,
+    "to_cluster": 0,
     "from_model": "75",
     "to_model": "75"
   },
@@ -5079,8 +5079,8 @@
     "real_id": "vamidothion",
     "from_layer": "ffn_layer_1",
     "to_layer": "ffn_layer_2",
-    "from_cluster": 1,
-    "to_cluster": 3,
+    "from_cluster": 0,
+    "to_cluster": 1,
     "from_model": "75",
     "to_model": "75"
   }

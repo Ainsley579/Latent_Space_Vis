@@ -10,6 +10,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -193,6 +194,7 @@ def run_pipeline(
     write_fmi_cspa: bool = True,
     interactive_output_suffix: str = "",
     verbose_dr: bool = True,
+    resume: bool = True,
 ) -> bool:
     """
     Load embedding input (optionally two directories for two epochs), run full analysis, write all frontend JSONs.
@@ -258,6 +260,87 @@ def run_pipeline(
     # Per-cell results: (epoch, layer) -> { method -> {labels, k, coords, bic, aic, reps} }
     results = {}
     cluster_assignments = []  # list of dicts: real_id, epoch, layer_0_cluster, ... (use default method for CA)
+    run_signature = {
+        "clustering_method": clustering_method,
+        "run_methods": run_methods,
+        "k_min": int(k_min),
+        "k_max": int(k_max),
+        "skip_tsne": bool(skip_tsne),
+        "n_clusters_override": n_clusters_override,
+        "linkage_override": linkage_override,
+        "data_split": data_split,
+        "max_epochs": max_epochs,
+        "n_samples": int(n_samples),
+        "random_state": int(random_state),
+    }
+    signature_id = hashlib.sha1(
+        json.dumps(run_signature, sort_keys=True, default=_json_default).encode("utf-8")
+    ).hexdigest()[:12]
+    resume_dir = out / ".pipeline_resume" / signature_id
+    if resume:
+        resume_dir.mkdir(parents=True, exist_ok=True)
+
+    def _checkpoint_path(epoch_key: str, layer_key: str) -> Path:
+        return resume_dir / "{}__{}.json".format(str(epoch_key), str(layer_key))
+
+    def _load_checkpoint(epoch_key: str, layer_key: str, emb: np.ndarray, dr_list: list):
+        if not resume:
+            return None
+        p = _checkpoint_path(epoch_key, layer_key)
+        if not p.is_file():
+            return None
+        try:
+            payload = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+        coords_raw = payload.get("coords") or {}
+        methods_raw = payload.get("methods") or {}
+        if not isinstance(coords_raw, dict) or not isinstance(methods_raw, dict):
+            return None
+        out_cell = {"coords": {}}
+        for dr_name in dr_list:
+            arr = coords_raw.get(dr_name)
+            if arr is None:
+                return None
+            arr_np = np.asarray(arr, dtype=np.float64)
+            if arr_np.shape != (n_samples, 2):
+                return None
+            out_cell["coords"][dr_name] = arr_np
+        for cl_method in run_methods:
+            item = methods_raw.get(cl_method)
+            if not isinstance(item, dict):
+                return None
+            labels = np.asarray(item.get("labels"), dtype=np.int64)
+            if labels.shape[0] != n_samples:
+                return None
+            reps = _cluster_representatives(emb, labels, k=5)
+            out_cell[cl_method] = {
+                "labels": labels,
+                "k": int(item.get("k", -1)),
+                "k_values": item.get("k_values", []),
+                "bic": item.get("bic", []),
+                "aic": item.get("aic", []),
+                "reps": reps,
+            }
+        return out_cell
+
+    def _write_checkpoint(epoch_key: str, layer_key: str, cell_result: dict):
+        if not resume:
+            return
+        p = _checkpoint_path(epoch_key, layer_key)
+        payload = {"coords": {}, "methods": {}}
+        for dr_name, coord in (cell_result.get("coords") or {}).items():
+            payload["coords"][dr_name] = np.asarray(coord).tolist()
+        for cl_method in run_methods:
+            item = cell_result.get(cl_method) or {}
+            payload["methods"][cl_method] = {
+                "labels": np.asarray(item.get("labels", []), dtype=np.int64).tolist(),
+                "k": int(item.get("k", -1)),
+                "k_values": item.get("k_values", []),
+                "bic": item.get("bic", []),
+                "aic": item.get("aic", []),
+            }
+        p.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
 
     def _scatter_source_dirs(root: Path) -> list:
         """Candidate dirs where scatterplot JSONs may already exist (for coordinate reuse)."""
@@ -318,8 +401,20 @@ def run_pipeline(
             print(f"  Skip ({ek}, {lk}): shape {emb.shape} != n_samples")
             continue
         print(f"  Processing ({ek}, {lk}) ...", flush=True)
-        coords = {}
         dr_list = ["pca", "mds", "umap"] if skip_tsne else ["pca", "mds", "umap", "tsne"]
+        resumed_cell = _load_checkpoint(ek, lk, emb, dr_list)
+        if resumed_cell is not None:
+            if skip_tsne and "tsne" not in resumed_cell["coords"]:
+                resumed_cell["coords"]["tsne"] = resumed_cell["coords"]["pca"].copy()
+            results[(ek, lk)] = resumed_cell
+            print("    resumed from checkpoint", flush=True)
+            default_labels = results[(ek, lk)][run_methods[0]]["labels"]
+            for i in range(n_samples):
+                rid = real_ids[i] if i < len(real_ids) else i
+                row = {"real_id": rid, "epoch": ek, f"{lk}_cluster": int(default_labels[i])}
+                cluster_assignments.append(row)
+            continue
+        coords = {}
         model_layer = "{}_{}".format(ek, lk)
         if reuse_scatter_coords:
             # Reuse precomputed scatter coordinates if present, to avoid expensive DR recomputation.
@@ -384,6 +479,7 @@ def run_pipeline(
             rid = real_ids[i] if i < len(real_ids) else i
             row = {"real_id": rid, "epoch": ek, f"{lk}_cluster": int(default_labels[i])}
             cluster_assignments.append(row)
+        _write_checkpoint(ek, lk, results[(ek, lk)])
 
     # Build cluster_assignments DataFrame: one row per (real_id, epoch) with columns layer0_cluster, layer1_cluster, ...
     rows_by_key = defaultdict(dict)
@@ -415,8 +511,8 @@ def run_pipeline(
                     vals.append(int(lab[i]) if i is not None else -1)
             ca_df[col] = vals
 
-    # Write real_id -> SMILES for frontend (all instances); enables molecule images / client rendering
-    if id_to_smiles_from_input:
+    # Write shared baseline lookup only for baseline runs (no interactive suffix).
+    if id_to_smiles_from_input and not interactive_output_suffix:
         smiles_out = out / "real_id_to_smiles.json"
         smiles_out.write_text(
             json.dumps({str(k): v for k, v in id_to_smiles_from_input.items()}, indent=2),
@@ -460,7 +556,7 @@ def run_pipeline(
                         "cluster_id": int(labels[i]),
                     })
                 (scatter_dir / "{}.json".format(model_layer)).write_text(json.dumps(default_points, indent=2))
-        bic_dir = base / "bic_aic"
+        bic_dir = base / ("bic_aic" + interactive_output_suffix)
         bic_dir.mkdir(parents=True, exist_ok=True)
         for (ek, lk) in results:
             r = res(ek, lk, cl_method)
@@ -670,7 +766,7 @@ def run_pipeline(
                     "count": len(fmi_vals),
                 })
         if fmi_cspa_layers:
-            fmi_dir = out / "bic_aic"
+            fmi_dir = out / ("bic_aic" + interactive_output_suffix)
             fmi_dir.mkdir(parents=True, exist_ok=True)
             (fmi_dir / "avg_fmi_cspa_by_layer.json").write_text(
                 json.dumps({"layers": fmi_cspa_layers, "models": epoch_keys}, indent=2)
@@ -728,6 +824,11 @@ def main():
         action="store_true",
         help="Reduce per-cell dimensionality reduction logging (e.g. for interactive runs).",
     )
+    ap.add_argument(
+        "--no-resume",
+        action="store_true",
+        help="Disable per-cell checkpoint resume support.",
+    )
     args = ap.parse_args()
 
     output_dir = args.output_dir
@@ -767,6 +868,7 @@ def main():
         data_split=args.data_split,
         write_fmi_cspa=not args.no_fmi_cspa,
         verbose_dr=not getattr(args, "quiet_dr", False),
+        resume=not args.no_resume,
     )
     sys.exit(0 if success else 1)
 
