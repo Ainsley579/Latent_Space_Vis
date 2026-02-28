@@ -31,6 +31,7 @@ type ScatterPoint = {
 type GeneratedSankeyPayload = {
   dataset: DatasetKey;
   clustering: ClusteringKey;
+  dataSplit: DataSplitKey;
   allSankey: any;
   modelSamples: Record<string, SankeySampleRow[]>;
   verticalSamplesByLayer: Record<string, SankeySampleRow[]>;
@@ -39,6 +40,7 @@ type GeneratedSankeyPayload = {
 type GeneratedRuntimePayload = {
   dataset: DatasetKey;
   clustering: ClusteringKey;
+  dataSplit: DataSplitKey;
   runId: string;
   topkRepresentatives: any[];
   clusterSortedMembers: any[];
@@ -71,6 +73,7 @@ type HoverPreviewState =
 
 type DatasetKey = "dimenet" | "chemprop" | "chemeleon";
 type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan";
+type DataSplitKey = "test" | "train";
 const DATASET_OPTIONS: DatasetKey[] = ["dimenet", "chemprop", "chemeleon"];
 const DATASET_OPTIONS_UI: DatasetKey[] = ["chemprop", "chemeleon"];
 const CLUSTERING_OPTIONS: Array<{ value: ClusteringKey; label: string }> = [
@@ -91,32 +94,38 @@ function sanitizePathKey(value: string) {
 export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
   const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("pgmeans");
+  const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("test");
   const [generatedSankeyPayloads, setGeneratedSankeyPayloads] = useState<Record<string, GeneratedSankeyPayload>>({});
   const [generatedRuntimePayloads, setGeneratedRuntimePayloads] = useState<Record<string, GeneratedRuntimePayload>>({});
   const generatedSankeyBlobUrlsRef = useRef<Map<string, string>>(new Map());
   const datasetRootFor = (
     dataset: DatasetKey,
-    clustering: ClusteringKey = selectedClustering
-  ) => (clustering === "pgmeans" ? `/data/${dataset}/test` : `/data/${dataset}`);
+    dataSplit: DataSplitKey = selectedDataSplit
+  ) => `/data/${dataset}/${dataSplit}`;
   const datasetBaseFor = (
     dataset: DatasetKey,
-    clustering: ClusteringKey = selectedClustering
+    clustering: ClusteringKey = selectedClustering,
+    dataSplit: DataSplitKey = selectedDataSplit
   ) => {
-    const root = datasetRootFor(dataset, clustering);
+    const root = datasetRootFor(dataset, dataSplit);
     if (clustering === "pgmeans") return root;
     return `${root}/clustering/${clustering}`;
   };
-  const datasetBase = datasetBaseFor(selectedDataset, selectedClustering);
-  const assetBase = datasetRootFor(selectedDataset, selectedClustering);
-  const shouldUseCurrentSuffix = (dataset: DatasetKey, clustering: ClusteringKey) =>
-    dataset === "chemprop" && clustering === "pgmeans";
+  const datasetBase = datasetBaseFor(selectedDataset, selectedClustering, selectedDataSplit);
+  const assetBase = datasetRootFor(selectedDataset, selectedDataSplit);
+  const shouldUseCurrentSuffix = (
+    dataset: DatasetKey,
+    clustering: ClusteringKey,
+    dataSplit: DataSplitKey = selectedDataSplit
+  ) => dataset === "chemprop" && clustering === "pgmeans" && dataSplit === "test";
   const sectionBaseFor = (
     section: "sankey" | "scatterplot" | "topk" | "substructures" | "clustering_metrics",
     dataset: DatasetKey = selectedDataset,
-    clustering: ClusteringKey = selectedClustering
+    clustering: ClusteringKey = selectedClustering,
+    dataSplit: DataSplitKey = selectedDataSplit
   ) => {
-    const suffix = shouldUseCurrentSuffix(dataset, clustering) ? "_current" : "";
-    return `${datasetBaseFor(dataset, clustering)}/${section}${suffix}`;
+    const suffix = shouldUseCurrentSuffix(dataset, clustering, dataSplit) ? "_current" : "";
+    return `${datasetBaseFor(dataset, clustering, dataSplit)}/${section}${suffix}`;
   };
   const revokeGeneratedSankeyBlobUrls = () => {
     generatedSankeyBlobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
@@ -131,8 +140,9 @@ export default function Home() {
     generatedSankeyBlobUrlsRef.current.set(cacheKey, url);
     return url;
   };
-  const runtimeKeyFor = (dataset: DatasetKey, clustering: ClusteringKey) => `${dataset}::${clustering}`;
-  const currentRuntimeKey = runtimeKeyFor(selectedDataset, selectedClustering);
+  const runtimeKeyFor = (dataset: DatasetKey, clustering: ClusteringKey, dataSplit: DataSplitKey) =>
+    `${dataset}::${clustering}::${dataSplit}`;
+  const currentRuntimeKey = runtimeKeyFor(selectedDataset, selectedClustering, selectedDataSplit);
   const generatedSankeyPayload = generatedSankeyPayloads[currentRuntimeKey] ?? null;
   const generatedRuntimePayload = generatedRuntimePayloads[currentRuntimeKey] ?? null;
   const generatedMatchesCurrent = !!generatedSankeyPayload;
@@ -145,35 +155,39 @@ export default function Home() {
   const buildAllSankeyPath = (
     dataset: DatasetKey = selectedDataset,
     clustering: ClusteringKey = selectedClustering,
+    dataSplit: DataSplitKey = selectedDataSplit,
     version: number = sankeyRefreshKey
   ) => {
-    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering)] ?? null;
+    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
     if (
       payload &&
       payload.dataset === dataset &&
-      payload.clustering === clustering
+      payload.clustering === clustering &&
+      payload.dataSplit === dataSplit
     ) {
-      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:all_sankey`, payload.allSankey);
+      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:all_sankey`, payload.allSankey);
     }
-    return withVersion(`${sectionBaseFor("sankey", dataset, clustering)}/all_sankey.json`, version);
+    return withVersion(`${sectionBaseFor("sankey", dataset, clustering, dataSplit)}/all_sankey.json`, version);
   };
   const buildSankeyModelPath = (
     model: string,
     dataset: DatasetKey = selectedDataset,
     clustering: ClusteringKey = selectedClustering,
+    dataSplit: DataSplitKey = selectedDataSplit,
     version: number = sankeyRefreshKey
   ) => {
-    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering)] ?? null;
+    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
     if (
       payload &&
       payload.dataset === dataset &&
-      payload.clustering === clustering
+      payload.clustering === clustering &&
+      payload.dataSplit === dataSplit
     ) {
       const rows = payload.modelSamples?.[model] ?? [];
-      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:model:${model}`, rows);
+      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:model:${model}`, rows);
     }
     return withVersion(
-      `${sectionBaseFor("sankey", dataset, clustering)}/${sanitizePathKey(model)}_sankey_samples.json`,
+      `${sectionBaseFor("sankey", dataset, clustering, dataSplit)}/${sanitizePathKey(model)}_sankey_samples.json`,
       version
     );
   };
@@ -181,19 +195,21 @@ export default function Home() {
     layer: string,
     dataset: DatasetKey = selectedDataset,
     clustering: ClusteringKey = selectedClustering,
+    dataSplit: DataSplitKey = selectedDataSplit,
     version: number = sankeyRefreshKey
   ) => {
-    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering)] ?? null;
+    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
     if (
       payload &&
       payload.dataset === dataset &&
-      payload.clustering === clustering
+      payload.clustering === clustering &&
+      payload.dataSplit === dataSplit
     ) {
       const rows = payload.verticalSamplesByLayer?.[layer] ?? [];
-      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:vertical:${layer}`, rows);
+      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:vertical:${layer}`, rows);
     }
     return withVersion(
-      `${sectionBaseFor("sankey", dataset, clustering)}/vertical_model_samples_${sanitizePathKey(layer)}.json`,
+      `${sectionBaseFor("sankey", dataset, clustering, dataSplit)}/vertical_model_samples_${sanitizePathKey(layer)}.json`,
       version
     );
   };
@@ -203,13 +219,14 @@ export default function Home() {
     projection: "pca" | "mds" | "umap" | "tsne",
     dataset: DatasetKey = selectedDataset,
     clustering: ClusteringKey = selectedClustering,
+    dataSplit: DataSplitKey = selectedDataSplit,
     version: number = dataRefreshKey
   ) => {
     const base = `${model}_${layer}`;
     const xyFile = `${base}_${projection}_xy.json`;
     const clusterFile = `${base}_${projection}_cluster.json`;
-    const xyUrl = `${sectionBaseFor("scatterplot", dataset, clustering)}/${xyFile}`;
-    const runtimePayload = generatedRuntimePayloads[runtimeKeyFor(dataset, clustering)] ?? null;
+    const xyUrl = `${sectionBaseFor("scatterplot", dataset, clustering, dataSplit)}/${xyFile}`;
+    const runtimePayload = generatedRuntimePayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
     const cellKey = `${model}__${layer}`;
     const overrideRows =
       runtimePayload?.scatterClusterByCell?.[cellKey] &&
@@ -217,8 +234,8 @@ export default function Home() {
         ? runtimePayload.scatterClusterByCell[cellKey]
         : null;
     const clusterUrl = overrideRows
-      ? buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:scatter_cluster:${cellKey}`, overrideRows)
-      : `${sectionBaseFor("scatterplot", dataset, clustering)}/${clusterFile}`;
+      ? buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:scatter_cluster:${cellKey}`, overrideRows)
+      : `${sectionBaseFor("scatterplot", dataset, clustering, dataSplit)}/${clusterFile}`;
     const sepXY = xyUrl.includes("?") ? "&" : "?";
     const sepCluster = clusterUrl.startsWith("blob:") ? "" : (clusterUrl.includes("?") ? "&" : "?");
     return {
@@ -231,25 +248,26 @@ export default function Home() {
     layer: string,
     dataset: DatasetKey = selectedDataset,
     clustering: ClusteringKey = selectedClustering,
+    dataSplit: DataSplitKey = selectedDataSplit,
     version: number = sankeyRefreshKey
   ) => {
-    setSankeyPath(buildSankeyModelPath(model, dataset, clustering, version));
-    setSankeyPathVertical(buildVerticalPath(layer, dataset, clustering, version));
+    setSankeyPath(buildSankeyModelPath(model, dataset, clustering, dataSplit, version));
+    setSankeyPathVertical(buildVerticalPath(layer, dataset, clustering, dataSplit, version));
   };
 
   const [sankeyPath, setSankeyPath] = useState(
-    `${sectionBaseFor("sankey", "chemprop", "pgmeans")}/0_sankey_samples.json`
+    `${sectionBaseFor("sankey", "chemprop", "pgmeans", "test")}/0_sankey_samples.json`
   );
   const [sankeyPathVertical, setSankeyPathVertical] = useState(
-    `${sectionBaseFor("sankey", "chemprop", "pgmeans")}/vertical_model_samples_fingerprint.json`
+    `${sectionBaseFor("sankey", "chemprop", "pgmeans", "test")}/vertical_model_samples_fingerprint.json`
   );
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [selectedLayer, setSelectedLayer] = useState("fingerprint");
   const [selectedModel, setSelectedModel] = useState("0");
   const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
   const [scatterPaths, setScatterPaths] = useState({
-    xy: `${sectionBaseFor("scatterplot", "chemprop", "pgmeans")}/0_fingerprint_pca_xy.json`,
-    cluster: `${sectionBaseFor("scatterplot", "chemprop", "pgmeans")}/0_fingerprint_pca_cluster.json`,
+    xy: `${sectionBaseFor("scatterplot", "chemprop", "pgmeans", "test")}/0_fingerprint_pca_xy.json`,
+    cluster: `${sectionBaseFor("scatterplot", "chemprop", "pgmeans", "test")}/0_fingerprint_pca_cluster.json`,
   });
   const scatterOverrideUrlRef = useRef<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
@@ -492,7 +510,7 @@ export default function Home() {
     const a = document.createElement("a");
     const dateTag = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = `${selectedDataset}_${selectedClustering}_bookmarked_ids_${dateTag}.csv`;
+    a.download = `${selectedDataset}_${selectedDataSplit}_${selectedClustering}_bookmarked_ids_${dateTag}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -542,7 +560,7 @@ export default function Home() {
     setSearchSmiles("");
     setShowSearchResultsInMembers(false);
     setLastSearchCount(null);
-  }, [selectedDataset, selectedClustering]);
+  }, [selectedDataset, selectedClustering, selectedDataSplit]);
 
   useEffect(() => {
     if (!uploadedUserClustering || uploadedUserClustering.rows.length === 0) {
@@ -563,9 +581,10 @@ export default function Home() {
         epoch: selectedModel,
         layer: selectedLayer,
         clustering: selectedClustering,
+        data_split: selectedDataSplit,
         use_current:
           generatedRuntimeMatchesCurrent ||
-          shouldUseCurrentSuffix(selectedDataset, selectedClustering),
+          shouldUseCurrentSuffix(selectedDataset, selectedClustering, selectedDataSplit),
         user_clustering: uploadedUserClustering.rows,
       }),
     })
@@ -598,6 +617,7 @@ export default function Home() {
     uploadedUserClustering,
     selectedDataset,
     selectedClustering,
+    selectedDataSplit,
     selectedModel,
     selectedLayer,
     generatedRuntimeMatchesCurrent,
@@ -614,6 +634,7 @@ export default function Home() {
         body: JSON.stringify({
           dataset: selectedDataset,
           clustering: selectedClustering,
+          data_split: selectedDataSplit,
           include_payload: true,
           persist: false,
           min: minValue,
@@ -629,12 +650,13 @@ export default function Home() {
         throw new Error("Generate API missing payload for selected dataset");
       }
       revokeGeneratedSankeyBlobUrls();
-      const key = runtimeKeyFor(selectedDataset, selectedClustering);
+      const key = runtimeKeyFor(selectedDataset, selectedClustering, selectedDataSplit);
       setGeneratedSankeyPayloads((prev) => ({
         ...prev,
         [key]: {
         dataset: selectedDataset,
         clustering: selectedClustering,
+        dataSplit: selectedDataSplit,
         allSankey: casePayload.all_sankey ?? { epoch: {}, layer: {} },
         modelSamples: (casePayload.model_samples ?? {}) as Record<string, SankeySampleRow[]>,
         verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<string, SankeySampleRow[]>,
@@ -646,6 +668,7 @@ export default function Home() {
         [key]: {
           dataset: selectedDataset,
           clustering: selectedClustering,
+          dataSplit: selectedDataSplit,
           runId,
           topkRepresentatives: Array.isArray(casePayload.topk_representatives)
             ? casePayload.topk_representatives
@@ -697,6 +720,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dataset: selectedDataset,
+          data_split: selectedDataSplit,
           min: kMin,
           max: kMax,
           clustering: "agglomerative",
@@ -715,12 +739,13 @@ export default function Home() {
         throw new Error("Generate API missing payload for selected dataset");
       }
       revokeGeneratedSankeyBlobUrls();
-      const key = runtimeKeyFor(selectedDataset, "agglomerative");
+      const key = runtimeKeyFor(selectedDataset, "agglomerative", selectedDataSplit);
       setGeneratedSankeyPayloads((prev) => ({
         ...prev,
         [key]: {
         dataset: selectedDataset,
         clustering: "agglomerative",
+        dataSplit: selectedDataSplit,
         allSankey: casePayload.all_sankey ?? { epoch: {}, layer: {} },
         modelSamples: (casePayload.model_samples ?? {}) as Record<string, SankeySampleRow[]>,
         verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<string, SankeySampleRow[]>,
@@ -732,6 +757,7 @@ export default function Home() {
         [key]: {
           dataset: selectedDataset,
           clustering: "agglomerative",
+          dataSplit: selectedDataSplit,
           runId,
           topkRepresentatives: Array.isArray(casePayload.topk_representatives)
             ? casePayload.topk_representatives
@@ -786,7 +812,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch(buildAllSankeyPath(selectedDataset, selectedClustering))
+    fetch(buildAllSankeyPath(selectedDataset, selectedClustering, selectedDataSplit))
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load all_sankey.json");
         return res.json();
@@ -807,8 +833,8 @@ export default function Home() {
 
         setSelectedModel(preferredModel);
         setSelectedLayer(preferredLayer);
-        setSankeyPath(buildSankeyModelPath(preferredModel));
-        setSankeyPathVertical(buildVerticalPath(preferredLayer));
+        setSankeyPath(buildSankeyModelPath(preferredModel, selectedDataset, selectedClustering, selectedDataSplit));
+        setSankeyPathVertical(buildVerticalPath(preferredLayer, selectedDataset, selectedClustering, selectedDataSplit));
         setSelectedNode(null);
         setSelectedIds(null);
         setActiveSankeyRows([]);
@@ -816,7 +842,7 @@ export default function Home() {
       .catch((err) => {
         console.error(err);
       });
-  }, [datasetBase, selectedDataset, selectedClustering, sankeyRefreshKey, generatedSankeyPayload]);
+  }, [datasetBase, selectedDataset, selectedClustering, selectedDataSplit, sankeyRefreshKey, generatedSankeyPayload]);
 
   useEffect(() => {
     if (!selectedNode) {
@@ -987,6 +1013,7 @@ export default function Home() {
         const body = {
           dataset: selectedDataset,
           clustering: selectedClustering,
+          data_split: selectedDataSplit,
           epoch: selectedModel,
           layer: selectedLayer,
           cluster_id: "all",
@@ -1025,7 +1052,7 @@ export default function Home() {
     };
     fetchCellTopm();
     return () => controller.abort();
-  }, [apiBase, selectedDataset, selectedClustering, selectedModel, selectedLayer, knnTopm]);
+  }, [apiBase, selectedDataset, selectedClustering, selectedDataSplit, selectedModel, selectedLayer, knnTopm]);
 
   const topkNearestRows = useMemo(() => {
     const mLimit = knnTopm === "all" ? null : Number(knnTopm);
@@ -1322,8 +1349,8 @@ export default function Home() {
               className="w-full h-full border border-zinc-400"
             >
               <SankeyView
-                key={`sankeyview-${selectedDataset}-${selectedClustering}-${sankeyRefreshKey}`}
-                dataPath={buildAllSankeyPath(selectedDataset, selectedClustering)}
+                key={`sankeyview-${selectedDataset}-${selectedClustering}-${selectedDataSplit}-${sankeyRefreshKey}`}
+                dataPath={buildAllSankeyPath(selectedDataset, selectedClustering, selectedDataSplit)}
                 metricsPath={`${datasetBase}/bic_aic/avg_fmi_cspa_by_layer.json`}
                 transitionStatsPath={`${sectionBaseFor("clustering_metrics")}/layer_transition_stats.json`}
                 onModelSelect={(model) => {
@@ -1824,17 +1851,19 @@ export default function Home() {
                     const next = d as DatasetKey;
                     const defaults = DATASET_DEFAULTS[next];
                     const nextClustering = selectedClustering;
+                    const nextSplit = selectedDataSplit;
                     setSelectedDataset(next);
                     setSelectedModel(defaults.model);
                     setSelectedLayer(defaults.layer);
-                    syncSankeyPaths(defaults.model, defaults.layer, next, nextClustering);
+                    syncSankeyPaths(defaults.model, defaults.layer, next, nextClustering, nextSplit);
                     setScatterPaths(
                       buildScatterPaths(
                         defaults.model,
                         defaults.layer,
                         scatterProjection,
                         next,
-                        nextClustering
+                        nextClustering,
+                        nextSplit
                       )
                     );
                     setSelectedNode(null);
@@ -1843,17 +1872,48 @@ export default function Home() {
                     setActiveSankeyRows([]);
                   }}
                   datasetOptions={DATASET_OPTIONS_UI}
+                  dataSplit={selectedDataSplit}
+                  onDataSplitChange={(split) => {
+                    const defaults = DATASET_DEFAULTS[selectedDataset];
+                    const nextSplit = split as DataSplitKey;
+                    setSelectedDataSplit(nextSplit);
+                    setSelectedModel(defaults.model);
+                    setSelectedLayer(defaults.layer);
+                    syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, selectedClustering, nextSplit);
+                    setScatterPaths(
+                      buildScatterPaths(
+                        defaults.model,
+                        defaults.layer,
+                        scatterProjection,
+                        selectedDataset,
+                        selectedClustering,
+                        nextSplit
+                      )
+                    );
+                    setSelectedNode(null);
+                    setSelectedIds(null);
+                    setCellSelected(false);
+                    setActiveSankeyRows([]);
+                  }}
                   clustering={selectedClustering}
                   clusteringOptions={CLUSTERING_OPTIONS}
                   onClusteringChange={(c) => {
                     const next = c as ClusteringKey;
                     const defaults = DATASET_DEFAULTS[selectedDataset];
+                    const nextSplit = selectedDataSplit;
                     setSelectedClustering(next);
                     setSelectedModel(defaults.model);
                     setSelectedLayer(defaults.layer);
-                    syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, next);
+                    syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, next, nextSplit);
                     setScatterPaths(
-                      buildScatterPaths(defaults.model, defaults.layer, scatterProjection, selectedDataset, next)
+                      buildScatterPaths(
+                        defaults.model,
+                        defaults.layer,
+                        scatterProjection,
+                        selectedDataset,
+                        next,
+                        nextSplit
+                      )
                     );
                     setSelectedNode(null);
                     setSelectedIds(null);

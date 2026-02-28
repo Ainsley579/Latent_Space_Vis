@@ -395,15 +395,37 @@ export default function ScatterPlot({
       }
     }
 
+    const buildLegacyScatterUrl = (url: string, kind: "xy" | "cluster") => {
+      const [path, query = ""] = url.split("?");
+      const suffix = kind === "xy" ? "_xy.json" : "_cluster.json";
+      if (!path.endsWith(suffix)) return null;
+      const legacy = path.slice(0, -suffix.length) + ".json";
+      return query ? `${legacy}?${query}` : legacy;
+    };
+
+    const fetchScatterJson = async (url: string, kind: "xy" | "cluster") => {
+      const res = await fetch(url);
+      if (res.ok) return res.json();
+
+      if (url.startsWith("blob:")) {
+        throw new Error(`Failed to fetch scatter ${kind} data`);
+      }
+
+      const legacyUrl = buildLegacyScatterUrl(url, kind);
+      if (!legacyUrl || legacyUrl === url) {
+        throw new Error(`Failed to fetch scatter ${kind} data`);
+      }
+
+      const legacyRes = await fetch(legacyUrl);
+      if (!legacyRes.ok) {
+        throw new Error(`Failed to fetch scatter ${kind} data`);
+      }
+      return legacyRes.json();
+    };
+
     Promise.all([
-      fetch(dataPathXY).then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch scatter XY data");
-        return res.json();
-      }),
-      fetch(dataPathCluster).then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch scatter cluster data");
-        return res.json();
-      }),
+      fetchScatterJson(dataPathXY, "xy"),
+      fetchScatterJson(dataPathCluster, "cluster"),
     ])
       .then(([xyJson, clusterJson]) => {
         const xyRows = Array.isArray(xyJson) ? xyJson : [];
