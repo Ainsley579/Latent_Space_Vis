@@ -28,9 +28,19 @@ DEFAULT_CLUSTERING = "pgmeans"
 
 # Embedding .pt paths (override with env LATENTVIS_CHEMPROP_PT / LATENTVIS_CHEMELEON_PT)
 _DEFAULT_PT_ROOT = Path("/global/cfs/projectdirs/m636/nhadler/projects/esol/data")
+_LOCAL_PT_ROOT = _BACKEND_DIR / "data" / "embeddings"
+
+
+def _default_embedding_path(case: str) -> Path:
+    local = _LOCAL_PT_ROOT / f"{case}-embeddings.pt"
+    if local.is_file():
+        return local
+    return _DEFAULT_PT_ROOT / f"{case}-embeddings.pt"
+
+
 EMBEDDING_PATHS = {
-    "chemprop": Path(os.environ.get("LATENTVIS_CHEMPROP_PT", str(_DEFAULT_PT_ROOT / "chemprop-embeddings.pt"))),
-    "chemeleon": Path(os.environ.get("LATENTVIS_CHEMELEON_PT", str(_DEFAULT_PT_ROOT / "chemeleon-embeddings.pt"))),
+    "chemprop": Path(os.environ.get("LATENTVIS_CHEMPROP_PT", str(_default_embedding_path("chemprop")))),
+    "chemeleon": Path(os.environ.get("LATENTVIS_CHEMELEON_PT", str(_default_embedding_path("chemeleon")))),
 }
 
 
