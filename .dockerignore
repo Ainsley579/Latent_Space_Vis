@@ -1,0 +1,40 @@
+# VCS / editor / caches
+.git
+.github
+.DS_Store
+**/__pycache__/
+**/.ipynb_checkpoints/
+
+# Local environments and build artifacts
+.venv/
+venv/
+node_modules/
+latentvis/frontend/node_modules/
+latentvis/frontend/out/
+latentvis/frontend/.next/
+
+# Large datasets and notebooks not required for backend runtime image
+InteractiveSankey/
+scripts/
+sankey_test/
+notebook/
+latentvis/frontend/public/data/
+latentvis/frontend/public/jsme/
+latentvis/backend/pipeline_output/
+latentvis/backend/pipeline_output_chemprop/
+latentvis/backend/pipeline_tiny_test/
+latentvis/backend/pipeline_validate_chemeleon/
+latentvis/backend/pipeline_validate_test/
+
+# Embedding/model binaries: provide via env paths or download URLs at runtime
+**/*.pt
+**/*.pth
+**/*.ckpt
+**/*.npy
+**/*.npz
+**/*.pkl
+**/*.joblib
+
+# Keep deployment files
+!Dockerfile
+!latentvis/backend/start.sh
