@@ -1035,8 +1035,8 @@ export default function Home() {
         }
         if (!res.ok) throw new Error(`topm failed: ${res.status}`);
         const json = await res.json();
-        const rows = Array.isArray(json?.rows) ? json.rows : [];
-        const normalizedRows = rows.map((row) => {
+        const rows: unknown[] = Array.isArray(json?.rows) ? json.rows : [];
+        const normalizedRows = rows.map((row: unknown) => {
           const r = (row ?? {}) as Record<string, unknown>;
           const groupRaw = String(r.group ?? "knn").toLowerCase();
           const group: "knn" | "kfn" = groupRaw === "kfn" ? "kfn" : "knn";
