@@ -3,7 +3,8 @@ set -euo pipefail
 
 PORT="${PORT:-5001}"
 WEB_CONCURRENCY="${WEB_CONCURRENCY:-2}"
-EMBEDDING_DOWNLOAD_DIR="${EMBEDDING_DOWNLOAD_DIR:-/app/latentvis/backend/data/embeddings}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+EMBEDDING_DOWNLOAD_DIR="${EMBEDDING_DOWNLOAD_DIR:-${SCRIPT_DIR}/data/embeddings}"
 
 mkdir -p "${EMBEDDING_DOWNLOAD_DIR}"
 
@@ -45,5 +46,5 @@ fi
 export LATENTVIS_CHEMPROP_PT
 export LATENTVIS_CHEMELEON_PT
 
-cd /app/latentvis/backend
+cd "${SCRIPT_DIR}"
 exec micromamba run -n base gunicorn -w "${WEB_CONCURRENCY}" -b "0.0.0.0:${PORT}" flask_backend:app
