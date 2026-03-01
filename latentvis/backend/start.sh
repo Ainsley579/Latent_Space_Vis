@@ -46,4 +46,4 @@ export LATENTVIS_CHEMPROP_PT
 export LATENTVIS_CHEMELEON_PT
 
 cd /app/latentvis/backend
-exec gunicorn -w "${WEB_CONCURRENCY}" -b "0.0.0.0:${PORT}" flask_backend:app
+exec micromamba run -n base gunicorn -w "${WEB_CONCURRENCY}" -b "0.0.0.0:${PORT}" flask_backend:app
