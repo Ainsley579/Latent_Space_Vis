@@ -177,6 +177,7 @@ type SankeyViewProps = {
   activeCell?: { model: string; layer: string } | null;
   onCellSelect?: (active: boolean) => void;
   onSwapAxes?: (swap: boolean) => void;
+  onVisibleEpochsChange?: (epochs: string[]) => void;
 };
 
 export default function SankeyView({
@@ -192,6 +193,7 @@ export default function SankeyView({
   activeCell,
   onCellSelect,
   onSwapAxes,
+  onVisibleEpochsChange,
 }: SankeyViewProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const fmiRef = useRef<HTMLDivElement | null>(null);
@@ -325,6 +327,7 @@ export default function SankeyView({
         const maxEpochPct = Math.max(0, ...Array.from(epochMaxTransitionPctByEpoch.values()));
         setMaxEpochTransitionPct(maxEpochPct);
         setVisibleEpochSummary({ visible: ROW_NAMES.length, total: allEpochKeys.length });
+        onVisibleEpochsChange?.(ROW_NAMES);
         if (epochTransitionThreshold > maxEpochPct) {
           setEpochTransitionThreshold(maxEpochPct);
           return;
@@ -1295,6 +1298,7 @@ export default function SankeyView({
     showCellBackground,
     showGapHeatmap,
     epochTransitionThreshold,
+    onVisibleEpochsChange,
   ]);
 
   useEffect(() => {

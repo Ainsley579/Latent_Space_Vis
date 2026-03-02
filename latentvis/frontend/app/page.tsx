@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SankeyView from "./component/SankeyView";
 import SankeyHorizontal from "./component/SankeyHorizontal";
 import SankeyVertical from "./component/SankeyVertical";
@@ -296,6 +296,10 @@ export default function Home() {
   const [isKnnTopmLoading, setIsKnnTopmLoading] = useState(false);
   const [cellSelected, setCellSelected] = useState(false);
   const [swapAxes, setSwapAxes] = useState(false);
+  const [visibleEpochs, setVisibleEpochs] = useState<string[] | null>(null);
+  const handleVisibleEpochsChange = useCallback((epochs: string[]) => {
+    setVisibleEpochs(epochs);
+  }, []);
   const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
   const [activeSankeyRows, setActiveSankeyRows] = useState<SankeySampleRow[]>([]);
   const [sankeyRefreshKey, setSankeyRefreshKey] = useState(0);
@@ -1417,6 +1421,7 @@ export default function Home() {
                   }
                 }}
                 onSwapAxes={(swap) => setSwapAxes(swap)}
+                onVisibleEpochsChange={handleVisibleEpochsChange}
                 externalTransform={sankeyViewExternalTransform}
                 onTransform={(t) => handleSankeyTransformSync(t, "view")}
               />
@@ -1435,6 +1440,7 @@ export default function Home() {
                 mode={swapAxes ? "layer" : "model"}
                 layerKey={selectedLayer}
                 modelKey={selectedModel}
+                visibleEpochs={swapAxes ? null : visibleEpochs}
                 syncTransform={syncLinkedSankeyViews ? syncTransformVertical : undefined}
                 onSyncTransform={(t) => {
                   if (!syncLinkedSankeyViews) return;
