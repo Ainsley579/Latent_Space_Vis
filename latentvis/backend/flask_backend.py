@@ -348,14 +348,14 @@ def _load_generated_case_payload(base: Path) -> Dict[str, object]:
     }
 
 
-def _search_smiles_substructure_in_case(case: str, smiles_query: str):
+def _search_smiles_substructure_in_case(case: str, smiles_query: str, data_split: Optional[str] = None):
     """
     Substructure search: return list of real_ids whose molecule contains the query
     (query is a substructure; all IDs that contain it are returned).
     Uses RDKit HasSubstructMatch. Returns (matches, error_message).
     """
-    case_dir = DATA_ROOT / case / "test"
-    mapping_path = case_dir / "real_id_to_smiles.json"
+    split = _normalize_split(data_split) or "test"
+    mapping_path = DATA_ROOT / case / split / "real_id_to_smiles.json"
     if not mapping_path.is_file():
         return [], None
     try:
@@ -400,8 +400,12 @@ def search_smiles():
     payload = request.get_json(silent=True) or {}
     smiles = payload.get("smiles")
     dataset = payload.get("dataset")  # optional: limit search to a single case
+    data_split = payload.get("data_split")
 
-    print(f"[flask-backend] search-smiles smiles={smiles}, dataset={dataset}", flush=True)
+    print(
+        f"[flask-backend] search-smiles smiles={smiles}, dataset={dataset}, data_split={data_split}",
+        flush=True,
+    )
 
     if not isinstance(smiles, str) or not smiles.strip():
         return jsonify({"ok": False, "error": "invalid_smiles"}), 400
@@ -410,7 +414,7 @@ def search_smiles():
     results = {}
     total = 0
     for case in cases:
-        ids, err = _search_smiles_substructure_in_case(case, smiles)
+        ids, err = _search_smiles_substructure_in_case(case, smiles, data_split=data_split)
         if err:
             return jsonify({"ok": False, "error": err}), 400
         if ids:

@@ -86,6 +86,7 @@ const DATASET_DEFAULTS: Record<DatasetKey, { model: string; layer: string }> = {
   chemprop: { model: "0", layer: "fingerprint" },
   chemeleon: { model: "0", layer: "fingerprint" },
 };
+const SHOW_CONTAINMENT_VIEW = false;
 
 function sanitizePathKey(value: string) {
   return value.replace(/[^a-zA-Z0-9_-]/g, "_");
@@ -1558,6 +1559,7 @@ export default function Home() {
             >
               <StructureEditorPanel
                 dataset={selectedDataset}
+                dataSplit={selectedDataSplit}
                 onSearchResultIds={(ids, smiles) => {
                   const uniq = Array.from(new Set(ids.map((x) => String(x))));
                   setSearchResultIds(uniq);
@@ -1643,17 +1645,19 @@ export default function Home() {
                 </div>
               </div>
               <div className="h-full min-w-0 flex-1 flex gap-1">
-                <div className="h-full min-w-[240px] w-[28%] border border-zinc-400 bg-white">
-                  <ClusterContainmentHeatmap
-                    loading={clusterContainmentLoading}
-                    error={clusterContainmentError}
-                    userClusterIds={clusterContainment?.user_cluster_ids ?? []}
-                    ourClusterIds={clusterContainment?.our_cluster_ids ?? []}
-                    matrix={clusterContainment?.matrix ?? []}
-                    entries={clusterContainment?.entries ?? []}
-                    userClusterLabelNames={uploadedUserClustering?.labelNames ?? []}
-                  />
-                </div>
+                {SHOW_CONTAINMENT_VIEW && (
+                  <div className="h-full min-w-[240px] w-[28%] border border-zinc-400 bg-white">
+                    <ClusterContainmentHeatmap
+                      loading={clusterContainmentLoading}
+                      error={clusterContainmentError}
+                      userClusterIds={clusterContainment?.user_cluster_ids ?? []}
+                      ourClusterIds={clusterContainment?.our_cluster_ids ?? []}
+                      matrix={clusterContainment?.matrix ?? []}
+                      entries={clusterContainment?.entries ?? []}
+                      userClusterLabelNames={uploadedUserClustering?.labelNames ?? []}
+                    />
+                  </div>
+                )}
                 <div
                   id="bottomPanel1"
                   className="w-full h-full border border-zinc-400 bg-white min-w-0 flex-1"

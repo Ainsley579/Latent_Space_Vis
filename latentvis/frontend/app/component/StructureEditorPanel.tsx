@@ -26,10 +26,11 @@ const LOCAL_JSME_SCRIPT_SRC = "/jsme/jsme.nocache.js";
 
 type StructureEditorPanelProps = {
   dataset?: string;
+  dataSplit?: "test" | "train";
   onSearchResultIds?: (ids: string[], smiles: string) => void;
 };
 
-export default function StructureEditorPanel({ dataset, onSearchResultIds }: StructureEditorPanelProps) {
+export default function StructureEditorPanel({ dataset, dataSplit, onSearchResultIds }: StructureEditorPanelProps) {
   const reactId = useId();
   const inlineHostId = useMemo(() => `jsme_inline_host_${reactId.replace(/:/g, "_")}`, [reactId]);
   const hostId = useMemo(() => `jsme_modal_host_${reactId.replace(/:/g, "_")}`, [reactId]);
@@ -209,7 +210,7 @@ export default function StructureEditorPanel({ dataset, onSearchResultIds }: Str
       const res = await fetch(`${apiBase}/search-smiles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ smiles, dataset }),
+        body: JSON.stringify({ smiles, dataset, data_split: dataSplit }),
       });
       if (!res.ok) {
         throw new Error(`search-smiles API failed: ${res.status}`);
