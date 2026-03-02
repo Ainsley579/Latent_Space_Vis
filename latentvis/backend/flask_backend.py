@@ -535,8 +535,9 @@ def generate_range():
 
     payload = request.get_json(silent=True) or {}
     include_payload = bool(payload.get("include_payload", False))
-    # Persist by default so downstream APIs can read freshly generated files from disk.
-    persist = bool(payload.get("persist", True))
+    # Always run generate-range in memory-only mode for frontend runtime payloads.
+    # Ignore client-provided persist flag to avoid mutating on-disk JSON artifacts.
+    persist = False
     min_value = payload.get("min")
     max_value = payload.get("max")
     k_fixed = payload.get("k")
@@ -622,7 +623,7 @@ def generate_range():
             substructure_max_members=sub_m,
             scatter_subdir="scatterplot",
             data_split=split_norm,
-            write_fmi_cspa=False,
+            write_fmi_cspa=True,
             interactive_output_suffix="",
             resume=False,
             verbose_dr=False,
@@ -669,10 +670,8 @@ def generate_range():
                 except Exception:
                     print("[flask-backend] materialize_sankey_compat stderr(raw): %r" % (stderr,), flush=True)
 
-    # Optional: recompute layer-to-layer and epoch-to-epoch transition stats for updated cluster assignments.
-    # This is disabled by default for generate-range to keep response time low; run the script manually
-    # or from a dedicated job if transition stats are needed.
-    if persist and bool(payload.get("compute_transition_stats")):
+    # Recompute transition stats for updated cluster assignments after generate-range.
+    if persist:
         transition_script = _BACKEND_DIR / "scripts" / "compute_layer_transition_stats.py"
         if transition_script.is_file():
             try:

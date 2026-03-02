@@ -946,6 +946,7 @@ export default function Home() {
   }, [swapAxes, sankeyPath, sankeyPathVertical]);
 
   useEffect(() => {
+    const isBlobPath = typeof activeSankeyPath === "string" && activeSankeyPath.startsWith("blob:");
     fetch(activeSankeyPath)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load active sankey rows");
@@ -955,6 +956,9 @@ export default function Home() {
         setActiveSankeyRows(Array.isArray(json) ? json : []);
       })
       .catch((err) => {
+        // In-memory payload mode may briefly reference stale blob URLs while state swaps.
+        // Ignore these transient blob fetch failures and wait for the next valid path.
+        if (isBlobPath) return;
         console.error(err);
         setActiveSankeyRows([]);
       });
