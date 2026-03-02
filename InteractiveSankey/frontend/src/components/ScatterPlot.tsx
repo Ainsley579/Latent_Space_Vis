@@ -31,6 +31,16 @@ interface ScatterPlotProps {
     useGroupHover?: boolean;
 }
 
+const MAX_SCATTER_POINTS_PER_LAYER = 8000;
+
+function strideSample<T>(arr: T[], maxCount: number): T[] {
+    if (arr.length <= maxCount) return arr;
+    const step = Math.ceil(arr.length / maxCount);
+    const sampled: T[] = [];
+    for (let i = 0; i < arr.length; i += step) sampled.push(arr[i]);
+    return sampled;
+}
+
 const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
     ({ onScroll, data = [], images = {}, layers = [], totalWindows, zoomFactor = 1, hideControls = false, useGroupHover = false }, ref) => {
         let tooltip = d3.select("body").select("#global-tooltip");
@@ -217,6 +227,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
                             id: j,
                             groupID: d.groupID
                         }));
+                    const localRenderData = strideSample(localData, MAX_SCATTER_POINTS_PER_LAYER);
                     const xExtent = d3.extent(localData, d => d.x) as [number, number];
                     const yExtent = d3.extent(localData, d => d.y) as [number, number];
 
@@ -232,7 +243,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
 
                     const circles = circleGroup
                         .selectAll("circle")
-                        .data(localData)
+                        .data(localRenderData)
                         .join("circle")
                         .attr("cx", (d) => xScale(d.x))
                         .attr("cy", (d) => yScale(d.y))
@@ -332,7 +343,7 @@ const ScatterPlot = forwardRef<HTMLDivElement, ScatterPlotProps>(
             };
 
             run();
-        }, [data, zoomFactor, lassoEnabled]);
+        }, [data, lassoEnabled]);
 
         return (
             <div>

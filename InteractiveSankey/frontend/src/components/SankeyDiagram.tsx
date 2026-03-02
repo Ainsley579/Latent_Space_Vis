@@ -45,6 +45,17 @@ interface LineDatum {
     className: string;
 }
 
+const MAX_TRAJECTORIES_TOTAL = 18000;
+const MAX_TRAJECTORIES_PER_LINK = 500;
+
+function strideSample<T>(arr: T[], maxCount: number): T[] {
+    if (arr.length <= maxCount) return arr;
+    const step = Math.ceil(arr.length / maxCount);
+    const sampled: T[] = [];
+    for (let i = 0; i < arr.length; i += step) sampled.push(arr[i]);
+    return sampled;
+}
+
 const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
     ({ data, zoomFactor = 1, hideTooltip = false }, ref) => {
         const svgRef = useRef<SVGSVGElement | null>(null);
@@ -554,7 +565,10 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
                 const sourceNode = link.source as Node;
                 const targetNode = link.target as Node;
                 const linkKey = `${sourceNode.name}->${targetNode.name}`;
-                const samplesOnLink = linkSamplesMap.get(linkKey) || [];
+                const samplesOnLink = strideSample(
+                    linkSamplesMap.get(linkKey) || [],
+                    MAX_TRAJECTORIES_PER_LINK
+                );
                 if (samplesOnLink.length === 0) return;
                 samplesOnLink.sort((a, b) => {
                     const yA = sampleNodeYMap.get(a)?.get(sourceNode.name) ?? 0;
@@ -582,8 +596,9 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
                     });
                 });
             });
+            const limitedLineData = strideSample(lineData, MAX_TRAJECTORIES_TOTAL);
             samplesGroup.selectAll<SVGLineElement, LineDatum>("line")
-                .data(lineData)
+                .data(limitedLineData)
                 .join("line")
                 .attr("x1", d => d.x1)
                 .attr("y1", d => d.y1)
@@ -753,16 +768,27 @@ const SankeyDiagram = React.forwardRef<HTMLDivElement, SankeyDiagramProps>(
             if (!container) return;
 
             const graph = buildGraphFromRows(data);
+            let rafId: number | null = null;
 
             const draw = () => {
-                const zoomedWidth = container.clientWidth * zoomFactor;
-                drawSankey(zoomedWidth, graph);
+                drawSankey(container.clientWidth, graph);
             };
+            const scheduleDraw = () => {
+                if (rafId !== null) cancelAnimationFrame(rafId);
+                rafId = requestAnimationFrame(() => {
+                    draw();
+                    rafId = null;
+                });
+            };
+
             draw();
-            const resizeObserver = new ResizeObserver(draw);
+            const resizeObserver = new ResizeObserver(scheduleDraw);
             resizeObserver.observe(container);
-            return () => resizeObserver.disconnect();
-        }, [data, zoomFactor]);
+            return () => {
+                resizeObserver.disconnect();
+                if (rafId !== null) cancelAnimationFrame(rafId);
+            };
+        }, [data]);
 
         return (
             <div

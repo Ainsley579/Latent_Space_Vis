@@ -18,6 +18,8 @@ interface WindowData {
 export default function WindowManager() {
     const [windows, setWindows] = useState<WindowData[]>([]);
     const [zoomFactor, setZoomFactor] = useState(1.0);
+    const zoomDeltaRef = useRef(0);
+    const zoomRafRef = useRef<number | null>(null);
     const [layerCounts, setLayerCounts] = useState<Record<string, { names: string[]; count: number }>>({});
     const windowRefs = useRef<HTMLDivElement[]>([]);
     const scatterRefs = useRef<HTMLDivElement[]>([]);
@@ -156,19 +158,35 @@ export default function WindowManager() {
             if (!e.shiftKey) return;
             e.preventDefault();
 
-            // macOS touchpad: Shift + wheel ⇒ horizontal scroll (deltaX)
-            const dx = e.deltaX;
+            const dominantDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+            if (Math.abs(dominantDelta) < 0.5) return;
 
-            // dx < 0 → zoom in, dx > 0 → zoom out
-            const delta = dx < 0 ? 0.1 : -0.1;
+            zoomDeltaRef.current += dominantDelta;
+            if (zoomRafRef.current !== null) return;
 
-            setZoomFactor(prev =>
-                Math.max(1, Math.min(5, prev + delta))
-            );
+            zoomRafRef.current = requestAnimationFrame(() => {
+                const acc = zoomDeltaRef.current;
+                zoomDeltaRef.current = 0;
+                zoomRafRef.current = null;
+
+                const stepCount = Math.round(Math.abs(acc) / 40);
+                if (stepCount === 0) return;
+                const delta = (acc < 0 ? 1 : -1) * 0.1 * Math.min(stepCount, 3);
+
+                setZoomFactor(prev =>
+                    Math.max(1, Math.min(5, prev + delta))
+                );
+            });
         };
 
         window.addEventListener("wheel", handler, { passive: false });
-        return () => window.removeEventListener("wheel", handler);
+        return () => {
+            window.removeEventListener("wheel", handler);
+            if (zoomRafRef.current !== null) {
+                cancelAnimationFrame(zoomRafRef.current);
+                zoomRafRef.current = null;
+            }
+        };
     }, []);
 
     // (Thumbnail logic moved to Thumbnail component)
