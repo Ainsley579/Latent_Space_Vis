@@ -1682,141 +1682,155 @@ export default function SankeyView({
   const normalizedLinkMax = Math.max(clampedLinkMin, clampedLinkMax);
   const linkStartPct = linkValueMaxBound > 0 ? (normalizedLinkMin / linkValueMaxBound) * 100 : 0;
   const linkEndPct = linkValueMaxBound > 0 ? (normalizedLinkMax / linkValueMaxBound) * 100 : 100;
+  const normalizedEpochThreshold = Math.max(0, Math.min(maxEpochTransitionPct, epochTransitionThreshold));
+  const epochPctPos = maxEpochTransitionPct > 0 ? (normalizedEpochThreshold / maxEpochTransitionPct) * 100 : 0;
 
   return (
     <div className="timeline-root h-full flex flex-col" style={{ marginLeft: 0 }}>
       <div id="controls" className="shrink-0">
-        <span style={{ display: "inline-flex", alignItems: "center", marginLeft: 5, marginRight: 8, gap: 6 }}>
-          <label>Link Value Range:</label>
-          <span
-            className="value-range-help"
-            data-tooltip="Filters visible Sankey links by link value. Links outside [min, max] are hidden."
-            aria-label="Link value range help"
-          >
-            ?
-          </span>
-        </span>
-        <span style={{ minWidth: 36, display: "inline-block", textAlign: "right" }}>
-          {normalizedLinkMin.toFixed(0)}
-        </span>
-        <div className="range-slider" id="rangeSlider">
-          <div
-            className="range-track"
-            id="rangeTrack"
-            style={{
-              background: `linear-gradient(to right, #ddd ${linkStartPct}%, #9c795b ${linkStartPct}%, #9c795b ${linkEndPct}%, #ddd ${linkEndPct}%)`,
-            }}
-          ></div>
-          <input
-            id="minRange"
-            className="range-min"
-            type="range"
-            min={0}
-            max={linkValueMaxBound}
-            step={1}
-            value={normalizedLinkMin}
-            onChange={(e) => {
-              const next = Number(e.target.value);
-              const clamped = Math.max(0, Math.min(next, linkValueMaxBound));
-              setLinkValueMin(Math.min(clamped, normalizedLinkMax));
-              const p = new URLSearchParams(window.location.search);
-              p.set("min", String(clamped));
-              p.set("max", String(normalizedLinkMax));
-              p.set("epochMin", epochTransitionThreshold.toFixed(2));
-              window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
-            }}
-          />
-          <input
-            id="maxRange"
-            className="range-max"
-            type="range"
-            min={0}
-            max={linkValueMaxBound}
-            step={1}
-            value={normalizedLinkMax}
-            onChange={(e) => {
-              const next = Number(e.target.value);
-              const clamped = Math.max(0, Math.min(next, linkValueMaxBound));
-              setLinkValueMax(Math.max(clamped, normalizedLinkMin));
-              const p = new URLSearchParams(window.location.search);
-              p.set("min", String(normalizedLinkMin));
-              p.set("max", String(clamped));
-              p.set("epochMin", epochTransitionThreshold.toFixed(2));
-              window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
-            }}
-          />
-        </div>
-        <span style={{ minWidth: 36, display: "inline-block" }}>
-          {normalizedLinkMax.toFixed(0)}
-        </span>
-
-        <span style={{ display: "inline-flex", alignItems: "center", marginLeft: 5, marginRight: 8, gap: 6 }}>
-          <label>Epoch Min Transition %:</label>
-          <span
-            className="value-range-help"
-            data-tooltip="For each epoch, we compute the maximum pct_changed across layer-to-layer transitions in that epoch. Epochs with max pct_changed below this threshold are hidden. Only transitions between remaining epochs are rendered."
-            aria-label="Value range help"
-          >
-            ?
-          </span>
-        </span>
-        <input
-          id="epochThresholdRange"
-          type="range"
-          min={0}
-          max={maxEpochTransitionPct}
-          step={0.1}
-          value={Math.max(0, Math.min(maxEpochTransitionPct, epochTransitionThreshold))}
-          onChange={(e) => {
-            const next = Number(e.target.value);
-            setEpochTransitionThreshold(next);
-            const p = new URLSearchParams(window.location.search);
-            p.set("epochMin", next.toFixed(2));
-            p.set("min", String(normalizedLinkMin));
-            p.set("max", String(normalizedLinkMax));
-            window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
-          }}
-          style={{ width: 320 }}
-        />
-        <span id="epochThresholdValue" style={{ marginLeft: 8, minWidth: 62, display: "inline-block" }}>
-          {Math.max(0, Math.min(maxEpochTransitionPct, epochTransitionThreshold)).toFixed(2)}%
-        </span>
-        <span style={{ fontSize: 12, color: "#475569" }}>
-          Visible epochs: {visibleEpochSummary.visible}/{visibleEpochSummary.total}
-        </span>
-        <div id="controlButtons" style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center" }}>
-          <button id="btnDefault">Default</button>
-          <button id="btnColumn">Column</button>
-          <button id="btnRow">Row</button>
-          <button id="btnSwap">Swap X/Y</button>
-          <button
-            type="button"
-            onClick={() => setShowSankeyPaths((v) => !v)}
-            style={{ fontWeight: showSankeyPaths ? 600 : 400 }}
-          >
-            Paths
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSankeyNodes((v) => !v)}
-            style={{ fontWeight: showSankeyNodes ? 600 : 400 }}
-          >
-            Nodes
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowCellBackground((v) => !v)}
-            style={{ fontWeight: showCellBackground ? 600 : 400 }}
-          >
-            Cell BG
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowGapHeatmap((v) => !v)}
-            style={{ fontWeight: showGapHeatmap ? 600 : 400 }}
-          >
-            Gap Heat
-          </button>
+        <div className="controls-main">
+          <div className="control-stack">
+            <div className="control-row">
+            <span className="control-label">
+              <label>Link Value Range:</label>
+              <span
+                className="value-range-help"
+                data-tooltip="Filters visible Sankey links by link value. Links outside [min, max] are hidden."
+                aria-label="Link value range help"
+              >
+                ?
+              </span>
+            </span>
+            <span className="range-bound">{normalizedLinkMin.toFixed(0)}</span>
+            <div className="range-slider" id="rangeSlider">
+              <div
+                className="range-track"
+                id="rangeTrack"
+                style={{
+                  background: `linear-gradient(to right, #ddd ${linkStartPct}%, #9c795b ${linkStartPct}%, #9c795b ${linkEndPct}%, #ddd ${linkEndPct}%)`,
+                }}
+              ></div>
+              <input
+                id="minRange"
+                className="range-min"
+                type="range"
+                min={0}
+                max={linkValueMaxBound}
+                step={1}
+                value={normalizedLinkMin}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  const clamped = Math.max(0, Math.min(next, linkValueMaxBound));
+                  setLinkValueMin(Math.min(clamped, normalizedLinkMax));
+                  const p = new URLSearchParams(window.location.search);
+                  p.set("min", String(clamped));
+                  p.set("max", String(normalizedLinkMax));
+                  p.set("epochMin", epochTransitionThreshold.toFixed(2));
+                  window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+                }}
+              />
+              <input
+                id="maxRange"
+                className="range-max"
+                type="range"
+                min={0}
+                max={linkValueMaxBound}
+                step={1}
+                value={normalizedLinkMax}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  const clamped = Math.max(0, Math.min(next, linkValueMaxBound));
+                  setLinkValueMax(Math.max(clamped, normalizedLinkMin));
+                  const p = new URLSearchParams(window.location.search);
+                  p.set("min", String(normalizedLinkMin));
+                  p.set("max", String(clamped));
+                  p.set("epochMin", epochTransitionThreshold.toFixed(2));
+                  window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+                }}
+              />
+            </div>
+            <span className="range-bound">{normalizedLinkMax.toFixed(0)}</span>
+            </div>
+            <div className="control-row">
+            <span className="control-label">
+              <label>Epoch Min Transition %:</label>
+              <span
+                className="value-range-help"
+                data-tooltip="For each epoch, we compute the maximum pct_changed across layer-to-layer transitions in that epoch. Epochs with max pct_changed below this threshold are hidden. Only transitions between remaining epochs are rendered."
+                aria-label="Epoch threshold help"
+              >
+                ?
+              </span>
+            </span>
+            <span className="range-bound">0.00%</span>
+            <div className="range-slider" id="epochRangeSlider">
+              <div
+                className="range-track"
+                style={{
+                  background: `linear-gradient(to right, #9c795b ${epochPctPos}%, #ddd ${epochPctPos}%)`,
+                }}
+              ></div>
+              <input
+                id="epochThresholdRange"
+                className="range-single"
+                type="range"
+                min={0}
+                max={maxEpochTransitionPct}
+                step={0.1}
+                value={normalizedEpochThreshold}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  setEpochTransitionThreshold(next);
+                  const p = new URLSearchParams(window.location.search);
+                  p.set("epochMin", next.toFixed(2));
+                  p.set("min", String(normalizedLinkMin));
+                  p.set("max", String(normalizedLinkMax));
+                  window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+                }}
+              />
+            </div>
+            <span id="epochThresholdValue" className="range-bound">
+              {normalizedEpochThreshold.toFixed(2)}%
+            </span>
+            <span style={{ fontSize: 12, color: "#475569" }}>
+              Visible epochs: {visibleEpochSummary.visible}/{visibleEpochSummary.total}
+            </span>
+            </div>
+          </div>
+          <div id="controlButtons">
+            <button id="btnDefault">Default</button>
+            <button id="btnColumn">Column</button>
+            <button id="btnRow">Row</button>
+            <button id="btnSwap">Swap X/Y</button>
+            <button
+              type="button"
+              onClick={() => setShowSankeyPaths((v) => !v)}
+              style={{ fontWeight: showSankeyPaths ? 600 : 400 }}
+            >
+              Paths
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSankeyNodes((v) => !v)}
+              style={{ fontWeight: showSankeyNodes ? 600 : 400 }}
+            >
+              Nodes
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCellBackground((v) => !v)}
+              style={{ fontWeight: showCellBackground ? 600 : 400 }}
+            >
+              Cell BG
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowGapHeatmap((v) => !v)}
+              style={{ fontWeight: showGapHeatmap ? 600 : 400 }}
+            >
+              Gap Heat
+            </button>
+          </div>
         </div>
       </div>
       {/* FMI/CSPA panel is temporarily hidden, keep code for future use.
@@ -1896,14 +1910,47 @@ export default function SankeyView({
         #controls {
           width: 100%;
           max-width: 100%;
-          margin: 8px 0;
+          margin: 4px 0;
+          display: block;
+          font-size: 13px;
+        }
+
+        .controls-main {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+
+        .control-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          min-width: 470px;
+        }
+
+        .control-row {
           display: flex;
           align-items: center;
-          gap: 12px;
-          font-size: 16px;
+          gap: 4px;
           flex-wrap: wrap;
-          position: relative;
-          padding-right: 260px;
+        }
+
+        .control-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          min-width: 158px;
+          font-size: 12px;
+        }
+
+        .range-bound {
+          min-width: 44px;
+          display: inline-block;
+          text-align: right;
+          font-variant-numeric: tabular-nums;
+          font-size: 12px;
         }
 
         #chart {
@@ -1912,32 +1959,38 @@ export default function SankeyView({
           margin: 0;
         }
 
-        input[type="range"] {
-          width: 360px;
-        }
-
         :global(.link-path.hidden) {
           display: none;
         }
 
         .range-slider {
           position: relative;
-          width: 360px;
-          height: 36px;
+          width: 170px;
+          height: 24px;
           display: inline-block;
           align-items: center;
         }
 
         #controlButtons {
-          position: absolute;
-          right: 8px;
-          top: 0;
+          display: grid;
+          grid-template-columns: repeat(4, max-content);
+          gap: 2px;
+          width: auto;
+          margin-top: 0;
+        }
+
+        #controlButtons button {
+          font-size: 12px;
+          padding: 1px 4px;
+          margin: 0;
+          line-height: 1.1;
+          white-space: nowrap;
         }
 
         .range-slider input[type="range"] {
           position: absolute;
           left: 0;
-          top: 12px;
+          top: 7px;
           width: 100%;
           pointer-events: none;
           -webkit-appearance: none;
@@ -1952,32 +2005,36 @@ export default function SankeyView({
           z-index: 2;
         }
 
+        .range-slider input.range-single {
+          z-index: 3;
+        }
+
         .range-slider input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
           pointer-events: auto;
-          width: 14px;
-          height: 14px;
+          width: 10px;
+          height: 10px;
           border-radius: 50%;
           background: #fff;
-          border: 2px solid #666;
+          border: 1.5px solid #666;
           box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
         }
 
         .range-slider input[type="range"]::-moz-range-thumb {
           pointer-events: auto;
-          width: 14px;
-          height: 14px;
+          width: 10px;
+          height: 10px;
           border-radius: 50%;
           background: #fff;
-          border: 2px solid #666;
+          border: 1.5px solid #666;
           box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
         }
 
         .range-track {
           position: absolute;
           left: 0;
-          top: 18px;
-          height: 6px;
+          top: 10px;
+          height: 4px;
           width: 100%;
           background: linear-gradient(to right, #ddd 0%, #ddd 100%);
           border-radius: 3px;
