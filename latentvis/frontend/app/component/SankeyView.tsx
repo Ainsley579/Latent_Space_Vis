@@ -208,6 +208,8 @@ export default function SankeyView({
   const [epochTransitionThreshold, setEpochTransitionThreshold] = useState(0);
   const [maxEpochTransitionPct, setMaxEpochTransitionPct] = useState(100);
   const [visibleEpochSummary, setVisibleEpochSummary] = useState({ visible: 0, total: 0 });
+  const [cellLegendRange, setCellLegendRange] = useState({ min: 0, max: 1 });
+  const [gapLegendMax, setGapLegendMax] = useState(1);
   const [linkValueMin, setLinkValueMin] = useState(0);
   const [linkValueMax, setLinkValueMax] = useState(Number.MAX_SAFE_INTEGER);
   const [linkValueMaxBound, setLinkValueMaxBound] = useState(1);
@@ -416,6 +418,11 @@ export default function SankeyView({
         const clusterCounts = Array.from(cellClusterCount.values());
         const minCellCluster = clusterCounts.length ? Math.min(...clusterCounts) : 0;
         const maxCellCluster = clusterCounts.length ? Math.max(...clusterCounts) : 1;
+        setCellLegendRange((prev) =>
+          prev.min === minCellCluster && prev.max === maxCellCluster
+            ? prev
+            : { min: minCellCluster, max: maxCellCluster }
+        );
         const cellBgColor = d3
           .scaleLinear<string>()
           .domain(
@@ -546,6 +553,7 @@ export default function SankeyView({
           ...Array.from(pctByEpochTransition.values()),
           ...Array.from(pctByLayerTransition.values())
         );
+        setGapLegendMax((prev) => (prev === maxGapPct ? prev : maxGapPct));
         const redGapColor = d3
           .scaleLinear<string>()
           .domain([0, maxGapPct])
@@ -1696,7 +1704,7 @@ export default function SankeyView({
           <div className="control-stack">
             <div className="control-row">
             <span className="control-label">
-              <label>Link Value Range:</label>
+              <label>Link Range:</label>
               <span
                 className="value-range-help"
                 data-tooltip="Filters visible Sankey links by link value. Links outside [min, max] are hidden."
@@ -1757,7 +1765,7 @@ export default function SankeyView({
             </div>
             <div className="control-row">
             <span className="control-label">
-              <label>Epoch Min Transition %:</label>
+              <label>Epoch Min %:</label>
               <span
                 className="value-range-help"
                 data-tooltip="For each epoch, we compute the maximum pct_changed across layer-to-layer transitions in that epoch. Epochs with max pct_changed below this threshold are hidden. Only transitions between remaining epochs are rendered."
@@ -1767,73 +1775,100 @@ export default function SankeyView({
               </span>
             </span>
             <span className="range-bound">0.00%</span>
-            <div className="range-slider" id="epochRangeSlider">
-              <div
-                className="range-track"
-                style={{
-                  background: `linear-gradient(to right, #9c795b ${epochPctPos}%, #ddd ${epochPctPos}%)`,
-                }}
-              ></div>
-              <input
-                id="epochThresholdRange"
-                className="range-single"
-                type="range"
-                min={0}
-                max={maxEpochTransitionPct}
-                step={0.1}
-                value={normalizedEpochThreshold}
-                onChange={(e) => {
-                  const next = Number(e.target.value);
-                  setEpochTransitionThreshold(next);
-                  const p = new URLSearchParams(window.location.search);
-                  p.set("epochMin", next.toFixed(2));
-                  p.set("min", String(normalizedLinkMin));
-                  p.set("max", String(normalizedLinkMax));
-                  window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
-                }}
-              />
+            <div className="epoch-slider-wrap">
+              <div className="range-slider" id="epochRangeSlider">
+                <div
+                  className="range-track"
+                  style={{
+                    background: `linear-gradient(to right, #9c795b ${epochPctPos}%, #ddd ${epochPctPos}%)`,
+                  }}
+                ></div>
+                <input
+                  id="epochThresholdRange"
+                  className="range-single"
+                  type="range"
+                  min={0}
+                  max={maxEpochTransitionPct}
+                  step={0.1}
+                  value={normalizedEpochThreshold}
+                  onChange={(e) => {
+                    const next = Number(e.target.value);
+                    setEpochTransitionThreshold(next);
+                    const p = new URLSearchParams(window.location.search);
+                    p.set("epochMin", next.toFixed(2));
+                    p.set("min", String(normalizedLinkMin));
+                    p.set("max", String(normalizedLinkMax));
+                    window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+                  }}
+                />
+              </div>
             </div>
             <span id="epochThresholdValue" className="range-bound">
               {normalizedEpochThreshold.toFixed(2)}%
             </span>
-            <span style={{ fontSize: 12, color: "#475569" }}>
-              Visible epochs: {visibleEpochSummary.visible}/{visibleEpochSummary.total}
+            <span className="epoch-visible-summary">
+              Shown: {visibleEpochSummary.visible}/{visibleEpochSummary.total}
             </span>
             </div>
           </div>
-          <div id="controlButtons">
-            <button id="btnDefault">Default</button>
-            <button id="btnColumn">Column</button>
-            <button id="btnRow">Row</button>
-            <button id="btnSwap">Swap X/Y</button>
-            <button
-              type="button"
-              onClick={() => setShowSankeyPaths((v) => !v)}
-              style={{ fontWeight: showSankeyPaths ? 600 : 400 }}
-            >
-              Paths
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowSankeyNodes((v) => !v)}
-              style={{ fontWeight: showSankeyNodes ? 600 : 400 }}
-            >
-              Nodes
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowCellBackground((v) => !v)}
-              style={{ fontWeight: showCellBackground ? 600 : 400 }}
-            >
-              Cell BG
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowGapHeatmap((v) => !v)}
-              style={{ fontWeight: showGapHeatmap ? 600 : 400 }}
-            >
-              Gap Heat
-            </button>
+          <div className="control-side">
+            <div id="controlButtons">
+              <button id="btnDefault">Default</button>
+              <button id="btnColumn">Column</button>
+              <button id="btnRow">Row</button>
+              <button id="btnSwap">Swap X/Y</button>
+              <button
+                type="button"
+                onClick={() => setShowSankeyPaths((v) => !v)}
+                style={{ fontWeight: showSankeyPaths ? 600 : 400 }}
+              >
+                Paths
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSankeyNodes((v) => !v)}
+                style={{ fontWeight: showSankeyNodes ? 600 : 400 }}
+              >
+                Nodes
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCellBackground((v) => !v)}
+                style={{ fontWeight: showCellBackground ? 600 : 400 }}
+              >
+                Cell BG
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowGapHeatmap((v) => !v)}
+                style={{ fontWeight: showGapHeatmap ? 600 : 400 }}
+              >
+                Gap Heat
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="legend-bottom-row">
+          <span className="control-label legend-label">Legend:</span>
+          <div className="sankey-mini-legend" aria-label="Sankey Color Legend">
+            <span className="legend-item">
+              <span className="legend-text">Cell BG</span>
+              <span className="legend-range">{cellLegendRange.min}</span>
+              <span className="legend-swatch" style={{ background: "linear-gradient(to right, #eff6ff, #46518C)" }} />
+              <span className="legend-range">{cellLegendRange.max}</span>
+            </span>
+            <span className="legend-item">
+              <span className="legend-text">Gap R</span>
+              <span className="legend-range">0</span>
+              <span className="legend-swatch" style={{ background: "linear-gradient(to right, #f3f4f6, #7f1d1d)" }} />
+              <span className="legend-range">{gapLegendMax.toFixed(1)}%</span>
+            </span>
+            <span className="legend-item">
+              <span className="legend-text">Gap G</span>
+              <span className="legend-range">0</span>
+              <span className="legend-swatch" style={{ background: "linear-gradient(to right, #f0fdf4, #166534)" }} />
+              <span className="legend-range">{gapLegendMax.toFixed(1)}%</span>
+            </span>
           </div>
         </div>
       </div>
@@ -1933,8 +1968,27 @@ export default function SankeyView({
           gap: 4px;
           min-width: 470px;
         }
+        
+        .control-side {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 2px;
+        }
 
         .control-row {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          flex-wrap: wrap;
+        }
+        
+        .legend-label {
+          min-width: 52px;
+        }
+        
+        .legend-bottom-row {
+          margin-top: 2px;
           display: flex;
           align-items: center;
           gap: 4px;
@@ -1944,13 +1998,13 @@ export default function SankeyView({
         .control-label {
           display: inline-flex;
           align-items: center;
-          gap: 4px;
-          min-width: 158px;
+          gap: 2px;
+          min-width: 96px;
           font-size: 12px;
         }
 
         .range-bound {
-          min-width: 44px;
+          min-width: 30px;
           display: inline-block;
           text-align: right;
           font-variant-numeric: tabular-nums;
@@ -1974,6 +2028,17 @@ export default function SankeyView({
           display: inline-block;
           align-items: center;
         }
+        
+        .epoch-slider-wrap {
+          display: inline-flex;
+        }
+
+        .epoch-visible-summary {
+          font-size: 12px;
+          color: #475569;
+          line-height: 1.2;
+          white-space: nowrap;
+        }
 
         #controlButtons {
           display: grid;
@@ -1981,6 +2046,41 @@ export default function SankeyView({
           gap: 2px;
           width: auto;
           margin-top: 0;
+        }
+        
+        .sankey-mini-legend {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 11px;
+          color: #475569;
+          line-height: 1;
+          white-space: nowrap;
+        }
+
+        .legend-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .legend-text {
+          min-width: 42px;
+          text-align: right;
+        }
+
+        .legend-range {
+          min-width: 26px;
+          text-align: center;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .legend-swatch {
+          width: 84px;
+          height: 8px;
+          border-radius: 4px;
+          border: 1px solid rgba(15, 23, 42, 0.25);
+          display: inline-block;
         }
 
         #controlButtons button {
