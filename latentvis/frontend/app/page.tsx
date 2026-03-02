@@ -1400,7 +1400,7 @@ export default function Home() {
                 key={`sankeyview-${selectedDataset}-${selectedClustering}-${selectedDataSplit}-${sankeyRefreshKey}`}
                 dataPath={buildAllSankeyPath(selectedDataset, selectedClustering, selectedDataSplit)}
                 metricsPath={`${datasetBase}/bic_aic/avg_fmi_cspa_by_layer.json`}
-                transitionStatsPath={`${sectionBaseFor("clustering_metrics")}/layer_transition_stats.json`}
+                transitionStatsPath={`${sectionBaseFor("clustering_metrics")}/layer_transition_by_epoch.json`}
                 onModelSelect={(model) => {
                   setSankeyPath(buildSankeyModelPath(model));
                   setSelectedModel(model);
