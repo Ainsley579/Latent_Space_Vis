@@ -93,7 +93,7 @@ function sanitizePathKey(value: string) {
 
 export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
-  const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("pgmeans");
+  const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("agglomerative");
   const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("test");
   const [generatedSankeyPayloads, setGeneratedSankeyPayloads] = useState<Record<string, GeneratedSankeyPayload>>({});
   const [generatedRuntimePayloads, setGeneratedRuntimePayloads] = useState<Record<string, GeneratedRuntimePayload>>({});
@@ -256,18 +256,18 @@ export default function Home() {
   };
 
   const [sankeyPath, setSankeyPath] = useState(
-    `${sectionBaseFor("sankey", "chemprop", "pgmeans", "test")}/0_sankey_samples.json`
+    `${sectionBaseFor("sankey", "chemprop", "agglomerative", "test")}/0_sankey_samples.json`
   );
   const [sankeyPathVertical, setSankeyPathVertical] = useState(
-    `${sectionBaseFor("sankey", "chemprop", "pgmeans", "test")}/vertical_model_samples_fingerprint.json`
+    `${sectionBaseFor("sankey", "chemprop", "agglomerative", "test")}/vertical_model_samples_fingerprint.json`
   );
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [selectedLayer, setSelectedLayer] = useState("fingerprint");
   const [selectedModel, setSelectedModel] = useState("0");
   const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
   const [scatterPaths, setScatterPaths] = useState({
-    xy: `${sectionBaseFor("scatterplot", "chemprop", "pgmeans", "test")}/0_fingerprint_pca_xy.json`,
-    cluster: `${sectionBaseFor("scatterplot", "chemprop", "pgmeans", "test")}/0_fingerprint_pca_cluster.json`,
+    xy: `${sectionBaseFor("scatterplot", "chemprop", "agglomerative", "test")}/0_fingerprint_pca_xy.json`,
+    cluster: `${sectionBaseFor("scatterplot", "chemprop", "agglomerative", "test")}/0_fingerprint_pca_cluster.json`,
   });
   const scatterOverrideUrlRef = useRef<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
