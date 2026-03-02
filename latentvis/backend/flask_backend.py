@@ -315,9 +315,9 @@ def _build_scatter_cluster_by_cell_from_samples(
 
 
 def _load_generated_case_payload(base: Path) -> Dict[str, object]:
-    sankey_dir = base / "sankey_current"
-    topk_dir = base / "topk_current"
-    sub_dir = base / "substructures_current"
+    sankey_dir = base / "sankey"
+    topk_dir = base / "topk"
+    sub_dir = base / "substructures"
 
     all_sankey = _read_json(sankey_dir / "all_sankey.json", {"epoch": {}, "layer": {}})
     samples = _read_json(sankey_dir / "sankey_samples.json", [])
@@ -535,8 +535,7 @@ def generate_range():
 
     payload = request.get_json(silent=True) or {}
     include_payload = bool(payload.get("include_payload", False))
-    # Persist by default so downstream APIs (e.g. cluster-containment use_current)
-    # can read freshly generated *_current files from disk.
+    # Persist by default so downstream APIs can read freshly generated files from disk.
     persist = bool(payload.get("persist", True))
     min_value = payload.get("min")
     max_value = payload.get("max")
@@ -621,10 +620,10 @@ def generate_range():
             linkage_override=linkage_override,
             reuse_scatter_coords=True,
             substructure_max_members=sub_m,
-            scatter_subdir="scatterplot_current",
+            scatter_subdir="scatterplot",
             data_split=split_norm,
             write_fmi_cspa=False,
-            interactive_output_suffix="_current",
+            interactive_output_suffix="",
             resume=False,
             verbose_dr=False,
         )
@@ -638,10 +637,10 @@ def generate_range():
             shutil.rmtree(temp_root, ignore_errors=True)
         return jsonify({"ok": False, "error": "pipeline_failed", "detail": str(e)}), 500
 
-    # Base dir where pipeline wrote outputs for this method (root for gmm, clustering/<method> for others)
-    base = case_dir if clustering == "gmm" else (case_dir / "clustering" / clustering)
+    # Current runs always write to the canonical directories under case_dir.
+    base = case_dir
     materialize_script = _BACKEND_DIR / "scripts" / "materialize_sankey_compat_files.py"
-    if materialize_script.is_file():
+    if persist and materialize_script.is_file():
         try:
             subprocess.run(
                 [
@@ -652,17 +651,23 @@ def generate_range():
                     "--vertical-mode",
                     "adjacent",
                     "--clustering-metrics-subdir",
-                    "clustering_metrics_current",
+                    "clustering_metrics",
                     "--sankey-subdir",
-                    "sankey_current",
+                    "sankey",
                 ],
                 cwd=str(_BACKEND_DIR.parent),
                 check=True,
                 capture_output=True,
                 timeout=300,
             )
-        except (subprocess.CalledProcessError, subprocess.TimeoutError) as e:
+        except subprocess.SubprocessError as e:
             print(f"[flask-backend] materialize_sankey_compat failed (non-fatal): {e}", flush=True)
+            stderr = getattr(e, "stderr", None)
+            if stderr:
+                try:
+                    print("[flask-backend] materialize_sankey_compat stderr:\n%s" % stderr.decode("utf-8", errors="ignore"), flush=True)
+                except Exception:
+                    print("[flask-backend] materialize_sankey_compat stderr(raw): %r" % (stderr,), flush=True)
 
     # Optional: recompute layer-to-layer and epoch-to-epoch transition stats for updated cluster assignments.
     # This is disabled by default for generate-range to keep response time low; run the script manually
@@ -678,11 +683,16 @@ def generate_range():
                     capture_output=True,
                     timeout=300,
                 )
-            except (subprocess.CalledProcessError, subprocess.TimeoutError) as e:
+            except subprocess.SubprocessError as e:
                 print(f"[flask-backend] compute_layer_transition_stats failed (non-fatal): {e}", flush=True)
+                stderr = getattr(e, "stderr", None)
+                if stderr:
+                    try:
+                        print("[flask-backend] compute_layer_transition_stats stderr:\n%s" % stderr.decode("utf-8", errors="ignore"), flush=True)
+                    except Exception:
+                        print("[flask-backend] compute_layer_transition_stats stderr(raw): %r" % (stderr,), flush=True)
 
-    # Collect updated-results summary from interactive output dirs (scatterplot_current, topk_current, etc.)
-    updated = _collect_updated_results_summary(base, output_suffix="_current")
+    updated = _collect_updated_results_summary(base, output_suffix="")
     summary = {dataset: {"status": "done", "updated": updated}}
 
     out = {"ok": True, "min": k_min, "max": k_max, "dataset": dataset, "clustering": clustering, "summary": summary}
@@ -701,8 +711,7 @@ def generate_range():
 
 
 def _collect_updated_results_summary(base: Path, output_suffix: str = "") -> Dict[str, object]:
-    """Scan pipeline output dir and return counts for scatter, topk, substructures, sankey, cluster_assignments.
-    When output_suffix is '_current', scans scatterplot_current, topk_current, etc. (interactive run)."""
+    """Scan pipeline output dir and return counts for scatter, topk, substructures, sankey, cluster_assignments."""
     summary = {"cells": 0, "scatter_files": 0, "topk_representatives": 0, "topk_sorted_members": 0, "substructure_entries": 0, "sankey_ok": False, "cluster_assignments_ok": False}
     if not base.is_dir():
         return summary
@@ -845,7 +854,7 @@ def cluster_containment():
     if clustering == "pgmeans":
         clustering = "gmm"
     data_split = payload.get("data_split")
-    use_current = bool(payload.get("use_current"))
+    _ = payload.get("use_current")  # deprecated, ignored
     user_clustering = payload.get("user_clustering")
     if not isinstance(user_clustering, list):
         user_clustering = []
@@ -858,7 +867,7 @@ def cluster_containment():
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
     case_dir = _case_dir(dataset, clustering, data_split)
-    cm_subdir = "clustering_metrics_current" if use_current else "clustering_metrics"
+    cm_subdir = "clustering_metrics"
     csv_path = case_dir / cm_subdir / "cluster_assignments_with_real_id.csv"
     if not csv_path.is_file():
         return jsonify({"ok": False, "error": "cluster_assignments_not_found", "path": str(csv_path)}), 404
@@ -945,7 +954,7 @@ def cell_cluster_metrics():
     """
     Compute external clustering metrics for every (epoch, layer) cell using user labels as ground truth.
     Request body:
-      - dataset, clustering, optional data_split, optional use_current
+      - dataset, clustering, optional data_split
       - user_clustering: list of { "real_id": <id>, "user_cluster_id": <int> }
     Response:
       - metrics_by_cell: { "<epoch>|<layer>": { metric_name: value_or_null, sample_count: n } }
@@ -960,7 +969,7 @@ def cell_cluster_metrics():
     if clustering == "pgmeans":
         clustering = "gmm"
     data_split = payload.get("data_split")
-    use_current = bool(payload.get("use_current"))
+    _ = payload.get("use_current")  # deprecated, ignored
     user_clustering = payload.get("user_clustering")
     if not isinstance(user_clustering, list):
         user_clustering = []
@@ -986,7 +995,7 @@ def cell_cluster_metrics():
         return jsonify({"ok": False, "error": "empty_user_clustering"}), 400
 
     case_dir = _case_dir(dataset, clustering, data_split)
-    cm_subdir = "clustering_metrics_current" if use_current else "clustering_metrics"
+    cm_subdir = "clustering_metrics"
     csv_path = case_dir / cm_subdir / "cluster_assignments_with_real_id.csv"
     if not csv_path.is_file():
         return jsonify({"ok": False, "error": "cluster_assignments_not_found", "path": str(csv_path)}), 404
@@ -1343,7 +1352,7 @@ def substructures_cluster_topm():
     - If cluster_id is provided: return that single cluster.
     - If cluster_id is omitted or "all": return all clusters in the cell.
     Supports GET query or POST JSON with: dataset, epoch, layer, m,
-    optional: cluster_id, group (knn|kfn|both), clustering, data_split, use_current.
+    optional: cluster_id, group (knn|kfn|both), clustering, data_split.
     """
     if request.method == "OPTIONS":
         return ("", 204)
@@ -1364,7 +1373,7 @@ def substructures_cluster_topm():
     group = str(pick("group", "both")).strip().lower()
     clustering = str(pick("clustering", DEFAULT_CLUSTERING)).strip().lower()
     data_split = pick("data_split") or pick("preferred_split")
-    use_current = _parse_bool(pick("use_current", True), default=True)
+    _ = pick("use_current", None)  # deprecated, ignored
 
     if dataset not in DEFAULT_CASES:
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
@@ -1392,12 +1401,7 @@ def substructures_cluster_topm():
             return jsonify({"ok": False, "error": "invalid_m"}), 400
 
     case_dir = _case_dir(dataset, clustering, data_split)
-    topk_subdir = "topk_current" if use_current else "topk"
-    sorted_path = case_dir / topk_subdir / "cluster_sorted_members.json"
-    if topk_subdir == "topk_current" and not sorted_path.is_file():
-        # Fallback for runs/materializations that only have static topk files.
-        sorted_path = case_dir / "topk" / "cluster_sorted_members.json"
-        use_current = False
+    sorted_path = case_dir / "topk" / "cluster_sorted_members.json"
     if not sorted_path.is_file():
         return jsonify({"ok": False, "error": "sorted_members_not_found", "path": str(sorted_path)}), 404
 
@@ -1470,7 +1474,7 @@ def substructures_cluster_topm():
         "dataset": dataset,
         "clustering": clustering,
         "data_split": _normalize_split(data_split) or "test",
-        "use_current": use_current,
+        "use_current": False,
         "epoch": str(epoch),
         "layer": str(layer),
         "cluster_id": "all" if cluster_all else int(cluster_id),

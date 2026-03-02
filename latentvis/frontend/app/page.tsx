@@ -818,7 +818,7 @@ export default function Home() {
           k: config.k,
           linkage: config.linkage,
           include_payload: true,
-          persist: true,
+          persist: false,
         }),
       });
       if (!res.ok) {
@@ -879,7 +879,7 @@ export default function Home() {
       }
       setSankeyRefreshKey((k) => k + 1);
       setGenerateStatusText(
-        `Agglomerative all-cell regenerate finished: k=${config.k == null ? "auto(2-15)" : config.k}, linkage=${config.linkage}.`
+        `Agglomerative regenerate finished (in-memory): k=${config.k == null ? "auto(2-15)" : config.k}, linkage=${config.linkage}.`
       );
     } catch (err) {
       console.error("Failed to regenerate all cells for agglomerative:", err);
