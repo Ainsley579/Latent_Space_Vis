@@ -543,8 +543,15 @@ export default function ScatterPlot({
   return (
     <div className="w-full h-full flex flex-col">
       <div className="shrink-0 border-b border-zinc-200 bg-white/90 px-1.5 py-1">
-        <div className="text-sm font-semibold text-zinc-700 leading-4">Scatterplot</div>
-        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-sm font-semibold text-zinc-700 leading-4">Scatterplot</div>
+          {labelFileName && (
+            <span className="text-[11px] text-zinc-500 truncate max-w-[190px]" title={labelFileName}>
+              {labelFileName}
+            </span>
+          )}
+        </div>
+        <div className="mt-1 flex items-center gap-1.5 flex-nowrap overflow-x-auto whitespace-nowrap">
           {projection && (
             <>
               <span className="text-[11px] text-zinc-600">Method:</span>
@@ -595,7 +602,6 @@ export default function ScatterPlot({
           >
             labelled
           </button>
-          {labelFileName && <span className="text-[11px] text-zinc-500 truncate max-w-[200px]">{labelFileName}</span>}
           {labelLoadError && <span className="text-[11px] text-red-600 truncate max-w-[240px]">{labelLoadError}</span>}
           <button
             type="button"

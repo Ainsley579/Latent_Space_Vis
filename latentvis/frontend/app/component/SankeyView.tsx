@@ -178,6 +178,8 @@ type SankeyViewProps = {
   onCellSelect?: (active: boolean) => void;
   onSwapAxes?: (swap: boolean) => void;
   onVisibleEpochsChange?: (epochs: string[]) => void;
+  cellMetricByCell?: Record<string, Record<string, number | null>> | null;
+  selectedCellMetric?: string;
 };
 
 export default function SankeyView({
@@ -194,6 +196,8 @@ export default function SankeyView({
   onCellSelect,
   onSwapAxes,
   onVisibleEpochsChange,
+  cellMetricByCell,
+  selectedCellMetric = "cluster_count",
 }: SankeyViewProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const fmiRef = useRef<HTMLDivElement | null>(null);
@@ -225,7 +229,6 @@ export default function SankeyView({
     margin: { top: number; left: number; right: number; bottom: number };
     cellMargin: { top: number; right: number; bottom: number; left: number };
   } | null>(null);
-
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const q = Number(p.get("epochMin"));
@@ -415,9 +418,25 @@ export default function SankeyView({
             cellClusterCount.set(`${rowName}|${columnName}`, ids.size || nodesForCell.length || 0);
           });
         });
-        const clusterCounts = Array.from(cellClusterCount.values());
-        const minCellCluster = clusterCounts.length ? Math.min(...clusterCounts) : 0;
-        const maxCellCluster = clusterCounts.length ? Math.max(...clusterCounts) : 1;
+        const cellMetricValue = new Map<string, number>();
+        ROW_NAMES.forEach((rowName) => {
+          COLUMN_NAMES.forEach((columnName) => {
+            const key = `${rowName}|${columnName}`;
+            if (selectedCellMetric === "cluster_count") {
+              cellMetricValue.set(key, cellClusterCount.get(key) ?? 0);
+              return;
+            }
+            const metricVal = Number(cellMetricByCell?.[key]?.[selectedCellMetric]);
+            if (Number.isFinite(metricVal)) {
+              cellMetricValue.set(key, metricVal);
+            } else {
+              cellMetricValue.set(key, 0);
+            }
+          });
+        });
+        const metricVals = Array.from(cellMetricValue.values());
+        const minCellCluster = metricVals.length ? Math.min(...metricVals) : 0;
+        const maxCellCluster = metricVals.length ? Math.max(...metricVals) : 1;
         setCellLegendRange((prev) =>
           prev.min === minCellCluster && prev.max === maxCellCluster
             ? prev
@@ -447,12 +466,14 @@ export default function SankeyView({
               .datum({ rowName, columnName, col, row });
 
             const cellCount = cellClusterCount.get(`${rowName}|${columnName}`) ?? 0;
+            const metricVal = cellMetricValue.get(`${rowName}|${columnName}`) ?? 0;
             g.append("rect")
               .attr("width", cellW)
               .attr("height", cellH)
-              .attr("fill", showCellBackground ? cellBgColor(cellCount) : "white")
+              .attr("fill", showCellBackground ? cellBgColor(metricVal) : "white")
               .attr("stroke", "#888")
-              .attr("data-cluster-count", cellCount);
+              .attr("data-cluster-count", cellCount)
+              .attr("data-cell-metric", metricVal);
 
             const innerG = g.append("g").attr("transform", `translate(${cellMargin.left}, ${cellMargin.top})`);
             cells.push(innerG);
@@ -1307,6 +1328,8 @@ export default function SankeyView({
     showGapHeatmap,
     epochTransitionThreshold,
     onVisibleEpochsChange,
+    selectedCellMetric,
+    cellMetricByCell,
   ]);
 
   useEffect(() => {
@@ -1696,6 +1719,21 @@ export default function SankeyView({
   const linkEndPct = linkValueMaxBound > 0 ? (normalizedLinkMax / linkValueMaxBound) * 100 : 100;
   const normalizedEpochThreshold = Math.max(0, Math.min(maxEpochTransitionPct, epochTransitionThreshold));
   const epochPctPos = maxEpochTransitionPct > 0 ? (normalizedEpochThreshold / maxEpochTransitionPct) * 100 : 0;
+  const cellLegendMinText =
+    selectedCellMetric === "cluster_count" ? cellLegendRange.min.toFixed(0) : cellLegendRange.min.toFixed(3);
+  const cellLegendMaxText =
+    selectedCellMetric === "cluster_count" ? cellLegendRange.max.toFixed(0) : cellLegendRange.max.toFixed(3);
+  const cellMetricDisplayNameMap: Record<string, string> = {
+    cluster_count: "Cluster Number",
+    ari: "ARI",
+    ami: "AMI",
+    nmi: "NMI",
+    homogeneity: "Homogeneity",
+    completeness: "Completeness",
+    v_measure: "V-Measure",
+    fowlkes_mallows: "FMI",
+  };
+  const cellMetricDisplayName = cellMetricDisplayNameMap[selectedCellMetric] ?? selectedCellMetric;
 
   return (
     <div className="timeline-root h-full flex flex-col" style={{ marginLeft: 0 }}>
@@ -1836,7 +1874,7 @@ export default function SankeyView({
                 onClick={() => setShowCellBackground((v) => !v)}
                 style={{ fontWeight: showCellBackground ? 600 : 400 }}
               >
-                Cell BG
+                {cellMetricDisplayName}
               </button>
               <button
                 type="button"
@@ -1852,19 +1890,19 @@ export default function SankeyView({
           <span className="control-label legend-label">Legend:</span>
           <div className="sankey-mini-legend" aria-label="Sankey Color Legend">
             <span className="legend-item">
-              <span className="legend-text">Cell BG</span>
-              <span className="legend-range">{cellLegendRange.min}</span>
+              <span className="legend-text">{cellMetricDisplayName}</span>
+              <span className="legend-range">{cellLegendMinText}</span>
               <span className="legend-swatch" style={{ background: "linear-gradient(to right, #eff6ff, #46518C)" }} />
-              <span className="legend-range">{cellLegendRange.max}</span>
+              <span className="legend-range">{cellLegendMaxText}</span>
             </span>
             <span className="legend-item">
-              <span className="legend-text">Gap R</span>
+              <span className="legend-text">Transition %</span>
               <span className="legend-range">0</span>
               <span className="legend-swatch" style={{ background: "linear-gradient(to right, #f3f4f6, #7f1d1d)" }} />
               <span className="legend-range">{gapLegendMax.toFixed(1)}%</span>
             </span>
             <span className="legend-item">
-              <span className="legend-text">Gap G</span>
+              <span className="legend-text">Transition %</span>
               <span className="legend-range">0</span>
               <span className="legend-swatch" style={{ background: "linear-gradient(to right, #f0fdf4, #166534)" }} />
               <span className="legend-range">{gapLegendMax.toFixed(1)}%</span>

@@ -940,6 +940,157 @@ def cluster_containment():
     })
 
 
+@app.route("/cell-cluster-metrics", methods=["POST", "OPTIONS"])
+def cell_cluster_metrics():
+    """
+    Compute external clustering metrics for every (epoch, layer) cell using user labels as ground truth.
+    Request body:
+      - dataset, clustering, optional data_split, optional use_current
+      - user_clustering: list of { "real_id": <id>, "user_cluster_id": <int> }
+    Response:
+      - metrics_by_cell: { "<epoch>|<layer>": { metric_name: value_or_null, sample_count: n } }
+      - metric_names
+    """
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    payload = request.get_json(silent=True) or {}
+    dataset = payload.get("dataset")
+    clustering = (payload.get("clustering") or DEFAULT_CLUSTERING).strip().lower()
+    if clustering == "pgmeans":
+        clustering = "gmm"
+    data_split = payload.get("data_split")
+    use_current = bool(payload.get("use_current"))
+    user_clustering = payload.get("user_clustering")
+    if not isinstance(user_clustering, list):
+        user_clustering = []
+
+    if not dataset or dataset not in DEFAULT_CASES:
+        return jsonify({"ok": False, "error": "invalid_dataset"}), 400
+    if clustering not in ("gmm", "agglomerative", "hdbscan"):
+        return jsonify({"ok": False, "error": "invalid_clustering"}), 400
+
+    user_rid_to_cluster: Dict[str, int] = {}
+    for item in user_clustering:
+        if not isinstance(item, dict):
+            continue
+        rid = item.get("real_id")
+        cid = item.get("user_cluster_id")
+        if rid is None or cid is None:
+            continue
+        try:
+            user_rid_to_cluster[str(rid)] = int(cid)
+        except (ValueError, TypeError):
+            continue
+    if not user_rid_to_cluster:
+        return jsonify({"ok": False, "error": "empty_user_clustering"}), 400
+
+    case_dir = _case_dir(dataset, clustering, data_split)
+    cm_subdir = "clustering_metrics_current" if use_current else "clustering_metrics"
+    csv_path = case_dir / cm_subdir / "cluster_assignments_with_real_id.csv"
+    if not csv_path.is_file():
+        return jsonify({"ok": False, "error": "cluster_assignments_not_found", "path": str(csv_path)}), 404
+
+    try:
+        from sklearn.metrics import (
+            adjusted_mutual_info_score,
+            adjusted_rand_score,
+            fowlkes_mallows_score,
+            homogeneity_completeness_v_measure,
+            normalized_mutual_info_score,
+        )
+    except Exception as e:
+        return jsonify({"ok": False, "error": "sklearn_unavailable", "detail": str(e)}), 500
+
+    import csv as csv_module
+
+    metric_names = [
+        "ari",
+        "ami",
+        "nmi",
+        "homogeneity",
+        "completeness",
+        "v_measure",
+        "fowlkes_mallows",
+    ]
+
+    # cell_key -> (y_true_list, y_pred_list)
+    cell_truth: Dict[str, List[int]] = {}
+    cell_pred: Dict[str, List[int]] = {}
+    layer_cols: List[str] = []
+    with csv_path.open("r", encoding="utf-8") as f:
+        reader = csv_module.DictReader(f)
+        fields = list(reader.fieldnames or [])
+        layer_cols = [c for c in fields if c.endswith("_cluster")]
+        for row in reader:
+            rid = row.get("real_id")
+            epoch = row.get("epoch")
+            if rid is None or epoch is None:
+                continue
+            u = user_rid_to_cluster.get(str(rid))
+            if u is None:
+                continue
+            epoch_key = str(epoch)
+            for col in layer_cols:
+                raw = row.get(col)
+                if raw in (None, ""):
+                    continue
+                try:
+                    pred = int(float(raw))
+                except (ValueError, TypeError):
+                    continue
+                if pred < 0:
+                    continue
+                layer = col[: -len("_cluster")]
+                cell_key = f"{epoch_key}|{layer}"
+                if cell_key not in cell_truth:
+                    cell_truth[cell_key] = []
+                    cell_pred[cell_key] = []
+                cell_truth[cell_key].append(u)
+                cell_pred[cell_key].append(pred)
+
+    metrics_by_cell: Dict[str, Dict[str, Optional[float]]] = {}
+    for cell_key, y_true in cell_truth.items():
+        y_pred = cell_pred.get(cell_key, [])
+        n = min(len(y_true), len(y_pred))
+        result: Dict[str, Optional[float]] = {m: None for m in metric_names}
+        result["sample_count"] = float(n)
+        if n < 2:
+            metrics_by_cell[cell_key] = result
+            continue
+
+        labels_true = y_true[:n]
+        labels_pred = y_pred[:n]
+        unique_true = len(set(labels_true))
+        unique_pred = len(set(labels_pred))
+        if unique_true < 1 or unique_pred < 1:
+            metrics_by_cell[cell_key] = result
+            continue
+
+        try:
+            result["ari"] = float(adjusted_rand_score(labels_true, labels_pred))
+            result["ami"] = float(adjusted_mutual_info_score(labels_true, labels_pred))
+            result["nmi"] = float(normalized_mutual_info_score(labels_true, labels_pred))
+            h, c, v = homogeneity_completeness_v_measure(labels_true, labels_pred)
+            result["homogeneity"] = float(h)
+            result["completeness"] = float(c)
+            result["v_measure"] = float(v)
+            result["fowlkes_mallows"] = float(fowlkes_mallows_score(labels_true, labels_pred))
+        except Exception:
+            # Keep nulls for unstable/degenerate cells.
+            pass
+        metrics_by_cell[cell_key] = result
+
+    return jsonify({
+        "ok": True,
+        "dataset": dataset,
+        "clustering": clustering,
+        "metric_names": metric_names,
+        "layer_columns": layer_cols,
+        "metrics_by_cell": metrics_by_cell,
+    })
+
+
 def _load_embedding_cell(dataset, epoch, layer, data_split: Optional[str] = None):
     """Load embedding matrix and real_ids for (dataset, epoch, layer). Returns (X, real_ids)."""
     pt_path = EMBEDDING_PATHS.get(dataset)

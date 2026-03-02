@@ -66,6 +66,11 @@ type ClusterContainmentPayload = {
   }>;
 };
 
+type CellMetricByCellPayload = {
+  metrics_by_cell: Record<string, Record<string, number | null>>;
+  metric_names: string[];
+};
+
 type KnnTopmOption = "5" | "10" | "20" | "all";
 type HoverPreviewState =
   | { kind: "image"; src: string; left: number; top: number; source?: "topk" | "members" | "other" }
@@ -341,6 +346,9 @@ export default function Home() {
   const [clusterContainment, setClusterContainment] = useState<ClusterContainmentPayload | null>(null);
   const [clusterContainmentLoading, setClusterContainmentLoading] = useState(false);
   const [clusterContainmentError, setClusterContainmentError] = useState<string | null>(null);
+  const [cellMetricByCell, setCellMetricByCell] = useState<Record<string, Record<string, number | null>> | null>(null);
+  const [cellMetricNames, setCellMetricNames] = useState<string[]>([]);
+  const [selectedCellBgMetric, setSelectedCellBgMetric] = useState<string>("cluster_count");
   const memberListRef = useRef<HTMLDivElement | null>(null);
 
   const DEFAULT_WORKSPACE_WIDTH_PCT = 50; // right column default 50%
@@ -349,6 +357,26 @@ export default function Home() {
   const [workspaceHeightPct] = useState(80);
   const layoutGridRef = useRef<HTMLDivElement | null>(null);
   const [scatterFixedWidthPx, setScatterFixedWidthPx] = useState<number | null>(null);
+  const cellBgMetricOptions = useMemo(
+    () => {
+      const metricLabelMap: Record<string, string> = {
+        cluster_count: "Cluster Number",
+        ari: "ARI",
+        ami: "AMI",
+        nmi: "NMI",
+        homogeneity: "Homo",
+        completeness: "Comp",
+        v_measure: "V-Measure",
+        fowlkes_mallows: "FMI",
+      };
+      const values = [
+        "cluster_count",
+        ...cellMetricNames.filter((m) => m && m !== "sample_count"),
+      ];
+      return values.map((v) => ({ value: v, label: metricLabelMap[v] ?? v }));
+    },
+    [cellMetricNames]
+  );
   const syncRafRef = useRef<number | null>(null);
   const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
   const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
@@ -573,6 +601,8 @@ export default function Home() {
       setClusterContainment(null);
       setClusterContainmentError(null);
       setClusterContainmentLoading(false);
+      setCellMetricByCell(null);
+      setCellMetricNames([]);
       return;
     }
     const controller = new AbortController();
@@ -624,6 +654,63 @@ export default function Home() {
     selectedDataSplit,
     selectedModel,
     selectedLayer,
+    generatedRuntimeMatchesCurrent,
+  ]);
+
+  useEffect(() => {
+    const valid = new Set(cellBgMetricOptions.map((o) => o.value));
+    if (!valid.has(selectedCellBgMetric)) {
+      setSelectedCellBgMetric("cluster_count");
+    }
+  }, [cellBgMetricOptions, selectedCellBgMetric]);
+
+  useEffect(() => {
+    if (!uploadedUserClustering || uploadedUserClustering.rows.length === 0) {
+      setCellMetricByCell(null);
+      setCellMetricNames([]);
+      return;
+    }
+    const controller = new AbortController();
+    fetch(`${apiBase}/cell-cluster-metrics`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        dataset: selectedDataset,
+        clustering: selectedClustering,
+        data_split: selectedDataSplit,
+        use_current: generatedRuntimeMatchesCurrent,
+        user_clustering: uploadedUserClustering.rows,
+      }),
+    })
+      .then(async (res) => {
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json?.ok) {
+          throw new Error(json?.error ? String(json.error) : `cell-cluster-metrics failed: ${res.status}`);
+        }
+        return json as CellMetricByCellPayload;
+      })
+      .then((json) => {
+        setCellMetricByCell(
+          json && json.metrics_by_cell && typeof json.metrics_by_cell === "object"
+            ? json.metrics_by_cell
+            : {}
+        );
+        setCellMetricNames(Array.isArray(json.metric_names) ? json.metric_names : []);
+      })
+      .catch((err) => {
+        if ((err as Error)?.name === "AbortError") return;
+        console.error(err);
+        setCellMetricByCell(null);
+        setCellMetricNames([]);
+      });
+    return () => controller.abort();
+  }, [
+    apiBase,
+    uploadedUserClustering,
+    selectedDataset,
+    selectedClustering,
+    selectedDataSplit,
     generatedRuntimeMatchesCurrent,
   ]);
 
@@ -1422,6 +1509,8 @@ export default function Home() {
                 }}
                 onSwapAxes={(swap) => setSwapAxes(swap)}
                 onVisibleEpochsChange={handleVisibleEpochsChange}
+                cellMetricByCell={cellMetricByCell}
+                selectedCellMetric={selectedCellBgMetric}
                 externalTransform={sankeyViewExternalTransform}
                 onTransform={(t) => handleSankeyTransformSync(t, "view")}
               />
@@ -1953,6 +2042,9 @@ export default function Home() {
                     setCellSelected(false);
                     setActiveSankeyRows([]);
                   }}
+                  cellBgMetric={selectedCellBgMetric}
+                  cellBgMetricOptions={cellBgMetricOptions}
+                  onCellBgMetricChange={setSelectedCellBgMetric}
                   syncOn={syncLinkedSankeyViews}
                   onToggleSync={toggleSyncLinkedViews}
                   largePreviewOn={showLargeHoverPreview}
