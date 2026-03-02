@@ -1320,8 +1320,8 @@ export default function Home() {
 
   const LEFT_COL_RATIO_IN_WORKSPACE = 45 / 55;
   const MID_COL_RATIO_IN_WORKSPACE = 10 / 55;
-  const TOP_ROW_RATIO_IN_WORKSPACE = 40 / 60;
-  const MID_ROW_RATIO_IN_WORKSPACE = 20 / 60;
+  const TOP_ROW_RATIO_IN_WORKSPACE = 46 / 60;
+  const MID_ROW_RATIO_IN_WORKSPACE = 14 / 60;
   const effectiveWorkspaceWidthPct = workspaceWidthPct;
   const leftColPct = effectiveWorkspaceWidthPct * LEFT_COL_RATIO_IN_WORKSPACE;
   const midColPct = effectiveWorkspaceWidthPct * MID_COL_RATIO_IN_WORKSPACE;

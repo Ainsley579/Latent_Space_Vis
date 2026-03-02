@@ -347,7 +347,7 @@ export default function SankeyView({
 
         const margin = { top: 20, left: 0, right: 0, bottom: 20 };
         const CELL_W = 120;
-        const CELL_H = 150;
+        const CELL_H = 40;
         const CELL_GAP = 10;
         const cellStepX = CELL_W + CELL_GAP;
         const cellStepY = CELL_H + CELL_GAP;
