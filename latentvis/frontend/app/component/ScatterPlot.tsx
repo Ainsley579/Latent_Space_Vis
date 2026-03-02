@@ -543,67 +543,67 @@ export default function ScatterPlot({
   return (
     <div className="w-full h-full flex flex-col">
       <div className="shrink-0 border-b border-zinc-200 bg-white/90 px-1.5 py-1">
-        <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto whitespace-nowrap">
-        {projection && (
-          <>
-            <span className="text-sm font-semibold text-zinc-700">Scatterplot</span>
-            <span className="text-[11px] text-zinc-600">Method:</span>
-            <select
-              value={projection}
-              onChange={(e) => onProjectionChange?.(e.target.value as "pca" | "mds" | "umap" | "tsne")}
-              className="text-[11px] leading-4 border border-zinc-300 rounded px-1.5 py-0.5 bg-white text-zinc-800"
-            >
-              <option value="pca">PCA</option>
-              <option value="mds">MDS</option>
-              <option value="umap">UMAP</option>
-              <option value="tsne">t-SNE</option>
-            </select>
-          </>
-        )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv,text/csv"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleLabelFileUpload(file);
-            e.currentTarget.value = "";
-          }}
-        />
-        <button
-          type="button"
-          className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
-            colorMode === "cluster" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-zinc-300 text-zinc-700 bg-white"
-          }`}
-          onClick={() => setColorMode("cluster")}
-        >
-          cluster
-        </button>
-        <button
-          type="button"
-          className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
-            colorMode === "label" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-zinc-300 text-zinc-700 bg-white"
-          } disabled:opacity-50`}
-          onClick={() => setColorMode("label")}
-          disabled={Object.keys(labelById).length === 0 && Object.keys(labelBySmiles).length === 0}
-          title={
-            Object.keys(labelById).length === 0 && Object.keys(labelBySmiles).length === 0
-              ? "Upload a CSV with label column first"
-              : "Use uploaded label colors"
-          }
-        >
-          labelled
-        </button>
-        {labelFileName && <span className="text-[11px] text-zinc-500 truncate max-w-[200px]">{labelFileName}</span>}
-        {labelLoadError && <span className="text-[11px] text-red-600 truncate max-w-[240px]">{labelLoadError}</span>}
-        <button
-          type="button"
-          className="ml-auto px-0 py-0 text-[11px] leading-4 text-blue-600 underline decoration-1 underline-offset-2 hover:text-blue-700 hover:decoration-2 transition-colors cursor-pointer"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          upload
-        </button>
+        <div className="text-sm font-semibold text-zinc-700 leading-4">Scatterplot</div>
+        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+          {projection && (
+            <>
+              <span className="text-[11px] text-zinc-600">Method:</span>
+              <select
+                value={projection}
+                onChange={(e) => onProjectionChange?.(e.target.value as "pca" | "mds" | "umap" | "tsne")}
+                className="text-[11px] leading-4 border border-zinc-300 rounded px-1.5 py-0.5 bg-white text-zinc-800"
+              >
+                <option value="pca">PCA</option>
+                <option value="mds">MDS</option>
+                <option value="umap">UMAP</option>
+                <option value="tsne">t-SNE</option>
+              </select>
+            </>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleLabelFileUpload(file);
+              e.currentTarget.value = "";
+            }}
+          />
+          <button
+            type="button"
+            className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
+              colorMode === "cluster" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-zinc-300 text-zinc-700 bg-white"
+            }`}
+            onClick={() => setColorMode("cluster")}
+          >
+            cluster
+          </button>
+          <button
+            type="button"
+            className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
+              colorMode === "label" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-zinc-300 text-zinc-700 bg-white"
+            } disabled:opacity-50`}
+            onClick={() => setColorMode("label")}
+            disabled={Object.keys(labelById).length === 0 && Object.keys(labelBySmiles).length === 0}
+            title={
+              Object.keys(labelById).length === 0 && Object.keys(labelBySmiles).length === 0
+                ? "Upload a CSV with label column first"
+                : "Use uploaded label colors"
+            }
+          >
+            labelled
+          </button>
+          {labelFileName && <span className="text-[11px] text-zinc-500 truncate max-w-[200px]">{labelFileName}</span>}
+          {labelLoadError && <span className="text-[11px] text-red-600 truncate max-w-[240px]">{labelLoadError}</span>}
+          <button
+            type="button"
+            className="px-0 py-0 text-[11px] leading-4 text-blue-600 underline decoration-1 underline-offset-2 hover:text-blue-700 hover:decoration-2 transition-colors cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            upload
+          </button>
         </div>
       </div>
       <div ref={containerRef} className="w-full flex-1 min-h-0" />
