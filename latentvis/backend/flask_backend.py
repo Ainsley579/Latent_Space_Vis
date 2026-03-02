@@ -80,12 +80,20 @@ def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[
     - DATA_ROOT/<case>/train/...
     """
     method = (clustering or DEFAULT_CLUSTERING).strip().lower()
-    # "pgmeans" is represented as "gmm" in backend APIs, but its files live under split roots.
-    if method not in ("pgmeans", "gmm"):
-        # For agglomerative/hdbscan, always use the original clustering folders.
-        return DATA_ROOT / case / "clustering" / method
     split = _normalize_split(data_split) or "test"
-    return DATA_ROOT / case / split
+    # "pgmeans" is represented as "gmm" in backend APIs.
+    if method in ("pgmeans", "gmm"):
+        return DATA_ROOT / case / split
+
+    # Non-pgmeans methods are split-aware in current frontend data layout:
+    #   /data/<case>/<split>/clustering/<method>/...
+    # Keep compatibility with older unsplit layout:
+    #   /data/<case>/clustering/<method>/...
+    split_aware = DATA_ROOT / case / split / "clustering" / method
+    legacy = DATA_ROOT / case / "clustering" / method
+    if split_aware.exists() or not legacy.exists():
+        return split_aware
+    return legacy
 
 
 def _ordered_models(models: Iterable[str]) -> List[str]:
