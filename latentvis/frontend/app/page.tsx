@@ -1479,6 +1479,7 @@ export default function Home() {
                 mode={swapAxes ? "model" : "layer"}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
+                visibleEpochs={swapAxes ? visibleEpochs : null}
                 syncTransform={syncLinkedSankeyViews ? syncTransformHorizontal : undefined}
                 onSyncTransform={(t) => {
                   if (!syncLinkedSankeyViews) return;
