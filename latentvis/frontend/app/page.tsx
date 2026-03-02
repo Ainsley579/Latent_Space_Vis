@@ -634,7 +634,7 @@ export default function Home() {
           clustering: selectedClustering,
           data_split: selectedDataSplit,
           include_payload: true,
-          persist: false,
+          persist: true,
           min: minValue,
           max: maxValue,
         }),
@@ -692,7 +692,7 @@ export default function Home() {
       );
       setSubstructures(Array.isArray(casePayload.substructures) ? casePayload.substructures : []);
       setSankeyRefreshKey((k: number) => k + 1);
-      setGenerateStatusText("Generate finished (backend temp payload, no static file writes).");
+      setGenerateStatusText("Generate finished (persisted *_current files and refreshed runtime payload).");
     } catch (err) {
       console.error("Failed to generate payload:", err);
       setGenerateStatusText(`Generate failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -725,7 +725,7 @@ export default function Home() {
           k: config.k,
           linkage: config.linkage,
           include_payload: true,
-          persist: false,
+          persist: true,
         }),
       });
       if (!res.ok) {

@@ -523,8 +523,9 @@ def generate_range():
 
     payload = request.get_json(silent=True) or {}
     include_payload = bool(payload.get("include_payload", False))
-    # Always run in non-persistent mode: generate data for frontend payload only.
-    persist = False
+    # Persist by default so downstream APIs (e.g. cluster-containment use_current)
+    # can read freshly generated *_current files from disk.
+    persist = bool(payload.get("persist", True))
     min_value = payload.get("min")
     max_value = payload.get("max")
     k_fixed = payload.get("k")
@@ -612,6 +613,7 @@ def generate_range():
             data_split=split_norm,
             write_fmi_cspa=False,
             interactive_output_suffix="_current",
+            resume=False,
             verbose_dr=False,
         )
         if not ok:
