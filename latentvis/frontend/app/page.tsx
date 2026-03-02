@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import SankeyView from "./component/SankeyView";
 import SankeyHorizontal from "./component/SankeyHorizontal";
 import SankeyVertical from "./component/SankeyVertical";
@@ -333,17 +333,18 @@ export default function Home() {
   const [searchSmiles, setSearchSmiles] = useState<string>("");
   const [showSearchResultsInMembers, setShowSearchResultsInMembers] = useState(false);
   const [lastSearchCount, setLastSearchCount] = useState<number | null>(null);
-  const [bottomSplitPct, setBottomSplitPct] = useState(35);
   const [uploadedUserClustering, setUploadedUserClustering] = useState<UploadedUserClustering | null>(null);
   const [clusterContainment, setClusterContainment] = useState<ClusterContainmentPayload | null>(null);
   const [clusterContainmentLoading, setClusterContainmentLoading] = useState(false);
   const [clusterContainmentError, setClusterContainmentError] = useState<string | null>(null);
   const memberListRef = useRef<HTMLDivElement | null>(null);
 
-  const [workspaceWidthPct, setWorkspaceWidthPct] = useState(80);
-  const [workspaceHeightPct, setWorkspaceHeightPct] = useState(70);
+  const DEFAULT_WORKSPACE_WIDTH_PCT = 50; // right column default 50%
+  const HALF_RIGHT_WORKSPACE_WIDTH_PCT = 83;
+  const [workspaceWidthPct, setWorkspaceWidthPct] = useState(DEFAULT_WORKSPACE_WIDTH_PCT);
+  const [workspaceHeightPct] = useState(80);
   const layoutGridRef = useRef<HTMLDivElement | null>(null);
-  const bottomSplitHostRef = useRef<HTMLDivElement | null>(null);
+  const [scatterFixedWidthPx, setScatterFixedWidthPx] = useState<number | null>(null);
   const syncRafRef = useRef<number | null>(null);
   const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
   const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
@@ -1318,10 +1319,28 @@ export default function Home() {
     return () => window.removeEventListener("pointermove", onPointerMove);
   }, [hoverPreview]);
 
+  useEffect(() => {
+    const host = layoutGridRef.current;
+    if (!host) return;
+    const MIN_RIGHT_COL_PCT = 100 - HALF_RIGHT_WORKSPACE_WIDTH_PCT; // 17%
+    const estimateScatterMinWidth = () => {
+      const hostW = host.getBoundingClientRect().width;
+      if (hostW <= 0) return;
+      const rightColMinW = (hostW * MIN_RIGHT_COL_PCT) / 100;
+      // Account for right-column paddings/borders/gaps to keep scatter at the collapsed-width feel.
+      const next = Math.max(140, Math.round(rightColMinW - 14));
+      setScatterFixedWidthPx(next);
+    };
+    estimateScatterMinWidth();
+    const ro = new ResizeObserver(estimateScatterMinWidth);
+    ro.observe(host);
+    return () => ro.disconnect();
+  }, [HALF_RIGHT_WORKSPACE_WIDTH_PCT]);
+
   const LEFT_COL_RATIO_IN_WORKSPACE = 45 / 55;
   const MID_COL_RATIO_IN_WORKSPACE = 10 / 55;
-  const TOP_ROW_RATIO_IN_WORKSPACE = 46 / 60;
-  const MID_ROW_RATIO_IN_WORKSPACE = 14 / 60;
+  const TOP_ROW_RATIO_IN_WORKSPACE = 59.8 / 60;
+  const MID_ROW_RATIO_IN_WORKSPACE = 0.2 / 60;
   const effectiveWorkspaceWidthPct = workspaceWidthPct;
   const leftColPct = effectiveWorkspaceWidthPct * LEFT_COL_RATIO_IN_WORKSPACE;
   const midColPct = effectiveWorkspaceWidthPct * MID_COL_RATIO_IN_WORKSPACE;
@@ -1329,48 +1348,13 @@ export default function Home() {
   const topRowPct = workspaceHeightPct * TOP_ROW_RATIO_IN_WORKSPACE;
   const midRowPct = workspaceHeightPct * MID_ROW_RATIO_IN_WORKSPACE;
   const bottomRowPct = 100 - workspaceHeightPct;
+  const showMembersPanelByWidth = rightColPct >= 24;
 
-  function onWorkspaceResizeStart(event: ReactMouseEvent<HTMLElement>) {
-    event.preventDefault();
-    const onMove = (ev: MouseEvent) => {
-      const host = layoutGridRef.current;
-      if (!host) return;
-      const rect = host.getBoundingClientRect();
-      const relX = ((ev.clientX - rect.left) / rect.width) * 100;
-      const relY = ((ev.clientY - rect.top) / rect.height) * 100;
-      const nextW = Math.min(80, Math.max(40, relX));
-      const nextH = Math.min(85, Math.max(45, relY));
-      setWorkspaceWidthPct((prev) => (Math.abs(prev - nextW) < 0.1 ? prev : nextW));
-      setWorkspaceHeightPct((prev) => (Math.abs(prev - nextH) < 0.1 ? prev : nextH));
-    };
-
-    const onUp = () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
-
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-  }
-
-  function onBottomSplitResizeStart(event: ReactMouseEvent<HTMLElement>) {
-    event.preventDefault();
-    const onMove = (ev: MouseEvent) => {
-      const host = bottomSplitHostRef.current;
-      if (!host) return;
-      const rect = host.getBoundingClientRect();
-      const relX = ((ev.clientX - rect.left) / rect.width) * 100;
-      const next = Math.min(80, Math.max(20, relX));
-      setBottomSplitPct(next);
-    };
-
-    const onUp = () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
-
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+  function toggleWorkspaceWidthPreset() {
+    setWorkspaceWidthPct((prev) => {
+      const isHalfRight = Math.abs(prev - HALF_RIGHT_WORKSPACE_WIDTH_PCT) < 0.5;
+      return isHalfRight ? DEFAULT_WORKSPACE_WIDTH_PCT : HALF_RIGHT_WORKSPACE_WIDTH_PCT;
+    });
   }
 
   const nowTs = typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -1476,45 +1460,7 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="p-1 box-border" style={{ gridColumn: "3 / 4", gridRow: "1 / 4" }}>
-          
-            <div
-              id="instanceview"
-              className="w-full h-full border border-zinc-400 bg-white"
-            >
-              <TopkNearestPanel
-                rows={topkNearestRows}
-                selectedModel={selectedModel}
-                selectedLayer={selectedLayer}
-                selectedCluster={selectedNode?.cluster ?? null}
-                hoveredId={hoveredId}
-                onToggleHoverId={(id) => setHoveredId((prev) => (prev === id ? null : id))}
-                onSelectHoverId={(id) => toggleLockedHighlight(id)}
-                onHoverIdChange={(id) => setHoverFromMouse(id)}
-                getSmilesById={getSmilesById}
-                substructureByCluster={substructureByCluster}
-                clusterBadgeColor={clusterBadgeColor}
-                onClusterSelect={(cluster) => {
-                  setSelectedNode({ model: selectedModel, layer: selectedLayer, cluster });
-                  setSelectedIds(null);
-                  setHoveredId(null);
-                  setHoverLock(false);
-                  setSuppressScatterCluster(false);
-                  setCellSelected(true);
-                }}
-                hideTopk={workspaceWidthPct >= 79.5}
-                largePreviewOn={showLargeHoverPreview}
-                onSmilesPreviewStart={(smiles, anchor) => showSmilesPreviewAt(smiles, anchor, "topk")}
-                onSmilesPreviewEnd={() => setHoverPreview(null)}
-                bookmarkedIds={bookmarkedIds}
-                onToggleBookmark={toggleBookmark}
-                knnTopm={knnTopm}
-                onKnnTopmChange={setKnnTopm}
-                isKnnTopmLoading={isKnnTopmLoading}
-              />
-            </div>
-          </div>
-          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "2 / 3" }}>
+          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "2 / 4" }}>
             <div
               id="sankeyHorizontal"
               className="w-full h-full border border-zinc-400 relative"
@@ -1552,7 +1498,7 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="p-1 box-border" style={{ gridColumn: "2 / 3", gridRow: "2 / 3" }}>
+          <div className="p-1 box-border" style={{ gridColumn: "2 / 3", gridRow: "2 / 4" }}>
             <div
               id="editor"
               className="w-full h-full border border-zinc-400 relative"
@@ -1574,9 +1520,17 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="p-1 box-border" style={{ gridColumn: "1 / 3", gridRow: "3 / 4" }}>
-            <div ref={bottomSplitHostRef} className="w-full h-full flex min-w-0">
-              <div className="h-full min-w-0 flex flex-col border border-zinc-400" style={{ width: `${bottomSplitPct}%` }}>
+          <div className="p-1 box-border" style={{ gridColumn: "3 / 4", gridRow: "1 / 4" }}>
+            <div className="w-full h-full min-w-0 flex flex-col gap-1">
+              <div className="h-[25%] min-h-0 flex min-w-0 gap-1">
+              <div
+                className="h-full min-w-0 flex flex-col border border-zinc-400"
+                style={
+                  scatterFixedWidthPx != null
+                    ? { width: `${scatterFixedWidthPx}px`, maxWidth: "100%", flex: "0 0 auto" }
+                    : { flex: "1 1 auto" }
+                }
+              >
                 <div
                   id="scatterplot"
                   className="flex-1 min-h-0 w-full bg-white"
@@ -1627,23 +1581,7 @@ export default function Home() {
                   />
                 </div>
               </div>
-              <div
-                className="w-4 shrink-0 cursor-col-resize group flex items-center justify-center bg-zinc-200/70 hover:bg-zinc-400/70 transition-colors"
-                onMouseDown={onBottomSplitResizeStart}
-                title="Resize Scatterplot / Cluster Instances"
-              >
-                <div className="h-16 w-3 rounded bg-white/85 border border-zinc-300 shadow-sm flex flex-col items-center justify-center gap-0.5">
-                  <svg width="10" height="10" viewBox="0 0 16 16" aria-hidden="true" className="text-zinc-500 group-hover:text-zinc-700">
-                    <path d="M6 3L3 8l3 5M10 3l3 5-3 5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <div className="grid grid-cols-2 gap-[2px]">
-                    <span className="w-[2px] h-[2px] bg-zinc-500 rounded-full" />
-                    <span className="w-[2px] h-[2px] bg-zinc-500 rounded-full" />
-                    <span className="w-[2px] h-[2px] bg-zinc-500 rounded-full" />
-                    <span className="w-[2px] h-[2px] bg-zinc-500 rounded-full" />
-                  </div>
-                </div>
-              </div>
+              {showMembersPanelByWidth && (
               <div className="h-full min-w-0 flex-1 flex gap-1">
                 {SHOW_CONTAINMENT_VIEW && (
                   <div className="h-full min-w-[240px] w-[28%] border border-zinc-400 bg-white">
@@ -1869,15 +1807,52 @@ export default function Home() {
                   </div>
                 </div>
               </div>
+              )}
+              </div>
+              <div
+                id="instanceview"
+                className="h-[75%] min-h-0 border border-zinc-400 bg-white"
+              >
+                <TopkNearestPanel
+                  rows={topkNearestRows}
+                  selectedModel={selectedModel}
+                  selectedLayer={selectedLayer}
+                  selectedCluster={selectedNode?.cluster ?? null}
+                  hoveredId={hoveredId}
+                  onToggleHoverId={(id) => setHoveredId((prev) => (prev === id ? null : id))}
+                  onSelectHoverId={(id) => toggleLockedHighlight(id)}
+                  onHoverIdChange={(id) => setHoverFromMouse(id)}
+                  getSmilesById={getSmilesById}
+                  substructureByCluster={substructureByCluster}
+                  clusterBadgeColor={clusterBadgeColor}
+                  onClusterSelect={(cluster) => {
+                    setSelectedNode({ model: selectedModel, layer: selectedLayer, cluster });
+                    setSelectedIds(null);
+                    setHoveredId(null);
+                    setHoverLock(false);
+                    setSuppressScatterCluster(false);
+                    setCellSelected(true);
+                  }}
+                  hideTopk={workspaceWidthPct >= 79.5}
+                  largePreviewOn={showLargeHoverPreview}
+                  onSmilesPreviewStart={(smiles, anchor) => showSmilesPreviewAt(smiles, anchor, "topk")}
+                  onSmilesPreviewEnd={() => setHoverPreview(null)}
+                  bookmarkedIds={bookmarkedIds}
+                  onToggleBookmark={toggleBookmark}
+                  knnTopm={knnTopm}
+                  onKnnTopmChange={setKnnTopm}
+                  isKnnTopmLoading={isKnnTopmLoading}
+                />
+              </div>
             </div>
           </div>
           <button
             type="button"
-            className="absolute z-30 w-6 h-6 rounded-md border border-zinc-400 bg-white/95 hover:bg-zinc-100 shadow cursor-se-resize flex items-center justify-center"
+            className="absolute z-30 w-6 h-6 rounded-md border border-zinc-400 bg-white/95 hover:bg-zinc-100 shadow cursor-pointer flex items-center justify-center"
             style={{ left: `calc(${effectiveWorkspaceWidthPct}% - 12px)`, top: `calc(${workspaceHeightPct}% - 12px)` }}
-            onMouseDown={onWorkspaceResizeStart}
-            title="Resize Sankey Workspace"
-            aria-label="Resize Sankey Workspace"
+            onClick={toggleWorkspaceWidthPreset}
+            title="Toggle Right Panel Width (50% / default)"
+            aria-label="Toggle Right Panel Width (50% / default)"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
               <path d="M6 2H2v4M10 14h4v-4M2 6l4-4M14 10l-4 4" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" />
