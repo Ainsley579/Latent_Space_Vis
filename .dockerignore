@@ -18,7 +18,6 @@ InteractiveSankey/
 scripts/
 sankey_test/
 notebook/
-latentvis/frontend/public/data/
 latentvis/frontend/public/jsme/
 latentvis/backend/pipeline_output/
 latentvis/backend/pipeline_output_chemprop/
@@ -38,3 +37,5 @@ latentvis/backend/pipeline_validate_test/
 # Keep deployment files
 !Dockerfile
 !latentvis/backend/start.sh
+!latentvis/backend/data/embeddings/chemprop-embeddings.pt
+!latentvis/backend/data/embeddings/chemeleon-embeddings.pt
