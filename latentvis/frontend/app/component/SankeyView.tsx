@@ -325,7 +325,9 @@ export default function SankeyView({
         });
 
         const allEpochKeys: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
+        const lastEpoch = allEpochKeys.length ? allEpochKeys[allEpochKeys.length - 1] : null;
         const ROW_NAMES: string[] = allEpochKeys.filter((epoch) => {
+          if (lastEpoch != null && epoch === lastEpoch) return true;
           const maxPct = epochMaxTransitionPctByEpoch.get(epoch) ?? 0;
           return maxPct >= epochTransitionThreshold;
         });
@@ -1806,7 +1808,7 @@ export default function SankeyView({
               <label>Epoch Min %:</label>
               <span
                 className="value-range-help"
-                data-tooltip="For each epoch, we compute the maximum pct_changed across layer-to-layer transitions in that epoch. Epochs with max pct_changed below this threshold are hidden. Only transitions between remaining epochs are rendered."
+                data-tooltip="For each epoch, we compute the maximum pct_changed across layer-to-layer transitions in that epoch. Epochs with max pct_changed below this threshold are hidden. The last epoch is always kept visible."
                 aria-label="Epoch threshold help"
               >
                 ?
