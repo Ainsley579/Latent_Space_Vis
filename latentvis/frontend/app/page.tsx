@@ -746,7 +746,14 @@ export default function Home() {
       const status = String(statusJson?.status ?? "");
       const msg = typeof statusJson?.message === "string" ? statusJson.message : "";
       if (status === "succeeded") {
-        return statusJson?.result ?? null;
+        if (statusJson?.result && typeof statusJson.result === "object") {
+          return statusJson.result;
+        }
+        // Backward compatibility: some backends may return final payload at top-level.
+        if (statusJson && typeof statusJson === "object") {
+          return statusJson;
+        }
+        return null;
       }
       if (status === "failed") {
         const detail =
@@ -770,9 +777,16 @@ export default function Home() {
     clustering: ClusteringKey,
     dataSplit: DataSplitKey
   ) {
-    const casePayload = json?.payload?.[dataset];
+    const root = json?.result && typeof json.result === "object" ? json.result : json;
+    const casePayload = root?.payload?.[dataset];
     if (!casePayload) {
-      throw new Error("Generate API missing payload for selected dataset");
+      const payloadKeys =
+        root?.payload && typeof root.payload === "object"
+          ? Object.keys(root.payload)
+          : [];
+      throw new Error(
+        `Generate API missing payload for selected dataset (${dataset}); payload keys: ${payloadKeys.join(",")}`
+      );
     }
 
     revokeGeneratedSankeyBlobUrls();
@@ -791,7 +805,7 @@ export default function Home() {
         >,
       },
     }));
-    const runId = String(json?.run_id ?? `${Date.now()}`);
+    const runId = String(root?.run_id ?? `${Date.now()}`);
     setGeneratedRuntimePayloads((prev) => ({
       ...prev,
       [key]: {
