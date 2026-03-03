@@ -1,0 +1,16 @@
+# Cloudflare Named Tunnel config for local LatentVis backend
+# Usage:
+#   cloudflared tunnel --config /Users/shiyiliu/Desktop/Latent_Space_Vis/deploy/cloudflared.config.yml run latentvis-backend
+
+# Tunnel name (must match: cloudflared tunnel create <name>)
+tunnel: latentvis-backend
+
+# Replace <TUNNEL_ID> with the JSON filename created by cloudflared tunnel create
+credentials-file: /Users/shiyiliu/.cloudflared/de2a11c9-ba4f-4bf1-b8cd-54c5ca0f80e3.json
+
+ingress:
+  # Replace with your real domain/subdomain
+  - hostname: api.latentvis.com
+    service: http://localhost:5001
+
+  - service: http_status:404

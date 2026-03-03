@@ -714,78 +714,134 @@ export default function Home() {
     generatedRuntimeMatchesCurrent,
   ]);
 
+  function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function submitGenerateRangeJob(
+    body: Record<string, unknown>,
+    statusPrefix: string
+  ) {
+    const submitRes = await fetch(`${apiBase}/generate-range`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...body, async: true }),
+    });
+    if (!submitRes.ok) {
+      throw new Error(`Generate submit failed: ${submitRes.status}`);
+    }
+    const submitJson = await submitRes.json();
+    const jobId = String(submitJson?.job_id ?? "");
+    if (!jobId) {
+      throw new Error("Generate submit missing job_id");
+    }
+
+    const deadline = Date.now() + 70 * 60 * 1000;
+    while (true) {
+      const statusRes = await fetch(`${apiBase}/generate-range/jobs/${encodeURIComponent(jobId)}`);
+      if (!statusRes.ok) {
+        throw new Error(`Generate status failed: ${statusRes.status}`);
+      }
+      const statusJson = await statusRes.json();
+      const status = String(statusJson?.status ?? "");
+      const msg = typeof statusJson?.message === "string" ? statusJson.message : "";
+      if (status === "succeeded") {
+        return statusJson?.result ?? null;
+      }
+      if (status === "failed") {
+        const detail =
+          statusJson?.error?.detail ??
+          statusJson?.error?.error ??
+          statusJson?.error ??
+          "Generate job failed";
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      }
+      setGenerateStatusText(msg ? `${statusPrefix} (${msg})` : `${statusPrefix} (${status})`);
+      if (Date.now() > deadline) {
+        throw new Error("Generate job polling timed out");
+      }
+      await sleep(2000);
+    }
+  }
+
+  function applyGeneratedPayload(
+    json: any,
+    dataset: DatasetKey,
+    clustering: ClusteringKey,
+    dataSplit: DataSplitKey
+  ) {
+    const casePayload = json?.payload?.[dataset];
+    if (!casePayload) {
+      throw new Error("Generate API missing payload for selected dataset");
+    }
+
+    revokeGeneratedSankeyBlobUrls();
+    const key = runtimeKeyFor(dataset, clustering, dataSplit);
+    setGeneratedSankeyPayloads((prev) => ({
+      ...prev,
+      [key]: {
+        dataset,
+        clustering,
+        dataSplit,
+        allSankey: casePayload.all_sankey ?? { epoch: {}, layer: {} },
+        modelSamples: (casePayload.model_samples ?? {}) as Record<string, SankeySampleRow[]>,
+        verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<
+          string,
+          SankeySampleRow[]
+        >,
+      },
+    }));
+    const runId = String(json?.run_id ?? `${Date.now()}`);
+    setGeneratedRuntimePayloads((prev) => ({
+      ...prev,
+      [key]: {
+        dataset,
+        clustering,
+        dataSplit,
+        runId,
+        topkRepresentatives: Array.isArray(casePayload.topk_representatives)
+          ? casePayload.topk_representatives
+          : [],
+        clusterSortedMembers: Array.isArray(casePayload.cluster_sorted_members)
+          ? casePayload.cluster_sorted_members
+          : [],
+        substructures: Array.isArray(casePayload.substructures) ? casePayload.substructures : [],
+        scatterClusterByCell:
+          casePayload?.scatter_cluster_by_cell &&
+          typeof casePayload.scatter_cluster_by_cell === "object"
+            ? casePayload.scatter_cluster_by_cell
+            : {},
+      },
+    }));
+    setTopkData(Array.isArray(casePayload.topk_representatives) ? casePayload.topk_representatives : []);
+    setClusterSortedMembers(
+      Array.isArray(casePayload.cluster_sorted_members) ? casePayload.cluster_sorted_members : []
+    );
+    setSubstructures(Array.isArray(casePayload.substructures) ? casePayload.substructures : []);
+  }
+
   async function generateFromRange(minValue: number, maxValue: number) {
     if (isGeneratingRange) return;
+    const dataset = selectedDataset;
+    const clustering = selectedClustering;
+    const dataSplit = selectedDataSplit;
     setIsGeneratingRange(true);
     setGenerateStatusText(`Generating PGMeans [${minValue}, ${maxValue}] ...`);
     try {
-      const res = await fetch(`${apiBase}/generate-range`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          dataset: selectedDataset,
-          clustering: selectedClustering,
-          data_split: selectedDataSplit,
+      const json = await submitGenerateRangeJob(
+        {
+          dataset,
+          clustering,
+          data_split: dataSplit,
           include_payload: true,
-          persist: true,
           min: minValue,
           max: maxValue,
-        }),
-      });
-      if (!res.ok) {
-        throw new Error(`Generate API failed: ${res.status}`);
-      }
-      const json = await res.json();
-      const casePayload = json?.payload?.[selectedDataset];
-      if (!casePayload) {
-        throw new Error("Generate API missing payload for selected dataset");
-      }
-      revokeGeneratedSankeyBlobUrls();
-      const key = runtimeKeyFor(selectedDataset, selectedClustering, selectedDataSplit);
-      setGeneratedSankeyPayloads((prev) => ({
-        ...prev,
-        [key]: {
-        dataset: selectedDataset,
-        clustering: selectedClustering,
-        dataSplit: selectedDataSplit,
-        allSankey: casePayload.all_sankey ?? { epoch: {}, layer: {} },
-        modelSamples: (casePayload.model_samples ?? {}) as Record<string, SankeySampleRow[]>,
-        verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<string, SankeySampleRow[]>,
         },
-      }));
-      const runId = String(json?.run_id ?? `${Date.now()}`);
-      setGeneratedRuntimePayloads((prev) => ({
-        ...prev,
-        [key]: {
-          dataset: selectedDataset,
-          clustering: selectedClustering,
-          dataSplit: selectedDataSplit,
-          runId,
-          topkRepresentatives: Array.isArray(casePayload.topk_representatives)
-            ? casePayload.topk_representatives
-            : [],
-          clusterSortedMembers: Array.isArray(casePayload.cluster_sorted_members)
-            ? casePayload.cluster_sorted_members
-            : [],
-          substructures: Array.isArray(casePayload.substructures)
-            ? casePayload.substructures
-            : [],
-          scatterClusterByCell:
-            casePayload?.scatter_cluster_by_cell &&
-            typeof casePayload.scatter_cluster_by_cell === "object"
-              ? casePayload.scatter_cluster_by_cell
-              : {},
-        },
-      }));
-      setTopkData(
-        Array.isArray(casePayload.topk_representatives) ? casePayload.topk_representatives : []
+        `Generating ${clustering} [${minValue}, ${maxValue}]`
       );
-      setClusterSortedMembers(
-        Array.isArray(casePayload.cluster_sorted_members) ? casePayload.cluster_sorted_members : []
-      );
-      setSubstructures(Array.isArray(casePayload.substructures) ? casePayload.substructures : []);
+      applyGeneratedPayload(json, dataset, clustering, dataSplit);
       setSankeyRefreshKey((k: number) => k + 1);
-      setGenerateStatusText("Generate finished (persisted *_current files and refreshed runtime payload).");
+      setGenerateStatusText("Generate finished.");
     } catch (err) {
       console.error("Failed to generate payload:", err);
       setGenerateStatusText(`Generate failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -799,6 +855,8 @@ export default function Home() {
     linkage: "ward" | "complete" | "average";
   }) {
     if (isGeneratingRange) return;
+    const dataset = selectedDataset;
+    const dataSplit = selectedDataSplit;
     setIsGeneratingRange(true);
     setGenerateStatusText(
       `Re-running agglomerative for ALL cells (k=${config.k == null ? "auto" : config.k}, linkage=${config.linkage}) ...`
@@ -806,73 +864,20 @@ export default function Home() {
     try {
       const kMin = config.k == null ? 2 : config.k;
       const kMax = config.k == null ? 15 : config.k;
-      const res = await fetch(`${apiBase}/generate-range`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          dataset: selectedDataset,
-          data_split: selectedDataSplit,
+      const json = await submitGenerateRangeJob(
+        {
+          dataset,
+          data_split: dataSplit,
           min: kMin,
           max: kMax,
           clustering: "agglomerative",
           k: config.k,
           linkage: config.linkage,
           include_payload: true,
-          persist: false,
-        }),
-      });
-      if (!res.ok) {
-        throw new Error(`Generate API failed: ${res.status}`);
-      }
-      const json = await res.json();
-      const casePayload = json?.payload?.[selectedDataset];
-      if (!casePayload) {
-        throw new Error("Generate API missing payload for selected dataset");
-      }
-      revokeGeneratedSankeyBlobUrls();
-      const key = runtimeKeyFor(selectedDataset, "agglomerative", selectedDataSplit);
-      setGeneratedSankeyPayloads((prev) => ({
-        ...prev,
-        [key]: {
-        dataset: selectedDataset,
-        clustering: "agglomerative",
-        dataSplit: selectedDataSplit,
-        allSankey: casePayload.all_sankey ?? { epoch: {}, layer: {} },
-        modelSamples: (casePayload.model_samples ?? {}) as Record<string, SankeySampleRow[]>,
-        verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<string, SankeySampleRow[]>,
         },
-      }));
-      const runId = String(json?.run_id ?? `${Date.now()}`);
-      setGeneratedRuntimePayloads((prev) => ({
-        ...prev,
-        [key]: {
-          dataset: selectedDataset,
-          clustering: "agglomerative",
-          dataSplit: selectedDataSplit,
-          runId,
-          topkRepresentatives: Array.isArray(casePayload.topk_representatives)
-            ? casePayload.topk_representatives
-            : [],
-          clusterSortedMembers: Array.isArray(casePayload.cluster_sorted_members)
-            ? casePayload.cluster_sorted_members
-            : [],
-          substructures: Array.isArray(casePayload.substructures)
-            ? casePayload.substructures
-            : [],
-          scatterClusterByCell:
-            casePayload?.scatter_cluster_by_cell &&
-            typeof casePayload.scatter_cluster_by_cell === "object"
-              ? casePayload.scatter_cluster_by_cell
-              : {},
-        },
-      }));
-      setTopkData(
-        Array.isArray(casePayload.topk_representatives) ? casePayload.topk_representatives : []
+        `Re-running agglomerative (k=${config.k == null ? "auto" : config.k}, linkage=${config.linkage})`
       );
-      setClusterSortedMembers(
-        Array.isArray(casePayload.cluster_sorted_members) ? casePayload.cluster_sorted_members : []
-      );
-      setSubstructures(Array.isArray(casePayload.substructures) ? casePayload.substructures : []);
+      applyGeneratedPayload(json, dataset, "agglomerative", dataSplit);
       if (scatterOverrideUrlRef.current) {
         URL.revokeObjectURL(scatterOverrideUrlRef.current);
         scatterOverrideUrlRef.current = null;

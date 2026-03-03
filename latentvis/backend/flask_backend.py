@@ -6,7 +6,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
+import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Iterable
 
@@ -19,6 +21,9 @@ if str(_BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(_BACKEND_DIR))
 
 app = Flask(__name__)
+GENERATE_RANGE_JOBS: Dict[str, Dict[str, object]] = {}
+GENERATE_RANGE_JOBS_LOCK = threading.Lock()
+MAX_GENERATE_RANGE_JOBS = 64
 
 
 def _resolve_project_root() -> Path:
@@ -557,14 +562,35 @@ def _filter_sankey_for_range(case: str, min_value: int, max_value: int, clusteri
     return kept_edges, kept_rows
 
 
-@app.route("/generate-range", methods=["POST", "OPTIONS"])
-def generate_range():
-    """Re-run clustering for ALL cells with user-supplied params. Updates scatter, topk, cluster_sorted_members,
-    substructures, sankey. Accepts: (min, max) for k_min/k_max; or for agglomerative (k, linkage) to apply fixed k and linkage to all cells."""
-    if request.method == "OPTIONS":
-        return ("", 204)
+def _set_generate_range_job(job_id: str, **updates: object) -> None:
+    with GENERATE_RANGE_JOBS_LOCK:
+        job = GENERATE_RANGE_JOBS.get(job_id)
+        if not job:
+            return
+        job.update(updates)
+        job["updated_at"] = time.time()
 
-    payload = request.get_json(silent=True) or {}
+
+def _trim_generate_range_jobs() -> None:
+    with GENERATE_RANGE_JOBS_LOCK:
+        if len(GENERATE_RANGE_JOBS) <= MAX_GENERATE_RANGE_JOBS:
+            return
+        completed = sorted(
+            (
+                (jid, job)
+                for jid, job in GENERATE_RANGE_JOBS.items()
+                if str(job.get("status")) in ("succeeded", "failed")
+            ),
+            key=lambda item: float(item[1].get("updated_at", 0.0)),
+        )
+        for jid, _ in completed:
+            if len(GENERATE_RANGE_JOBS) <= MAX_GENERATE_RANGE_JOBS:
+                break
+            GENERATE_RANGE_JOBS.pop(jid, None)
+
+
+def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = None) -> Tuple[Dict[str, object], int]:
+    """Re-run clustering for ALL cells with user-supplied params."""
     include_payload = bool(payload.get("include_payload", False))
     # Always run generate-range in memory-only mode for frontend runtime payloads.
     # Ignore client-provided persist flag to avoid mutating on-disk JSON artifacts.
@@ -593,7 +619,7 @@ def generate_range():
             n_clusters_override = int(k_fixed)
             n_clusters_override = max(2, n_clusters_override)
         except (ValueError, TypeError):
-            return jsonify({"ok": False, "error": "invalid_k"}), 400
+            return {"ok": False, "error": "invalid_k"}, 400
         linkage_override = linkage
         k_min = k_max = n_clusters_override
         print(
@@ -606,7 +632,7 @@ def generate_range():
             k_min = int(min_value)
             k_max = int(max_value)
         except (ValueError, TypeError):
-            return jsonify({"ok": False, "error": "invalid_range"}), 400
+            return {"ok": False, "error": "invalid_range"}, 400
         if k_min > k_max:
             k_min, k_max = k_max, k_min
         if k_min < 2:
@@ -620,13 +646,13 @@ def generate_range():
         )
 
     if not dataset or dataset not in DEFAULT_CASES:
-        return jsonify({"ok": False, "error": "invalid_dataset"}), 400
+        return {"ok": False, "error": "invalid_dataset"}, 400
     if clustering not in ("gmm", "agglomerative", "hdbscan"):
-        return jsonify({"ok": False, "error": "invalid_clustering"}), 400
+        return {"ok": False, "error": "invalid_clustering"}, 400
 
     input_path = EMBEDDING_PATHS.get(dataset)
     if not input_path or not input_path.is_file():
-        return jsonify({"ok": False, "error": "embedding_not_found", "detail": str(input_path)}), 404
+        return {"ok": False, "error": "embedding_not_found", "detail": str(input_path)}, 404
 
     split_norm = _normalize_split(data_split) or "test"
     temp_root: Optional[Path] = None
@@ -640,6 +666,8 @@ def generate_range():
 
     try:
         from run_pipeline_from_embeddings import run_pipeline
+        if job_id:
+            _set_generate_range_job(job_id, message="running_pipeline")
 
         ok = run_pipeline(
             input_path=str(input_path),
@@ -662,12 +690,12 @@ def generate_range():
         if not ok:
             if temp_root is not None:
                 shutil.rmtree(temp_root, ignore_errors=True)
-            return jsonify({"ok": False, "error": "pipeline_failed"}), 500
+            return {"ok": False, "error": "pipeline_failed"}, 500
     except Exception as e:
         print(f"[flask-backend] generate-range pipeline failed: {e}", flush=True)
         if temp_root is not None:
             shutil.rmtree(temp_root, ignore_errors=True)
-        return jsonify({"ok": False, "error": "pipeline_failed", "detail": str(e)}), 500
+        return {"ok": False, "error": "pipeline_failed", "detail": str(e)}, 500
 
     # Current runs always write to the canonical directories under case_dir.
     base = case_dir
@@ -737,6 +765,85 @@ def generate_range():
         out["note"] = "Generated in temporary backend workspace; no files were written to public/data."
     if temp_root is not None:
         shutil.rmtree(temp_root, ignore_errors=True)
+    return out, 200
+
+
+def _generate_range_worker(job_id: str, payload: Dict[str, object]) -> None:
+    _set_generate_range_job(job_id, status="running", message="starting")
+    try:
+        result, status_code = _generate_range_impl(payload, job_id=job_id)
+        if status_code >= 400:
+            _set_generate_range_job(
+                job_id,
+                status="failed",
+                message="failed",
+                error={"status_code": status_code, "detail": result},
+            )
+            return
+        _set_generate_range_job(job_id, status="succeeded", message="done", result=result)
+    except Exception as e:
+        print(f"[flask-backend] generate-range async worker failed: {e}", flush=True)
+        _set_generate_range_job(
+            job_id,
+            status="failed",
+            message="failed",
+            error={"status_code": 500, "detail": str(e)},
+        )
+    finally:
+        _trim_generate_range_jobs()
+
+
+@app.route("/generate-range", methods=["POST", "OPTIONS"])
+def generate_range():
+    """Queue a generate-range job and return job_id for polling."""
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    payload = request.get_json(silent=True) or {}
+    async_mode = bool(payload.get("async", True))
+    if not async_mode:
+        out, status_code = _generate_range_impl(payload)
+        return jsonify(out), status_code
+
+    job_id = uuid.uuid4().hex
+    now = time.time()
+    with GENERATE_RANGE_JOBS_LOCK:
+        GENERATE_RANGE_JOBS[job_id] = {
+            "id": job_id,
+            "status": "queued",
+            "message": "queued",
+            "created_at": now,
+            "updated_at": now,
+            "result": None,
+            "error": None,
+        }
+    worker = threading.Thread(target=_generate_range_worker, args=(job_id, payload), daemon=True)
+    worker.start()
+    return jsonify({"ok": True, "job_id": job_id, "status": "queued"}), 202
+
+
+@app.route("/generate-range/jobs/<job_id>", methods=["GET", "OPTIONS"])
+def generate_range_job_status(job_id: str):
+    if request.method == "OPTIONS":
+        return ("", 204)
+    with GENERATE_RANGE_JOBS_LOCK:
+        job = GENERATE_RANGE_JOBS.get(job_id)
+    if not job:
+        return jsonify({"ok": False, "error": "job_not_found", "job_id": job_id}), 404
+
+    status = str(job.get("status", "unknown"))
+    out: Dict[str, object] = {
+        "ok": status != "failed",
+        "job_id": job_id,
+        "status": status,
+        "message": str(job.get("message", "")),
+        "created_at": job.get("created_at"),
+        "updated_at": job.get("updated_at"),
+    }
+    if status == "succeeded":
+        out["result"] = job.get("result")
+    elif status == "failed":
+        out["error"] = job.get("error")
     return jsonify(out)
 
 
