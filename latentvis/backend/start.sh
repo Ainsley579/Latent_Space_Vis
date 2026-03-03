@@ -3,6 +3,8 @@ set -euo pipefail
 
 PORT="${PORT:-5001}"
 WEB_CONCURRENCY="${WEB_CONCURRENCY:-2}"
+GUNICORN_TIMEOUT="${GUNICORN_TIMEOUT:-600}"
+GUNICORN_GRACEFUL_TIMEOUT="${GUNICORN_GRACEFUL_TIMEOUT:-60}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EMBEDDING_DOWNLOAD_DIR="${EMBEDDING_DOWNLOAD_DIR:-${SCRIPT_DIR}/data/embeddings}"
 
@@ -47,4 +49,9 @@ export LATENTVIS_CHEMPROP_PT
 export LATENTVIS_CHEMELEON_PT
 
 cd "${SCRIPT_DIR}"
-exec micromamba run -n base gunicorn -w "${WEB_CONCURRENCY}" -b "0.0.0.0:${PORT}" flask_backend:app
+exec micromamba run -n base gunicorn \
+  -w "${WEB_CONCURRENCY}" \
+  --timeout "${GUNICORN_TIMEOUT}" \
+  --graceful-timeout "${GUNICORN_GRACEFUL_TIMEOUT}" \
+  -b "0.0.0.0:${PORT}" \
+  flask_backend:app
