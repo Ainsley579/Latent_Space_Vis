@@ -21,8 +21,39 @@ if str(_BACKEND_DIR) not in sys.path:
 app = Flask(__name__)
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DATA_ROOT = PROJECT_ROOT / "latentvis" / "frontend" / "public" / "data"
+def _resolve_project_root() -> Path:
+    env_root = os.environ.get("LATENTVIS_PROJECT_ROOT", "").strip()
+    if env_root:
+        return Path(env_root).resolve()
+
+    resolved = Path(__file__).resolve()
+    # Local dev layout:
+    #   <repo>/latentvis/backend/flask_backend.py
+    # Container layout may be:
+    #   /app/flask_backend.py
+    if len(resolved.parents) >= 3:
+        return resolved.parents[2]
+    return _BACKEND_DIR
+
+
+def _resolve_data_root(project_root: Path) -> Path:
+    env_data_root = os.environ.get("LATENTVIS_DATA_ROOT", "").strip()
+    if env_data_root:
+        return Path(env_data_root).resolve()
+
+    candidates = [
+        project_root / "latentvis" / "frontend" / "public" / "data",
+        _BACKEND_DIR.parent / "frontend" / "public" / "data",
+        _BACKEND_DIR / "data",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
+PROJECT_ROOT = _resolve_project_root()
+DATA_ROOT = _resolve_data_root(PROJECT_ROOT)
 DEFAULT_CASES = ("chemprop", "chemeleon")
 DEFAULT_CLUSTERING = "pgmeans"
 
