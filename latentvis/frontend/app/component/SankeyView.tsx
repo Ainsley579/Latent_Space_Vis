@@ -177,6 +177,8 @@ type SankeyViewProps = {
   activeCell?: { model: string; layer: string } | null;
   onCellSelect?: (active: boolean) => void;
   onSwapAxes?: (swap: boolean) => void;
+  reverseEpochOrder?: boolean;
+  onToggleEpochOrder?: () => void;
   onVisibleEpochsChange?: (epochs: string[]) => void;
   cellMetricByCell?: Record<string, Record<string, number | null>> | null;
   selectedCellMetric?: string;
@@ -195,6 +197,8 @@ export default function SankeyView({
   activeCell,
   onCellSelect,
   onSwapAxes,
+  reverseEpochOrder = false,
+  onToggleEpochOrder,
   onVisibleEpochsChange,
   cellMetricByCell,
   selectedCellMetric = "cluster_count",
@@ -326,15 +330,16 @@ export default function SankeyView({
 
         const allEpochKeys: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
         const lastEpoch = allEpochKeys.length ? allEpochKeys[allEpochKeys.length - 1] : null;
-        const ROW_NAMES: string[] = allEpochKeys.filter((epoch) => {
+        const visibleEpochBase: string[] = allEpochKeys.filter((epoch) => {
           if (lastEpoch != null && epoch === lastEpoch) return true;
           const maxPct = epochMaxTransitionPctByEpoch.get(epoch) ?? 0;
           return maxPct >= epochTransitionThreshold;
         });
+        const ROW_NAMES: string[] = reverseEpochOrder ? [...visibleEpochBase].reverse() : visibleEpochBase;
         const maxEpochPct = Math.max(0, ...Array.from(epochMaxTransitionPctByEpoch.values()));
         setMaxEpochTransitionPct(maxEpochPct);
         setVisibleEpochSummary({ visible: ROW_NAMES.length, total: allEpochKeys.length });
-        onVisibleEpochsChange?.(ROW_NAMES);
+        onVisibleEpochsChange?.(visibleEpochBase);
         if (epochTransitionThreshold > maxEpochPct) {
           setEpochTransitionThreshold(maxEpochPct);
           return;
@@ -1329,6 +1334,7 @@ export default function SankeyView({
     showCellBackground,
     showGapHeatmap,
     epochTransitionThreshold,
+    reverseEpochOrder,
     onVisibleEpochsChange,
     selectedCellMetric,
     cellMetricByCell,
@@ -1859,6 +1865,14 @@ export default function SankeyView({
               <button id="btnSwap">Swap X/Y</button>
               <button
                 type="button"
+                onClick={() => onToggleEpochOrder?.()}
+                style={{ fontWeight: reverseEpochOrder ? 600 : 400 }}
+                title="Flip epoch order"
+              >
+                Flip Epoch
+              </button>
+              <button
+                type="button"
                 onClick={() => setShowSankeyPaths((v) => !v)}
                 style={{ fontWeight: showSankeyPaths ? 600 : 400 }}
               >
@@ -2082,7 +2096,7 @@ export default function SankeyView({
 
         #controlButtons {
           display: grid;
-          grid-template-columns: repeat(4, max-content);
+          grid-template-columns: repeat(5, max-content);
           gap: 2px;
           width: auto;
           margin-top: 0;

@@ -69,6 +69,7 @@ type SankeyVerticalProps = {
   layerKey?: string;
   modelKey?: string;
   visibleEpochs?: string[] | null;
+  reverseEpochOrder?: boolean;
   activeNodeKey?: string | null;
   highlightId?: string | null;
   highlightIds?: string[] | null;
@@ -294,6 +295,7 @@ export default function SankeyVertical({
   layerKey,
   modelKey,
   visibleEpochs,
+  reverseEpochOrder = false,
   activeNodeKey,
   highlightId,
   highlightIds,
@@ -410,18 +412,22 @@ export default function SankeyVertical({
       const g = svg.append("g").attr("transform", `translate(${width},0) rotate(90)`);
 
       // model transition within a single layer
-      const order =
+      const visibleEpochOrder =
         mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
-          ? visibleEpochs.map((x) => String(x))
+          ? (reverseEpochOrder ? [...visibleEpochs].reverse() : visibleEpochs).map((x) => String(x))
+          : null;
+      const order =
+        mode === "model" && visibleEpochOrder
+          ? visibleEpochOrder
           : mode === "model"
-            ? MODEL_ORDER
+            ? (reverseEpochOrder ? [...MODEL_ORDER].reverse() : MODEL_ORDER)
             : LAYER_ORDER;
       const filteredRows =
-        mode === "model" && Array.isArray(visibleEpochs)
+        mode === "model" && visibleEpochOrder
           ? (() => {
-              const stitched = stitchRowsByVisibleEpochs(lastRows, visibleEpochs.map((x) => String(x)));
+              const stitched = stitchRowsByVisibleEpochs(lastRows, visibleEpochOrder);
               if (stitched.length > 0) return stitched;
-              const allowed = new Set(visibleEpochs.map((x) => String(x)));
+              const allowed = new Set(visibleEpochOrder);
               return lastRows.filter((r) => {
                 const fromKey = String(r.from_model ?? "");
                 const toKey = String(r.to_model ?? "");
@@ -462,8 +468,8 @@ export default function SankeyVertical({
       const isSynced = !!syncTransform;
       const inferredOrder = inferSequenceFromRows(rows as SampleRow[], mode, order);
       const renderOrder =
-        mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
-          ? visibleEpochs.map((x) => String(x))
+        mode === "model" && visibleEpochOrder
+          ? visibleEpochOrder
           : inferredOrder.filter((m) => (nodesByModel.get(m)?.length ?? 0) > 0);
 
       // In rotated rendering, x-axis maps to screen Y (vertical direction).
@@ -807,7 +813,7 @@ export default function SankeyVertical({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, mode, modelKey, layerKey, visibleEpochs, !!syncTransform]);
+  }, [dataPath, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, !!syncTransform]);
 
   useEffect(() => {
     const container = containerRef.current;

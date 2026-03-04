@@ -301,6 +301,7 @@ export default function Home() {
   const [isKnnTopmLoading, setIsKnnTopmLoading] = useState(false);
   const [cellSelected, setCellSelected] = useState(false);
   const [swapAxes, setSwapAxes] = useState(false);
+  const [reverseEpochOrder, setReverseEpochOrder] = useState(true);
   const [visibleEpochs, setVisibleEpochs] = useState<string[] | null>(null);
   const handleVisibleEpochsChange = useCallback((epochs: string[]) => {
     setVisibleEpochs(epochs);
@@ -1478,7 +1479,7 @@ export default function Home() {
   const scatterResolvedWidthPx =
     scatterWidthPx == null ? null : Math.max(scatterMinWidthPx ?? 140, Math.min(900, scatterWidthPx));
 
-  function startScatterCornerResize(e: ReactPointerEvent<HTMLDivElement>) {
+  function startScatterCornerResize(e: ReactPointerEvent<HTMLElement>) {
     if (!showMembersPanelByWidth) return;
     const currentWidth = scatterResolvedWidthPx ?? scatterMinWidthPx ?? 160;
     scatterCornerResizeRef.current = {
@@ -1594,6 +1595,8 @@ export default function Home() {
                   }
                 }}
                 onSwapAxes={(swap) => setSwapAxes(swap)}
+                reverseEpochOrder={reverseEpochOrder}
+                onToggleEpochOrder={() => setReverseEpochOrder((v) => !v)}
                 onVisibleEpochsChange={handleVisibleEpochsChange}
                 cellMetricByCell={cellMetricByCell}
                 selectedCellMetric={selectedCellBgMetric}
@@ -1615,6 +1618,7 @@ export default function Home() {
                 mode={swapAxes ? "layer" : "model"}
                 layerKey={selectedLayer}
                 modelKey={selectedModel}
+                reverseEpochOrder={reverseEpochOrder}
                 visibleEpochs={swapAxes ? null : visibleEpochs}
                 syncTransform={syncLinkedSankeyViews ? syncTransformVertical : undefined}
                 onSyncTransform={(t) => {
@@ -1654,6 +1658,7 @@ export default function Home() {
                 mode={swapAxes ? "model" : "layer"}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
+                reverseEpochOrder={reverseEpochOrder}
                 visibleEpochs={swapAxes ? visibleEpochs : null}
                 syncTransform={syncLinkedSankeyViews ? syncTransformHorizontal : undefined}
                 onSyncTransform={(t) => {

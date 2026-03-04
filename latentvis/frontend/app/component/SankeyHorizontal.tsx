@@ -69,6 +69,7 @@ type SankeyHorizontalProps = {
   modelKey?: string;
   layerKey?: string;
   visibleEpochs?: string[] | null;
+  reverseEpochOrder?: boolean;
   activeNodeKey?: string | null;
   highlightId?: string | null;
   highlightIds?: string[] | null;
@@ -293,6 +294,7 @@ export default function SankeyHorizontal({
   modelKey,
   layerKey,
   visibleEpochs,
+  reverseEpochOrder = false,
   activeNodeKey,
   highlightId,
   highlightIds,
@@ -405,18 +407,22 @@ export default function SankeyHorizontal({
       const height = Math.max(1, container.clientHeight);
 
       const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
-      const order =
+      const visibleEpochOrder =
         mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
-          ? visibleEpochs.map((x) => String(x))
+          ? (reverseEpochOrder ? [...visibleEpochs].reverse() : visibleEpochs).map((x) => String(x))
+          : null;
+      const order =
+        mode === "model" && visibleEpochOrder
+          ? visibleEpochOrder
           : mode === "model"
-            ? MODEL_ORDER
+            ? (reverseEpochOrder ? [...MODEL_ORDER].reverse() : MODEL_ORDER)
             : LAYER_ORDER;
       const filteredRows =
-        mode === "model" && Array.isArray(visibleEpochs)
+        mode === "model" && visibleEpochOrder
           ? (() => {
-              const stitched = stitchRowsByVisibleEpochs(lastRows, visibleEpochs.map((x) => String(x)));
+              const stitched = stitchRowsByVisibleEpochs(lastRows, visibleEpochOrder);
               if (stitched.length > 0) return stitched;
-              const allowed = new Set(visibleEpochs.map((x) => String(x)));
+              const allowed = new Set(visibleEpochOrder);
               return lastRows.filter((r) => {
                 const fromKey = String(r.from_model ?? "");
                 const toKey = String(r.to_model ?? "");
@@ -461,8 +467,8 @@ export default function SankeyHorizontal({
       });
       const inferredLayers = inferSequenceFromRows(renderRows, mode, order).filter((l) => presentLayers.has(l));
       const layers =
-        mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
-          ? visibleEpochs.map((x) => String(x))
+        mode === "model" && visibleEpochOrder
+          ? visibleEpochOrder
           : inferredLayers;
       const layerIndex = new Map(layers.map((l, i) => [l, i]));
       const centerOffset = CELL_MARGIN_LEFT + INNER_W / 2;
@@ -789,7 +795,7 @@ export default function SankeyHorizontal({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, mode, modelKey, layerKey, visibleEpochs, !!syncTransform]);
+  }, [dataPath, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, !!syncTransform]);
 
   useEffect(() => {
     const container = containerRef.current;
