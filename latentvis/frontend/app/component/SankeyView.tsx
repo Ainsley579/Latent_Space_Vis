@@ -328,10 +328,26 @@ export default function SankeyView({
   } | null>(null);
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
-    const q = Number(p.get("epochMin"));
-    if (Number.isFinite(q) && q >= 0) {
-      setEpochTransitionThreshold(q);
+    let shouldReplace = false;
+    if (!p.has("min")) {
+      p.set("min", "0");
+      shouldReplace = true;
     }
+    if (!p.has("max")) {
+      p.set("max", "812");
+      shouldReplace = true;
+    }
+    if (!p.has("epochMin")) {
+      p.set("epochMin", "0");
+      shouldReplace = true;
+    }
+    if (shouldReplace) {
+      const next = window.location.pathname + "?" + p.toString();
+      window.history.replaceState(null, "", next);
+    }
+
+    const q = Number(p.get("epochMin"));
+    if (Number.isFinite(q) && q >= 0) setEpochTransitionThreshold(q);
     const qMin = Number(p.get("min"));
     const qMax = Number(p.get("max"));
     if (Number.isFinite(qMin) && qMin >= 0) setLinkValueMin(qMin);
