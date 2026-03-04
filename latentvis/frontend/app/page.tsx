@@ -565,7 +565,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    fetch(`${assetBase}/real_id_to_smiles.json`)
+    fetch(`/data/${selectedDataset}/real_id_to_smiles.json`)
       .then((res) => {
         if (res.status === 404) return {};
         if (!res.ok) throw new Error("Failed to load real_id_to_smiles.json");
@@ -600,7 +600,7 @@ export default function Home() {
         console.error(err);
         setSmilesByRealId({});
       });
-  }, [assetBase]);
+  }, [selectedDataset]);
 
   useEffect(() => {
     setSearchResultIds([]);
@@ -976,16 +976,56 @@ export default function Home() {
   const activeSankeyPath = useMemo(() => {
     return swapAxes ? sankeyPathVertical : sankeyPath;
   }, [swapAxes, sankeyPath, sankeyPathVertical]);
+  const activeSankeySecondaryPath = useMemo(() => {
+    if (selectedDataSplit !== "all") return null;
+    return swapAxes
+      ? buildVerticalPath(selectedLayer, selectedDataset, selectedClustering, "test")
+      : buildSankeyModelPath(selectedModel, selectedDataset, selectedClustering, "test");
+  }, [selectedDataSplit, swapAxes, selectedLayer, selectedModel, selectedDataset, selectedClustering, dataRefreshKey, sankeyRefreshKey, generatedSankeyPayloads]);
 
   useEffect(() => {
     const isBlobPath = typeof activeSankeyPath === "string" && activeSankeyPath.startsWith("blob:");
-    fetch(activeSankeyPath)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load active sankey rows");
-        return res.json();
+    const fetchRows = async (path: string): Promise<SankeySampleRow[]> => {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error("Failed to load active sankey rows");
+      const json = await res.json();
+      return Array.isArray(json) ? (json as SankeySampleRow[]) : [];
+    };
+    const mergeRows = (a: SankeySampleRow[], b: SankeySampleRow[]) => {
+      const out: SankeySampleRow[] = [];
+      const seen = new Set<string>();
+      const add = (r: SankeySampleRow) => {
+        const key = [
+          String(r.real_id ?? ""),
+          String(r.from_model ?? ""),
+          String(r.to_model ?? ""),
+          String(r.from_layer ?? ""),
+          String(r.to_layer ?? ""),
+          String(r.from_cluster ?? ""),
+          String(r.to_cluster ?? ""),
+        ].join("|");
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push(r);
+      };
+      a.forEach(add);
+      b.forEach(add);
+      return out;
+    };
+
+    fetchRows(activeSankeyPath)
+      .then(async (primaryRows) => {
+        if (!activeSankeySecondaryPath) return primaryRows;
+        try {
+          const secondaryRows = await fetchRows(activeSankeySecondaryPath);
+          return mergeRows(primaryRows, secondaryRows);
+        } catch (err) {
+          console.error("Failed to load secondary active sankey rows:", err);
+          return primaryRows;
+        }
       })
-      .then((json: SankeySampleRow[]) => {
-        setActiveSankeyRows(Array.isArray(json) ? json : []);
+      .then((rows) => {
+        setActiveSankeyRows(rows);
       })
       .catch((err) => {
         // In-memory payload mode may briefly reference stale blob URLs while state swaps.
@@ -994,7 +1034,7 @@ export default function Home() {
         console.error(err);
         setActiveSankeyRows([]);
       });
-  }, [activeSankeyPath, sankeyRefreshKey]);
+  }, [activeSankeyPath, activeSankeySecondaryPath, sankeyRefreshKey]);
 
   const tabCycleData = useMemo(() => {
     if (!selectedNode) return null;
@@ -1089,21 +1129,65 @@ export default function Home() {
         console.error(err);
         setTopkData([]);
       });
-  }, [datasetBase, dataRefreshKey, generatedRuntimeMatchesCurrent, generatedRuntimePayload]);
+  }, [
+    datasetBase,
+    dataRefreshKey,
+    generatedRuntimeMatchesCurrent,
+    generatedRuntimePayload,
+    selectedDataSplit,
+    selectedDataset,
+    selectedClustering,
+  ]);
 
   useEffect(() => {
     if (generatedRuntimeMatchesCurrent) {
       setClusterSortedMembers(generatedRuntimePayload?.clusterSortedMembers ?? []);
       return;
     }
-    fetch(`${sectionBaseFor("topk")}/cluster_sorted_members.json`)
-      .then((res) => {
-        if (res.status === 404) return [];
-        if (!res.ok) throw new Error("Failed to load cluster sorted members");
-        return res.json();
+    const fetchSorted = async (url: string) => {
+      const res = await fetch(url);
+      if (res.status === 404) return [];
+      if (!res.ok) throw new Error("Failed to load cluster sorted members");
+      const json = await res.json();
+      return Array.isArray(json) ? json : [];
+    };
+    const mergeSorted = (a: any[], b: any[]) => {
+      const map = new Map<string, any>();
+      const add = (row: any) => {
+        const key = `${String(row?.model_type ?? "")}__${String(row?.layer_name ?? "")}__${String(row?.cluster_id ?? "")}`;
+        if (!map.has(key)) {
+          map.set(key, {
+            ...row,
+            sorted_real_ids: Array.isArray(row?.sorted_real_ids) ? row.sorted_real_ids.map((x: any) => String(x)) : [],
+          });
+          return;
+        }
+        const cur = map.get(key);
+        const merged = new Set<string>(Array.isArray(cur.sorted_real_ids) ? cur.sorted_real_ids.map((x: any) => String(x)) : []);
+        (Array.isArray(row?.sorted_real_ids) ? row.sorted_real_ids : []).forEach((x: any) => merged.add(String(x)));
+        cur.sorted_real_ids = Array.from(merged);
+        cur.count = Math.max(Number(cur.count ?? 0), Number(row?.count ?? 0), cur.sorted_real_ids.length);
+      };
+      a.forEach(add);
+      b.forEach(add);
+      return Array.from(map.values());
+    };
+
+    const baseTrain = `${sectionBaseFor("topk")}/cluster_sorted_members.json`;
+    const baseTest = `${sectionBaseFor("topk", selectedDataset, selectedClustering, "test")}/cluster_sorted_members.json`;
+    fetchSorted(baseTrain)
+      .then(async (trainRows) => {
+        if (selectedDataSplit !== "all") return trainRows;
+        try {
+          const testRows = await fetchSorted(baseTest);
+          return mergeSorted(trainRows, testRows);
+        } catch (err) {
+          console.error("Failed to load test cluster sorted members:", err);
+          return trainRows;
+        }
       })
-      .then((json) => {
-        setClusterSortedMembers(Array.isArray(json) ? json : []);
+      .then((rows) => {
+        setClusterSortedMembers(rows);
       })
       .catch((err) => {
         console.error(err);

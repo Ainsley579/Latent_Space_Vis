@@ -1014,14 +1014,34 @@ export default function SankeyView({
         });
 
         const allEdgeValues: number[] = [];
+        const collectAggregatedEdgeValues = (edges: any[]) => {
+          const sumByEdge = new Map<string, number>();
+          (Array.isArray(edges) ? edges : []).forEach((e: any) => {
+            const srcLabel = String(e?.source_label ?? "");
+            const tgtLabel = String(e?.target_label ?? "");
+            const srcId = String(e?.source_node_id ?? "");
+            const tgtId = String(e?.target_node_id ?? "");
+            const key = `${srcLabel}|${tgtLabel}|${srcId}|${tgtId}`;
+            const v = Number(e?.value ?? 0) || 0;
+            sumByEdge.set(key, (sumByEdge.get(key) ?? 0) + v);
+          });
+          sumByEdge.forEach((v) => allEdgeValues.push(v));
+        };
         Object.keys(data.epoch || {}).forEach((k) => {
-          (data.epoch[k].edges || []).forEach((e: any) => allEdgeValues.push(+e.value || 0));
+          collectAggregatedEdgeValues(data.epoch[k].edges || []);
         });
         Object.keys(data.layer || {}).forEach((k) => {
-          (data.layer[k].edges || []).forEach((e: any) => allEdgeValues.push(+e.value || 0));
+          collectAggregatedEdgeValues(data.layer[k].edges || []);
         });
         const maxEdgeVal = d3.max(allEdgeValues) || 1;
-        const nextMaxBound = Math.max(1, Math.ceil(maxEdgeVal));
+        const cellTotals: number[] = nodeDrawQueue.map(({ nodesForCell }) =>
+          (Array.isArray(nodesForCell) ? nodesForCell : []).reduce(
+            (sum: number, n: any) => sum + (Number(n?.value ?? 0) || 0),
+            0
+          )
+        );
+        const maxCellTotal = d3.max(cellTotals) || 1;
+        const nextMaxBound = Math.max(1, Math.ceil(maxEdgeVal), Math.ceil(maxCellTotal));
         setLinkValueMaxBound(nextMaxBound);
         setLinkValueMin((v) => Math.max(0, Math.min(v, nextMaxBound)));
         setLinkValueMax((v) => Math.max(0, Math.min(v, nextMaxBound)));
