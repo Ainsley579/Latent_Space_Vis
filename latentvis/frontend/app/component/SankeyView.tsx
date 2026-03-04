@@ -22,6 +22,22 @@ type SankeyNodeLike = {
   previous: number;
 };
 
+type CellInfoTag = {
+  rowName: string;
+  columnName: string;
+  epochName: string;
+  layerName: string;
+  col: number;
+  row: number;
+};
+
+type HoverTooltip = {
+  x: number;
+  y: number;
+  title: string;
+  lines: string[];
+};
+
 function parseClusterFromLabel(label: string): number {
   const m = /_C(\d+)$/.exec(label);
   return m ? Number(m[1]) : 0;
@@ -204,6 +220,7 @@ export default function SankeyView({
   selectedCellMetric = "cluster_count",
 }: SankeyViewProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const chartPanelRef = useRef<HTMLDivElement | null>(null);
   const fmiRef = useRef<HTMLDivElement | null>(null);
   const rowMetricRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
@@ -221,6 +238,10 @@ export default function SankeyView({
   const [linkValueMin, setLinkValueMin] = useState(0);
   const [linkValueMax, setLinkValueMax] = useState(Number.MAX_SAFE_INTEGER);
   const [linkValueMaxBound, setLinkValueMaxBound] = useState(1);
+  const [hoveredCellInfo, setHoveredCellInfo] = useState<CellInfoTag | null>(null);
+  const [pinnedCellInfo, setPinnedCellInfo] = useState<CellInfoTag | null>(null);
+  const [hoverTooltip, setHoverTooltip] = useState<HoverTooltip | null>(null);
+  const [showTooltips, setShowTooltips] = useState(true);
   const [layout, setLayout] = useState<{
     rowNames: string[];
     colNames: string[];
@@ -456,11 +477,33 @@ export default function SankeyView({
               ? [minCellCluster, minCellCluster + 1]
               : [minCellCluster, maxCellCluster]
           )
-          .range(["#eff6ff", "#46518C"])
+          .range(["#eff6ff", "#7B8FC7"])
           .clamp(true);
 
         const cells: d3.Selection<SVGGElement, any, any, any>[] = [];
         let lockedCell: { rowName: string; columnName: string } | null = null;
+        const metricNameMap: Record<string, string> = {
+          cluster_count: "Cluster Number",
+          ari: "ARI",
+          ami: "AMI",
+          nmi: "NMI",
+          homogeneity: "Homogeneity",
+          completeness: "Completeness",
+          v_measure: "V-Measure",
+          fowlkes_mallows: "FMI",
+        };
+        const activeMetricLabel = metricNameMap[selectedCellMetric] ?? selectedCellMetric;
+        const placeTooltipFromEvent = (evt: any, title: string, lines: string[]) => {
+          if (!showTooltips) return;
+          const panel = chartPanelRef.current;
+          const target = evt?.currentTarget as Element | null;
+          if (!panel || !target || typeof (target as any).getBoundingClientRect !== "function") return;
+          const panelRect = panel.getBoundingClientRect();
+          const targetRect = (target as any).getBoundingClientRect() as DOMRect;
+          const x = targetRect.left - panelRect.left + targetRect.width / 2;
+          const y = targetRect.bottom - panelRect.top;
+          setHoverTooltip({ x, y, title, lines });
+        };
         X_NAMES.forEach((xKey, col) => {
           Y_NAMES.forEach((yKey, row) => {
             const rowName = SWAP_AXES ? xKey : yKey;
@@ -493,12 +536,32 @@ export default function SankeyView({
                 // Toggle off when clicking the same locked cell.
                 if (isSameLocked) {
                   lockedCell = null;
+                  setPinnedCellInfo(null);
+                  setHoverTooltip(null);
                   setCellHighlight(datum.rowName, datum.columnName, false);
                   onCellSelect?.(false);
                   return;
                 }
 
                 lockedCell = { rowName: datum.rowName, columnName: datum.columnName };
+                const epochName = MODEL_SET.has(datum.rowName)
+                  ? datum.rowName
+                  : MODEL_SET.has(datum.columnName)
+                    ? datum.columnName
+                    : datum.rowName;
+                const layerName = LAYER_SET.has(datum.rowName)
+                  ? datum.rowName
+                  : LAYER_SET.has(datum.columnName)
+                    ? datum.columnName
+                    : datum.columnName;
+                setPinnedCellInfo({
+                  rowName: datum.rowName,
+                  columnName: datum.columnName,
+                  epochName,
+                  layerName,
+                  col: Number(datum.col ?? 0),
+                  row: Number(datum.row ?? 0),
+                });
                 setCellHighlight(datum.rowName, datum.columnName, true);
 
                 const modelCandidate = MODEL_SET.has(datum.rowName)
@@ -519,6 +582,66 @@ export default function SankeyView({
                 }
                 // Fire after model/layer updates so linked Sankey highlights follow the new cell immediately.
                 onCellSelect?.(true);
+              })
+              .on("mouseenter", (event: any, datum: any) => {
+                const epochName = MODEL_SET.has(datum.rowName)
+                  ? datum.rowName
+                  : MODEL_SET.has(datum.columnName)
+                    ? datum.columnName
+                    : datum.rowName;
+                const layerName = LAYER_SET.has(datum.rowName)
+                  ? datum.rowName
+                  : LAYER_SET.has(datum.columnName)
+                    ? datum.columnName
+                    : datum.columnName;
+                setHoveredCellInfo({
+                  rowName: datum.rowName,
+                  columnName: datum.columnName,
+                  epochName,
+                  layerName,
+                  col: Number(datum.col ?? 0),
+                  row: Number(datum.row ?? 0),
+                });
+                const key = `${datum.rowName}|${datum.columnName}`;
+                const clusterCount = Number(cellClusterCount.get(key) ?? 0);
+                const metricValue = Number(cellMetricValue.get(key) ?? 0);
+                const lines = [
+                  `Layer: ${layerName}`,
+                  `Epoch: ${epochName}`,
+                  `Cluster Number: ${clusterCount.toFixed(0)}`,
+                ];
+                if (selectedCellMetric !== "cluster_count") {
+                  lines.push(`${activeMetricLabel}: ${Number.isFinite(metricValue) ? metricValue.toFixed(3) : "0.000"}`);
+                }
+                placeTooltipFromEvent(event, "Cell Metrics", lines);
+              })
+              .on("mousemove", (_event: any, datum: any) => {
+                const epochName = MODEL_SET.has(datum.rowName)
+                  ? datum.rowName
+                  : MODEL_SET.has(datum.columnName)
+                    ? datum.columnName
+                    : datum.rowName;
+                const layerName = LAYER_SET.has(datum.rowName)
+                  ? datum.rowName
+                  : LAYER_SET.has(datum.columnName)
+                    ? datum.columnName
+                    : datum.columnName;
+                const key = `${datum.rowName}|${datum.columnName}`;
+                const clusterCount = Number(cellClusterCount.get(key) ?? 0);
+                const metricValue = Number(cellMetricValue.get(key) ?? 0);
+                const lines = [
+                  `Layer: ${layerName}`,
+                  `Epoch: ${epochName}`,
+                  `Cluster Number: ${clusterCount.toFixed(0)}`,
+                ];
+                if (selectedCellMetric !== "cluster_count") {
+                  lines.push(`${activeMetricLabel}: ${Number.isFinite(metricValue) ? metricValue.toFixed(3) : "0.000"}`);
+                }
+                placeTooltipFromEvent(_event, "Cell Metrics", lines);
+              })
+              .on("mouseleave", () => {
+                setHoveredCellInfo(null);
+                setHoverTooltip(null);
               });
           });
         });
@@ -605,7 +728,7 @@ export default function SankeyView({
               const pct = pctByEpochTransition.get(`${epoch}|${fromLayer}|${toLayer}`) ?? 0;
               const xGap = i * cellStepX + cellW;
               const yGap = rowIdx * cellStepY;
-              gapHeatmap
+              const gapRect = gapHeatmap
                 .append("rect")
                 .attr("x", xGap)
                 .attr("y", yGap)
@@ -613,9 +736,16 @@ export default function SankeyView({
                 .attr("height", cellH)
                 .attr("fill", horizontalGapColor(pct))
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 0.7)
-                .append("title")
-                .text(`${epoch}: ${fromLayer} -> ${toLayer}, ${pct.toFixed(2)}%`);
+                .attr("stroke-width", 0.7);
+              gapRect
+                .on("mouseenter mousemove", (_event: any) => {
+                  placeTooltipFromEvent(event, "Gap Transition", [
+                    `${epoch}: ${fromLayer} -> ${toLayer}`,
+                    `${pct.toFixed(2)}% changed to other clusters`,
+                  ]);
+                })
+                .on("mouseleave", () => setHoverTooltip(null));
+              gapRect.append("title").text(`${epoch}: ${fromLayer} -> ${toLayer}, ${pct.toFixed(2)}%`);
             }
           });
           // Vertical gaps: epoch-to-epoch transitions for each layer (by_layer)
@@ -626,7 +756,7 @@ export default function SankeyView({
               const pct = pctByLayerTransition.get(`${layer}|${fromEpoch}|${toEpoch}`) ?? 0;
               const xGap = colIdx * cellStepX;
               const yGap = i * cellStepY + cellH;
-              gapHeatmap
+              const gapRect = gapHeatmap
                 .append("rect")
                 .attr("x", xGap)
                 .attr("y", yGap)
@@ -634,9 +764,16 @@ export default function SankeyView({
                 .attr("height", CELL_GAP)
                 .attr("fill", verticalGapColor(pct))
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 0.7)
-                .append("title")
-                .text(`${layer}: ${fromEpoch} -> ${toEpoch}, ${pct.toFixed(2)}%`);
+                .attr("stroke-width", 0.7);
+              gapRect
+                .on("mouseenter mousemove", (_event: any) => {
+                  placeTooltipFromEvent(event, "Gap Transition", [
+                    `${layer}: ${fromEpoch} -> ${toEpoch}`,
+                    `${pct.toFixed(2)}% changed to other clusters`,
+                  ]);
+                })
+                .on("mouseleave", () => setHoverTooltip(null));
+              gapRect.append("title").text(`${layer}: ${fromEpoch} -> ${toEpoch}, ${pct.toFixed(2)}%`);
             }
           });
           } else {
@@ -648,7 +785,7 @@ export default function SankeyView({
               const pct = pctByLayerTransition.get(`${layer}|${fromEpoch}|${toEpoch}`) ?? 0;
               const xGap = i * cellStepX + cellW;
               const yGap = rowIdx * cellStepY;
-              gapHeatmap
+              const gapRect = gapHeatmap
                 .append("rect")
                 .attr("x", xGap)
                 .attr("y", yGap)
@@ -656,9 +793,16 @@ export default function SankeyView({
                 .attr("height", cellH)
                 .attr("fill", horizontalGapColor(pct))
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 0.7)
-                .append("title")
-                .text(`${layer}: ${fromEpoch} -> ${toEpoch}, ${pct.toFixed(2)}%`);
+                .attr("stroke-width", 0.7);
+              gapRect
+                .on("mouseenter mousemove", (_event: any) => {
+                  placeTooltipFromEvent(event, "Gap Transition", [
+                    `${layer}: ${fromEpoch} -> ${toEpoch}`,
+                    `${pct.toFixed(2)}% changed to other clusters`,
+                  ]);
+                })
+                .on("mouseleave", () => setHoverTooltip(null));
+              gapRect.append("title").text(`${layer}: ${fromEpoch} -> ${toEpoch}, ${pct.toFixed(2)}%`);
             }
           });
           // Vertical gaps: layer-to-layer transitions for each epoch (by_epoch)
@@ -669,7 +813,7 @@ export default function SankeyView({
               const pct = pctByEpochTransition.get(`${epoch}|${fromLayer}|${toLayer}`) ?? 0;
               const xGap = colIdx * cellStepX;
               const yGap = i * cellStepY + cellH;
-              gapHeatmap
+              const gapRect = gapHeatmap
                 .append("rect")
                 .attr("x", xGap)
                 .attr("y", yGap)
@@ -677,9 +821,16 @@ export default function SankeyView({
                 .attr("height", CELL_GAP)
                 .attr("fill", verticalGapColor(pct))
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 0.7)
-                .append("title")
-                .text(`${epoch}: ${fromLayer} -> ${toLayer}, ${pct.toFixed(2)}%`);
+                .attr("stroke-width", 0.7);
+              gapRect
+                .on("mouseenter mousemove", (_event: any) => {
+                  placeTooltipFromEvent(event, "Gap Transition", [
+                    `${epoch}: ${fromLayer} -> ${toLayer}`,
+                    `${pct.toFixed(2)}% changed to other clusters`,
+                  ]);
+                })
+                .on("mouseleave", () => setHoverTooltip(null));
+              gapRect.append("title").text(`${epoch}: ${fromLayer} -> ${toLayer}, ${pct.toFixed(2)}%`);
             }
           });
           }
@@ -1333,6 +1484,7 @@ export default function SankeyView({
     showSankeyNodes,
     showCellBackground,
     showGapHeatmap,
+    showTooltips,
     epochTransitionThreshold,
     reverseEpochOrder,
     onVisibleEpochsChange,
@@ -1435,6 +1587,10 @@ export default function SankeyView({
         if (el.attr("data-column") === colKey) el.classed("link-dimmed", false).classed("link-highlight", true);
       });
   }, [selectedNode, activeCell]);
+
+  useEffect(() => {
+    if (!showTooltips) setHoverTooltip(null);
+  }, [showTooltips]);
 
   useEffect(() => {
     if (!SHOW_FMI_CSPA) return;
@@ -1742,6 +1898,17 @@ export default function SankeyView({
     fowlkes_mallows: "FMI",
   };
   const cellMetricDisplayName = cellMetricDisplayNameMap[selectedCellMetric] ?? selectedCellMetric;
+  const displayCellInfo = pinnedCellInfo ?? hoveredCellInfo;
+  const cellInfoLeft =
+    displayCellInfo && layout
+      ? transform.x +
+        transform.scale * (layout.margin.left + displayCellInfo.col * layout.cellStepX + layout.cellW) +
+        24
+      : 0;
+  const cellInfoTop =
+    displayCellInfo && layout
+      ? transform.y + transform.scale * (layout.margin.top + displayCellInfo.row * layout.cellStepY)
+      : 0;
 
   return (
     <div className="timeline-root h-full flex flex-col" style={{ marginLeft: 0 }}>
@@ -1899,6 +2066,19 @@ export default function SankeyView({
               >
                 Gap Heat
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowTooltips((v) => {
+                    const next = !v;
+                    if (!next) setHoverTooltip(null);
+                    return next;
+                  });
+                }}
+                style={{ fontWeight: showTooltips ? 600 : 400 }}
+              >
+                Tooltip
+              </button>
             </div>
           </div>
         </div>
@@ -1908,17 +2088,17 @@ export default function SankeyView({
             <span className="legend-item">
               <span className="legend-text">{cellMetricDisplayName}</span>
               <span className="legend-range">{cellLegendMinText}</span>
-              <span className="legend-swatch" style={{ background: "linear-gradient(to right, #eff6ff, #46518C)" }} />
+              <span className="legend-swatch" style={{ background: "linear-gradient(to right, #eff6ff, #7B8FC7)" }} />
               <span className="legend-range">{cellLegendMaxText}</span>
             </span>
             <span className="legend-item">
-              <span className="legend-text">Transition %</span>
+              <span className="legend-text">Layer Change %</span>
               <span className="legend-range">0</span>
               <span className="legend-swatch" style={{ background: "linear-gradient(to right, #f3f4f6, #7f1d1d)" }} />
               <span className="legend-range">{gapLegendMax.toFixed(1)}%</span>
             </span>
             <span className="legend-item">
-              <span className="legend-text">Transition %</span>
+              <span className="legend-text">Epoch Change %</span>
               <span className="legend-range">0</span>
               <span className="legend-swatch" style={{ background: "linear-gradient(to right, #f0fdf4, #166534)" }} />
               <span className="legend-range">{gapLegendMax.toFixed(1)}%</span>
@@ -1935,7 +2115,7 @@ export default function SankeyView({
           {/* FMI/CSPA row metric strip is temporarily hidden, keep code for future use.
           <div id="rowMetricChart" ref={rowMetricRef} className="shrink-0 w-10 h-full pointer-events-none" />
           */}
-          <div className="relative flex-1 min-w-0 pl-8">
+          <div ref={chartPanelRef} className="relative flex-1 min-w-0 pl-8">
             <ZoomPan
               className="w-full h-full"
               panPadding={220}
@@ -1947,6 +2127,34 @@ export default function SankeyView({
             >
               <div id="chart" ref={chartRef}></div>
             </ZoomPan>
+            {displayCellInfo && layout && (
+              <div
+                className="absolute z-20 pointer-events-none rounded border border-zinc-300 bg-white/95 px-1.5 py-0.5 text-[11px] text-zinc-700 shadow-sm whitespace-nowrap"
+                style={{
+                  left: cellInfoLeft,
+                  top: cellInfoTop,
+                  transform: "translate(-100%, 0)",
+                }}
+              >
+                {displayCellInfo.layerName} / {displayCellInfo.epochName}
+              </div>
+            )}
+            {hoverTooltip && (
+              <div
+                className="absolute z-30 pointer-events-none rounded border border-zinc-300 bg-white/95 px-2 py-1 text-[11px] text-zinc-700 shadow-sm whitespace-nowrap"
+                style={{
+                  left: hoverTooltip.x,
+                  top: hoverTooltip.y,
+                  transform: "translate(-50%, 8px)",
+                }}
+              >
+                <div className="tooltip-arrow" />
+                <div className="font-semibold text-zinc-800">{hoverTooltip.title}</div>
+                {hoverTooltip.lines.map((line, idx) => (
+                  <div key={`tt-${idx}`}>{line}</div>
+                ))}
+              </div>
+            )}
 
             {layout && (
               <>
@@ -2135,6 +2343,19 @@ export default function SankeyView({
           border-radius: 4px;
           border: 1px solid rgba(15, 23, 42, 0.25);
           display: inline-block;
+        }
+
+        .tooltip-arrow {
+          position: absolute;
+          left: 50%;
+          top: -6px;
+          width: 0;
+          height: 0;
+          transform: translateX(-50%);
+          border-left: 6px solid transparent;
+          border-right: 6px solid transparent;
+          border-bottom: 6px solid rgba(255, 255, 255, 0.95);
+          filter: drop-shadow(0 -1px 0 rgba(148, 163, 184, 0.9));
         }
 
         #controlButtons button {
