@@ -26,7 +26,7 @@ const LOCAL_JSME_SCRIPT_SRC = "/jsme/jsme.nocache.js";
 
 type StructureEditorPanelProps = {
   dataset?: string;
-  dataSplit?: "test" | "train";
+  dataSplit?: "all" | "test" | "train";
   onSearchResultIds?: (ids: string[], smiles: string) => void;
 };
 
@@ -210,7 +210,11 @@ export default function StructureEditorPanel({ dataset, dataSplit, onSearchResul
       const res = await fetch(`${apiBase}/search-smiles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ smiles, dataset, data_split: dataSplit }),
+        body: JSON.stringify({
+          smiles,
+          dataset,
+          data_split: dataSplit === "all" ? "train" : dataSplit,
+        }),
       });
       if (!res.ok) {
         throw new Error(`search-smiles API failed: ${res.status}`);
