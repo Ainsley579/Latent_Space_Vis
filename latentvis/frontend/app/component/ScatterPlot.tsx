@@ -10,13 +10,19 @@ type ScatterPoint = {
   x: number;
   y: number;
   cluster_id: number;
+  split?: "train" | "test";
 };
 
-type ColorMode = "cluster" | "label";
+type ColorMode = "cluster" | "label" | "split";
 
 type ScatterPlotProps = {
   dataPathXY: string;
   dataPathCluster: string;
+  secondaryDataPathXY?: string;
+  secondaryDataPathCluster?: string;
+  splitMapPath?: string;
+  splitMapDataset?: string;
+  dataSplit?: "all" | "train" | "test";
   projection?: "pca" | "mds" | "umap" | "tsne";
   onProjectionChange?: (next: "pca" | "mds" | "umap" | "tsne") => void;
   activeCluster?: number | null;
@@ -42,6 +48,11 @@ type ScatterPlotProps = {
 export default function ScatterPlot({
   dataPathXY,
   dataPathCluster,
+  secondaryDataPathXY,
+  secondaryDataPathCluster,
+  splitMapPath,
+  splitMapDataset,
+  dataSplit,
   projection,
   onProjectionChange,
   activeCluster,
@@ -75,6 +86,8 @@ export default function ScatterPlot({
   const [labelLegend, setLabelLegend] = useState<string[]>([]);
   const [labelFileName, setLabelFileName] = useState<string>("");
   const [labelLoadError, setLabelLoadError] = useState<string | null>(null);
+  const [hasSplitData, setHasSplitData] = useState(false);
+  const colorModeRef = useRef<ColorMode>("cluster");
 
   function idLookupKeys(raw: string): string[] {
     const s = String(raw ?? "").trim();
@@ -108,8 +121,13 @@ export default function ScatterPlot({
     return out;
   }
 
-  function resolveBaseFill(id: string, cluster: number): string {
-    if (colorMode === "label") {
+  function resolveBaseFillByMode(mode: ColorMode, id: string, cluster: number, split?: "train" | "test"): string {
+    if (mode === "split") {
+      if (split === "test") return "#2563eb";
+      if (split === "train") return "#f59e0b";
+      return "#9ca3af";
+    }
+    if (mode === "label") {
       const direct = lookupLabelById(labelById, id);
       if (direct) return labelColors[direct] ?? "#9ca3af";
       const smiles = getSmilesByIdRef.current?.(String(id));
@@ -121,6 +139,38 @@ export default function ScatterPlot({
     }
     return CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length];
   }
+
+  function resolveBaseFill(id: string, cluster: number, split?: "train" | "test"): string {
+    return resolveBaseFillByMode(colorMode, id, cluster, split);
+  }
+
+  function repaintBaseFillForMode(mode: ColorMode) {
+    const container = containerRef.current;
+    if (!container) return;
+    const svg = container.querySelector("svg");
+    if (!svg) return;
+    const circles = Array.from(svg.querySelectorAll("circle[data-id]")) as SVGCircleElement[];
+    circles.forEach((el) => {
+      const id = el.getAttribute("data-id") || "";
+      const cluster = Number(el.getAttribute("data-cluster") || "0");
+      const split = (el.getAttribute("data-split") || "") as "train" | "test" | "";
+      const fill = resolveBaseFillByMode(mode, id, cluster, split || undefined);
+      el.setAttribute("data-base-fill", fill);
+      if (!highlightId || id !== String(highlightId)) {
+        el.setAttribute("fill", fill);
+      }
+    });
+  }
+
+  function setColorModeAndRefresh(next: ColorMode) {
+    colorModeRef.current = next;
+    setColorMode(next);
+    requestAnimationFrame(() => repaintBaseFillForMode(next));
+  }
+
+  useEffect(() => {
+    colorModeRef.current = colorMode;
+  }, [colorMode]);
 
   function handleLabelFileUpload(file: File) {
     setLabelLoadError(null);
@@ -301,11 +351,16 @@ export default function ScatterPlot({
         .append("circle")
         .attr("data-id", (d) => String(d.real_id))
         .attr("data-cluster", (d) => String(d.cluster_id))
-        .attr("data-base-fill", (d) => resolveBaseFill(String(d.real_id), d.cluster_id))
+        .attr("data-split", (d) => String(d.split ?? ""))
+        .attr("data-base-fill", (d) =>
+          resolveBaseFillByMode(colorModeRef.current, String(d.real_id), d.cluster_id, d.split)
+        )
         .attr("cx", (d) => x(d.x))
         .attr("cy", (d) => y(d.y))
         .attr("r", 3.2)
-        .attr("fill", (d) => resolveBaseFill(String(d.real_id), d.cluster_id))
+        .attr("fill", (d) =>
+          resolveBaseFillByMode(colorModeRef.current, String(d.real_id), d.cluster_id, d.split)
+        )
         .attr("fill-opacity", 0.75)
         .attr("stroke", "none")
         .attr("stroke-width", 0.9)
@@ -417,31 +472,82 @@ export default function ScatterPlot({
       return res.json();
     };
 
-    Promise.all([
+    const fetchSplitMap = async () => {
+      if (!splitMapPath || !splitMapDataset) return null;
+      const res = await fetch(splitMapPath);
+      if (!res.ok) return null;
+      const json = await res.json();
+      const map = json?.datasets?.[splitMapDataset]?.split_by_real_id;
+      if (!map || typeof map !== "object") return null;
+      return map as Record<string, "train" | "test" | "both">;
+    };
+
+    const requests: Array<Promise<any>> = [
       fetchScatterJson(dataPathXY, "xy"),
       fetchScatterJson(dataPathCluster, "cluster"),
-    ])
-      .then(([xyJson, clusterJson]) => {
-        const xyRows = Array.isArray(xyJson) ? xyJson : [];
-        const clusterRows = Array.isArray(clusterJson) ? clusterJson : [];
-        const clusterById = new Map<string, number>();
-        clusterRows.forEach((d: any) => {
-          const id = String(d?.real_id ?? "");
-          if (!id) return;
-          clusterById.set(id, Number(d?.cluster_id ?? 0) || 0);
-        });
-        const merged: ScatterPoint[] = xyRows
-          .map((d: any) => {
+      fetchSplitMap(),
+    ];
+    if (secondaryDataPathXY && secondaryDataPathCluster) {
+      requests.push(fetchScatterJson(secondaryDataPathXY, "xy"));
+      requests.push(fetchScatterJson(secondaryDataPathCluster, "cluster"));
+    }
+
+    Promise.all(requests)
+      .then((allJson) => {
+        const [xyJson, clusterJson, splitById, secondaryXYJson, secondaryClusterJson] = allJson;
+
+          const parseRows = (
+          xySource: any,
+          clusterSource: any,
+          split: "train" | "test" | undefined
+        ): ScatterPoint[] => {
+          const xyRows = Array.isArray(xySource) ? xySource : [];
+          const clusterRows = Array.isArray(clusterSource) ? clusterSource : [];
+          const clusterById = new Map<string, number>();
+          clusterRows.forEach((d: any) => {
             const id = String(d?.real_id ?? "");
-            if (!id) return null;
-            return {
-              real_id: id,
-              x: Number(d?.x ?? 0) || 0,
-              y: Number(d?.y ?? 0) || 0,
-              cluster_id: clusterById.get(id) ?? 0,
-            } as ScatterPoint;
-          })
-          .filter((d: ScatterPoint | null): d is ScatterPoint => !!d);
+            if (!id) return;
+            clusterById.set(id, Number(d?.cluster_id ?? 0) || 0);
+          });
+          return xyRows
+            .map((d: any) => {
+              const id = String(d?.real_id ?? "");
+              if (!id) return null;
+              const clusterFromMap = clusterById.get(id);
+              const clusterFromRow = Number(d?.cluster_id ?? 0) || 0;
+              const splitFromMapRaw = (() => {
+                const keys = idLookupKeys(id);
+                for (let i = 0; i < keys.length; i += 1) {
+                  const v = splitById?.[keys[i]];
+                  if (v) return v;
+                }
+                return undefined;
+              })();
+              const splitFromMap = splitFromMapRaw === "train" || splitFromMapRaw === "test" ? splitFromMapRaw : undefined;
+              return {
+                real_id: id,
+                x: Number(d?.x ?? 0) || 0,
+                y: Number(d?.y ?? 0) || 0,
+                cluster_id: clusterFromMap ?? clusterFromRow,
+                split: splitFromMap ?? split,
+              } as ScatterPoint;
+            })
+            .filter((d: ScatterPoint | null): d is ScatterPoint => !!d);
+        };
+
+        const primaryDefaultSplit: "train" | "test" | undefined =
+          secondaryXYJson ? "train" : (dataSplit === "train" || dataSplit === "test" ? dataSplit : undefined);
+        const primaryRows = parseRows(xyJson, clusterJson, primaryDefaultSplit);
+        const secondaryRows = secondaryXYJson
+          ? parseRows(secondaryXYJson, secondaryClusterJson, "test")
+          : [];
+        const merged: ScatterPoint[] = [...primaryRows, ...secondaryRows];
+        const splitKinds = new Set(merged.map((d) => d.split).filter((x): x is "train" | "test" => !!x));
+        const canUseSplit = splitKinds.size > 0;
+        setHasSplitData(canUseSplit);
+        if (!canUseSplit && colorMode === "split") {
+          setColorMode("cluster");
+        }
 
         lastRows = merged;
         rowsRef.current = merged;
@@ -459,6 +565,7 @@ export default function ScatterPlot({
         setLegendClusters(clusterIds);
         setLegendClusterIds(idsByCluster);
         draw();
+        requestAnimationFrame(() => repaintBaseFillForMode(colorModeRef.current));
       })
       .catch((err) => {
         console.error(err);
@@ -472,6 +579,11 @@ export default function ScatterPlot({
   }, [
     dataPathXY,
     dataPathCluster,
+    secondaryDataPathXY,
+    secondaryDataPathCluster,
+    splitMapPath,
+    splitMapDataset,
+    dataSplit,
   ]);
 
   useEffect(() => {
@@ -487,7 +599,8 @@ export default function ScatterPlot({
     circles.forEach((el) => {
       const id = el.getAttribute("data-id") || "";
       const cluster = Number(el.getAttribute("data-cluster") || "0");
-      const computedBaseFill = resolveBaseFill(id, cluster);
+      const split = (el.getAttribute("data-split") || "") as "train" | "test" | "";
+      const computedBaseFill = resolveBaseFill(id, cluster, split || undefined);
       el.setAttribute("data-base-fill", computedBaseFill);
       const baseFill = computedBaseFill;
       const isHovered = !!highlightId && id === String(highlightId);
@@ -583,7 +696,7 @@ export default function ScatterPlot({
             className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
               colorMode === "cluster" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-zinc-300 text-zinc-700 bg-white"
             }`}
-            onClick={() => setColorMode("cluster")}
+            onClick={() => setColorModeAndRefresh("cluster")}
           >
             cluster
           </button>
@@ -592,7 +705,7 @@ export default function ScatterPlot({
             className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
               colorMode === "label" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-zinc-300 text-zinc-700 bg-white"
             } disabled:opacity-50`}
-            onClick={() => setColorMode("label")}
+            onClick={() => setColorModeAndRefresh("label")}
             disabled={Object.keys(labelById).length === 0 && Object.keys(labelBySmiles).length === 0}
             title={
               Object.keys(labelById).length === 0 && Object.keys(labelBySmiles).length === 0
@@ -601,6 +714,17 @@ export default function ScatterPlot({
             }
           >
             labelled
+          </button>
+          <button
+            type="button"
+            className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
+              colorMode === "split" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-zinc-300 text-zinc-700 bg-white"
+            } disabled:opacity-50`}
+            onClick={() => setColorModeAndRefresh("split")}
+            disabled={!hasSplitData}
+            title={hasSplitData ? "Color points by train/test split" : "Only available in train+test mode"}
+          >
+            split
           </button>
           {labelLoadError && <span className="text-[11px] text-red-600 truncate max-w-[240px]">{labelLoadError}</span>}
           <button
@@ -643,6 +767,18 @@ export default function ScatterPlot({
                 </span>
               </button>
             ))}
+          </div>
+        )}
+        {colorMode === "split" && (
+          <div className="flex flex-nowrap gap-x-3 gap-y-1 min-w-max text-[11px] text-zinc-700">
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#f59e0b" }} />
+              train
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#2563eb" }} />
+              test
+            </span>
           </div>
         )}
         {colorMode === "label" && (

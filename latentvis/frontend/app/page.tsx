@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import SankeyView from "./component/SankeyView";
 import SankeyHorizontal from "./component/SankeyHorizontal";
 import SankeyVertical from "./component/SankeyVertical";
@@ -78,7 +78,7 @@ type HoverPreviewState =
 
 type DatasetKey = "dimenet" | "chemprop" | "chemeleon";
 type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan";
-type DataSplitKey = "test" | "train";
+type DataSplitKey = "all" | "test" | "train";
 const DATASET_OPTIONS: DatasetKey[] = ["dimenet", "chemprop", "chemeleon"];
 const DATASET_OPTIONS_UI: DatasetKey[] = ["chemprop", "chemeleon"];
 const CLUSTERING_OPTIONS: Array<{ value: ClusteringKey; label: string }> = [
@@ -100,14 +100,16 @@ function sanitizePathKey(value: string) {
 export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
   const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("agglomerative");
-  const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("test");
+  const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("all");
   const [generatedSankeyPayloads, setGeneratedSankeyPayloads] = useState<Record<string, GeneratedSankeyPayload>>({});
   const [generatedRuntimePayloads, setGeneratedRuntimePayloads] = useState<Record<string, GeneratedRuntimePayload>>({});
   const generatedSankeyBlobUrlsRef = useRef<Map<string, string>>(new Map());
+  const effectiveDataSplitForFiles = (dataSplit: DataSplitKey): "test" | "train" =>
+    dataSplit === "all" ? "train" : dataSplit;
   const datasetRootFor = (
     dataset: DatasetKey,
     dataSplit: DataSplitKey = selectedDataSplit
-  ) => `/data/${dataset}/${dataSplit}`;
+  ) => `/data/${dataset}/${effectiveDataSplitForFiles(dataSplit)}`;
   const datasetBaseFor = (
     dataset: DatasetKey,
     clustering: ClusteringKey = selectedClustering,
@@ -262,18 +264,18 @@ export default function Home() {
   };
 
   const [sankeyPath, setSankeyPath] = useState(
-    `${sectionBaseFor("sankey", "chemprop", "agglomerative", "test")}/0_sankey_samples.json`
+    `${sectionBaseFor("sankey", "chemprop", "agglomerative", "all")}/0_sankey_samples.json`
   );
   const [sankeyPathVertical, setSankeyPathVertical] = useState(
-    `${sectionBaseFor("sankey", "chemprop", "agglomerative", "test")}/vertical_model_samples_fingerprint.json`
+    `${sectionBaseFor("sankey", "chemprop", "agglomerative", "all")}/vertical_model_samples_fingerprint.json`
   );
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [selectedLayer, setSelectedLayer] = useState("fingerprint");
   const [selectedModel, setSelectedModel] = useState("0");
   const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
   const [scatterPaths, setScatterPaths] = useState({
-    xy: `${sectionBaseFor("scatterplot", "chemprop", "agglomerative", "test")}/0_fingerprint_pca_xy.json`,
-    cluster: `${sectionBaseFor("scatterplot", "chemprop", "agglomerative", "test")}/0_fingerprint_pca_cluster.json`,
+    xy: `${sectionBaseFor("scatterplot", "chemprop", "agglomerative", "all")}/0_fingerprint_pca_xy.json`,
+    cluster: `${sectionBaseFor("scatterplot", "chemprop", "agglomerative", "all")}/0_fingerprint_pca_cluster.json`,
   });
   const scatterOverrideUrlRef = useRef<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
@@ -301,6 +303,7 @@ export default function Home() {
   const [isKnnTopmLoading, setIsKnnTopmLoading] = useState(false);
   const [cellSelected, setCellSelected] = useState(false);
   const [swapAxes, setSwapAxes] = useState(false);
+  const [reverseEpochOrder, setReverseEpochOrder] = useState(true);
   const [visibleEpochs, setVisibleEpochs] = useState<string[] | null>(null);
   const handleVisibleEpochsChange = useCallback((epochs: string[]) => {
     setVisibleEpochs(epochs);
@@ -356,7 +359,17 @@ export default function Home() {
   const [workspaceWidthPct, setWorkspaceWidthPct] = useState(DEFAULT_WORKSPACE_WIDTH_PCT);
   const [workspaceHeightPct] = useState(80);
   const layoutGridRef = useRef<HTMLDivElement | null>(null);
-  const [scatterFixedWidthPx, setScatterFixedWidthPx] = useState<number | null>(null);
+  const rightTopRowRef = useRef<HTMLDivElement | null>(null);
+  const [scatterMinWidthPx, setScatterMinWidthPx] = useState<number | null>(null);
+  const [scatterWidthPx, setScatterWidthPx] = useState<number | null>(null);
+  const scatterCornerResizeRef = useRef<{
+    startX: number;
+    startY: number;
+    startWidth: number;
+    startTopHeightPct: number;
+  } | null>(null);
+  const [isScatterCornerResizing, setIsScatterCornerResizing] = useState(false);
+  const [rightTopHeightPct, setRightTopHeightPct] = useState(32);
   const cellBgMetricOptions = useMemo(
     () => {
       const metricLabelMap: Record<string, string> = {
@@ -1443,7 +1456,8 @@ export default function Home() {
       const rightColMinW = (hostW * MIN_RIGHT_COL_PCT) / 100;
       // Account for right-column paddings/borders/gaps to keep scatter at the collapsed-width feel.
       const next = Math.max(140, Math.round(rightColMinW - 14));
-      setScatterFixedWidthPx(next);
+      setScatterMinWidthPx(next);
+      setScatterWidthPx((prev) => (prev == null ? next : Math.max(next, prev)));
     };
     estimateScatterMinWidth();
     const ro = new ResizeObserver(estimateScatterMinWidth);
@@ -1463,6 +1477,58 @@ export default function Home() {
   const midRowPct = workspaceHeightPct * MID_ROW_RATIO_IN_WORKSPACE;
   const bottomRowPct = 100 - workspaceHeightPct;
   const showMembersPanelByWidth = rightColPct >= 24;
+  const isRightPanelCollapsed = Math.abs(workspaceWidthPct - HALF_RIGHT_WORKSPACE_WIDTH_PCT) < 0.5;
+  const scatterResolvedWidthPx =
+    scatterWidthPx == null ? null : Math.max(scatterMinWidthPx ?? 140, Math.min(900, scatterWidthPx));
+
+  function startScatterCornerResize(e: ReactPointerEvent<HTMLElement>) {
+    if (!showMembersPanelByWidth) return;
+    const currentWidth = scatterResolvedWidthPx ?? scatterMinWidthPx ?? 160;
+    scatterCornerResizeRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      startWidth: currentWidth,
+      startTopHeightPct: rightTopHeightPct,
+    };
+    setIsScatterCornerResizing(true);
+    try {
+      (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    } catch {}
+    e.preventDefault();
+  }
+
+  useEffect(() => {
+    if (!isScatterCornerResizing) return;
+    const onMove = (ev: PointerEvent) => {
+      const state = scatterCornerResizeRef.current;
+      const host = rightTopRowRef.current;
+      const panel = layoutGridRef.current;
+      if (!state || !host || !panel) return;
+      const rect = host.getBoundingClientRect();
+      const minW = scatterMinWidthPx ?? 140;
+      const membersMinW = showMembersPanelByWidth ? 220 : 0;
+      const maxW = Math.max(minW, Math.floor(rect.width - membersMinW - 8));
+      const next = Math.max(minW, Math.min(maxW, Math.round(state.startWidth + (ev.clientX - state.startX))));
+      setScatterWidthPx(next);
+
+      const panelRect = panel.getBoundingClientRect();
+      if (panelRect.height > 0) {
+        const deltaYPct = ((ev.clientY - state.startY) / panelRect.height) * 100;
+        const nextTopPct = Math.max(20, Math.min(58, state.startTopHeightPct + deltaYPct));
+        setRightTopHeightPct(nextTopPct);
+      }
+    };
+    const onUp = () => {
+      scatterCornerResizeRef.current = null;
+      setIsScatterCornerResizing(false);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp, { once: true });
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [isScatterCornerResizing, scatterMinWidthPx, showMembersPanelByWidth]);
 
   function toggleWorkspaceWidthPreset() {
     setWorkspaceWidthPct((prev) => {
@@ -1497,6 +1563,11 @@ export default function Home() {
               <SankeyView
                 key={`sankeyview-${selectedDataset}-${selectedClustering}-${selectedDataSplit}-${sankeyRefreshKey}`}
                 dataPath={buildAllSankeyPath(selectedDataset, selectedClustering, selectedDataSplit)}
+                secondaryDataPath={
+                  selectedDataSplit === "all"
+                    ? buildAllSankeyPath(selectedDataset, selectedClustering, "test")
+                    : undefined
+                }
                 metricsPath={`${datasetBase}/bic_aic/avg_fmi_cspa_by_layer.json`}
                 transitionStatsPath={`${sectionBaseFor("clustering_metrics")}/layer_transition_by_epoch.json`}
                 onModelSelect={(model) => {
@@ -1531,6 +1602,8 @@ export default function Home() {
                   }
                 }}
                 onSwapAxes={(swap) => setSwapAxes(swap)}
+                reverseEpochOrder={reverseEpochOrder}
+                onToggleEpochOrder={() => setReverseEpochOrder((v) => !v)}
                 onVisibleEpochsChange={handleVisibleEpochsChange}
                 cellMetricByCell={cellMetricByCell}
                 selectedCellMetric={selectedCellBgMetric}
@@ -1549,9 +1622,17 @@ export default function Home() {
               </div>
               <SankeyVertical
                 dataPath={swapAxes ? sankeyPath : sankeyPathVertical}
+                secondaryDataPath={
+                  selectedDataSplit === "all"
+                    ? swapAxes
+                      ? buildSankeyModelPath(selectedModel, selectedDataset, selectedClustering, "test")
+                      : buildVerticalPath(selectedLayer, selectedDataset, selectedClustering, "test")
+                    : undefined
+                }
                 mode={swapAxes ? "layer" : "model"}
                 layerKey={selectedLayer}
                 modelKey={selectedModel}
+                reverseEpochOrder={reverseEpochOrder}
                 visibleEpochs={swapAxes ? null : visibleEpochs}
                 syncTransform={syncLinkedSankeyViews ? syncTransformVertical : undefined}
                 onSyncTransform={(t) => {
@@ -1588,9 +1669,17 @@ export default function Home() {
               </div>
               <SankeyHorizontal
                 dataPath={swapAxes ? sankeyPathVertical : sankeyPath}
+                secondaryDataPath={
+                  selectedDataSplit === "all"
+                    ? swapAxes
+                      ? buildVerticalPath(selectedLayer, selectedDataset, selectedClustering, "test")
+                      : buildSankeyModelPath(selectedModel, selectedDataset, selectedClustering, "test")
+                    : undefined
+                }
                 mode={swapAxes ? "model" : "layer"}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
+                reverseEpochOrder={reverseEpochOrder}
                 visibleEpochs={swapAxes ? visibleEpochs : null}
                 syncTransform={syncLinkedSankeyViews ? syncTransformHorizontal : undefined}
                 onSyncTransform={(t) => {
@@ -1640,13 +1729,17 @@ export default function Home() {
           </div>
 
           <div className="p-1 box-border" style={{ gridColumn: "3 / 4", gridRow: "1 / 4" }}>
-            <div className="w-full h-full min-w-0 flex flex-col gap-1">
-              <div className="h-[25%] min-h-0 flex min-w-0 gap-1">
+            <div className="w-full h-full min-w-0 flex flex-col gap-0">
               <div
-                className="h-full min-w-0 flex flex-col border border-zinc-400"
+                ref={rightTopRowRef}
+                className="min-h-0 flex min-w-0 gap-0"
+                style={{ height: `${rightTopHeightPct}%` }}
+              >
+              <div
+                className="relative h-full min-w-0 flex flex-col border border-zinc-400"
                 style={
-                  scatterFixedWidthPx != null
-                    ? { width: `${scatterFixedWidthPx}px`, maxWidth: "100%", flex: "0 0 auto" }
+                  scatterResolvedWidthPx != null
+                    ? { width: `${scatterResolvedWidthPx}px`, maxWidth: "100%", flex: "0 0 auto" }
                     : { flex: "1 1 auto" }
                 }
               >
@@ -1657,6 +1750,33 @@ export default function Home() {
                   <ScatterPlot
                     dataPathXY={scatterPaths.xy}
                     dataPathCluster={scatterPaths.cluster}
+                    splitMapPath={withVersion("/data/real_id_split_map.json", dataRefreshKey)}
+                    splitMapDataset={selectedDataset}
+                    dataSplit={selectedDataSplit}
+                    secondaryDataPathXY={
+                      selectedDataSplit === "all"
+                        ? buildScatterPaths(
+                            selectedModel,
+                            selectedLayer,
+                            scatterProjection,
+                            selectedDataset,
+                            selectedClustering,
+                            "test"
+                          ).xy
+                        : undefined
+                    }
+                    secondaryDataPathCluster={
+                      selectedDataSplit === "all"
+                        ? buildScatterPaths(
+                            selectedModel,
+                            selectedLayer,
+                            scatterProjection,
+                            selectedDataset,
+                            selectedClustering,
+                            "test"
+                          ).cluster
+                        : undefined
+                    }
                     projection={scatterProjection}
                     onProjectionChange={(next) => setScatterProjection(next)}
                     onUserClusteringUpload={(payload) => setUploadedUserClustering(payload)}
@@ -1699,9 +1819,23 @@ export default function Home() {
                     getSmilesById={getSmilesById}
                   />
                 </div>
+                <button
+                  type="button"
+                  aria-label="Resize scatter width and height"
+                  className={
+                    "absolute right-1 bottom-1 z-30 w-6 h-6 rounded-md border border-zinc-400 bg-white/95 hover:bg-zinc-100 shadow flex items-center justify-center cursor-nwse-resize " +
+                    (isScatterCornerResizing ? "border-zinc-600 bg-zinc-100" : "")
+                  }
+                  onPointerDown={startScatterCornerResize}
+                  title="Drag to resize scatter width and height"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M6 2H2v4M10 14h4v-4M2 6l4-4M14 10l-4 4" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+                  </svg>
+                </button>
               </div>
               {showMembersPanelByWidth && (
-              <div className="h-full min-w-0 flex-1 flex gap-1">
+              <div className="h-full min-w-0 flex-1 flex gap-0">
                 {SHOW_CONTAINMENT_VIEW && (
                   <div className="h-full min-w-[240px] w-[28%] border border-zinc-400 bg-white">
                     <ClusterContainmentHeatmap
@@ -1930,8 +2064,24 @@ export default function Home() {
               </div>
               <div
                 id="instanceview"
-                className="h-[75%] min-h-0 border border-zinc-400 bg-white"
+                className="relative min-h-0 border border-zinc-400 bg-white"
+                style={{ height: `${100 - rightTopHeightPct}%` }}
               >
+                <button
+                  type="button"
+                  className="absolute top-1 left-1 z-30 w-6 h-6 rounded-md border border-zinc-400 bg-white/95 hover:bg-zinc-100 shadow cursor-pointer flex items-center justify-center"
+                  onClick={toggleWorkspaceWidthPreset}
+                  title="Toggle Right Panel Width (50% / default)"
+                  aria-label="Toggle Right Panel Width (50% / default)"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                    {isRightPanelCollapsed ? (
+                      <path d="M5 8l5-3.2v6.4L5 8z" fill="currentColor" />
+                    ) : (
+                      <path d="M11 8L6 4.8v6.4L11 8z" fill="currentColor" />
+                    )}
+                  </svg>
+                </button>
                 <TopkNearestPanel
                   rows={topkNearestRows}
                   selectedModel={selectedModel}
@@ -1965,18 +2115,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <button
-            type="button"
-            className="absolute z-30 w-6 h-6 rounded-md border border-zinc-400 bg-white/95 hover:bg-zinc-100 shadow cursor-pointer flex items-center justify-center"
-            style={{ left: `calc(${effectiveWorkspaceWidthPct}% - 12px)`, top: `calc(${workspaceHeightPct}% - 12px)` }}
-            onClick={toggleWorkspaceWidthPreset}
-            title="Toggle Right Panel Width (50% / default)"
-            aria-label="Toggle Right Panel Width (50% / default)"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M6 2H2v4M10 14h4v-4M2 6l4-4M14 10l-4 4" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-            </svg>
-          </button>
           <div
             className="absolute left-0 top-0 bottom-0 z-30 flex items-start"
             onMouseLeave={() => setIsControlPanelOpen(false)}

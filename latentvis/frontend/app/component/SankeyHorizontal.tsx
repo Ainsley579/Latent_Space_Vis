@@ -63,12 +63,14 @@ function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): 
 
 type SankeyHorizontalProps = {
   dataPath?: string;
+  secondaryDataPath?: string;
   syncTransform?: { x: number; scale: number };
   onSyncTransform?: (t: { x: number; y: number; scale: number }) => void;
   mode?: "layer" | "model";
   modelKey?: string;
   layerKey?: string;
   visibleEpochs?: string[] | null;
+  reverseEpochOrder?: boolean;
   activeNodeKey?: string | null;
   highlightId?: string | null;
   highlightIds?: string[] | null;
@@ -86,9 +88,11 @@ function inferSequenceFromRows(
   const edgeCounts = new Map<string, number>();
 
   rows.forEach((r) => {
-    const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
-    const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
-    if (!fromKey || !toKey) return;
+    const fromRaw = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
+    const toRaw = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
+    if (!fromRaw || !toRaw) return;
+    const fromKey = mode === "layer" ? canonicalLayerKey(fromRaw) : fromRaw;
+    const toKey = mode === "layer" ? canonicalLayerKey(toRaw) : toRaw;
     present.add(fromKey);
     present.add(toKey);
     if (!firstSeen.has(fromKey)) firstSeen.set(fromKey, seenIdx++);
@@ -98,7 +102,6 @@ function inferSequenceFromRows(
   });
 
   const fromPreferred = preferredOrder.filter((k) => present.has(k));
-  if (fromPreferred.length > 0) return fromPreferred;
 
   const fallback = Array.from(present).sort((a, b) => {
     const na = Number(a);
@@ -109,6 +112,11 @@ function inferSequenceFromRows(
     if (sa !== sb) return sa - sb;
     return a.localeCompare(b);
   });
+  if (fromPreferred.length > 0) {
+    const seen = new Set(fromPreferred);
+    const remaining = fallback.filter((k) => !seen.has(k));
+    return [...fromPreferred, ...remaining];
+  }
   if (mode !== "layer") return fallback;
 
   const bestNext = new Map<string, string>();
@@ -142,6 +150,7 @@ function inferSequenceFromRows(
 }
 
 function canonicalLayerKey(name: string): string {
+  if (name === "fp") return "fingerprint";
   if (/^fnn_layer_/.test(name)) return name.replace(/^fnn_layer_/, "ffn_layer_");
   return name;
 }
@@ -151,7 +160,11 @@ function normalizeAdjacentRows(
   mode: "layer" | "model",
   preferredOrder: string[]
 ): SampleRow[] {
-  const sequence = inferSequenceFromRows(rows, mode, preferredOrder);
+  const rawSequence = inferSequenceFromRows(rows, mode, preferredOrder);
+  const sequence =
+    mode === "layer"
+      ? rawSequence.filter((k, i) => rawSequence.findIndex((x) => canonicalLayerKey(x) === canonicalLayerKey(k)) === i)
+      : rawSequence;
   const idxMap = new Map(
     sequence.map((k, i) => [mode === "layer" ? canonicalLayerKey(k) : k, i])
   );
@@ -200,7 +213,7 @@ function synthesizeMissingAdjacentRows(
   const keyOf = (r: SampleRow, dir: "from" | "to") =>
     mode === "model"
       ? (dir === "from" ? r.from_model ?? r.from_layer : r.to_model ?? r.to_layer)
-      : (dir === "from" ? r.from_layer : r.to_layer);
+      : canonicalLayerKey(dir === "from" ? r.from_layer : r.to_layer);
 
   const edgePairCount = new Map<string, number>();
   const assignmentsById = new Map<
@@ -287,12 +300,14 @@ function toShortLayerName(name: string): string {
 
 export default function SankeyHorizontal({
   dataPath = "/data/dimenet/sankey/sankey_samples.json",
+  secondaryDataPath,
   syncTransform,
   onSyncTransform,
   mode = "layer",
   modelKey,
   layerKey,
   visibleEpochs,
+  reverseEpochOrder = false,
   activeNodeKey,
   highlightId,
   highlightIds,
@@ -358,6 +373,7 @@ export default function SankeyHorizontal({
     ro.observe(container);
 
     let lastRows: SampleRow[] | null = null;
+    let lastSecondaryRows: SampleRow[] | null = null;
 
     function buildGraph(rows: SampleRow[]) {
       const nodesMap = new Map<string, number>();
@@ -405,28 +421,38 @@ export default function SankeyHorizontal({
       const height = Math.max(1, container.clientHeight);
 
       const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
-      const order =
+      const visibleEpochOrder =
         mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
-          ? visibleEpochs.map((x) => String(x))
+          ? (reverseEpochOrder ? [...visibleEpochs].reverse() : visibleEpochs).map((x) => String(x))
+          : null;
+      const order =
+        mode === "model" && visibleEpochOrder
+          ? visibleEpochOrder
           : mode === "model"
-            ? MODEL_ORDER
+            ? (reverseEpochOrder ? [...MODEL_ORDER].reverse() : MODEL_ORDER)
             : LAYER_ORDER;
-      const filteredRows =
-        mode === "model" && Array.isArray(visibleEpochs)
+      const filterRowsForView = (rowsInput: SampleRow[]): SampleRow[] =>
+        mode === "model" && visibleEpochOrder
           ? (() => {
-              const stitched = stitchRowsByVisibleEpochs(lastRows, visibleEpochs.map((x) => String(x)));
+              const stitched = stitchRowsByVisibleEpochs(rowsInput, visibleEpochOrder);
               if (stitched.length > 0) return stitched;
-              const allowed = new Set(visibleEpochs.map((x) => String(x)));
-              return lastRows.filter((r) => {
+              const allowed = new Set(visibleEpochOrder);
+              return rowsInput.filter((r) => {
                 const fromKey = String(r.from_model ?? "");
                 const toKey = String(r.to_model ?? "");
                 return allowed.has(fromKey) && allowed.has(toKey);
               });
             })()
-          : lastRows;
+          : rowsInput;
+      const filteredRows = filterRowsForView(lastRows);
+      const filteredSecondaryRows = lastSecondaryRows ? filterRowsForView(lastSecondaryRows) : [];
       const renderRows = normalizeAdjacentRows(filteredRows, mode, order);
       const syntheticRows = synthesizeMissingAdjacentRows(renderRows, mode, order);
       const graphRows = syntheticRows.length > 0 ? [...renderRows, ...syntheticRows] : renderRows;
+      const secondaryRenderRows = normalizeAdjacentRows(filteredSecondaryRows, mode, order);
+      const secondarySyntheticRows = synthesizeMissingAdjacentRows(secondaryRenderRows, mode, order);
+      const secondaryGraphRows =
+        secondarySyntheticRows.length > 0 ? [...secondaryRenderRows, ...secondarySyntheticRows] : secondaryRenderRows;
       const graph = buildGraph(graphRows);
 
       const NODE_W = 12;
@@ -452,17 +478,20 @@ export default function SankeyHorizontal({
       });
 
       // enforce x positions by layer order to align with SankeyView columns
+      const axisRows = filteredRows.length > 0 ? filteredRows : graphRows;
+      const normalizeAxisKey = (k: string) => (mode === "layer" ? canonicalLayerKey(k) : k);
       const presentLayers = new Set<string>();
-      graphRows.forEach((r) => {
+      axisRows.forEach((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
-        presentLayers.add(fromKey);
-        presentLayers.add(toKey);
+        presentLayers.add(normalizeAxisKey(fromKey));
+        presentLayers.add(normalizeAxisKey(toKey));
       });
-      const inferredLayers = inferSequenceFromRows(renderRows, mode, order).filter((l) => presentLayers.has(l));
+      const inferredLayersRaw = inferSequenceFromRows(axisRows, mode, order).map((l) => normalizeAxisKey(l));
+      const inferredLayers = inferredLayersRaw.filter((l, i) => presentLayers.has(l) && inferredLayersRaw.indexOf(l) === i);
       const layers =
-        mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
-          ? visibleEpochs.map((x) => String(x))
+        mode === "model" && visibleEpochOrder
+          ? visibleEpochOrder
           : inferredLayers;
       const layerIndex = new Map(layers.map((l, i) => [l, i]));
       const centerOffset = CELL_MARGIN_LEFT + INNER_W / 2;
@@ -539,26 +568,43 @@ export default function SankeyHorizontal({
         const idx = displayActiveNode.lastIndexOf("_");
         activeLayer = idx === -1 ? displayActiveNode : displayActiveNode.slice(0, idx);
       }
+      const shouldRenderPaths = true;
       const focusGroup = activeLayer ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
       const clusterColor = (cluster: number) =>
         CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length];
+      const darker = (hex: string) => {
+        const c = d3.color(hex);
+        return c ? c.darker(0.6).formatHex() : hex;
+      };
+
+      const secondaryNodeValue = new Map<string, number>();
+      secondaryGraphRows.forEach((r) => {
+        const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
+        const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
+        const srcName = `${fromKey}_${r.from_cluster}`;
+        const tgtName = `${toKey}_${r.to_cluster}`;
+        secondaryNodeValue.set(srcName, (secondaryNodeValue.get(srcName) ?? 0) + 1);
+        secondaryNodeValue.set(tgtName, (secondaryNodeValue.get(tgtName) ?? 0) + 1);
+      });
 
       const linkGroup = svg.append("g").attr("class", "noaug-links");
       const sampleGroup = svg.append("g").attr("class", "sample-trajectories");
       const nodeGroup = svg.append("g").attr("class", "noaug-nodes");
 
-      const linkSel = linkGroup
-        .selectAll("path")
-        .data(sankeyGraph.links as SankeyLink<any, any>[])
-        .enter()
-        .append("path")
-        .attr("d", sankeyLinkHorizontal())
-        .attr("fill", "none")
-        .attr("stroke", SANKEY_LINK_COLOR)
-        .attr("stroke-opacity", 0.4)
-        .attr("vector-effect", "non-scaling-stroke")
-        .attr("stroke-width", (d: any) => Math.max(1, d.width || 1))
-        .attr("data-key", (d: any) => d.key);
+      if (shouldRenderPaths) {
+        linkGroup
+          .selectAll("path")
+          .data(sankeyGraph.links as SankeyLink<any, any>[])
+          .enter()
+          .append("path")
+          .attr("d", sankeyLinkHorizontal())
+          .attr("fill", "none")
+          .attr("stroke", SANKEY_LINK_COLOR)
+          .attr("stroke-opacity", 0.4)
+          .attr("vector-effect", "non-scaling-stroke")
+          .attr("stroke-width", (d: any) => Math.max(1, d.width || 1))
+          .attr("data-key", (d: any) => d.key);
+      }
 
       // build per-sample trajectories with per-node y offsets (spread inside node height)
       const nodeSamples = new Map<string, Set<string>>();
@@ -613,27 +659,31 @@ export default function SankeyHorizontal({
         sampleLines.push({ id, x1, y1, x2, y2 });
       });
 
-      const sampleSel = sampleGroup
-        .selectAll("line")
-        .data(sampleLines)
-        .enter()
-        .append("line")
-        .attr("x1", (d) => d.x1)
-        .attr("y1", (d) => d.y1)
-        .attr("x2", (d) => d.x2)
-        .attr("y2", (d) => d.y2)
-        .attr("stroke", SANKEY_LINK_COLOR)
-        .attr("vector-effect", "non-scaling-stroke")
-        .attr("stroke-width", 1.2)
-        .attr("opacity", 0)
-        .attr("class", (d) => `sample-${d.id}`)
-        .attr("data-id", (d) => d.id);
+      let sampleSel: d3.Selection<SVGLineElement, { id: string; x1: number; y1: number; x2: number; y2: number }, SVGGElement, unknown> | null = null;
+      if (shouldRenderPaths) {
+        sampleSel = sampleGroup
+          .selectAll("line")
+          .data(sampleLines)
+          .enter()
+          .append("line")
+          .attr("x1", (d) => d.x1)
+          .attr("y1", (d) => d.y1)
+          .attr("x2", (d) => d.x2)
+          .attr("y2", (d) => d.y2)
+          .attr("stroke", SANKEY_LINK_COLOR)
+          .attr("vector-effect", "non-scaling-stroke")
+          .attr("stroke-width", 1.2)
+          .attr("opacity", 0)
+          .attr("class", (d) => `sample-${d.id}`)
+          .attr("data-id", (d) => d.id);
+      }
 
       const nodeSel = nodeGroup
-        .selectAll("rect")
+        .selectAll("rect.node-main")
         .data(sankeyGraph.nodes as SankeyNode<any, any>[])
         .enter()
         .append("rect")
+        .attr("class", "node-main")
         .attr("x", (d: any) => d.x0)
         .attr("y", (d: any) => d.y0)
         .attr("width", (d: any) => d.x1 - d.x0)
@@ -670,6 +720,44 @@ export default function SankeyHorizontal({
             onNodeSelectRef.current?.({ model: modelKey, layer: keyName, cluster, ids });
           }
         });
+
+      nodeGroup
+        .selectAll("rect.node-test")
+        .data(sankeyGraph.nodes as SankeyNode<any, any>[])
+        .enter()
+        .append("rect")
+        .attr("class", "node-test")
+        .attr("x", (d: any) => d.x0)
+        .attr("y", (d: any) => {
+          const name = String(d.name || "");
+          const total = Math.max(0, Number(d.value ?? 0));
+          const test = Math.max(0, Number(secondaryNodeValue.get(name) ?? 0));
+          const ratio = total > 0 ? Math.min(1, test / total) : 0;
+          const h = Math.max(1, (d.y1 ?? 0) - (d.y0 ?? 0));
+          const testH = h * ratio;
+          return (d.y0 ?? 0) + Math.max(0, h - testH);
+        })
+        .attr("width", (d: any) => d.x1 - d.x0)
+        .attr("height", (d: any) => {
+          const name = String(d.name || "");
+          const total = Math.max(0, Number(d.value ?? 0));
+          const test = Math.max(0, Number(secondaryNodeValue.get(name) ?? 0));
+          const ratio = total > 0 ? Math.min(1, test / total) : 0;
+          const h = Math.max(1, (d.y1 ?? 0) - (d.y0 ?? 0));
+          return Math.max(0, h * ratio);
+        })
+        .attr("fill", (d: any) => {
+          const name = String(d.name || "");
+          if (focusGroup) {
+            const idx = name.lastIndexOf("_");
+            const layer = idx === -1 ? name : name.slice(0, idx);
+            const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
+            if (layer === focusGroup && Number.isFinite(cluster)) return darker(clusterColor(cluster));
+          }
+          return darker(SANKEY_NODE_COLOR);
+        })
+        .attr("data-name", (d: any) => d.name)
+        .style("pointer-events", "none");
 
       nodeSel.append("title").text((d: any) => String(d.name || ""));
       nodeGroup.raise();
@@ -716,21 +804,23 @@ export default function SankeyHorizontal({
         return 0;
       };
 
-      sampleSel
-        .attr("opacity", (d) => {
-          const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
-          const isHovered = !!highlightId && d.id === highlightId;
-          const isSearchHit = highlightSet.has(d.id);
-          return (isHovered || isSearchHit) ? 1 : baseOpacity(d);
-        })
-        .attr("stroke", (d) => {
-          const isHovered = !!highlightId && d.id === highlightId;
-          return isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
-        })
-        .attr("stroke-width", (d) => {
-          const isHovered = !!highlightId && d.id === highlightId;
-          return isHovered ? 2.2 : 1.2;
-        });
+      if (sampleSel) {
+        sampleSel
+          .attr("opacity", (d) => {
+            const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
+            const isHovered = !!highlightId && d.id === highlightId;
+            const isSearchHit = highlightSet.has(d.id);
+            return (isHovered || isSearchHit) ? 1 : baseOpacity(d);
+          })
+          .attr("stroke", (d) => {
+            const isHovered = !!highlightId && d.id === highlightId;
+            return isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
+          })
+          .attr("stroke-width", (d) => {
+            const isHovered = !!highlightId && d.id === highlightId;
+            return isHovered ? 2.2 : 1.2;
+          });
+      }
 
       // Re-apply current transform right after redraw so viewport state is preserved.
       const groups = svg.selectAll(
@@ -747,13 +837,20 @@ export default function SankeyHorizontal({
       }
     }
 
-    fetch(dataPath)
-      .then((res) => {
+    Promise.all([
+      fetch(dataPath).then((res) => {
         if (!res.ok) throw new Error("Failed to fetch noaug_sankey_samples.json");
         return res.json();
-      })
-      .then((json: SampleRow[]) => {
+      }),
+      secondaryDataPath
+        ? fetch(secondaryDataPath)
+            .then((res) => (res.ok ? res.json() : null))
+            .catch(() => null)
+        : Promise.resolve(null),
+    ])
+      .then(([json, secondaryJson]: [SampleRow[], SampleRow[] | null]) => {
         lastRows = json;
+        lastSecondaryRows = Array.isArray(secondaryJson) ? secondaryJson : null;
         draw();
       })
       .catch((err) => {
@@ -781,7 +878,7 @@ export default function SankeyHorizontal({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, mode, modelKey, layerKey, visibleEpochs, !!syncTransform]);
+  }, [dataPath, secondaryDataPath, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, !!syncTransform]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -799,11 +896,20 @@ export default function SankeyHorizontal({
       const idx = name.lastIndexOf("_");
       const layer = idx === -1 ? name : name.slice(0, idx);
       const cluster = Number(idx === -1 ? 0 : name.slice(idx + 1));
+      const isTestRect = rect.classList.contains("node-test");
+      const baseColor =
+        focusGroup && layer === focusGroup && Number.isFinite(cluster)
+          ? CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length]
+          : SANKEY_NODE_COLOR;
+      const c = d3.color(baseColor);
+      const testColor = c ? c.darker(0.6).formatHex() : baseColor;
 
-      if (focusGroup && layer === focusGroup && Number.isFinite(cluster)) {
-        rect.setAttribute("fill", CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length]);
-      } else {
-        rect.setAttribute("fill", SANKEY_NODE_COLOR);
+      rect.setAttribute("fill", isTestRect ? testColor : baseColor);
+
+      if (isTestRect) {
+        rect.setAttribute("stroke", "none");
+        rect.setAttribute("stroke-width", "0");
+        return;
       }
 
       if (activeName && name === activeName) {

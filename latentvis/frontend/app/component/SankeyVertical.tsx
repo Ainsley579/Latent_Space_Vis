@@ -63,12 +63,14 @@ function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): 
 
 type SankeyVerticalProps = {
   dataPath?: string;
+  secondaryDataPath?: string;
   syncTransform?: { x: number; y: number; scale: number };
   onSyncTransform?: (t: { x: number; y: number; scale: number }) => void;
   mode?: "layer" | "model";
   layerKey?: string;
   modelKey?: string;
   visibleEpochs?: string[] | null;
+  reverseEpochOrder?: boolean;
   activeNodeKey?: string | null;
   highlightId?: string | null;
   highlightIds?: string[] | null;
@@ -86,9 +88,11 @@ function inferSequenceFromRows(
   const edgeCounts = new Map<string, number>();
 
   rows.forEach((r) => {
-    const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
-    const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
-    if (!fromKey || !toKey) return;
+    const fromRaw = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
+    const toRaw = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+    if (!fromRaw || !toRaw) return;
+    const fromKey = mode === "layer" ? canonicalLayerKey(fromRaw) : fromRaw;
+    const toKey = mode === "layer" ? canonicalLayerKey(toRaw) : toRaw;
     present.add(fromKey);
     present.add(toKey);
     if (!firstSeen.has(fromKey)) firstSeen.set(fromKey, seenIdx++);
@@ -98,7 +102,6 @@ function inferSequenceFromRows(
   });
 
   const fromPreferred = preferredOrder.filter((k) => present.has(k));
-  if (fromPreferred.length > 0) return fromPreferred;
 
   const fallback = Array.from(present).sort((a, b) => {
     const na = Number(a);
@@ -109,7 +112,14 @@ function inferSequenceFromRows(
     if (sa !== sb) return sa - sb;
     return a.localeCompare(b);
   });
-  if (mode !== "layer") return fallback;
+  if (mode !== "layer") {
+    if (fromPreferred.length > 0) {
+      const seen = new Set(fromPreferred);
+      const remaining = fallback.filter((k) => !seen.has(k));
+      return [...fromPreferred, ...remaining];
+    }
+    return fallback;
+  }
 
   const bestNext = new Map<string, string>();
   const bestVal = new Map<string, number>();
@@ -142,6 +152,7 @@ function inferSequenceFromRows(
 }
 
 function canonicalLayerKey(name: string): string {
+  if (name === "fp") return "fingerprint";
   if (/^fnn_layer_/.test(name)) return name.replace(/^fnn_layer_/, "ffn_layer_");
   return name;
 }
@@ -151,7 +162,11 @@ function normalizeAdjacentRows(
   mode: "layer" | "model",
   preferredOrder: string[]
 ): SampleRow[] {
-  const sequence = inferSequenceFromRows(rows, mode, preferredOrder);
+  const rawSequence = inferSequenceFromRows(rows, mode, preferredOrder);
+  const sequence =
+    mode === "layer"
+      ? rawSequence.filter((k, i) => rawSequence.findIndex((x) => canonicalLayerKey(x) === canonicalLayerKey(k)) === i)
+      : rawSequence;
   const idxMap = new Map(
     sequence.map((k, i) => [mode === "layer" ? canonicalLayerKey(k) : k, i])
   );
@@ -288,12 +303,14 @@ function toShortLayerName(name: string): string {
 
 export default function SankeyVertical({
   dataPath = "/data/dimenet/sankey/sankey_samples.json",
+  secondaryDataPath,
   syncTransform,
   onSyncTransform,
   mode = "model",
   layerKey,
   modelKey,
   visibleEpochs,
+  reverseEpochOrder = false,
   activeNodeKey,
   highlightId,
   highlightIds,
@@ -359,6 +376,7 @@ export default function SankeyVertical({
     ro.observe(container);
 
     let lastRows: SampleRow[] | null = null;
+    let lastSecondaryRows: SampleRow[] | null = null;
 
     function buildGraph(rows: SampleRow[]) {
       const nodesMap = new Map<string, number>();
@@ -410,29 +428,39 @@ export default function SankeyVertical({
       const g = svg.append("g").attr("transform", `translate(${width},0) rotate(90)`);
 
       // model transition within a single layer
-      const order =
+      const visibleEpochOrder =
         mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
-          ? visibleEpochs.map((x) => String(x))
+          ? (reverseEpochOrder ? [...visibleEpochs].reverse() : visibleEpochs).map((x) => String(x))
+          : null;
+      const order =
+        mode === "model" && visibleEpochOrder
+          ? visibleEpochOrder
           : mode === "model"
-            ? MODEL_ORDER
+            ? (reverseEpochOrder ? [...MODEL_ORDER].reverse() : MODEL_ORDER)
             : LAYER_ORDER;
-      const filteredRows =
-        mode === "model" && Array.isArray(visibleEpochs)
+      const filterRowsForView = (rowsInput: SampleRow[]): SampleRow[] =>
+        mode === "model" && visibleEpochOrder
           ? (() => {
-              const stitched = stitchRowsByVisibleEpochs(lastRows, visibleEpochs.map((x) => String(x)));
+              const stitched = stitchRowsByVisibleEpochs(rowsInput, visibleEpochOrder);
               if (stitched.length > 0) return stitched;
-              const allowed = new Set(visibleEpochs.map((x) => String(x)));
-              return lastRows.filter((r) => {
+              const allowed = new Set(visibleEpochOrder);
+              return rowsInput.filter((r) => {
                 const fromKey = String(r.from_model ?? "");
                 const toKey = String(r.to_model ?? "");
                 return allowed.has(fromKey) && allowed.has(toKey);
               });
             })()
-          : lastRows;
+          : rowsInput;
+      const filteredRows = filterRowsForView(lastRows);
+      const filteredSecondaryRows = lastSecondaryRows ? filterRowsForView(lastSecondaryRows) : [];
 
       const rowsReal = normalizeAdjacentRows(filteredRows, mode, order) as any[];
       const rowsSynthetic = synthesizeMissingAdjacentRows(rowsReal, mode, order) as any[];
       const rows = rowsSynthetic.length > 0 ? [...rowsReal, ...rowsSynthetic] : rowsReal;
+      const secondaryRowsReal = normalizeAdjacentRows(filteredSecondaryRows, mode, order) as any[];
+      const secondaryRowsSynthetic = synthesizeMissingAdjacentRows(secondaryRowsReal, mode, order) as any[];
+      const secondaryRows =
+        secondaryRowsSynthetic.length > 0 ? [...secondaryRowsReal, ...secondaryRowsSynthetic] : secondaryRowsReal;
       const NODE_W = 12;
       const NODE_PAD = 4;
       const BOTTOM = 28;
@@ -449,6 +477,15 @@ export default function SankeyVertical({
         nodeValue.set(src, (nodeValue.get(src) ?? 0) + 1);
         nodeValue.set(tgt, (nodeValue.get(tgt) ?? 0) + 1);
       });
+      const secondaryNodeValue = new Map<string, number>();
+      secondaryRows.forEach((r) => {
+        const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
+        const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+        const src = `${fromKey}_${r.from_cluster}`;
+        const tgt = `${toKey}_${r.to_cluster}`;
+        secondaryNodeValue.set(src, (secondaryNodeValue.get(src) ?? 0) + 1);
+        secondaryNodeValue.set(tgt, (secondaryNodeValue.get(tgt) ?? 0) + 1);
+      });
 
       const nodesByModel = new Map<string, Array<{ key: string; cluster: number; value: number }>>();
       nodeValue.forEach((value, key) => {
@@ -462,8 +499,8 @@ export default function SankeyVertical({
       const isSynced = !!syncTransform;
       const inferredOrder = inferSequenceFromRows(rows as SampleRow[], mode, order);
       const renderOrder =
-        mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
-          ? visibleEpochs.map((x) => String(x))
+        mode === "model" && visibleEpochOrder
+          ? visibleEpochOrder
           : inferredOrder.filter((m) => (nodesByModel.get(m)?.length ?? 0) > 0);
 
       // In rotated rendering, x-axis maps to screen Y (vertical direction).
@@ -532,6 +569,7 @@ export default function SankeyVertical({
         const idx = displayActiveNode.lastIndexOf("_");
         activeModel = idx === -1 ? displayActiveNode : displayActiveNode.slice(0, idx);
       }
+      const shouldRenderPaths = true;
       const focusGroup = activeModel ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
 
       const clusterValues: number[] = [];
@@ -578,38 +616,40 @@ export default function SankeyVertical({
       const sampleGroup = g.append("g").attr("class", "sample-trajectories");
       const nodeGroup = g.append("g").attr("class", "nodes");
 
-      linkGroup
-        .selectAll("path")
-        .data(links)
-        .enter()
-        .append("path")
-        .attr("d", (d) => {
-          const s = nodeByKey.get(d.src);
-          const t = nodeByKey.get(d.tgt);
-          if (!s || !t) return "";
-          const sTot = outTotal.get(d.src) || 1;
-          const tTot = inTotal.get(d.tgt) || 1;
-          const sOff = outOffset.get(d.src) || 0;
-          const tOff = inOffset.get(d.tgt) || 0;
-          const y1 = s.y + ((sOff + d.value / 2) / sTot) * s.h;
-          const y2 = t.y + ((tOff + d.value / 2) / tTot) * t.h;
-          outOffset.set(d.src, sOff + d.value);
-          inOffset.set(d.tgt, tOff + d.value);
-          const x1 = s.x <= t.x ? s.x + NODE_W : t.x + NODE_W;
-          const x2 = s.x <= t.x ? t.x : s.x;
-          const dx = Math.abs(x2 - x1) * 0.5;
-          return `M ${x1},${y1} C ${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
-        })
-        .attr("fill", "none")
-        .attr("stroke", SANKEY_LINK_COLOR)
-        .attr("stroke-opacity", 0.35)
-        .attr("vector-effect", "non-scaling-stroke")
-        .attr("stroke-width", (d) => {
-          const s = nodeByKey.get(d.src);
-          if (!s) return 1;
-          const sTot = outTotal.get(d.src) || 1;
-          return Math.max(0.5, (d.value / sTot) * s.h);
-        });
+      if (shouldRenderPaths) {
+        linkGroup
+          .selectAll("path")
+          .data(links)
+          .enter()
+          .append("path")
+          .attr("d", (d) => {
+            const s = nodeByKey.get(d.src);
+            const t = nodeByKey.get(d.tgt);
+            if (!s || !t) return "";
+            const sTot = outTotal.get(d.src) || 1;
+            const tTot = inTotal.get(d.tgt) || 1;
+            const sOff = outOffset.get(d.src) || 0;
+            const tOff = inOffset.get(d.tgt) || 0;
+            const y1 = s.y + ((sOff + d.value / 2) / sTot) * s.h;
+            const y2 = t.y + ((tOff + d.value / 2) / tTot) * t.h;
+            outOffset.set(d.src, sOff + d.value);
+            inOffset.set(d.tgt, tOff + d.value);
+            const x1 = s.x <= t.x ? s.x + NODE_W : t.x + NODE_W;
+            const x2 = s.x <= t.x ? t.x : s.x;
+            const dx = Math.abs(x2 - x1) * 0.5;
+            return `M ${x1},${y1} C ${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
+          })
+          .attr("fill", "none")
+          .attr("stroke", SANKEY_LINK_COLOR)
+          .attr("stroke-opacity", 0.35)
+          .attr("vector-effect", "non-scaling-stroke")
+          .attr("stroke-width", (d) => {
+            const s = nodeByKey.get(d.src);
+            if (!s) return 1;
+            const sTot = outTotal.get(d.src) || 1;
+            return Math.max(0.5, (d.value / sTot) * s.h);
+          });
+      }
 
       const nodeSamples = new Map<string, Set<string>>();
       rows.forEach((r) => {
@@ -652,27 +692,36 @@ export default function SankeyVertical({
         return [{ id, x1: s.x + NODE_W, y1, x2: t.x, y2 }];
       });
 
-      const sampleSel = sampleGroup
-        .selectAll("line")
-        .data(sampleLines)
-        .enter()
-        .append("line")
-        .attr("x1", (d) => d.x1)
-        .attr("y1", (d) => d.y1)
-        .attr("x2", (d) => d.x2)
-        .attr("y2", (d) => d.y2)
-        .attr("stroke", SANKEY_LINK_COLOR)
-        .attr("vector-effect", "non-scaling-stroke")
-        .attr("stroke-width", 1.1)
-        .attr("opacity", 0)
-        .attr("class", (d) => `sample-${d.id}`)
-        .attr("data-id", (d) => d.id);
+      let sampleSel: d3.Selection<SVGLineElement, { id: string; x1: number; y1: number; x2: number; y2: number }, SVGGElement, unknown> | null = null;
+      if (shouldRenderPaths) {
+        sampleSel = sampleGroup
+          .selectAll("line")
+          .data(sampleLines)
+          .enter()
+          .append("line")
+          .attr("x1", (d) => d.x1)
+          .attr("y1", (d) => d.y1)
+          .attr("x2", (d) => d.x2)
+          .attr("y2", (d) => d.y2)
+          .attr("stroke", SANKEY_LINK_COLOR)
+          .attr("vector-effect", "non-scaling-stroke")
+          .attr("stroke-width", 1.1)
+          .attr("opacity", 0)
+          .attr("class", (d) => `sample-${d.id}`)
+          .attr("data-id", (d) => d.id);
+      }
+
+      const darker = (hex: string) => {
+        const c = d3.color(hex);
+        return c ? c.darker(0.6).formatHex() : hex;
+      };
 
       const nodeSel = nodeGroup
-        .selectAll("rect")
+        .selectAll("rect.node-main")
         .data(nodes)
         .enter()
         .append("rect")
+        .attr("class", "node-main")
         .attr("x", (d) => d.x)
         .attr("y", (d) => d.y)
         .attr("width", NODE_W)
@@ -707,6 +756,39 @@ export default function SankeyVertical({
           }
         });
 
+      nodeGroup
+        .selectAll("rect.node-test")
+        .data(nodes)
+        .enter()
+        .append("rect")
+        .attr("class", "node-test")
+        .attr("x", (d) => d.x)
+        .attr("y", (d) => {
+          const total = Math.max(0, Number(d.value ?? 0));
+          const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
+          const ratio = total > 0 ? Math.min(1, test / total) : 0;
+          const h = Math.max(1, d.h);
+          const testH = h * ratio;
+          return d.y + Math.max(0, h - testH);
+        })
+        .attr("width", NODE_W)
+        .attr("height", (d) => {
+          const total = Math.max(0, Number(d.value ?? 0));
+          const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
+          const ratio = total > 0 ? Math.min(1, test / total) : 0;
+          return Math.max(0, Math.max(1, d.h) * ratio);
+        })
+        .attr("fill", (d) => {
+          if (focusGroup && d.model === focusGroup) {
+            const idx = d.key.lastIndexOf("_");
+            const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
+            if (Number.isFinite(cluster)) return darker(color(Math.max(0, cluster)));
+          }
+          return darker(SANKEY_NODE_COLOR);
+        })
+        .attr("data-key", (d) => d.key)
+        .style("pointer-events", "none");
+
       nodeSel.append("title").text((d) => d.key);
       nodeGroup.raise();
 
@@ -722,21 +804,23 @@ export default function SankeyVertical({
         return 0;
       };
 
-      sampleSel
-        .attr("opacity", (d) => {
-          const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
-          const isHovered = !!highlightId && d.id === highlightId;
-          const isSearchHit = highlightSet.has(d.id);
-          return (isHovered || isSearchHit) ? 1 : baseOpacity(d);
-        })
-        .attr("stroke", (d) => {
-          const isHovered = !!highlightId && d.id === highlightId;
-          return isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
-        })
-        .attr("stroke-width", (d) => {
-          const isHovered = !!highlightId && d.id === highlightId;
-          return isHovered ? 2 : 1.1;
-        });
+      if (sampleSel) {
+        sampleSel
+          .attr("opacity", (d) => {
+            const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
+            const isHovered = !!highlightId && d.id === highlightId;
+            const isSearchHit = highlightSet.has(d.id);
+            return (isHovered || isSearchHit) ? 1 : baseOpacity(d);
+          })
+          .attr("stroke", (d) => {
+            const isHovered = !!highlightId && d.id === highlightId;
+            return isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
+          })
+          .attr("stroke-width", (d) => {
+            const isHovered = !!highlightId && d.id === highlightId;
+            return isHovered ? 2 : 1.1;
+          });
+      }
 
       // Keep labels above links/nodes.
       svg.selectAll("g.axis-labels").raise();
@@ -759,13 +843,20 @@ export default function SankeyVertical({
       }
     }
 
-    fetch(dataPath)
-      .then((res) => {
+    Promise.all([
+      fetch(dataPath).then((res) => {
         if (!res.ok) throw new Error("Failed to fetch noaug_sankey_samples.json");
         return res.json();
-      })
-      .then((json: SampleRow[]) => {
+      }),
+      secondaryDataPath
+        ? fetch(secondaryDataPath)
+            .then((res) => (res.ok ? res.json() : null))
+            .catch(() => null)
+        : Promise.resolve(null),
+    ])
+      .then(([json, secondaryJson]: [SampleRow[], SampleRow[] | null]) => {
         lastRows = json;
+        lastSecondaryRows = Array.isArray(secondaryJson) ? secondaryJson : null;
         draw();
       })
       .catch((err) => {
@@ -799,7 +890,7 @@ export default function SankeyVertical({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, mode, modelKey, layerKey, visibleEpochs, !!syncTransform]);
+  }, [dataPath, secondaryDataPath, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, !!syncTransform]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -817,11 +908,20 @@ export default function SankeyVertical({
       const idx = key.lastIndexOf("_");
       const model = idx === -1 ? key : key.slice(0, idx);
       const cluster = Number(idx === -1 ? 0 : key.slice(idx + 1));
+      const isTestRect = rect.classList.contains("node-test");
+      const baseColor =
+        focusGroup && model === focusGroup && Number.isFinite(cluster)
+          ? CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length]
+          : SANKEY_NODE_COLOR;
+      const c = d3.color(baseColor);
+      const testColor = c ? c.darker(0.6).formatHex() : baseColor;
 
-      if (focusGroup && model === focusGroup && Number.isFinite(cluster)) {
-        rect.setAttribute("fill", CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length]);
-      } else {
-        rect.setAttribute("fill", SANKEY_NODE_COLOR);
+      rect.setAttribute("fill", isTestRect ? testColor : baseColor);
+
+      if (isTestRect) {
+        rect.setAttribute("stroke", "none");
+        rect.setAttribute("stroke-width", "0");
+        return;
       }
 
       if (activeName && key === activeName) {
