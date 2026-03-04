@@ -13,6 +13,9 @@ type SyncControlPanelProps = {
   clustering?: string;
   clusteringOptions?: Array<{ value: string; label: string }>;
   onClusteringChange?: (clustering: string) => void;
+  cellBgMetric?: string;
+  cellBgMetricOptions?: Array<{ value: string; label: string }>;
+  onCellBgMetricChange?: (metric: string) => void;
   syncOn: boolean;
   onToggleSync: () => void;
   largePreviewOn: boolean;
@@ -42,6 +45,9 @@ export default function SyncControlPanel({
   clustering,
   clusteringOptions = [],
   onClusteringChange,
+  cellBgMetric = "cluster_count",
+  cellBgMetricOptions = [],
+  onCellBgMetricChange,
   syncOn,
   onToggleSync,
   largePreviewOn,
@@ -137,6 +143,22 @@ export default function SyncControlPanel({
             {clusteringOptions.map((c) => (
               <option key={c.value} value={c.value}>
                 {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {onCellBgMetricChange && cellBgMetricOptions.length > 0 && (
+        <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
+          <label className="text-[10px] text-zinc-700 shrink-0">CELL BG</label>
+          <select
+            className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
+            value={cellBgMetric}
+            onChange={(e) => onCellBgMetricChange(e.target.value)}
+          >
+            {cellBgMetricOptions.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
               </option>
             ))}
           </select>

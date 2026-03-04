@@ -15,6 +15,52 @@ type SampleRow = {
   to_cluster: number;
 };
 
+function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): SampleRow[] {
+  if (!Array.isArray(visibleEpochs) || visibleEpochs.length < 2) return [];
+  const orderedEpochs = visibleEpochs.map((x) => String(x));
+  const allowed = new Set(orderedEpochs);
+  const assignmentById = new Map<
+    string,
+    Map<string, { cluster: number; model?: string; layer?: string }>
+  >();
+
+  rows.forEach((r) => {
+    const fromModel = String(r.from_model ?? "");
+    const toModel = String(r.to_model ?? "");
+    const id = String(r.real_id);
+    if (!id) return;
+    if (!assignmentById.has(id)) assignmentById.set(id, new Map());
+    const amap = assignmentById.get(id)!;
+    if (allowed.has(fromModel)) {
+      amap.set(fromModel, { cluster: r.from_cluster, model: r.from_model, layer: r.from_layer });
+    }
+    if (allowed.has(toModel)) {
+      amap.set(toModel, { cluster: r.to_cluster, model: r.to_model, layer: r.to_layer });
+    }
+  });
+
+  const out: SampleRow[] = [];
+  assignmentById.forEach((amap, rid) => {
+    for (let i = 0; i < orderedEpochs.length - 1; i += 1) {
+      const fromEpoch = orderedEpochs[i];
+      const toEpoch = orderedEpochs[i + 1];
+      const fromAssign = amap.get(fromEpoch);
+      const toAssign = amap.get(toEpoch);
+      if (!fromAssign || !toAssign) continue;
+      out.push({
+        real_id: rid,
+        from_model: fromEpoch,
+        to_model: toEpoch,
+        from_layer: fromAssign.layer,
+        to_layer: toAssign.layer,
+        from_cluster: fromAssign.cluster,
+        to_cluster: toAssign.cluster,
+      });
+    }
+  });
+  return out;
+}
+
 type SankeyVerticalProps = {
   dataPath?: string;
   syncTransform?: { x: number; y: number; scale: number };
@@ -22,6 +68,7 @@ type SankeyVerticalProps = {
   mode?: "layer" | "model";
   layerKey?: string;
   modelKey?: string;
+  visibleEpochs?: string[] | null;
   activeNodeKey?: string | null;
   highlightId?: string | null;
   highlightIds?: string[] | null;
@@ -246,6 +293,7 @@ export default function SankeyVertical({
   mode = "model",
   layerKey,
   modelKey,
+  visibleEpochs,
   activeNodeKey,
   highlightId,
   highlightIds,
@@ -362,8 +410,27 @@ export default function SankeyVertical({
       const g = svg.append("g").attr("transform", `translate(${width},0) rotate(90)`);
 
       // model transition within a single layer
-      const order = mode === "model" ? MODEL_ORDER : LAYER_ORDER;
-      const rowsReal = normalizeAdjacentRows(lastRows, mode, order) as any[];
+      const order =
+        mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
+          ? visibleEpochs.map((x) => String(x))
+          : mode === "model"
+            ? MODEL_ORDER
+            : LAYER_ORDER;
+      const filteredRows =
+        mode === "model" && Array.isArray(visibleEpochs)
+          ? (() => {
+              const stitched = stitchRowsByVisibleEpochs(lastRows, visibleEpochs.map((x) => String(x)));
+              if (stitched.length > 0) return stitched;
+              const allowed = new Set(visibleEpochs.map((x) => String(x)));
+              return lastRows.filter((r) => {
+                const fromKey = String(r.from_model ?? "");
+                const toKey = String(r.to_model ?? "");
+                return allowed.has(fromKey) && allowed.has(toKey);
+              });
+            })()
+          : lastRows;
+
+      const rowsReal = normalizeAdjacentRows(filteredRows, mode, order) as any[];
       const rowsSynthetic = synthesizeMissingAdjacentRows(rowsReal, mode, order) as any[];
       const rows = rowsSynthetic.length > 0 ? [...rowsReal, ...rowsSynthetic] : rowsReal;
       const NODE_W = 12;
@@ -393,9 +460,11 @@ export default function SankeyVertical({
       });
 
       const isSynced = !!syncTransform;
-      const renderOrder = inferSequenceFromRows(rows as SampleRow[], mode, order).filter(
-        (m) => (nodesByModel.get(m)?.length ?? 0) > 0
-      );
+      const inferredOrder = inferSequenceFromRows(rows as SampleRow[], mode, order);
+      const renderOrder =
+        mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
+          ? visibleEpochs.map((x) => String(x))
+          : inferredOrder.filter((m) => (nodesByModel.get(m)?.length ?? 0) > 0);
 
       // In rotated rendering, x-axis maps to screen Y (vertical direction).
       const unsyncedLeftPad = UNSYNC_TOP_PAD;
@@ -730,7 +799,7 @@ export default function SankeyVertical({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, mode, modelKey, layerKey, !!syncTransform]);
+  }, [dataPath, mode, modelKey, layerKey, visibleEpochs, !!syncTransform]);
 
   useEffect(() => {
     const container = containerRef.current;

@@ -4,7 +4,6 @@ import * as d3 from "d3";
 import ZoomPan from "./ZoomPan";
 import { CLUSTER_COLORS, SANKEY_2D_COLUMN_LINK_COLOR, SANKEY_2D_ROW_LINK_COLOR } from "../theme/colors";
 
-const DEFAULT_MAX_INSTANCE = 158;
 const SHOW_FMI_CSPA = false;
 
 type SankeyEdge = {
@@ -178,12 +177,15 @@ type SankeyViewProps = {
   activeCell?: { model: string; layer: string } | null;
   onCellSelect?: (active: boolean) => void;
   onSwapAxes?: (swap: boolean) => void;
+  onVisibleEpochsChange?: (epochs: string[]) => void;
+  cellMetricByCell?: Record<string, Record<string, number | null>> | null;
+  selectedCellMetric?: string;
 };
 
 export default function SankeyView({
   dataPath = "/data/dimenet/sankey/all_sankey.json",
   metricsPath = "/data/dimenet/bic_aic/avg_fmi_cspa_by_layer.json",
-  transitionStatsPath = "/data/chemprop/clustering_metrics/layer_transition_stats.json",
+  transitionStatsPath = "/data/dimenet/clustering_metrics/layer_transition_by_epoch.json",
   onModelSelect,
   onTransform,
   externalTransform,
@@ -193,18 +195,28 @@ export default function SankeyView({
   activeCell,
   onCellSelect,
   onSwapAxes,
+  onVisibleEpochsChange,
+  cellMetricByCell,
+  selectedCellMetric = "cluster_count",
 }: SankeyViewProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const fmiRef = useRef<HTMLDivElement | null>(null);
   const rowMetricRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
-  const [maxInstanceValue, setMaxInstanceValue] = useState(DEFAULT_MAX_INSTANCE);
   const [fmiData, setFmiData] = useState<Array<{ layer: string; fmi: number; cspa: number }>>([]);
   const [rowMetricData, setRowMetricData] = useState<Array<{ model: string; fmi: number; cspa: number }>>([]);
   const [showSankeyPaths, setShowSankeyPaths] = useState(true);
   const [showSankeyNodes, setShowSankeyNodes] = useState(true);
   const [showCellBackground, setShowCellBackground] = useState(true);
   const [showGapHeatmap, setShowGapHeatmap] = useState(true);
+  const [epochTransitionThreshold, setEpochTransitionThreshold] = useState(0);
+  const [maxEpochTransitionPct, setMaxEpochTransitionPct] = useState(100);
+  const [visibleEpochSummary, setVisibleEpochSummary] = useState({ visible: 0, total: 0 });
+  const [cellLegendRange, setCellLegendRange] = useState({ min: 0, max: 1 });
+  const [gapLegendMax, setGapLegendMax] = useState(1);
+  const [linkValueMin, setLinkValueMin] = useState(0);
+  const [linkValueMax, setLinkValueMax] = useState(Number.MAX_SAFE_INTEGER);
+  const [linkValueMaxBound, setLinkValueMaxBound] = useState(1);
   const [layout, setLayout] = useState<{
     rowNames: string[];
     colNames: string[];
@@ -217,6 +229,30 @@ export default function SankeyView({
     margin: { top: number; left: number; right: number; bottom: number };
     cellMargin: { top: number; right: number; bottom: number; left: number };
   } | null>(null);
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const q = Number(p.get("epochMin"));
+    if (Number.isFinite(q) && q >= 0) {
+      setEpochTransitionThreshold(q);
+    }
+    const qMin = Number(p.get("min"));
+    const qMax = Number(p.get("max"));
+    if (Number.isFinite(qMin) && qMin >= 0) setLinkValueMin(qMin);
+    if (Number.isFinite(qMax) && qMax >= 0) setLinkValueMax(qMax);
+  }, []);
+
+  function applyLinkValueFilter(minVal: number, maxVal: number) {
+    const container = chartRef.current;
+    if (!container) return;
+    const lo = Math.max(0, Math.min(minVal, maxVal));
+    const hi = Math.max(lo, maxVal);
+    d3.select(container)
+      .selectAll<SVGPathElement, unknown>("path.link-path")
+      .classed("hidden", function () {
+        const v = Number(d3.select(this).attr("data-value") ?? 0) || 0;
+        return v < lo || v > hi;
+      });
+  }
 
   useEffect(() => {
     const container = chartRef.current;
@@ -232,17 +268,21 @@ export default function SankeyView({
       const p = new URLSearchParams(window.location.search);
       if (nextSwap) p.set("swap", "1");
       else p.delete("swap");
-
-      const minEl = document.getElementById("minRange") as HTMLInputElement | null;
-      const maxEl = document.getElementById("maxRange") as HTMLInputElement | null;
-      if (minEl && maxEl) {
-        p.set("min", String(minEl.value));
-        p.set("max", String(maxEl.value));
-      }
+      p.set("epochMin", String(epochTransitionThreshold.toFixed(2)));
 
       const next = window.location.pathname + (p.toString() ? "?" + p.toString() : "");
       window.location.href = next;
     }
+
+    const transitionLayerPath = (() => {
+      if (transitionStatsPath.includes("layer_transition_by_epoch.json")) {
+        return transitionStatsPath.replace("layer_transition_by_epoch.json", "layer_transition_by_layer.json");
+      }
+      if (transitionStatsPath.includes("layer_transition_stats.json")) {
+        return transitionStatsPath.replace("layer_transition_stats.json", "layer_transition_by_layer.json");
+      }
+      return transitionStatsPath;
+    })();
 
     Promise.all([
       fetch(dataPath).then((res) => {
@@ -252,12 +292,53 @@ export default function SankeyView({
       fetch(transitionStatsPath)
         .then((res) => (res.ok ? res.json() : null))
         .catch(() => null),
+      fetch(transitionLayerPath)
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null),
     ])
-      .then(([rawData, transitionJson]) => {
+      .then(([rawData, transitionJson, transitionLayerJson]) => {
         if (cancelled || chartRef.current !== container) return;
         container.innerHTML = "";
         const data = normalizeSankeyData(rawData);
-        const ROW_NAMES: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
+        const transitionEntriesByEpoch: Array<{
+          epoch: string;
+          from_layer: string;
+          to_layer: string;
+          pct_changed: number;
+        }> = Array.isArray((transitionJson as any)?.by_epoch) ? (transitionJson as any).by_epoch : [];
+        const transitionEntriesByLayer: Array<{
+          layer: string;
+          from_epoch: string;
+          to_epoch: string;
+          pct_changed: number;
+        }> =
+          (Array.isArray((transitionJson as any)?.by_layer) ? (transitionJson as any).by_layer : null) ||
+          (Array.isArray((transitionLayerJson as any)?.by_layer) ? (transitionLayerJson as any).by_layer : []);
+
+        const epochMaxTransitionPctByEpoch = new Map<string, number>();
+        transitionEntriesByEpoch.forEach((d) => {
+          const epoch = String(d?.epoch ?? "").trim();
+          const pct = Number(d?.pct_changed ?? 0);
+          if (!epoch || !Number.isFinite(pct)) return;
+          const prev = epochMaxTransitionPctByEpoch.get(epoch) ?? 0;
+          if (pct > prev) epochMaxTransitionPctByEpoch.set(epoch, pct);
+        });
+
+        const allEpochKeys: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
+        const lastEpoch = allEpochKeys.length ? allEpochKeys[allEpochKeys.length - 1] : null;
+        const ROW_NAMES: string[] = allEpochKeys.filter((epoch) => {
+          if (lastEpoch != null && epoch === lastEpoch) return true;
+          const maxPct = epochMaxTransitionPctByEpoch.get(epoch) ?? 0;
+          return maxPct >= epochTransitionThreshold;
+        });
+        const maxEpochPct = Math.max(0, ...Array.from(epochMaxTransitionPctByEpoch.values()));
+        setMaxEpochTransitionPct(maxEpochPct);
+        setVisibleEpochSummary({ visible: ROW_NAMES.length, total: allEpochKeys.length });
+        onVisibleEpochsChange?.(ROW_NAMES);
+        if (epochTransitionThreshold > maxEpochPct) {
+          setEpochTransitionThreshold(maxEpochPct);
+          return;
+        }
         const COLUMN_NAMES: string[] = sortLayerKeys(Object.keys(data?.layer || {}));
         const MODEL_SET = new Set(ROW_NAMES);
         const LAYER_SET = new Set(COLUMN_NAMES);
@@ -276,7 +357,7 @@ export default function SankeyView({
 
         const margin = { top: 20, left: 0, right: 0, bottom: 20 };
         const CELL_W = 120;
-        const CELL_H = 150;
+        const CELL_H = 60;
         const CELL_GAP = 10;
         const cellStepX = CELL_W + CELL_GAP;
         const cellStepY = CELL_H + CELL_GAP;
@@ -339,9 +420,30 @@ export default function SankeyView({
             cellClusterCount.set(`${rowName}|${columnName}`, ids.size || nodesForCell.length || 0);
           });
         });
-        const clusterCounts = Array.from(cellClusterCount.values());
-        const minCellCluster = clusterCounts.length ? Math.min(...clusterCounts) : 0;
-        const maxCellCluster = clusterCounts.length ? Math.max(...clusterCounts) : 1;
+        const cellMetricValue = new Map<string, number>();
+        ROW_NAMES.forEach((rowName) => {
+          COLUMN_NAMES.forEach((columnName) => {
+            const key = `${rowName}|${columnName}`;
+            if (selectedCellMetric === "cluster_count") {
+              cellMetricValue.set(key, cellClusterCount.get(key) ?? 0);
+              return;
+            }
+            const metricVal = Number(cellMetricByCell?.[key]?.[selectedCellMetric]);
+            if (Number.isFinite(metricVal)) {
+              cellMetricValue.set(key, metricVal);
+            } else {
+              cellMetricValue.set(key, 0);
+            }
+          });
+        });
+        const metricVals = Array.from(cellMetricValue.values());
+        const minCellCluster = metricVals.length ? Math.min(...metricVals) : 0;
+        const maxCellCluster = metricVals.length ? Math.max(...metricVals) : 1;
+        setCellLegendRange((prev) =>
+          prev.min === minCellCluster && prev.max === maxCellCluster
+            ? prev
+            : { min: minCellCluster, max: maxCellCluster }
+        );
         const cellBgColor = d3
           .scaleLinear<string>()
           .domain(
@@ -366,12 +468,14 @@ export default function SankeyView({
               .datum({ rowName, columnName, col, row });
 
             const cellCount = cellClusterCount.get(`${rowName}|${columnName}`) ?? 0;
+            const metricVal = cellMetricValue.get(`${rowName}|${columnName}`) ?? 0;
             g.append("rect")
               .attr("width", cellW)
               .attr("height", cellH)
-              .attr("fill", showCellBackground ? cellBgColor(cellCount) : "white")
+              .attr("fill", showCellBackground ? cellBgColor(metricVal) : "white")
               .attr("stroke", "#888")
-              .attr("data-cluster-count", cellCount);
+              .attr("data-cluster-count", cellCount)
+              .attr("data-cell-metric", metricVal);
 
             const innerG = g.append("g").attr("transform", `translate(${cellMargin.left}, ${cellMargin.top})`);
             cells.push(innerG);
@@ -417,9 +521,8 @@ export default function SankeyView({
 
         const maxClusters = (() => {
           let max = 0;
-          const epochEntries = data.epoch || {};
-          Object.keys(epochEntries).forEach((rowKey) => {
-            const nodesByColumn = epochEntries[rowKey]?.nodes || {};
+          ROW_NAMES.forEach((rowKey) => {
+            const nodesByColumn = data.epoch?.[rowKey]?.nodes || {};
             Object.keys(nodesByColumn).forEach((columnKey) => {
               const list = nodesByColumn[columnKey] || [];
               if (list.length > max) max = list.length;
@@ -430,9 +533,8 @@ export default function SankeyView({
 
         const maxInstance = (() => {
           let max = 0;
-          const epochEntries = data.epoch || {};
-          Object.keys(epochEntries).forEach((rowKey) => {
-            const nodesByColumn = epochEntries[rowKey]?.nodes || {};
+          ROW_NAMES.forEach((rowKey) => {
+            const nodesByColumn = data.epoch?.[rowKey]?.nodes || {};
             Object.keys(nodesByColumn).forEach((columnKey) => {
               const list = nodesByColumn[columnKey] || [];
               list.forEach((node: any) => {
@@ -445,26 +547,12 @@ export default function SankeyView({
           });
           return Math.max(1, max);
         })();
-        setMaxInstanceValue(maxInstance);
-
         const x = d3.scaleBand<number>().range([0, innerW]).domain(d3.range(maxClusters)).padding(0.2);
         const y = d3.scaleLinear().domain([0, maxInstance]).range([innerH, 0]);
         const MAX_NODE_BAR_WIDTH = 20;
         const nodeBarWidth = Math.min(x.bandwidth(), MAX_NODE_BAR_WIDTH);
         const nodeBarOffset = (x.bandwidth() - nodeBarWidth) / 2;
 
-        const transitionEntriesByEpoch: Array<{
-          epoch: string;
-          from_layer: string;
-          to_layer: string;
-          pct_changed: number;
-        }> = Array.isArray((transitionJson as any)?.by_epoch) ? (transitionJson as any).by_epoch : [];
-        const transitionEntriesByLayer: Array<{
-          layer: string;
-          from_epoch: string;
-          to_epoch: string;
-          pct_changed: number;
-        }> = Array.isArray((transitionJson as any)?.by_layer) ? (transitionJson as any).by_layer : [];
         const pctByEpochTransition = new Map<string, number>();
         transitionEntriesByEpoch.forEach((d) => {
           const epoch = String(d?.epoch ?? "").trim();
@@ -488,6 +576,7 @@ export default function SankeyView({
           ...Array.from(pctByEpochTransition.values()),
           ...Array.from(pctByLayerTransition.values())
         );
+        setGapLegendMax((prev) => (prev === maxGapPct ? prev : maxGapPct));
         const redGapColor = d3
           .scaleLinear<string>()
           .domain([0, maxGapPct])
@@ -661,6 +750,10 @@ export default function SankeyView({
           (data.layer[k].edges || []).forEach((e: any) => allEdgeValues.push(+e.value || 0));
         });
         const maxEdgeVal = d3.max(allEdgeValues) || 1;
+        const nextMaxBound = Math.max(1, Math.ceil(maxEdgeVal));
+        setLinkValueMaxBound(nextMaxBound);
+        setLinkValueMin((v) => Math.max(0, Math.min(v, nextMaxBound)));
+        setLinkValueMax((v) => Math.max(0, Math.min(v, nextMaxBound)));
         const linkWidthScale = d3.scaleSqrt().domain([0, maxEdgeVal]).range([0.5, 20]).clamp(true);
 
         function appendLinkPath(
@@ -719,6 +812,7 @@ export default function SankeyView({
           Object.keys(data.layer || {}).forEach((columnKey) => {
           const columnObj = data.layer[columnKey];
           if (COLUMN_INDEX.get(columnKey) == null) return;
+          const acceptedEpochPairSet = new Set<string>();
 
           (columnObj.edges || []).forEach((edge: any) => {
             let sourceInfo: any = null;
@@ -753,6 +847,7 @@ export default function SankeyView({
               tgtRowIdxRaw > srcRowIdxRaw
                 ? { source: sourceInfo, target: targetInfo }
                 : { source: targetInfo, target: sourceInfo };
+            acceptedEpochPairSet.add(`${forwardColumn.source.rowName}->${forwardColumn.target.rowName}`);
 
             const srcO = cellOrigin(forwardColumn.source.rowName, columnKey, cellStepX, cellStepY);
             const tgtO = cellOrigin(forwardColumn.target.rowName, columnKey, cellStepX, cellStepY);
@@ -801,11 +896,81 @@ export default function SankeyView({
             const p = appendLinkPath(linkGroup as any, pathD, edge.value, strokeW, SANKEY_2D_COLUMN_LINK_COLOR, 0.3);
             p.attr("data-column", columnKey);
           });
+
+          // Ensure every adjacent visible epoch pair has paths within this layer.
+          // If source data lacks a direct visible pair after filtering, synthesize conservative bridges.
+          for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
+            const fromRow = ROW_NAMES[i];
+            const toRow = ROW_NAMES[i + 1];
+            const pairKey = `${fromRow}->${toRow}`;
+            if (acceptedEpochPairSet.has(pairKey)) continue;
+
+            const srcNodes = ((columnObj?.nodes?.[fromRow] || []) as any[]).filter((n) => (n?.value ?? 0) > 0);
+            const tgtNodes = ((columnObj?.nodes?.[toRow] || []) as any[]).filter((n) => (n?.value ?? 0) > 0);
+            if (srcNodes.length === 0 || tgtNodes.length === 0) continue;
+
+            const bridges = buildGreedyBridgeLinks(srcNodes, tgtNodes);
+            const srcO = cellOrigin(fromRow, columnKey, cellStepX, cellStepY);
+            const tgtO = cellOrigin(toRow, columnKey, cellStepX, cellStepY);
+
+            bridges.forEach((bridge) => {
+              const srcIdx = bridge.sourceIdx;
+              const tgtIdx = bridge.targetIdx;
+              const srcNode = srcNodes[srcIdx];
+              const tgtNode = tgtNodes[tgtIdx];
+              const srcBand = x(srcIdx);
+              const tgtBand = x(tgtIdx);
+              if (srcBand == null || tgtBand == null) return;
+
+              const sPrev = srcNode.previous ?? 0;
+              const sVal = srcNode.value ?? 0;
+              const tPrev = tgtNode.previous ?? 0;
+              const tVal = tgtNode.value ?? 0;
+              const sBarY = innerH - y(sPrev);
+              const sBarH = innerH - y(sVal);
+              const tBarY = innerH - y(tPrev);
+              const tBarH = innerH - y(tVal);
+
+              let pathD = "";
+              if (!SWAP_AXES) {
+                const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
+                const srcCenterY = srcO.y + cellMargin.top + sBarY + Math.max(0, sBarH);
+                const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
+                const tgtCenterY = tgtO.y + cellMargin.top + tBarY;
+                const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
+                pathD = `M ${srcCenterX},${srcCenterY}
+                     C ${srcCenterX},${srcCenterY + dy}
+                       ${tgtCenterX},${tgtCenterY - dy}
+                       ${tgtCenterX},${tgtCenterY}`;
+              } else {
+                const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
+                const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
+                const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
+                const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
+                const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
+                pathD = `M ${srcCenterX},${srcCenterY}
+                     C ${srcCenterX + dx},${srcCenterY}
+                       ${tgtCenterX - dx},${tgtCenterY}
+                       ${tgtCenterX},${tgtCenterY}`;
+              }
+
+              const syntheticW = Math.max(0.8, linkWidthScale(bridge.value));
+              const synthetic = appendLinkPath(
+                linkGroup as any,
+                pathD,
+                bridge.value,
+                syntheticW,
+                SANKEY_2D_COLUMN_LINK_COLOR,
+                0.18
+              );
+              synthetic.attr("data-column", columnKey).attr("data-synthetic", "1");
+            });
+          }
           });
 
           // row-links (per epoch/model) -> horizontal inside a row
           linkGroup2 = gRoot.append("g").attr("class", "links row-links");
-          Object.keys(data.epoch || {}).forEach((rowKey) => {
+          ROW_NAMES.forEach((rowKey) => {
           const rowObj = data.epoch[rowKey];
           if (ROW_INDEX.get(rowKey) == null) return;
           const acceptedPairSet = new Set<string>();
@@ -996,88 +1161,6 @@ export default function SankeyView({
           });
         }
 
-        // slider + mode controls
-        const minRange = document.getElementById("minRange") as HTMLInputElement | null;
-        const maxRange = document.getElementById("maxRange") as HTMLInputElement | null;
-        const minValue = document.getElementById("minValue") as HTMLSpanElement | null;
-        const maxValue = document.getElementById("maxValue") as HTMLSpanElement | null;
-
-        if (minRange && maxRange && minValue && maxValue) {
-          minRange.min = "0";
-          minRange.max = String(maxInstance);
-          maxRange.min = "0";
-          maxRange.max = String(maxInstance);
-
-          const qMin = urlParams.get("min");
-          const qMax = urlParams.get("max");
-          if (qMin !== null) minRange.value = String(Math.max(0, Math.min(maxInstance, +qMin)));
-          else minRange.value = "0";
-          maxRange.value = String(maxInstance);
-
-          minValue.textContent = minRange.value;
-          maxValue.textContent = maxRange.value;
-          updateSliderTrack();
-        }
-
-        function normalizeRange() {
-          if (!minRange || !maxRange || !minValue || !maxValue) return [0, maxInstance];
-          let a = +minRange.value;
-          let b = +maxRange.value;
-          if (a > b) {
-            const tmp = a;
-            a = b;
-            b = tmp;
-            minRange.value = String(a);
-            maxRange.value = String(b);
-          }
-          minValue.textContent = String(a);
-          maxValue.textContent = String(b);
-          return [a, b];
-        }
-
-        function updateSliderTrack() {
-          if (!minRange || !maxRange) return;
-          const minV = +minRange.min;
-          const maxV = +maxRange.max;
-          let a = +minRange.value;
-          let b = +maxRange.value;
-          if (a > b) {
-            const tmp = a;
-            a = b;
-            b = tmp;
-          }
-          const startPct = ((a - minV) / (maxV - minV)) * 100;
-          const endPct = ((b - minV) / (maxV - minV)) * 100;
-          const track = document.getElementById("rangeTrack") as HTMLDivElement | null;
-          if (track) {
-            track.style.background = `linear-gradient(to right, #ddd ${startPct}%, #9c795b ${startPct}%, #9c795b ${endPct}%, #ddd ${endPct}%)`;
-          }
-        }
-
-        function updateLinkVisibilityRange(minVal: number, maxVal: number) {
-          d3.selectAll("path.link-path").each(function () {
-            const el = d3.select(this);
-            const v = +el.attr("data-value") || 0;
-            if (v < minVal || v > maxVal) el.classed("hidden", true);
-            else el.classed("hidden", false);
-          });
-        }
-
-        normalizeRange();
-        updateSliderTrack();
-        if (minRange && maxRange) {
-          minRange.addEventListener("input", () => {
-            const [a, b] = normalizeRange();
-            updateLinkVisibilityRange(a, b);
-            updateSliderTrack();
-          });
-          maxRange.addEventListener("input", () => {
-            const [a, b] = normalizeRange();
-            updateLinkVisibilityRange(a, b);
-            updateSliderTrack();
-          });
-        }
-
         const btnDefault = document.getElementById("btnDefault") as HTMLButtonElement | null;
         const btnColumn = document.getElementById("btnColumn") as HTMLButtonElement | null;
         const btnRow = document.getElementById("btnRow") as HTMLButtonElement | null;
@@ -1122,6 +1205,7 @@ export default function SankeyView({
 
         if (btnSwap) btnSwap.style.fontWeight = SWAP_AXES ? "600" : "400";
         setMode("default");
+        applyLinkValueFilter(linkValueMin, Math.min(linkValueMax, nextMaxBound));
 
         function setRowHighlight(rowKey: string, on: boolean) {
           if (on) {
@@ -1237,7 +1321,22 @@ export default function SankeyView({
       cancelled = true;
       if (chartRef.current === container) container.innerHTML = "";
     };
-  }, [dataPath, transitionStatsPath, showSankeyPaths, showSankeyNodes, showCellBackground, showGapHeatmap]);
+  }, [
+    dataPath,
+    transitionStatsPath,
+    showSankeyPaths,
+    showSankeyNodes,
+    showCellBackground,
+    showGapHeatmap,
+    epochTransitionThreshold,
+    onVisibleEpochsChange,
+    selectedCellMetric,
+    cellMetricByCell,
+  ]);
+
+  useEffect(() => {
+    applyLinkValueFilter(linkValueMin, Math.min(linkValueMax, linkValueMaxBound));
+  }, [linkValueMin, linkValueMax, linkValueMaxBound]);
 
   useEffect(() => {
     const container = chartRef.current;
@@ -1614,59 +1713,203 @@ export default function SankeyView({
     return () => ro.disconnect();
   }, [layout, transform, rowMetricData]);
 
+  const clampedLinkMin = Math.max(0, Math.min(linkValueMin, linkValueMaxBound));
+  const clampedLinkMax = Math.max(0, Math.min(linkValueMax, linkValueMaxBound));
+  const normalizedLinkMin = Math.min(clampedLinkMin, clampedLinkMax);
+  const normalizedLinkMax = Math.max(clampedLinkMin, clampedLinkMax);
+  const linkStartPct = linkValueMaxBound > 0 ? (normalizedLinkMin / linkValueMaxBound) * 100 : 0;
+  const linkEndPct = linkValueMaxBound > 0 ? (normalizedLinkMax / linkValueMaxBound) * 100 : 100;
+  const normalizedEpochThreshold = Math.max(0, Math.min(maxEpochTransitionPct, epochTransitionThreshold));
+  const epochPctPos = maxEpochTransitionPct > 0 ? (normalizedEpochThreshold / maxEpochTransitionPct) * 100 : 0;
+  const cellLegendMinText =
+    selectedCellMetric === "cluster_count" ? cellLegendRange.min.toFixed(0) : cellLegendRange.min.toFixed(3);
+  const cellLegendMaxText =
+    selectedCellMetric === "cluster_count" ? cellLegendRange.max.toFixed(0) : cellLegendRange.max.toFixed(3);
+  const cellMetricDisplayNameMap: Record<string, string> = {
+    cluster_count: "Cluster Number",
+    ari: "ARI",
+    ami: "AMI",
+    nmi: "NMI",
+    homogeneity: "Homogeneity",
+    completeness: "Completeness",
+    v_measure: "V-Measure",
+    fowlkes_mallows: "FMI",
+  };
+  const cellMetricDisplayName = cellMetricDisplayNameMap[selectedCellMetric] ?? selectedCellMetric;
+
   return (
     <div className="timeline-root h-full flex flex-col" style={{ marginLeft: 0 }}>
       <div id="controls" className="shrink-0">
-        <span style={{ display: "inline-flex", alignItems: "center", marginLeft: 5, marginRight: 8, gap: 6 }}>
-          <label>Value range:</label>
-          <span
-            className="value-range-help"
-            data-tooltip="Value range is a link-value filter for the 2D Sankey view. It controls which path segments are visible: only links with values between the selected minimum and maximum are displayed, and links outside that range are hidden."
-            aria-label="Value range help"
-          >
-            ?
-          </span>
-        </span>
-        <span id="minValue" style={{ marginRight: 8 }}>0</span>
-        <div className="range-slider" id="rangeSlider">
-          <div className="range-track" id="rangeTrack"></div>
-          <input id="minRange" className="range-min" type="range" min={0} max={maxInstanceValue} step={1} defaultValue={0} />
-          <input id="maxRange" className="range-max" type="range" min={0} max={maxInstanceValue} step={1} defaultValue={maxInstanceValue} />
+        <div className="controls-main">
+          <div className="control-stack">
+            <div className="control-row">
+            <span className="control-label">
+              <label>Link Range:</label>
+              <span
+                className="value-range-help"
+                data-tooltip="Filters visible Sankey links by link value. Links outside [min, max] are hidden."
+                aria-label="Link value range help"
+              >
+                ?
+              </span>
+            </span>
+            <span className="range-bound">{normalizedLinkMin.toFixed(0)}</span>
+            <div className="range-slider" id="rangeSlider">
+              <div
+                className="range-track"
+                id="rangeTrack"
+                style={{
+                  background: `linear-gradient(to right, #ddd ${linkStartPct}%, #9c795b ${linkStartPct}%, #9c795b ${linkEndPct}%, #ddd ${linkEndPct}%)`,
+                }}
+              ></div>
+              <input
+                id="minRange"
+                className="range-min"
+                type="range"
+                min={0}
+                max={linkValueMaxBound}
+                step={1}
+                value={normalizedLinkMin}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  const clamped = Math.max(0, Math.min(next, linkValueMaxBound));
+                  setLinkValueMin(Math.min(clamped, normalizedLinkMax));
+                  const p = new URLSearchParams(window.location.search);
+                  p.set("min", String(clamped));
+                  p.set("max", String(normalizedLinkMax));
+                  p.set("epochMin", epochTransitionThreshold.toFixed(2));
+                  window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+                }}
+              />
+              <input
+                id="maxRange"
+                className="range-max"
+                type="range"
+                min={0}
+                max={linkValueMaxBound}
+                step={1}
+                value={normalizedLinkMax}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  const clamped = Math.max(0, Math.min(next, linkValueMaxBound));
+                  setLinkValueMax(Math.max(clamped, normalizedLinkMin));
+                  const p = new URLSearchParams(window.location.search);
+                  p.set("min", String(normalizedLinkMin));
+                  p.set("max", String(clamped));
+                  p.set("epochMin", epochTransitionThreshold.toFixed(2));
+                  window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+                }}
+              />
+            </div>
+            <span className="range-bound">{normalizedLinkMax.toFixed(0)}</span>
+            </div>
+            <div className="control-row">
+            <span className="control-label">
+              <label>Epoch Min %:</label>
+              <span
+                className="value-range-help"
+                data-tooltip="For each epoch, we compute the maximum pct_changed across layer-to-layer transitions in that epoch. Epochs with max pct_changed below this threshold are hidden. The last epoch is always kept visible."
+                aria-label="Epoch threshold help"
+              >
+                ?
+              </span>
+            </span>
+            <span className="range-bound">0.00%</span>
+            <div className="epoch-slider-wrap">
+              <div className="range-slider" id="epochRangeSlider">
+                <div
+                  className="range-track"
+                  style={{
+                    background: `linear-gradient(to right, #9c795b ${epochPctPos}%, #ddd ${epochPctPos}%)`,
+                  }}
+                ></div>
+                <input
+                  id="epochThresholdRange"
+                  className="range-single"
+                  type="range"
+                  min={0}
+                  max={maxEpochTransitionPct}
+                  step={0.1}
+                  value={normalizedEpochThreshold}
+                  onChange={(e) => {
+                    const next = Number(e.target.value);
+                    setEpochTransitionThreshold(next);
+                    const p = new URLSearchParams(window.location.search);
+                    p.set("epochMin", next.toFixed(2));
+                    p.set("min", String(normalizedLinkMin));
+                    p.set("max", String(normalizedLinkMax));
+                    window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+                  }}
+                />
+              </div>
+            </div>
+            <span id="epochThresholdValue" className="range-bound">
+              {normalizedEpochThreshold.toFixed(2)}%
+            </span>
+            <span className="epoch-visible-summary">
+              Shown: {visibleEpochSummary.visible}/{visibleEpochSummary.total}
+            </span>
+            </div>
+          </div>
+          <div className="control-side">
+            <div id="controlButtons">
+              <button id="btnDefault">Default</button>
+              <button id="btnColumn">Column</button>
+              <button id="btnRow">Row</button>
+              <button id="btnSwap">Swap X/Y</button>
+              <button
+                type="button"
+                onClick={() => setShowSankeyPaths((v) => !v)}
+                style={{ fontWeight: showSankeyPaths ? 600 : 400 }}
+              >
+                Paths
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSankeyNodes((v) => !v)}
+                style={{ fontWeight: showSankeyNodes ? 600 : 400 }}
+              >
+                Nodes
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCellBackground((v) => !v)}
+                style={{ fontWeight: showCellBackground ? 600 : 400 }}
+              >
+                {cellMetricDisplayName}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowGapHeatmap((v) => !v)}
+                style={{ fontWeight: showGapHeatmap ? 600 : 400 }}
+              >
+                Gap Heat
+              </button>
+            </div>
+          </div>
         </div>
-        <span id="maxValue" style={{ marginLeft: 8 }}>{maxInstanceValue}</span>
-        <div id="controlButtons" style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center" }}>
-          <button id="btnDefault">Default</button>
-          <button id="btnColumn">Column</button>
-          <button id="btnRow">Row</button>
-          <button id="btnSwap">Swap X/Y</button>
-          <button
-            type="button"
-            onClick={() => setShowSankeyPaths((v) => !v)}
-            style={{ fontWeight: showSankeyPaths ? 600 : 400 }}
-          >
-            Paths
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSankeyNodes((v) => !v)}
-            style={{ fontWeight: showSankeyNodes ? 600 : 400 }}
-          >
-            Nodes
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowCellBackground((v) => !v)}
-            style={{ fontWeight: showCellBackground ? 600 : 400 }}
-          >
-            Cell BG
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowGapHeatmap((v) => !v)}
-            style={{ fontWeight: showGapHeatmap ? 600 : 400 }}
-          >
-            Gap Heat
-          </button>
+        <div className="legend-bottom-row">
+          <span className="control-label legend-label">Legend:</span>
+          <div className="sankey-mini-legend" aria-label="Sankey Color Legend">
+            <span className="legend-item">
+              <span className="legend-text">{cellMetricDisplayName}</span>
+              <span className="legend-range">{cellLegendMinText}</span>
+              <span className="legend-swatch" style={{ background: "linear-gradient(to right, #eff6ff, #46518C)" }} />
+              <span className="legend-range">{cellLegendMaxText}</span>
+            </span>
+            <span className="legend-item">
+              <span className="legend-text">Transition %</span>
+              <span className="legend-range">0</span>
+              <span className="legend-swatch" style={{ background: "linear-gradient(to right, #f3f4f6, #7f1d1d)" }} />
+              <span className="legend-range">{gapLegendMax.toFixed(1)}%</span>
+            </span>
+            <span className="legend-item">
+              <span className="legend-text">Transition %</span>
+              <span className="legend-range">0</span>
+              <span className="legend-swatch" style={{ background: "linear-gradient(to right, #f0fdf4, #166534)" }} />
+              <span className="legend-range">{gapLegendMax.toFixed(1)}%</span>
+            </span>
+          </div>
         </div>
       </div>
       {/* FMI/CSPA panel is temporarily hidden, keep code for future use.
@@ -1746,14 +1989,66 @@ export default function SankeyView({
         #controls {
           width: 100%;
           max-width: 100%;
-          margin: 8px 0;
+          margin: 4px 0;
+          display: block;
+          font-size: 13px;
+        }
+
+        .controls-main {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+
+        .control-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          min-width: 470px;
+        }
+        
+        .control-side {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 2px;
+        }
+
+        .control-row {
           display: flex;
           align-items: center;
-          gap: 12px;
-          font-size: 16px;
+          gap: 2px;
           flex-wrap: wrap;
-          position: relative;
-          padding-right: 260px;
+        }
+        
+        .legend-label {
+          min-width: 52px;
+        }
+        
+        .legend-bottom-row {
+          margin-top: 2px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          flex-wrap: wrap;
+        }
+
+        .control-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+          min-width: 96px;
+          font-size: 12px;
+        }
+
+        .range-bound {
+          min-width: 30px;
+          display: inline-block;
+          text-align: right;
+          font-variant-numeric: tabular-nums;
+          font-size: 12px;
         }
 
         #chart {
@@ -1762,32 +2057,84 @@ export default function SankeyView({
           margin: 0;
         }
 
-        input[type="range"] {
-          width: 360px;
-        }
-
         :global(.link-path.hidden) {
           display: none;
         }
 
         .range-slider {
           position: relative;
-          width: 360px;
-          height: 36px;
+          width: 170px;
+          height: 24px;
           display: inline-block;
           align-items: center;
         }
+        
+        .epoch-slider-wrap {
+          display: inline-flex;
+        }
+
+        .epoch-visible-summary {
+          font-size: 12px;
+          color: #475569;
+          line-height: 1.2;
+          white-space: nowrap;
+        }
 
         #controlButtons {
-          position: absolute;
-          right: 8px;
-          top: 0;
+          display: grid;
+          grid-template-columns: repeat(4, max-content);
+          gap: 2px;
+          width: auto;
+          margin-top: 0;
+        }
+        
+        .sankey-mini-legend {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 11px;
+          color: #475569;
+          line-height: 1;
+          white-space: nowrap;
+        }
+
+        .legend-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .legend-text {
+          min-width: 42px;
+          text-align: right;
+        }
+
+        .legend-range {
+          min-width: 26px;
+          text-align: center;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .legend-swatch {
+          width: 84px;
+          height: 8px;
+          border-radius: 4px;
+          border: 1px solid rgba(15, 23, 42, 0.25);
+          display: inline-block;
+        }
+
+        #controlButtons button {
+          font-size: 12px;
+          padding: 1px 4px;
+          margin: 0;
+          line-height: 1.1;
+          white-space: nowrap;
         }
 
         .range-slider input[type="range"] {
           position: absolute;
           left: 0;
-          top: 12px;
+          top: 7px;
           width: 100%;
           pointer-events: none;
           -webkit-appearance: none;
@@ -1802,32 +2149,36 @@ export default function SankeyView({
           z-index: 2;
         }
 
+        .range-slider input.range-single {
+          z-index: 3;
+        }
+
         .range-slider input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
           pointer-events: auto;
-          width: 14px;
-          height: 14px;
+          width: 10px;
+          height: 10px;
           border-radius: 50%;
           background: #fff;
-          border: 2px solid #666;
+          border: 1.5px solid #666;
           box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
         }
 
         .range-slider input[type="range"]::-moz-range-thumb {
           pointer-events: auto;
-          width: 14px;
-          height: 14px;
+          width: 10px;
+          height: 10px;
           border-radius: 50%;
           background: #fff;
-          border: 2px solid #666;
+          border: 1.5px solid #666;
           box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
         }
 
         .range-track {
           position: absolute;
           left: 0;
-          top: 18px;
-          height: 6px;
+          top: 10px;
+          height: 4px;
           width: 100%;
           background: linear-gradient(to right, #ddd 0%, #ddd 100%);
           border-radius: 3px;
