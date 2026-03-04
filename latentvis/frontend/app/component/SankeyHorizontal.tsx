@@ -90,9 +90,9 @@ function inferSequenceFromRows(
   rows.forEach((r) => {
     const fromRaw = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
     const toRaw = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
+    if (!fromRaw || !toRaw) return;
     const fromKey = mode === "layer" ? canonicalLayerKey(fromRaw) : fromRaw;
     const toKey = mode === "layer" ? canonicalLayerKey(toRaw) : toRaw;
-    if (!fromKey || !toKey) return;
     present.add(fromKey);
     present.add(toKey);
     if (!firstSeen.has(fromKey)) firstSeen.set(fromKey, seenIdx++);
