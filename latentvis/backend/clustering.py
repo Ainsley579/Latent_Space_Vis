@@ -146,9 +146,54 @@ def fit_agglomerative(emb, n_clusters=None, k_min=2, k_max=15, random_state=42, 
     }
 
 
+def fit_knn(emb, n_neighbors=10, random_state=42):
+    """
+    KNN graph clustering via connected components on a symmetric kNN graph.
+    n_neighbors is the K in KNN.
+    Returns dict with labels, k (#components), k_values, bic/aic as None.
+    """
+    from sklearn.neighbors import NearestNeighbors
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+
+    X = StandardScaler().fit_transform(_flatten(emb))
+    n = int(X.shape[0])
+    if n <= 1:
+        labels = np.zeros(n, dtype=int)
+        return {
+            "labels": labels,
+            "k": int(len(np.unique(labels))),
+            "k_values": [int(len(np.unique(labels)))],
+            "bic": [None],
+            "aic": [None],
+            "n_neighbors": 0,
+        }
+
+    k = int(n_neighbors) if n_neighbors is not None else 10
+    k = max(1, min(k, n - 1))
+    nbrs = NearestNeighbors(n_neighbors=k + 1, metric="euclidean")
+    nbrs.fit(X)
+    idx = nbrs.kneighbors(X, return_distance=False)[:, 1:]  # drop self
+    rows = np.repeat(np.arange(n), k)
+    cols = idx.reshape(-1)
+    data = np.ones(rows.shape[0], dtype=np.int8)
+    graph = coo_matrix((data, (rows, cols)), shape=(n, n)).tocsr()
+    graph = graph.maximum(graph.T)  # symmetric connectivity
+    n_components, labels = connected_components(graph, directed=False)
+    labels = labels.astype(int)
+    return {
+        "labels": labels,
+        "k": int(n_components),
+        "k_values": [int(n_components)],
+        "bic": [None],
+        "aic": [None],
+        "n_neighbors": int(k),
+    }
+
+
 def fit_clustering(emb, method="gmm", k_min=2, k_max=15, random_state=42, **kwargs):
     """
-    Single entry: method in ('gmm', 'hdbscan', 'agglomerative').
+    Single entry: method in ('gmm', 'hdbscan', 'agglomerative', 'knn').
     Returns dict with keys: labels, k, k_values, bic, aic.
     """
     method = (method or "gmm").lower()
@@ -169,5 +214,11 @@ def fit_clustering(emb, method="gmm", k_min=2, k_max=15, random_state=42, **kwar
             k_max=k_max,
             random_state=random_state,
             linkage=kwargs.get("linkage", "ward"),
+        )
+    if method == "knn":
+        return fit_knn(
+            emb,
+            n_neighbors=kwargs.get("n_neighbors", 10),
+            random_state=random_state,
         )
     raise ValueError("Unknown clustering method: {}".format(method))

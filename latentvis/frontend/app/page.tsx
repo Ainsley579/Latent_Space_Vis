@@ -77,7 +77,7 @@ type HoverPreviewState =
   | { kind: "smiles"; smiles: string; left: number; top: number; source?: "topk" | "members" | "other" };
 
 type DatasetKey = "dimenet" | "chemprop" | "chemeleon";
-type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan";
+type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan" | "knn";
 type DataSplitKey = "all" | "test" | "train";
 const DATASET_OPTIONS: DatasetKey[] = ["dimenet", "chemprop", "chemeleon"];
 const DATASET_OPTIONS_UI: DatasetKey[] = ["chemprop", "chemeleon"];
@@ -85,6 +85,7 @@ const CLUSTERING_OPTIONS: Array<{ value: ClusteringKey; label: string }> = [
   { value: "pgmeans", label: "PG Means" },
   { value: "agglomerative", label: "Agglomerative" },
   { value: "hdbscan", label: "HDBSCAN" },
+  { value: "knn", label: "KNN" },
 ];
 const DATASET_DEFAULTS: Record<DatasetKey, { model: string; layer: string }> = {
   dimenet: { model: "dimenet_noaug", layer: "emb" },

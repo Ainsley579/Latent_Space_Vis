@@ -107,6 +107,29 @@ def _normalize_split(value: Optional[str]) -> Optional[str]:
     return v
 
 
+def _expand_split_selector(value: Optional[str]) -> List[str]:
+    """
+    Expand split selector to concrete split list.
+    Supports: train/test/val, train+test, test+train, all.
+    """
+    if value is None:
+        return ["test"]
+    raw = str(value).strip().lower()
+    if not raw:
+        return ["test"]
+    if raw == "all":
+        return ["train", "test", "val"]
+    if "+" in raw:
+        out: List[str] = []
+        for token in [p.strip() for p in raw.split("+") if p.strip()]:
+            sp = _normalize_split(token)
+            if sp and sp not in out:
+                out.append(sp)
+        return out
+    sp = _normalize_split(raw)
+    return [sp] if sp else []
+
+
 def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[str] = None) -> Path:
     """
     Resolve case directory for a given dataset, clustering method, and data split.
@@ -611,16 +634,41 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
     # Optional substructure member cap for MCS (first M nearest / farthest per cluster)
     sub_m = payload.get("substructure_max_members") or payload.get("sub_m")
 
-    # Agglomerative with fixed k: apply k and linkage to all cells
+    # Agglomerative: always honor linkage; optionally honor fixed k.
+    # KNN: honor fixed k as n_neighbors when provided.
     n_clusters_override = None
     linkage_override = None
-    if clustering == "agglomerative" and k_fixed is not None:
+    knn_k_override = None
+    if clustering == "agglomerative":
+        linkage_override = linkage
+    if clustering == "knn":
+        if k_fixed is not None:
+            try:
+                knn_k_override = max(1, int(k_fixed))
+            except (ValueError, TypeError):
+                return {"ok": False, "error": "invalid_k"}, 400
+            print(
+                f"[flask-backend] generate-range all cells knn k={knn_k_override} dataset={dataset} split={data_split}",
+                flush=True,
+            )
+        else:
+            # Keep UI compatibility: if only min/max are provided, use max as K.
+            try:
+                knn_k_override = max(1, int(max_value))
+            except (ValueError, TypeError):
+                return {"ok": False, "error": "invalid_k"}, 400
+            print(
+                f"[flask-backend] generate-range all cells knn k(from max)={knn_k_override} "
+                f"dataset={dataset} split={data_split}",
+                flush=True,
+            )
+        k_min = k_max = max(2, min(knn_k_override, 15))
+    elif clustering == "agglomerative" and k_fixed is not None:
         try:
             n_clusters_override = int(k_fixed)
             n_clusters_override = max(2, n_clusters_override)
         except (ValueError, TypeError):
             return {"ok": False, "error": "invalid_k"}, 400
-        linkage_override = linkage
         k_min = k_max = n_clusters_override
         print(
             f"[flask-backend] generate-range all cells agg k={n_clusters_override} linkage={linkage_override} "
@@ -647,7 +695,7 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
 
     if not dataset or dataset not in DEFAULT_CASES:
         return {"ok": False, "error": "invalid_dataset"}, 400
-    if clustering not in ("gmm", "agglomerative", "hdbscan"):
+    if clustering not in ("gmm", "agglomerative", "hdbscan", "knn"):
         return {"ok": False, "error": "invalid_clustering"}, 400
 
     input_path = EMBEDDING_PATHS.get(dataset)
@@ -678,6 +726,7 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
             skip_tsne=True,
             n_clusters_override=n_clusters_override,
             linkage_override=linkage_override,
+            knn_k_override=knn_k_override,
             reuse_scatter_coords=True,
             substructure_max_members=sub_m,
             scatter_subdir="scatterplot",
@@ -1000,7 +1049,7 @@ def cluster_containment():
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
     if epoch is None or layer is None:
         return jsonify({"ok": False, "error": "missing_epoch_or_layer"}), 400
-    if clustering not in ("gmm", "agglomerative", "hdbscan"):
+    if clustering not in ("gmm", "agglomerative", "hdbscan", "knn"):
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
     case_dir = _case_dir(dataset, clustering, data_split)
@@ -1113,7 +1162,7 @@ def cell_cluster_metrics():
 
     if not dataset or dataset not in DEFAULT_CASES:
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
-    if clustering not in ("gmm", "agglomerative", "hdbscan"):
+    if clustering not in ("gmm", "agglomerative", "hdbscan", "knn"):
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
     user_rid_to_cluster: Dict[str, int] = {}
@@ -1234,6 +1283,108 @@ def cell_cluster_metrics():
         "metric_names": metric_names,
         "layer_columns": layer_cols,
         "metrics_by_cell": metrics_by_cell,
+    })
+
+
+@app.route("/cluster-tanimoto", methods=["POST", "OPTIONS"])
+def cluster_tanimoto():
+    """
+    Compute per-cluster average pairwise Tanimoto for one (epoch, layer) cell.
+    Request body:
+      - dataset: chemprop|chemeleon
+      - epoch: model/epoch key
+      - layer: layer key
+      - clustering: pgmeans|gmm|agglomerative|hdbscan|knn (optional, default pgmeans)
+      - data_split: train|test|val|train+test|all (optional, default test)
+      - radius: Morgan radius (default 2)
+      - n_bits: fingerprint bits (default 2048)
+    """
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    payload = request.get_json(silent=True) or {}
+    dataset = payload.get("dataset")
+    epoch = payload.get("epoch")
+    layer = payload.get("layer")
+    clustering = str(payload.get("clustering") or DEFAULT_CLUSTERING).strip().lower()
+    if clustering == "pgmeans":
+        clustering = "gmm"
+    split_selector = payload.get("data_split")
+    splits = _expand_split_selector(split_selector)
+
+    try:
+        radius = int(payload.get("radius", 2))
+        n_bits = int(payload.get("n_bits", 2048))
+    except Exception:
+        return jsonify({"ok": False, "error": "invalid_fingerprint_params"}), 400
+
+    if not dataset or dataset not in DEFAULT_CASES:
+        return jsonify({"ok": False, "error": "invalid_dataset"}), 400
+    if epoch is None or layer is None:
+        return jsonify({"ok": False, "error": "missing_epoch_or_layer"}), 400
+    if clustering not in ("gmm", "agglomerative", "hdbscan", "knn"):
+        return jsonify({"ok": False, "error": "invalid_clustering"}), 400
+    if not splits:
+        return jsonify({"ok": False, "error": "invalid_data_split"}), 400
+
+    try:
+        from rdkit import Chem  # noqa: F401
+    except Exception as e:
+        return jsonify({"ok": False, "error": "rdkit_unavailable", "detail": str(e)}), 500
+
+    cluster_rows, err = _load_cluster_rows_for_cell(
+        dataset=dataset,
+        clustering=clustering,
+        epoch=str(epoch),
+        layer=str(layer),
+        splits=splits,
+    )
+    if err == "cluster_assignments_not_found":
+        return jsonify({"ok": False, "error": err}), 404
+    if not cluster_rows:
+        return jsonify({"ok": False, "error": "cell_not_found_or_empty"}), 404
+
+    smiles_by_split: Dict[str, Dict[str, str]] = {}
+    for split in splits:
+        smiles_by_split[split] = _load_id_to_smiles(dataset, data_split=split)
+
+    cluster_to_smiles: Dict[int, List[str]] = {}
+    missing_smiles = 0
+    for row in cluster_rows:
+        rid = str(row.get("real_id"))
+        cid = int(row.get("cluster_id"))
+        split = str(row.get("split"))
+        smi = smiles_by_split.get(split, {}).get(rid, "")
+        if not smi:
+            missing_smiles += 1
+            continue
+        cluster_to_smiles.setdefault(cid, []).append(smi)
+
+    clusters = []
+    for cid in sorted(cluster_to_smiles.keys()):
+        smi_list = cluster_to_smiles[cid]
+        avg_sim, n_valid, n_pairs = _average_tanimoto(smi_list, radius=radius, n_bits=n_bits)
+        clusters.append({
+            "cluster_id": int(cid),
+            "tanimoto": round(float(avg_sim), 6),
+            "n_molecules": len(smi_list),
+            "n_valid_molecules": int(n_valid),
+            "n_pairs": int(n_pairs),
+        })
+
+    return jsonify({
+        "ok": True,
+        "dataset": dataset,
+        "epoch": str(epoch),
+        "layer": str(layer),
+        "clustering": clustering,
+        "data_split": str(split_selector) if split_selector is not None else "test",
+        "resolved_splits": splits,
+        "radius": radius,
+        "n_bits": n_bits,
+        "n_rows": len(cluster_rows),
+        "n_missing_smiles": int(missing_smiles),
+        "clusters": clusters,
     })
 
 
@@ -1411,6 +1562,77 @@ def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[s
     if isinstance(raw, dict):
         return {str(k): str(v) for k, v in raw.items()}
     return {}
+
+
+def _load_cluster_rows_for_cell(
+    dataset: str,
+    clustering: str,
+    epoch: str,
+    layer: str,
+    splits: List[str],
+) -> Tuple[List[Dict[str, object]], Optional[str]]:
+    """
+    Load selected-split cluster assignment rows for one cell.
+    Row format: {"real_id": str, "cluster_id": int, "split": str}.
+    """
+    import csv as csv_module
+
+    layer_col = "{}_cluster".format(str(layer).strip())
+    out: List[Dict[str, object]] = []
+    saw_csv = False
+    for split in splits:
+        case_dir = _case_dir(dataset, clustering, split)
+        csv_path = case_dir / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
+        if not csv_path.is_file():
+            continue
+        saw_csv = True
+        with csv_path.open("r", encoding="utf-8") as f:
+            reader = csv_module.DictReader(f)
+            for row in reader:
+                if str(row.get("epoch")) != str(epoch):
+                    continue
+                rid = row.get("real_id")
+                if rid in (None, ""):
+                    continue
+                try:
+                    cid = int(float(row.get(layer_col)))
+                except (ValueError, TypeError):
+                    continue
+                if cid < 0:
+                    continue
+                out.append({"real_id": str(rid), "cluster_id": int(cid), "split": split})
+    if not saw_csv:
+        return [], "cluster_assignments_not_found"
+    return out, None
+
+
+def _average_tanimoto(smiles_list: List[str], radius: int = 2, n_bits: int = 2048) -> Tuple[float, int, int]:
+    """
+    Mean pairwise Tanimoto for one cluster.
+    Returns: (mean_similarity, n_valid_molecules, n_pairs).
+    """
+    from rdkit import Chem
+    from rdkit.Chem import DataStructs, rdMolDescriptors
+
+    fps = []
+    for smi in smiles_list:
+        mol = Chem.MolFromSmiles(_normalize_smiles(str(smi)))
+        if mol is None:
+            continue
+        fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(mol, int(radius), nBits=int(n_bits))
+        fps.append(fp)
+
+    n = len(fps)
+    if n < 2:
+        return 0.0, n, 0
+
+    total = 0.0
+    pairs = 0
+    for i in range(n - 1):
+        sims = DataStructs.BulkTanimotoSimilarity(fps[i], fps[i + 1 :])
+        total += float(sum(sims))
+        pairs += len(sims)
+    return (total / pairs) if pairs > 0 else 0.0, n, pairs
 
 
 def _mcs_for_real_ids(real_ids: List[object], id_to_smiles: Dict[str, str]) -> Dict[str, object]:

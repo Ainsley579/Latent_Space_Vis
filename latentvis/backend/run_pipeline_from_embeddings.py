@@ -226,6 +226,7 @@ def run_pipeline(
     skip_tsne: bool = False,
     n_clusters_override: Optional[int] = None,
     linkage_override: Optional[str] = None,
+    knn_k_override: Optional[int] = None,
     reuse_scatter_coords: bool = False,
     substructure_max_members: Optional[int] = None,
     scatter_subdir: str = "scatterplot",
@@ -291,9 +292,9 @@ def run_pipeline(
         print(f"Limited to {len(epoch_keys)} epochs (--max-epochs {max_epochs})")
     print(f"Epoch keys: {epoch_keys}, Layer keys: {layer_keys}, n_samples: {n_samples}")
 
-    # Clustering methods to run: default gmm; if clustering_method=="all" then gmm, hdbscan, agglomerative
+    # Clustering methods to run: default gmm; if clustering_method=="all" then gmm, hdbscan, agglomerative, knn
     if clustering_method == "all":
-        run_methods = ["gmm", "hdbscan", "agglomerative"]
+        run_methods = ["gmm", "hdbscan", "agglomerative", "knn"]
     else:
         run_methods = [clustering_method]
 
@@ -489,7 +490,7 @@ def run_pipeline(
         sys.stderr.flush()
         results[(ek, lk)] = {"coords": coords}
         for cl_method in run_methods:
-            if cl_method == "agglomerative" and n_clusters_override is not None:
+            if cl_method == "agglomerative" and (n_clusters_override is not None or linkage_override is not None):
                 from clustering import fit_agglomerative
                 cl_out = fit_agglomerative(
                     emb,
@@ -498,6 +499,16 @@ def run_pipeline(
                     k_max=k_max,
                     random_state=random_state,
                     linkage=linkage_override or "ward",
+                )
+            elif cl_method == "knn":
+                knn_k = knn_k_override if knn_k_override is not None else max(2, int(k_max))
+                cl_out = fit_clustering(
+                    emb,
+                    method=cl_method,
+                    k_min=k_min,
+                    k_max=k_max,
+                    random_state=random_state,
+                    n_neighbors=knn_k,
                 )
             else:
                 cl_out = fit_clustering(
@@ -832,8 +843,26 @@ def main():
     ap.add_argument("--input2", default=None, help="Second embedding dir (for second epoch, e.g. dimenet10conf)")
     ap.add_argument("--model-name2", default=None, help="Model name for second input")
     ap.add_argument("--layer-file-map2", default=None, help="JSON path for second input layer map")
-    ap.add_argument("--clustering-method", default="gmm", choices=["gmm", "hdbscan", "agglomerative", "all"],
-                    help="Clustering method: gmm (default), hdbscan, agglomerative, or all")
+    ap.add_argument("--clustering-method", default="gmm", choices=["gmm", "hdbscan", "agglomerative", "knn", "all"],
+                    help="Clustering method: gmm (default), hdbscan, agglomerative, knn, or all")
+    ap.add_argument(
+        "--agg-k",
+        type=int,
+        default=None,
+        help="Fixed number of clusters for agglomerative clustering.",
+    )
+    ap.add_argument(
+        "--agg-linkage",
+        choices=["ward", "complete", "average"],
+        default="ward",
+        help="Linkage for agglomerative clustering.",
+    )
+    ap.add_argument(
+        "--knn-k",
+        type=int,
+        default=None,
+        help="K for KNN clustering (number of neighbors). Used when --clustering-method knn (or all).",
+    )
     ap.add_argument("--max-epochs", type=int, default=None, help="Limit to first N epochs (e.g. 10 for quick run)")
     ap.add_argument("--skip-tsne", action="store_true", help="Skip t-SNE (use PCA for tsne coords); much faster")
     ap.add_argument(
@@ -902,6 +931,9 @@ def main():
         model_name2=args.model_name2,
         layer_file_map2=layer_file_map2,
         clustering_method=args.clustering_method,
+        n_clusters_override=args.agg_k,
+        linkage_override=args.agg_linkage,
+        knn_k_override=args.knn_k,
         max_epochs=args.max_epochs,
         skip_tsne=args.skip_tsne,
         substructure_max_members=args.substructure_max_members,
