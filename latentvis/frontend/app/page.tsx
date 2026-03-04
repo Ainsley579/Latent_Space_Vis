@@ -1474,6 +1474,7 @@ export default function Home() {
   const midRowPct = workspaceHeightPct * MID_ROW_RATIO_IN_WORKSPACE;
   const bottomRowPct = 100 - workspaceHeightPct;
   const showMembersPanelByWidth = rightColPct >= 24;
+  const isRightPanelCollapsed = Math.abs(workspaceWidthPct - HALF_RIGHT_WORKSPACE_WIDTH_PCT) < 0.5;
   const scatterResolvedWidthPx =
     scatterWidthPx == null ? null : Math.max(scatterMinWidthPx ?? 140, Math.min(900, scatterWidthPx));
 
@@ -2010,9 +2011,24 @@ export default function Home() {
               </div>
               <div
                 id="instanceview"
-                className="min-h-0 border border-zinc-400 bg-white"
+                className="relative min-h-0 border border-zinc-400 bg-white"
                 style={{ height: `${100 - rightTopHeightPct}%` }}
               >
+                <button
+                  type="button"
+                  className="absolute top-1 left-1 z-30 w-6 h-6 rounded-md border border-zinc-400 bg-white/95 hover:bg-zinc-100 shadow cursor-pointer flex items-center justify-center"
+                  onClick={toggleWorkspaceWidthPreset}
+                  title="Toggle Right Panel Width (50% / default)"
+                  aria-label="Toggle Right Panel Width (50% / default)"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                    {isRightPanelCollapsed ? (
+                      <path d="M5 8l5-3.2v6.4L5 8z" fill="currentColor" />
+                    ) : (
+                      <path d="M11 8L6 4.8v6.4L11 8z" fill="currentColor" />
+                    )}
+                  </svg>
+                </button>
                 <TopkNearestPanel
                   rows={topkNearestRows}
                   selectedModel={selectedModel}
@@ -2046,18 +2062,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <button
-            type="button"
-            className="absolute z-30 w-6 h-6 rounded-md border border-zinc-400 bg-white/95 hover:bg-zinc-100 shadow cursor-pointer flex items-center justify-center"
-            style={{ left: `calc(${effectiveWorkspaceWidthPct}% - 12px)`, top: `calc(${workspaceHeightPct}% - 12px)` }}
-            onClick={toggleWorkspaceWidthPreset}
-            title="Toggle Right Panel Width (50% / default)"
-            aria-label="Toggle Right Panel Width (50% / default)"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M6 2H2v4M10 14h4v-4M2 6l4-4M14 10l-4 4" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-            </svg>
-          </button>
           <div
             className="absolute left-0 top-0 bottom-0 z-30 flex items-start"
             onMouseLeave={() => setIsControlPanelOpen(false)}
