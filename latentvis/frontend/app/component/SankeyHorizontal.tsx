@@ -539,6 +539,7 @@ export default function SankeyHorizontal({
         const idx = displayActiveNode.lastIndexOf("_");
         activeLayer = idx === -1 ? displayActiveNode : displayActiveNode.slice(0, idx);
       }
+      const shouldRenderPaths = true;
       const focusGroup = activeLayer ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
       const clusterColor = (cluster: number) =>
         CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length];
@@ -547,18 +548,20 @@ export default function SankeyHorizontal({
       const sampleGroup = svg.append("g").attr("class", "sample-trajectories");
       const nodeGroup = svg.append("g").attr("class", "noaug-nodes");
 
-      const linkSel = linkGroup
-        .selectAll("path")
-        .data(sankeyGraph.links as SankeyLink<any, any>[])
-        .enter()
-        .append("path")
-        .attr("d", sankeyLinkHorizontal())
-        .attr("fill", "none")
-        .attr("stroke", SANKEY_LINK_COLOR)
-        .attr("stroke-opacity", 0.4)
-        .attr("vector-effect", "non-scaling-stroke")
-        .attr("stroke-width", (d: any) => Math.max(1, d.width || 1))
-        .attr("data-key", (d: any) => d.key);
+      if (shouldRenderPaths) {
+        linkGroup
+          .selectAll("path")
+          .data(sankeyGraph.links as SankeyLink<any, any>[])
+          .enter()
+          .append("path")
+          .attr("d", sankeyLinkHorizontal())
+          .attr("fill", "none")
+          .attr("stroke", SANKEY_LINK_COLOR)
+          .attr("stroke-opacity", 0.4)
+          .attr("vector-effect", "non-scaling-stroke")
+          .attr("stroke-width", (d: any) => Math.max(1, d.width || 1))
+          .attr("data-key", (d: any) => d.key);
+      }
 
       // build per-sample trajectories with per-node y offsets (spread inside node height)
       const nodeSamples = new Map<string, Set<string>>();
@@ -613,21 +616,24 @@ export default function SankeyHorizontal({
         sampleLines.push({ id, x1, y1, x2, y2 });
       });
 
-      const sampleSel = sampleGroup
-        .selectAll("line")
-        .data(sampleLines)
-        .enter()
-        .append("line")
-        .attr("x1", (d) => d.x1)
-        .attr("y1", (d) => d.y1)
-        .attr("x2", (d) => d.x2)
-        .attr("y2", (d) => d.y2)
-        .attr("stroke", SANKEY_LINK_COLOR)
-        .attr("vector-effect", "non-scaling-stroke")
-        .attr("stroke-width", 1.2)
-        .attr("opacity", 0)
-        .attr("class", (d) => `sample-${d.id}`)
-        .attr("data-id", (d) => d.id);
+      let sampleSel: d3.Selection<SVGLineElement, { id: string; x1: number; y1: number; x2: number; y2: number }, SVGGElement, unknown> | null = null;
+      if (shouldRenderPaths) {
+        sampleSel = sampleGroup
+          .selectAll("line")
+          .data(sampleLines)
+          .enter()
+          .append("line")
+          .attr("x1", (d) => d.x1)
+          .attr("y1", (d) => d.y1)
+          .attr("x2", (d) => d.x2)
+          .attr("y2", (d) => d.y2)
+          .attr("stroke", SANKEY_LINK_COLOR)
+          .attr("vector-effect", "non-scaling-stroke")
+          .attr("stroke-width", 1.2)
+          .attr("opacity", 0)
+          .attr("class", (d) => `sample-${d.id}`)
+          .attr("data-id", (d) => d.id);
+      }
 
       const nodeSel = nodeGroup
         .selectAll("rect")
@@ -716,21 +722,23 @@ export default function SankeyHorizontal({
         return 0;
       };
 
-      sampleSel
-        .attr("opacity", (d) => {
-          const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
-          const isHovered = !!highlightId && d.id === highlightId;
-          const isSearchHit = highlightSet.has(d.id);
-          return (isHovered || isSearchHit) ? 1 : baseOpacity(d);
-        })
-        .attr("stroke", (d) => {
-          const isHovered = !!highlightId && d.id === highlightId;
-          return isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
-        })
-        .attr("stroke-width", (d) => {
-          const isHovered = !!highlightId && d.id === highlightId;
-          return isHovered ? 2.2 : 1.2;
-        });
+      if (sampleSel) {
+        sampleSel
+          .attr("opacity", (d) => {
+            const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
+            const isHovered = !!highlightId && d.id === highlightId;
+            const isSearchHit = highlightSet.has(d.id);
+            return (isHovered || isSearchHit) ? 1 : baseOpacity(d);
+          })
+          .attr("stroke", (d) => {
+            const isHovered = !!highlightId && d.id === highlightId;
+            return isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
+          })
+          .attr("stroke-width", (d) => {
+            const isHovered = !!highlightId && d.id === highlightId;
+            return isHovered ? 2.2 : 1.2;
+          });
+      }
 
       // Re-apply current transform right after redraw so viewport state is preserved.
       const groups = svg.selectAll(

@@ -532,6 +532,7 @@ export default function SankeyVertical({
         const idx = displayActiveNode.lastIndexOf("_");
         activeModel = idx === -1 ? displayActiveNode : displayActiveNode.slice(0, idx);
       }
+      const shouldRenderPaths = true;
       const focusGroup = activeModel ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
 
       const clusterValues: number[] = [];
@@ -578,38 +579,40 @@ export default function SankeyVertical({
       const sampleGroup = g.append("g").attr("class", "sample-trajectories");
       const nodeGroup = g.append("g").attr("class", "nodes");
 
-      linkGroup
-        .selectAll("path")
-        .data(links)
-        .enter()
-        .append("path")
-        .attr("d", (d) => {
-          const s = nodeByKey.get(d.src);
-          const t = nodeByKey.get(d.tgt);
-          if (!s || !t) return "";
-          const sTot = outTotal.get(d.src) || 1;
-          const tTot = inTotal.get(d.tgt) || 1;
-          const sOff = outOffset.get(d.src) || 0;
-          const tOff = inOffset.get(d.tgt) || 0;
-          const y1 = s.y + ((sOff + d.value / 2) / sTot) * s.h;
-          const y2 = t.y + ((tOff + d.value / 2) / tTot) * t.h;
-          outOffset.set(d.src, sOff + d.value);
-          inOffset.set(d.tgt, tOff + d.value);
-          const x1 = s.x <= t.x ? s.x + NODE_W : t.x + NODE_W;
-          const x2 = s.x <= t.x ? t.x : s.x;
-          const dx = Math.abs(x2 - x1) * 0.5;
-          return `M ${x1},${y1} C ${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
-        })
-        .attr("fill", "none")
-        .attr("stroke", SANKEY_LINK_COLOR)
-        .attr("stroke-opacity", 0.35)
-        .attr("vector-effect", "non-scaling-stroke")
-        .attr("stroke-width", (d) => {
-          const s = nodeByKey.get(d.src);
-          if (!s) return 1;
-          const sTot = outTotal.get(d.src) || 1;
-          return Math.max(0.5, (d.value / sTot) * s.h);
-        });
+      if (shouldRenderPaths) {
+        linkGroup
+          .selectAll("path")
+          .data(links)
+          .enter()
+          .append("path")
+          .attr("d", (d) => {
+            const s = nodeByKey.get(d.src);
+            const t = nodeByKey.get(d.tgt);
+            if (!s || !t) return "";
+            const sTot = outTotal.get(d.src) || 1;
+            const tTot = inTotal.get(d.tgt) || 1;
+            const sOff = outOffset.get(d.src) || 0;
+            const tOff = inOffset.get(d.tgt) || 0;
+            const y1 = s.y + ((sOff + d.value / 2) / sTot) * s.h;
+            const y2 = t.y + ((tOff + d.value / 2) / tTot) * t.h;
+            outOffset.set(d.src, sOff + d.value);
+            inOffset.set(d.tgt, tOff + d.value);
+            const x1 = s.x <= t.x ? s.x + NODE_W : t.x + NODE_W;
+            const x2 = s.x <= t.x ? t.x : s.x;
+            const dx = Math.abs(x2 - x1) * 0.5;
+            return `M ${x1},${y1} C ${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
+          })
+          .attr("fill", "none")
+          .attr("stroke", SANKEY_LINK_COLOR)
+          .attr("stroke-opacity", 0.35)
+          .attr("vector-effect", "non-scaling-stroke")
+          .attr("stroke-width", (d) => {
+            const s = nodeByKey.get(d.src);
+            if (!s) return 1;
+            const sTot = outTotal.get(d.src) || 1;
+            return Math.max(0.5, (d.value / sTot) * s.h);
+          });
+      }
 
       const nodeSamples = new Map<string, Set<string>>();
       rows.forEach((r) => {
@@ -652,21 +655,24 @@ export default function SankeyVertical({
         return [{ id, x1: s.x + NODE_W, y1, x2: t.x, y2 }];
       });
 
-      const sampleSel = sampleGroup
-        .selectAll("line")
-        .data(sampleLines)
-        .enter()
-        .append("line")
-        .attr("x1", (d) => d.x1)
-        .attr("y1", (d) => d.y1)
-        .attr("x2", (d) => d.x2)
-        .attr("y2", (d) => d.y2)
-        .attr("stroke", SANKEY_LINK_COLOR)
-        .attr("vector-effect", "non-scaling-stroke")
-        .attr("stroke-width", 1.1)
-        .attr("opacity", 0)
-        .attr("class", (d) => `sample-${d.id}`)
-        .attr("data-id", (d) => d.id);
+      let sampleSel: d3.Selection<SVGLineElement, { id: string; x1: number; y1: number; x2: number; y2: number }, SVGGElement, unknown> | null = null;
+      if (shouldRenderPaths) {
+        sampleSel = sampleGroup
+          .selectAll("line")
+          .data(sampleLines)
+          .enter()
+          .append("line")
+          .attr("x1", (d) => d.x1)
+          .attr("y1", (d) => d.y1)
+          .attr("x2", (d) => d.x2)
+          .attr("y2", (d) => d.y2)
+          .attr("stroke", SANKEY_LINK_COLOR)
+          .attr("vector-effect", "non-scaling-stroke")
+          .attr("stroke-width", 1.1)
+          .attr("opacity", 0)
+          .attr("class", (d) => `sample-${d.id}`)
+          .attr("data-id", (d) => d.id);
+      }
 
       const nodeSel = nodeGroup
         .selectAll("rect")
@@ -722,21 +728,23 @@ export default function SankeyVertical({
         return 0;
       };
 
-      sampleSel
-        .attr("opacity", (d) => {
-          const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
-          const isHovered = !!highlightId && d.id === highlightId;
-          const isSearchHit = highlightSet.has(d.id);
-          return (isHovered || isSearchHit) ? 1 : baseOpacity(d);
-        })
-        .attr("stroke", (d) => {
-          const isHovered = !!highlightId && d.id === highlightId;
-          return isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
-        })
-        .attr("stroke-width", (d) => {
-          const isHovered = !!highlightId && d.id === highlightId;
-          return isHovered ? 2 : 1.1;
-        });
+      if (sampleSel) {
+        sampleSel
+          .attr("opacity", (d) => {
+            const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
+            const isHovered = !!highlightId && d.id === highlightId;
+            const isSearchHit = highlightSet.has(d.id);
+            return (isHovered || isSearchHit) ? 1 : baseOpacity(d);
+          })
+          .attr("stroke", (d) => {
+            const isHovered = !!highlightId && d.id === highlightId;
+            return isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
+          })
+          .attr("stroke-width", (d) => {
+            const isHovered = !!highlightId && d.id === highlightId;
+            return isHovered ? 2 : 1.1;
+          });
+      }
 
       // Keep labels above links/nodes.
       svg.selectAll("g.axis-labels").raise();
