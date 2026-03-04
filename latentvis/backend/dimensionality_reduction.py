@@ -142,22 +142,14 @@ def reduce_embedding(
             out[:, 0] = X.ravel()
         return out
     if n_features < 2:
-        # Single feature: keep method-specific 2D layouts so projections are not identical.
+        # Single-feature embeddings cannot produce a meaningful 2D manifold.
+        # Keep x faithful, add only tiny method-agnostic jitter on y for visibility.
         out = np.zeros((n_samples, 2), dtype=np.float64)
         x = X.ravel().astype(np.float64, copy=False)
         out[:, 0] = x
-        t = np.linspace(-1.0, 1.0, n_samples)
-        if method == "pca":
-            out[:, 1] = t
-        elif method == "mds":
-            out[:, 1] = np.sin(np.linspace(0.0, np.pi, n_samples))
-        elif method == "umap":
-            out[:, 1] = np.cos(np.linspace(0.0, np.pi, n_samples))
-        elif method == "tsne":
-            rs = np.random.RandomState(random_state)
-            out[:, 1] = t + rs.normal(0.0, 0.03, size=n_samples)
-        else:
-            raise ValueError(f"Unknown method: {method}")
+        rs = np.random.RandomState(random_state)
+        scale = max(1e-8, np.std(x), np.max(np.abs(x)) * 1e-3)
+        out[:, 1] = rs.normal(0.0, scale * 1e-3, size=n_samples)
         return out
     result = None
     if method == "pca":
@@ -176,7 +168,7 @@ def reduce_embedding(
 
 
 def _ensure_2d_spread(arr: np.ndarray, random_state: int = _RANDOM_STATE) -> np.ndarray:
-    """If second column has negligible variance, replace with spread so plot is not a line."""
+    """If second column has negligible variance, add tiny random jitter (no synthetic pattern)."""
     if arr.shape[1] < 2:
         return arr
     col1 = arr[:, 1]
@@ -185,5 +177,5 @@ def _ensure_2d_spread(arr: np.ndarray, random_state: int = _RANDOM_STATE) -> np.
     if var1 < (0.01 * scale) ** 2:  # effectively degenerate
         rs = np.random.RandomState(random_state)
         arr = arr.copy()
-        arr[:, 1] = np.linspace(-scale * 0.5, scale * 0.5, arr.shape[0]) + rs.randn(arr.shape[0]) * scale * 0.02
+        arr[:, 1] = rs.normal(0.0, scale * 1e-3, size=arr.shape[0])
     return arr
