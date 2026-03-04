@@ -63,6 +63,7 @@ function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): 
 
 type SankeyVerticalProps = {
   dataPath?: string;
+  secondaryDataPath?: string;
   syncTransform?: { x: number; y: number; scale: number };
   onSyncTransform?: (t: { x: number; y: number; scale: number }) => void;
   mode?: "layer" | "model";
@@ -87,8 +88,10 @@ function inferSequenceFromRows(
   const edgeCounts = new Map<string, number>();
 
   rows.forEach((r) => {
-    const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
-    const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+    const fromRaw = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
+    const toRaw = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+    const fromKey = mode === "layer" ? canonicalLayerKey(fromRaw) : fromRaw;
+    const toKey = mode === "layer" ? canonicalLayerKey(toRaw) : toRaw;
     if (!fromKey || !toKey) return;
     present.add(fromKey);
     present.add(toKey);
@@ -99,7 +102,6 @@ function inferSequenceFromRows(
   });
 
   const fromPreferred = preferredOrder.filter((k) => present.has(k));
-  if (fromPreferred.length > 0) return fromPreferred;
 
   const fallback = Array.from(present).sort((a, b) => {
     const na = Number(a);
@@ -110,7 +112,14 @@ function inferSequenceFromRows(
     if (sa !== sb) return sa - sb;
     return a.localeCompare(b);
   });
-  if (mode !== "layer") return fallback;
+  if (mode !== "layer") {
+    if (fromPreferred.length > 0) {
+      const seen = new Set(fromPreferred);
+      const remaining = fallback.filter((k) => !seen.has(k));
+      return [...fromPreferred, ...remaining];
+    }
+    return fallback;
+  }
 
   const bestNext = new Map<string, string>();
   const bestVal = new Map<string, number>();
@@ -143,6 +152,7 @@ function inferSequenceFromRows(
 }
 
 function canonicalLayerKey(name: string): string {
+  if (name === "fp") return "fingerprint";
   if (/^fnn_layer_/.test(name)) return name.replace(/^fnn_layer_/, "ffn_layer_");
   return name;
 }
@@ -152,7 +162,11 @@ function normalizeAdjacentRows(
   mode: "layer" | "model",
   preferredOrder: string[]
 ): SampleRow[] {
-  const sequence = inferSequenceFromRows(rows, mode, preferredOrder);
+  const rawSequence = inferSequenceFromRows(rows, mode, preferredOrder);
+  const sequence =
+    mode === "layer"
+      ? rawSequence.filter((k, i) => rawSequence.findIndex((x) => canonicalLayerKey(x) === canonicalLayerKey(k)) === i)
+      : rawSequence;
   const idxMap = new Map(
     sequence.map((k, i) => [mode === "layer" ? canonicalLayerKey(k) : k, i])
   );
@@ -289,6 +303,7 @@ function toShortLayerName(name: string): string {
 
 export default function SankeyVertical({
   dataPath = "/data/dimenet/sankey/sankey_samples.json",
+  secondaryDataPath,
   syncTransform,
   onSyncTransform,
   mode = "model",
@@ -361,6 +376,7 @@ export default function SankeyVertical({
     ro.observe(container);
 
     let lastRows: SampleRow[] | null = null;
+    let lastSecondaryRows: SampleRow[] | null = null;
 
     function buildGraph(rows: SampleRow[]) {
       const nodesMap = new Map<string, number>();
@@ -422,23 +438,29 @@ export default function SankeyVertical({
           : mode === "model"
             ? (reverseEpochOrder ? [...MODEL_ORDER].reverse() : MODEL_ORDER)
             : LAYER_ORDER;
-      const filteredRows =
+      const filterRowsForView = (rowsInput: SampleRow[]): SampleRow[] =>
         mode === "model" && visibleEpochOrder
           ? (() => {
-              const stitched = stitchRowsByVisibleEpochs(lastRows, visibleEpochOrder);
+              const stitched = stitchRowsByVisibleEpochs(rowsInput, visibleEpochOrder);
               if (stitched.length > 0) return stitched;
               const allowed = new Set(visibleEpochOrder);
-              return lastRows.filter((r) => {
+              return rowsInput.filter((r) => {
                 const fromKey = String(r.from_model ?? "");
                 const toKey = String(r.to_model ?? "");
                 return allowed.has(fromKey) && allowed.has(toKey);
               });
             })()
-          : lastRows;
+          : rowsInput;
+      const filteredRows = filterRowsForView(lastRows);
+      const filteredSecondaryRows = lastSecondaryRows ? filterRowsForView(lastSecondaryRows) : [];
 
       const rowsReal = normalizeAdjacentRows(filteredRows, mode, order) as any[];
       const rowsSynthetic = synthesizeMissingAdjacentRows(rowsReal, mode, order) as any[];
       const rows = rowsSynthetic.length > 0 ? [...rowsReal, ...rowsSynthetic] : rowsReal;
+      const secondaryRowsReal = normalizeAdjacentRows(filteredSecondaryRows, mode, order) as any[];
+      const secondaryRowsSynthetic = synthesizeMissingAdjacentRows(secondaryRowsReal, mode, order) as any[];
+      const secondaryRows =
+        secondaryRowsSynthetic.length > 0 ? [...secondaryRowsReal, ...secondaryRowsSynthetic] : secondaryRowsReal;
       const NODE_W = 12;
       const NODE_PAD = 4;
       const BOTTOM = 28;
@@ -454,6 +476,15 @@ export default function SankeyVertical({
         const tgt = `${toKey}_${r.to_cluster}`;
         nodeValue.set(src, (nodeValue.get(src) ?? 0) + 1);
         nodeValue.set(tgt, (nodeValue.get(tgt) ?? 0) + 1);
+      });
+      const secondaryNodeValue = new Map<string, number>();
+      secondaryRows.forEach((r) => {
+        const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
+        const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+        const src = `${fromKey}_${r.from_cluster}`;
+        const tgt = `${toKey}_${r.to_cluster}`;
+        secondaryNodeValue.set(src, (secondaryNodeValue.get(src) ?? 0) + 1);
+        secondaryNodeValue.set(tgt, (secondaryNodeValue.get(tgt) ?? 0) + 1);
       });
 
       const nodesByModel = new Map<string, Array<{ key: string; cluster: number; value: number }>>();
@@ -680,11 +711,17 @@ export default function SankeyVertical({
           .attr("data-id", (d) => d.id);
       }
 
+      const darker = (hex: string) => {
+        const c = d3.color(hex);
+        return c ? c.darker(0.6).formatHex() : hex;
+      };
+
       const nodeSel = nodeGroup
-        .selectAll("rect")
+        .selectAll("rect.node-main")
         .data(nodes)
         .enter()
         .append("rect")
+        .attr("class", "node-main")
         .attr("x", (d) => d.x)
         .attr("y", (d) => d.y)
         .attr("width", NODE_W)
@@ -718,6 +755,39 @@ export default function SankeyVertical({
             onNodeSelectRef.current?.({ model: modelKey, layer: keyName, cluster, ids });
           }
         });
+
+      nodeGroup
+        .selectAll("rect.node-test")
+        .data(nodes)
+        .enter()
+        .append("rect")
+        .attr("class", "node-test")
+        .attr("x", (d) => d.x)
+        .attr("y", (d) => {
+          const total = Math.max(0, Number(d.value ?? 0));
+          const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
+          const ratio = total > 0 ? Math.min(1, test / total) : 0;
+          const h = Math.max(1, d.h);
+          const testH = h * ratio;
+          return d.y + Math.max(0, h - testH);
+        })
+        .attr("width", NODE_W)
+        .attr("height", (d) => {
+          const total = Math.max(0, Number(d.value ?? 0));
+          const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
+          const ratio = total > 0 ? Math.min(1, test / total) : 0;
+          return Math.max(0, Math.max(1, d.h) * ratio);
+        })
+        .attr("fill", (d) => {
+          if (focusGroup && d.model === focusGroup) {
+            const idx = d.key.lastIndexOf("_");
+            const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
+            if (Number.isFinite(cluster)) return darker(color(Math.max(0, cluster)));
+          }
+          return darker(SANKEY_NODE_COLOR);
+        })
+        .attr("data-key", (d) => d.key)
+        .style("pointer-events", "none");
 
       nodeSel.append("title").text((d) => d.key);
       nodeGroup.raise();
@@ -773,13 +843,20 @@ export default function SankeyVertical({
       }
     }
 
-    fetch(dataPath)
-      .then((res) => {
+    Promise.all([
+      fetch(dataPath).then((res) => {
         if (!res.ok) throw new Error("Failed to fetch noaug_sankey_samples.json");
         return res.json();
-      })
-      .then((json: SampleRow[]) => {
+      }),
+      secondaryDataPath
+        ? fetch(secondaryDataPath)
+            .then((res) => (res.ok ? res.json() : null))
+            .catch(() => null)
+        : Promise.resolve(null),
+    ])
+      .then(([json, secondaryJson]: [SampleRow[], SampleRow[] | null]) => {
         lastRows = json;
+        lastSecondaryRows = Array.isArray(secondaryJson) ? secondaryJson : null;
         draw();
       })
       .catch((err) => {
@@ -813,7 +890,7 @@ export default function SankeyVertical({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, !!syncTransform]);
+  }, [dataPath, secondaryDataPath, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, !!syncTransform]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -831,11 +908,20 @@ export default function SankeyVertical({
       const idx = key.lastIndexOf("_");
       const model = idx === -1 ? key : key.slice(0, idx);
       const cluster = Number(idx === -1 ? 0 : key.slice(idx + 1));
+      const isTestRect = rect.classList.contains("node-test");
+      const baseColor =
+        focusGroup && model === focusGroup && Number.isFinite(cluster)
+          ? CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length]
+          : SANKEY_NODE_COLOR;
+      const c = d3.color(baseColor);
+      const testColor = c ? c.darker(0.6).formatHex() : baseColor;
 
-      if (focusGroup && model === focusGroup && Number.isFinite(cluster)) {
-        rect.setAttribute("fill", CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length]);
-      } else {
-        rect.setAttribute("fill", SANKEY_NODE_COLOR);
+      rect.setAttribute("fill", isTestRect ? testColor : baseColor);
+
+      if (isTestRect) {
+        rect.setAttribute("stroke", "none");
+        rect.setAttribute("stroke-width", "0");
+        return;
       }
 
       if (activeName && key === activeName) {

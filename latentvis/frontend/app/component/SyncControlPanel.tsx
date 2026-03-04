@@ -6,8 +6,8 @@ type SyncControlPanelProps = {
   dataset: string;
   onDatasetChange: (dataset: string) => void;
   datasetOptions: string[];
-  dataSplit?: "test" | "train";
-  onDataSplitChange?: (split: "test" | "train") => void;
+  dataSplit?: "all" | "test" | "train";
+  onDataSplitChange?: (split: "all" | "test" | "train") => void;
   substructureMaxMembers?: number;
   onSubstructureMaxMembersChange?: (value: number) => void;
   clustering?: string;
@@ -106,10 +106,11 @@ export default function SyncControlPanel({
           <label className="text-[10px] text-zinc-700 shrink-0">DATA SPLIT</label>
           <select
             className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
-            value={dataSplit ?? "test"}
-            onChange={(e) => onDataSplitChange(e.target.value as "test" | "train")}
+            value={dataSplit ?? "all"}
+            onChange={(e) => onDataSplitChange(e.target.value as "all" | "test" | "train")}
           >
-            <option value="test">test (default)</option>
+            <option value="all">train + test (default)</option>
+            <option value="test">test</option>
             <option value="train">train</option>
           </select>
         </div>

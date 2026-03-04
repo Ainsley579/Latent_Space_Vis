@@ -12,6 +12,7 @@ Usage:
 import argparse
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 from collections import defaultdict
@@ -167,6 +168,44 @@ def _sankey_sample_rows(
     return rows
 
 
+def _preferred_layer_order(layer_keys: list) -> list:
+    """
+    Normalize layer traversal order for sankey generation:
+    fingerprint -> gnn_layer_1..N -> ffn/fnn_layer_1..N -> remaining (original order).
+    """
+    ordered_input = [str(x).strip() for x in layer_keys if str(x).strip()]
+    layer_set = set(ordered_input)
+
+    def _sort_numeric(names: list, pattern: str) -> list:
+        out = []
+        for name in names:
+            m = re.match(pattern, name)
+            if m:
+                out.append((int(m.group(1)), name))
+        out.sort(key=lambda t: t[0])
+        return [name for _, name in out]
+
+    ordered = []
+    if "fingerprint" in layer_set:
+        ordered.append("fingerprint")
+
+    ordered.extend(_sort_numeric(ordered_input, r"^gnn_layer_(\d+)$"))
+
+    ffn_like = [n for n in ordered_input if re.match(r"^(ffn|fnn)_layer_(\d+)$", n)]
+    ffn_like_sorted = sorted(
+        ffn_like,
+        key=lambda n: int(re.match(r"^(?:ffn|fnn)_layer_(\d+)$", n).group(1))
+    )
+    for name in ffn_like_sorted:
+        if name not in ordered:
+            ordered.append(name)
+
+    for name in ordered_input:
+        if name not in ordered:
+            ordered.append(name)
+    return ordered
+
+
 def run_pipeline(
     input_path,
     output_dir,
@@ -218,6 +257,7 @@ def run_pipeline(
     cells = dict(data["cells"])
     epoch_keys = list(data["epoch_keys"])
     layer_keys = list(data["layer_keys"])
+    layer_keys = _preferred_layer_order(layer_keys)
     n_samples = data["n_samples"]
     real_ids = data.get("real_ids")
     id_to_smiles_from_input = data.get("id_to_smiles") or {}

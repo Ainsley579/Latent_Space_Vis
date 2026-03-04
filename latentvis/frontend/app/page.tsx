@@ -78,7 +78,7 @@ type HoverPreviewState =
 
 type DatasetKey = "dimenet" | "chemprop" | "chemeleon";
 type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan";
-type DataSplitKey = "test" | "train";
+type DataSplitKey = "all" | "test" | "train";
 const DATASET_OPTIONS: DatasetKey[] = ["dimenet", "chemprop", "chemeleon"];
 const DATASET_OPTIONS_UI: DatasetKey[] = ["chemprop", "chemeleon"];
 const CLUSTERING_OPTIONS: Array<{ value: ClusteringKey; label: string }> = [
@@ -100,14 +100,16 @@ function sanitizePathKey(value: string) {
 export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
   const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("agglomerative");
-  const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("test");
+  const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("all");
   const [generatedSankeyPayloads, setGeneratedSankeyPayloads] = useState<Record<string, GeneratedSankeyPayload>>({});
   const [generatedRuntimePayloads, setGeneratedRuntimePayloads] = useState<Record<string, GeneratedRuntimePayload>>({});
   const generatedSankeyBlobUrlsRef = useRef<Map<string, string>>(new Map());
+  const effectiveDataSplitForFiles = (dataSplit: DataSplitKey): "test" | "train" =>
+    dataSplit === "all" ? "train" : dataSplit;
   const datasetRootFor = (
     dataset: DatasetKey,
     dataSplit: DataSplitKey = selectedDataSplit
-  ) => `/data/${dataset}/${dataSplit}`;
+  ) => `/data/${dataset}/${effectiveDataSplitForFiles(dataSplit)}`;
   const datasetBaseFor = (
     dataset: DatasetKey,
     clustering: ClusteringKey = selectedClustering,
@@ -262,18 +264,18 @@ export default function Home() {
   };
 
   const [sankeyPath, setSankeyPath] = useState(
-    `${sectionBaseFor("sankey", "chemprop", "agglomerative", "test")}/0_sankey_samples.json`
+    `${sectionBaseFor("sankey", "chemprop", "agglomerative", "all")}/0_sankey_samples.json`
   );
   const [sankeyPathVertical, setSankeyPathVertical] = useState(
-    `${sectionBaseFor("sankey", "chemprop", "agglomerative", "test")}/vertical_model_samples_fingerprint.json`
+    `${sectionBaseFor("sankey", "chemprop", "agglomerative", "all")}/vertical_model_samples_fingerprint.json`
   );
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [selectedLayer, setSelectedLayer] = useState("fingerprint");
   const [selectedModel, setSelectedModel] = useState("0");
   const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
   const [scatterPaths, setScatterPaths] = useState({
-    xy: `${sectionBaseFor("scatterplot", "chemprop", "agglomerative", "test")}/0_fingerprint_pca_xy.json`,
-    cluster: `${sectionBaseFor("scatterplot", "chemprop", "agglomerative", "test")}/0_fingerprint_pca_cluster.json`,
+    xy: `${sectionBaseFor("scatterplot", "chemprop", "agglomerative", "all")}/0_fingerprint_pca_xy.json`,
+    cluster: `${sectionBaseFor("scatterplot", "chemprop", "agglomerative", "all")}/0_fingerprint_pca_cluster.json`,
   });
   const scatterOverrideUrlRef = useRef<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
@@ -1561,6 +1563,11 @@ export default function Home() {
               <SankeyView
                 key={`sankeyview-${selectedDataset}-${selectedClustering}-${selectedDataSplit}-${sankeyRefreshKey}`}
                 dataPath={buildAllSankeyPath(selectedDataset, selectedClustering, selectedDataSplit)}
+                secondaryDataPath={
+                  selectedDataSplit === "all"
+                    ? buildAllSankeyPath(selectedDataset, selectedClustering, "test")
+                    : undefined
+                }
                 metricsPath={`${datasetBase}/bic_aic/avg_fmi_cspa_by_layer.json`}
                 transitionStatsPath={`${sectionBaseFor("clustering_metrics")}/layer_transition_by_epoch.json`}
                 onModelSelect={(model) => {
@@ -1615,6 +1622,13 @@ export default function Home() {
               </div>
               <SankeyVertical
                 dataPath={swapAxes ? sankeyPath : sankeyPathVertical}
+                secondaryDataPath={
+                  selectedDataSplit === "all"
+                    ? swapAxes
+                      ? buildSankeyModelPath(selectedModel, selectedDataset, selectedClustering, "test")
+                      : buildVerticalPath(selectedLayer, selectedDataset, selectedClustering, "test")
+                    : undefined
+                }
                 mode={swapAxes ? "layer" : "model"}
                 layerKey={selectedLayer}
                 modelKey={selectedModel}
@@ -1655,6 +1669,13 @@ export default function Home() {
               </div>
               <SankeyHorizontal
                 dataPath={swapAxes ? sankeyPathVertical : sankeyPath}
+                secondaryDataPath={
+                  selectedDataSplit === "all"
+                    ? swapAxes
+                      ? buildVerticalPath(selectedLayer, selectedDataset, selectedClustering, "test")
+                      : buildSankeyModelPath(selectedModel, selectedDataset, selectedClustering, "test")
+                    : undefined
+                }
                 mode={swapAxes ? "model" : "layer"}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
