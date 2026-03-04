@@ -1750,6 +1750,33 @@ export default function Home() {
                   <ScatterPlot
                     dataPathXY={scatterPaths.xy}
                     dataPathCluster={scatterPaths.cluster}
+                    splitMapPath={withVersion("/data/real_id_split_map.json", dataRefreshKey)}
+                    splitMapDataset={selectedDataset}
+                    dataSplit={selectedDataSplit}
+                    secondaryDataPathXY={
+                      selectedDataSplit === "all"
+                        ? buildScatterPaths(
+                            selectedModel,
+                            selectedLayer,
+                            scatterProjection,
+                            selectedDataset,
+                            selectedClustering,
+                            "test"
+                          ).xy
+                        : undefined
+                    }
+                    secondaryDataPathCluster={
+                      selectedDataSplit === "all"
+                        ? buildScatterPaths(
+                            selectedModel,
+                            selectedLayer,
+                            scatterProjection,
+                            selectedDataset,
+                            selectedClustering,
+                            "test"
+                          ).cluster
+                        : undefined
+                    }
                     projection={scatterProjection}
                     onProjectionChange={(next) => setScatterProjection(next)}
                     onUserClusteringUpload={(payload) => setUploadedUserClustering(payload)}
