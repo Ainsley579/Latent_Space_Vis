@@ -99,6 +99,13 @@ function sanitizePathKey(value: string) {
   return value.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
+function parseSplitTaggedId(value: string | number): { split: "train" | "test" | null; realId: string } {
+  const raw = String(value ?? "").trim();
+  if (raw.startsWith("train::")) return { split: "train", realId: raw.slice("train::".length) };
+  if (raw.startsWith("test::")) return { split: "test", realId: raw.slice("test::".length) };
+  return { split: null, realId: raw };
+}
+
 export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
   const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("agglomerative");
@@ -423,8 +430,8 @@ export default function Home() {
       layer_name: string;
       model_type: string;
       cluster_id: number;
-      top_k_closest_real_ids: number[];
-      top_k_farthest_real_ids: number[];
+      top_k_closest_real_ids: Array<string | number>;
+      top_k_farthest_real_ids: Array<string | number>;
       k: number;
     }[]
   >([]);
@@ -669,34 +676,70 @@ export default function Home() {
   }
 
   useEffect(() => {
-    fetch("/real_id_to_smiles.json")
-      .then((res) => {
-        if (res.status === 404) return {};
-        if (!res.ok) throw new Error("Failed to load real_id_to_smiles.json");
-        return res.json();
-      })
-      .then((json) => {
+    const normalizeJsonInto = (json: unknown, out: Record<string, string>, splitTag: "train" | "test" | null) => {
+      if (Array.isArray(json)) {
+        json.forEach((row) => {
+          if (!row || typeof row !== "object") return;
+          const rid = String((row as any).real_id ?? "").trim();
+          if (!rid) return;
+          const smiles = typeof (row as any).smiles === "string" ? (row as any).smiles : "";
+          if (!out[rid]) out[rid] = smiles;
+          out[rid.trim()] = smiles;
+          out[rid.toLowerCase()] = smiles;
+          out[rid.trim().toLowerCase()] = smiles;
+          if (splitTag) {
+            const tagged = `${splitTag}::${rid}`;
+            out[tagged] = smiles;
+            out[tagged.toLowerCase()] = smiles;
+          }
+        });
+        return;
+      }
+      if (json && typeof json === "object") {
+        Object.entries(json as Record<string, unknown>).forEach(([k, v]) => {
+          const key = String(k).trim();
+          const smiles = typeof v === "string" ? v : "";
+          if (!out[key]) out[key] = smiles;
+          out[key.trim()] = smiles;
+          out[key.toLowerCase()] = smiles;
+          out[key.trim().toLowerCase()] = smiles;
+          if (splitTag) {
+            const tagged = `${splitTag}::${key}`;
+            out[tagged] = smiles;
+            out[tagged.toLowerCase()] = smiles;
+          }
+        });
+      }
+    };
+
+    const fetchSmiles = async (split: "train" | "test") => {
+      const url = buildDataFileUrl({
+        dataset: selectedDataset,
+        dataSplit: split,
+        file: `${split}/real_id_to_smiles.json`,
+        datasetRoot: true,
+      });
+      const res = await fetch(url);
+      if (res.status === 404) return {};
+      if (!res.ok) throw new Error("Failed to load real_id_to_smiles.json");
+      return res.json();
+    };
+
+    const primarySplit = effectiveDataSplitForFiles(selectedDataSplit);
+    fetchSmiles(primarySplit)
+      .then(async (primaryJson) => {
         const out: Record<string, string> = {};
-        if (Array.isArray(json)) {
-          json.forEach((row) => {
-            if (!row || typeof row !== "object") return;
-            const rid = String((row as any).real_id ?? "").trim();
-            if (!rid) return;
-            const smiles = typeof (row as any).smiles === "string" ? (row as any).smiles : "";
-            out[rid] = smiles;
-            out[rid.trim()] = smiles;
-            out[rid.toLowerCase()] = smiles;
-            out[rid.trim().toLowerCase()] = smiles;
-          });
-        } else if (json && typeof json === "object") {
-          Object.entries(json as Record<string, unknown>).forEach(([k, v]) => {
-            const key = String(k);
-            const smiles = typeof v === "string" ? v : "";
-            out[key] = smiles;
-            out[key.trim()] = smiles;
-            out[key.toLowerCase()] = smiles;
-            out[key.trim().toLowerCase()] = smiles;
-          });
+        if (selectedDataSplit === "all") {
+          normalizeJsonInto(primaryJson, out, primarySplit);
+          const otherSplit: "train" | "test" = primarySplit === "train" ? "test" : "train";
+          try {
+            const otherJson = await fetchSmiles(otherSplit);
+            normalizeJsonInto(otherJson, out, otherSplit);
+          } catch (err) {
+            console.error("Failed to load secondary split smiles mapping:", err);
+          }
+        } else {
+          normalizeJsonInto(primaryJson, out, null);
         }
         setSmilesByRealId(out);
       })
@@ -704,7 +747,7 @@ export default function Home() {
         console.error(err);
         setSmilesByRealId({});
       });
-  }, []);
+  }, [buildDataFileUrl, selectedDataset, selectedDataSplit]);
 
   useEffect(() => {
     setSearchResultIds([]);
@@ -1293,19 +1336,83 @@ export default function Home() {
       setTopkData(generatedRuntimePayload?.topkRepresentatives ?? []);
       return;
     }
-    fetch(
-      buildDataFileUrl({
-        section: "topk",
-        file: "cluster_representatives.json",
+    const fetchTopk = async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to load topk data");
+      const json = await res.json();
+      return Array.isArray(json) ? json : [];
+    };
+    const tagRowIds = (rows: any[], split: "train" | "test") =>
+      rows.map((row) => ({
+        ...row,
+        top_k_closest_real_ids: Array.isArray(row?.top_k_closest_real_ids)
+          ? row.top_k_closest_real_ids.map((x: any) => `${split}::${String(x)}`)
+          : [],
+        top_k_farthest_real_ids: Array.isArray(row?.top_k_farthest_real_ids)
+          ? row.top_k_farthest_real_ids.map((x: any) => `${split}::${String(x)}`)
+          : [],
+      }));
+    const mergeTopk = (a: any[], b: any[]) => {
+      const map = new Map<string, any>();
+      const add = (row: any) => {
+        const key = `${String(row?.model_type ?? "")}__${String(row?.layer_name ?? "")}__${String(row?.cluster_id ?? "")}`;
+        if (!map.has(key)) {
+          map.set(key, {
+            ...row,
+            top_k_closest_real_ids: Array.isArray(row?.top_k_closest_real_ids)
+              ? row.top_k_closest_real_ids.map((x: any) => String(x))
+              : [],
+            top_k_farthest_real_ids: Array.isArray(row?.top_k_farthest_real_ids)
+              ? row.top_k_farthest_real_ids.map((x: any) => String(x))
+              : [],
+          });
+          return;
+        }
+        const cur = map.get(key);
+        const mergeArr = (x: any[], y: any[]) => {
+          const seen = new Set<string>(x.map((v) => String(v)));
+          const out = [...x.map((v) => String(v))];
+          y.forEach((v) => {
+            const sv = String(v);
+            if (seen.has(sv)) return;
+            seen.add(sv);
+            out.push(sv);
+          });
+          return out;
+        };
+        cur.top_k_closest_real_ids = mergeArr(cur.top_k_closest_real_ids ?? [], row?.top_k_closest_real_ids ?? []);
+        cur.top_k_farthest_real_ids = mergeArr(cur.top_k_farthest_real_ids ?? [], row?.top_k_farthest_real_ids ?? []);
+        cur.k = Math.max(Number(cur.k ?? 0), Number(row?.k ?? 0));
+      };
+      a.forEach(add);
+      b.forEach(add);
+      return Array.from(map.values());
+    };
+
+    const trainUrl = buildDataFileUrl({
+      section: "topk",
+      file: "cluster_representatives.json",
+    });
+    const testUrl = buildDataFileUrl({
+      dataset: selectedDataset,
+      clustering: selectedClustering,
+      dataSplit: "test",
+      section: "topk",
+      file: "cluster_representatives.json",
+    });
+
+    fetchTopk(trainUrl)
+      .then(async (trainRows) => {
+        if (selectedDataSplit !== "all") return trainRows;
+        try {
+          const testRows = await fetchTopk(testUrl);
+          return mergeTopk(tagRowIds(trainRows, "train"), tagRowIds(testRows, "test"));
+        } catch (err) {
+          console.error("Failed to load test topk representatives:", err);
+          return tagRowIds(trainRows, "train");
+        }
       })
-    )
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load topk data");
-        return res.json();
-      })
-      .then((json) => {
-        setTopkData(Array.isArray(json) ? json : []);
-      })
+      .then((rows) => setTopkData(rows))
       .catch((err) => {
         console.error(err);
         setTopkData([]);
@@ -1335,23 +1442,33 @@ export default function Home() {
     };
     const mergeSorted = (a: any[], b: any[]) => {
       const map = new Map<string, any>();
-      const add = (row: any) => {
+      const add = (row: any, splitTag: "train" | "test" | null = null) => {
         const key = `${String(row?.model_type ?? "")}__${String(row?.layer_name ?? "")}__${String(row?.cluster_id ?? "")}`;
+        const nextIds = Array.isArray(row?.sorted_real_ids)
+          ? row.sorted_real_ids.map((x: any) =>
+              splitTag ? `${splitTag}::${String(x)}` : String(x)
+            )
+          : [];
         if (!map.has(key)) {
           map.set(key, {
             ...row,
-            sorted_real_ids: Array.isArray(row?.sorted_real_ids) ? row.sorted_real_ids.map((x: any) => String(x)) : [],
+            sorted_real_ids: nextIds,
           });
           return;
         }
         const cur = map.get(key);
         const merged = new Set<string>(Array.isArray(cur.sorted_real_ids) ? cur.sorted_real_ids.map((x: any) => String(x)) : []);
-        (Array.isArray(row?.sorted_real_ids) ? row.sorted_real_ids : []).forEach((x: any) => merged.add(String(x)));
+        nextIds.forEach((x: any) => merged.add(String(x)));
         cur.sorted_real_ids = Array.from(merged);
         cur.count = Math.max(Number(cur.count ?? 0), Number(row?.count ?? 0), cur.sorted_real_ids.length);
       };
-      a.forEach(add);
-      b.forEach(add);
+      if (selectedDataSplit === "all") {
+        a.forEach((r) => add(r, "train"));
+        b.forEach((r) => add(r, "test"));
+      } else {
+        a.forEach((r) => add(r, null));
+        b.forEach((r) => add(r, null));
+      }
       return Array.from(map.values());
     };
 
@@ -1374,7 +1491,7 @@ export default function Home() {
           return mergeSorted(trainRows, testRows);
         } catch (err) {
           console.error("Failed to load test cluster sorted members:", err);
-          return trainRows;
+          return mergeSorted(trainRows, []);
         }
       })
       .then((rows) => {
@@ -1659,18 +1776,22 @@ export default function Home() {
   }, [clusterPage, clusterPageSize, selectedNode?.model, selectedNode?.layer, selectedNode?.cluster, showSearchResultsInMembers]);
 
   function resolveImageSrc(realId: string | number, imageType: string) {
-    const key = sanitizePathKey(String(realId).trim());
+    const parsed = parseSplitTaggedId(realId);
+    const splitForImage = parsed.split ?? effectiveDataSplitForFiles(selectedDataSplit);
+    const key = sanitizePathKey(parsed.realId.trim());
     return buildDataFileUrl({
       dataset: selectedDataset,
-      dataSplit: selectedDataSplit,
-      file: `${effectiveDataSplitForFiles(selectedDataSplit)}/molecule_images/${key}_${imageType}.png`,
+      dataSplit: splitForImage,
+      file: `${splitForImage}/molecule_images/${key}_${imageType}.png`,
       datasetRoot: true,
     });
   }
 
   function getSmilesById(realId: string | number): string | null {
-    const key = String(realId).trim().toLowerCase();
-    return smilesByRealId[key] ?? null;
+    const parsed = parseSplitTaggedId(realId);
+    const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
+    const base = parsed.realId.trim().toLowerCase();
+    return (tagged ? smilesByRealId[tagged] : undefined) ?? smilesByRealId[base] ?? null;
   }
 
   function clusterBadgeColor(cluster: number) {
