@@ -12,7 +12,7 @@ import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Iterable
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
 
 
 # Backend dir on path for embedding_loader / clustering
@@ -214,6 +214,18 @@ def _read_json(path: Path, default):
 def _write_json(path: Path, payload) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _safe_relpath(raw: str) -> Optional[Path]:
+    s = str(raw or "").strip()
+    if not s:
+        return None
+    p = Path(s)
+    if p.is_absolute():
+        return None
+    if any(part in ("", ".", "..") for part in p.parts):
+        return None
+    return p
 
 
 def _materialize_compat_sankey_files(
@@ -746,37 +758,8 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
             shutil.rmtree(temp_root, ignore_errors=True)
         return {"ok": False, "error": "pipeline_failed", "detail": str(e)}, 500
 
-    # Current runs always write to the canonical directories under case_dir.
-    base = case_dir
-    materialize_script = _BACKEND_DIR / "scripts" / "materialize_sankey_compat_files.py"
-    if persist and materialize_script.is_file():
-        try:
-            subprocess.run(
-                [
-                    sys.executable,
-                    str(materialize_script),
-                    "--dataset-root",
-                    str(base),
-                    "--vertical-mode",
-                    "adjacent",
-                    "--clustering-metrics-subdir",
-                    "clustering_metrics",
-                    "--sankey-subdir",
-                    "sankey",
-                ],
-                cwd=str(_BACKEND_DIR.parent),
-                check=True,
-                capture_output=True,
-                timeout=300,
-            )
-        except subprocess.SubprocessError as e:
-            print(f"[flask-backend] materialize_sankey_compat failed (non-fatal): {e}", flush=True)
-            stderr = getattr(e, "stderr", None)
-            if stderr:
-                try:
-                    print("[flask-backend] materialize_sankey_compat stderr:\n%s" % stderr.decode("utf-8", errors="ignore"), flush=True)
-                except Exception:
-                    print("[flask-backend] materialize_sankey_compat stderr(raw): %r" % (stderr,), flush=True)
+    # Do not materialize per-model/per-layer Sankey compatibility files on disk.
+    # Frontend fetches those via /data-file and backend computes them on demand in memory.
 
     # Recompute transition stats for updated cluster assignments after generate-range.
     if persist:
@@ -1019,6 +1002,122 @@ def sankey_vertical():
     if payload is None:
         return jsonify({"ok": False, "error": "not_found"}), 404
     return jsonify(payload)
+
+
+@app.route("/data-file", methods=["GET", "OPTIONS"])
+def data_file():
+    """
+    Serve JSON/binary files from backend DATA_ROOT with path controls.
+    Query params:
+      - dataset: required (chemprop/chemeleon)
+      - split: optional (train/test/val/all; all -> train for base path)
+      - clustering: optional (pgmeans/agglomerative/hdbscan)
+      - section: optional (sankey/scatterplot/topk/substructures/clustering_metrics/bic_aic/...)
+      - file: required relative file path under the resolved base
+      - dataset_root: optional (1/true), serve from DATA_ROOT/<dataset> directly
+    """
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    dataset = str(request.args.get("dataset", "")).strip().lower()
+    if dataset not in DEFAULT_CASES:
+        return jsonify({"ok": False, "error": "invalid_dataset"}), 400
+
+    file_raw = request.args.get("file", "")
+    file_rel = _safe_relpath(file_raw)
+    if file_rel is None:
+        return jsonify({"ok": False, "error": "invalid_file"}), 400
+
+    split_raw = str(request.args.get("split", "")).strip().lower()
+    split_for_base = "train" if split_raw == "all" else split_raw
+    clustering = request.args.get("clustering")
+    section_raw = request.args.get("section")
+    section_rel = _safe_relpath(section_raw) if section_raw else None
+    dataset_root = str(request.args.get("dataset_root", "")).strip().lower() in ("1", "true", "yes")
+
+    if dataset_root:
+        base = DATA_ROOT / dataset
+    else:
+        base = _case_dir(dataset, clustering, data_split=split_for_base)
+        if section_rel is not None:
+            base = base / section_rel
+
+    target = (base / file_rel).resolve()
+    try:
+        target.relative_to(base.resolve())
+    except Exception:
+        return jsonify({"ok": False, "error": "invalid_path"}), 400
+
+    if not target.exists() and (section_rel == Path("sankey") if section_rel else False):
+        # Compute compatibility samples from all_sankey + sankey_samples on demand.
+        name = target.name
+        compat = _materialize_compat_sankey_files(
+            dataset,
+            clustering=clustering,
+            write_files=False,
+            data_split=split_for_base,
+        )
+        if name.endswith("_sankey_samples.json"):
+            model = name[: -len("_sankey_samples.json")]
+            rows = (compat.get("model_samples") or {}).get(model, [])
+            return jsonify(rows if isinstance(rows, list) else [])
+        if name.startswith("vertical_model_samples_") and name.endswith(".json"):
+            layer = name[len("vertical_model_samples_") : -len(".json")]
+            rows = (compat.get("vertical_samples_by_layer") or {}).get(layer, [])
+            return jsonify(rows if isinstance(rows, list) else [])
+        if name == "vertical_model_samples.json":
+            rows = compat.get("vertical_samples") or []
+            return jsonify(rows if isinstance(rows, list) else [])
+
+    if not target.exists():
+        return jsonify({"ok": False, "error": "not_found", "path": str(target)}), 404
+
+    if target.suffix.lower() == ".json":
+        payload = _read_json(target, None)
+        if payload is None:
+            return jsonify({"ok": False, "error": "invalid_json", "path": str(target)}), 500
+        return jsonify(payload)
+
+    return send_file(str(target))
+
+
+@app.route("/real-id-split-map", methods=["GET", "OPTIONS"])
+def real_id_split_map():
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    dataset = str(request.args.get("dataset", "")).strip().lower()
+    datasets = [dataset] if dataset in DEFAULT_CASES else list(DEFAULT_CASES)
+
+    out = {"generated_from": "real_id_to_smiles.json", "datasets": {}}
+    for ds in datasets:
+        train_map = _read_json(DATA_ROOT / ds / "train" / "real_id_to_smiles.json", {})
+        test_map = _read_json(DATA_ROOT / ds / "test" / "real_id_to_smiles.json", {})
+        train_ids = set(train_map.keys()) if isinstance(train_map, dict) else set()
+        test_ids = set(test_map.keys()) if isinstance(test_map, dict) else set()
+        all_ids = sorted(train_ids | test_ids)
+        split_by_real_id: Dict[str, str] = {}
+        overlap = 0
+        for rid in all_ids:
+            in_train = rid in train_ids
+            in_test = rid in test_ids
+            if in_train and in_test:
+                split_by_real_id[rid] = "both"
+                overlap += 1
+            elif in_train:
+                split_by_real_id[rid] = "train"
+            else:
+                split_by_real_id[rid] = "test"
+        out["datasets"][ds] = {
+            "counts": {
+                "train": len(train_ids),
+                "test": len(test_ids),
+                "unique_total": len(all_ids),
+                "overlap_both": overlap,
+            },
+            "split_by_real_id": split_by_real_id,
+        }
+    return jsonify(out)
 
 
 @app.route("/cluster-containment", methods=["POST", "OPTIONS"])

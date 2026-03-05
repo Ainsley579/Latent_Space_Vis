@@ -157,6 +157,33 @@ export default function Home() {
   const generatedMatchesCurrent = !!generatedSankeyPayload;
   const generatedRuntimeMatchesCurrent = !!generatedRuntimePayload;
   const apiBase = (process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001").replace(/\/+$/, "");
+  const buildDataFileUrl = useCallback(
+    ({
+      dataset = selectedDataset,
+      clustering = selectedClustering,
+      dataSplit = selectedDataSplit,
+      section,
+      file,
+      datasetRoot = false,
+    }: {
+      dataset?: DatasetKey;
+      clustering?: ClusteringKey;
+      dataSplit?: DataSplitKey;
+      section?: string;
+      file: string;
+      datasetRoot?: boolean;
+    }) => {
+      const p = new URLSearchParams();
+      p.set("dataset", dataset);
+      p.set("clustering", clustering);
+      p.set("split", effectiveDataSplitForFiles(dataSplit));
+      if (section) p.set("section", section);
+      p.set("file", file);
+      if (datasetRoot) p.set("dataset_root", "1");
+      return `${apiBase}/data-file?${p.toString()}`;
+    },
+    [apiBase, selectedDataset, selectedClustering, selectedDataSplit]
+  );
   const withVersion = (url: string, version: number = sankeyRefreshKey) => {
     const sep = url.includes("?") ? "&" : "?";
     return `${url}${sep}v=${version}`;
@@ -176,7 +203,16 @@ export default function Home() {
     ) {
       return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:all_sankey`, payload.allSankey);
     }
-    return withVersion(`${sectionBaseFor("sankey", dataset, clustering, dataSplit)}/all_sankey.json`, version);
+    return withVersion(
+      buildDataFileUrl({
+        dataset,
+        clustering,
+        dataSplit,
+        section: "sankey",
+        file: "all_sankey.json",
+      }),
+      version
+    );
   };
   const buildSankeyModelPath = (
     model: string,
@@ -196,7 +232,13 @@ export default function Home() {
       return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:model:${model}`, rows);
     }
     return withVersion(
-      `${sectionBaseFor("sankey", dataset, clustering, dataSplit)}/${sanitizePathKey(model)}_sankey_samples.json`,
+      buildDataFileUrl({
+        dataset,
+        clustering,
+        dataSplit,
+        section: "sankey",
+        file: `${sanitizePathKey(model)}_sankey_samples.json`,
+      }),
       version
     );
   };
@@ -218,7 +260,13 @@ export default function Home() {
       return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:vertical:${layer}`, rows);
     }
     return withVersion(
-      `${sectionBaseFor("sankey", dataset, clustering, dataSplit)}/vertical_model_samples_${sanitizePathKey(layer)}.json`,
+      buildDataFileUrl({
+        dataset,
+        clustering,
+        dataSplit,
+        section: "sankey",
+        file: `vertical_model_samples_${sanitizePathKey(layer)}.json`,
+      }),
       version
     );
   };
@@ -234,7 +282,13 @@ export default function Home() {
     const base = `${model}_${layer}`;
     const xyFile = `${base}_${projection}_xy.json`;
     const clusterFile = `${base}_${projection}_cluster.json`;
-    const xyUrl = `${sectionBaseFor("scatterplot", dataset, clustering, dataSplit)}/${xyFile}`;
+    const xyUrl = buildDataFileUrl({
+      dataset,
+      clustering,
+      dataSplit,
+      section: "scatterplot",
+      file: xyFile,
+    });
     const runtimePayload = generatedRuntimePayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
     const cellKey = `${model}__${layer}`;
     const overrideRows =
@@ -244,7 +298,13 @@ export default function Home() {
         : null;
     const clusterUrl = overrideRows
       ? buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:scatter_cluster:${cellKey}`, overrideRows)
-      : `${sectionBaseFor("scatterplot", dataset, clustering, dataSplit)}/${clusterFile}`;
+      : buildDataFileUrl({
+          dataset,
+          clustering,
+          dataSplit,
+          section: "scatterplot",
+          file: clusterFile,
+        });
     const sepXY = xyUrl.includes("?") ? "&" : "?";
     const sepCluster = clusterUrl.startsWith("blob:") ? "" : (clusterUrl.includes("?") ? "&" : "?");
     return {
@@ -265,18 +325,54 @@ export default function Home() {
   };
 
   const [sankeyPath, setSankeyPath] = useState(
-    `${sectionBaseFor("sankey", "chemprop", "agglomerative", "all")}/0_sankey_samples.json`
+    withVersion(
+      buildDataFileUrl({
+        dataset: "chemprop",
+        clustering: "agglomerative",
+        dataSplit: "all",
+        section: "sankey",
+        file: "0_sankey_samples.json",
+      }),
+      0
+    )
   );
   const [sankeyPathVertical, setSankeyPathVertical] = useState(
-    `${sectionBaseFor("sankey", "chemprop", "agglomerative", "all")}/vertical_model_samples_fingerprint.json`
+    withVersion(
+      buildDataFileUrl({
+        dataset: "chemprop",
+        clustering: "agglomerative",
+        dataSplit: "all",
+        section: "sankey",
+        file: "vertical_model_samples_fingerprint.json",
+      }),
+      0
+    )
   );
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [selectedLayer, setSelectedLayer] = useState("fingerprint");
   const [selectedModel, setSelectedModel] = useState("0");
   const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
   const [scatterPaths, setScatterPaths] = useState({
-    xy: `${sectionBaseFor("scatterplot", "chemprop", "agglomerative", "all")}/0_fingerprint_pca_xy.json`,
-    cluster: `${sectionBaseFor("scatterplot", "chemprop", "agglomerative", "all")}/0_fingerprint_pca_cluster.json`,
+    xy: withVersion(
+      buildDataFileUrl({
+        dataset: "chemprop",
+        clustering: "agglomerative",
+        dataSplit: "all",
+        section: "scatterplot",
+        file: "0_fingerprint_pca_xy.json",
+      }),
+      0
+    ),
+    cluster: withVersion(
+      buildDataFileUrl({
+        dataset: "chemprop",
+        clustering: "agglomerative",
+        dataSplit: "all",
+        section: "scatterplot",
+        file: "0_fingerprint_pca_cluster.json",
+      }),
+      0
+    ),
   });
   const scatterOverrideUrlRef = useRef<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
@@ -566,7 +662,14 @@ export default function Home() {
   }
 
   useEffect(() => {
-    fetch(`/data/${selectedDataset}/real_id_to_smiles.json`)
+    fetch(
+      buildDataFileUrl({
+        dataset: selectedDataset,
+        dataSplit: selectedDataSplit,
+        file: "real_id_to_smiles.json",
+        datasetRoot: true,
+      })
+    )
       .then((res) => {
         if (res.status === 404) return {};
         if (!res.ok) throw new Error("Failed to load real_id_to_smiles.json");
@@ -601,7 +704,7 @@ export default function Home() {
         console.error(err);
         setSmilesByRealId({});
       });
-  }, [selectedDataset]);
+  }, [selectedDataset, selectedDataSplit, buildDataFileUrl]);
 
   useEffect(() => {
     setSearchResultIds([]);
@@ -1118,7 +1221,12 @@ export default function Home() {
       setTopkData(generatedRuntimePayload?.topkRepresentatives ?? []);
       return;
     }
-    fetch(`${sectionBaseFor("topk")}/cluster_representatives.json`)
+    fetch(
+      buildDataFileUrl({
+        section: "topk",
+        file: "cluster_representatives.json",
+      })
+    )
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load topk data");
         return res.json();
@@ -1138,6 +1246,7 @@ export default function Home() {
     selectedDataSplit,
     selectedDataset,
     selectedClustering,
+    buildDataFileUrl,
   ]);
 
   useEffect(() => {
@@ -1174,8 +1283,17 @@ export default function Home() {
       return Array.from(map.values());
     };
 
-    const baseTrain = `${sectionBaseFor("topk")}/cluster_sorted_members.json`;
-    const baseTest = `${sectionBaseFor("topk", selectedDataset, selectedClustering, "test")}/cluster_sorted_members.json`;
+    const baseTrain = buildDataFileUrl({
+      section: "topk",
+      file: "cluster_sorted_members.json",
+    });
+    const baseTest = buildDataFileUrl({
+      dataset: selectedDataset,
+      clustering: selectedClustering,
+      dataSplit: "test",
+      section: "topk",
+      file: "cluster_sorted_members.json",
+    });
     fetchSorted(baseTrain)
       .then(async (trainRows) => {
         if (selectedDataSplit !== "all") return trainRows;
@@ -1194,14 +1312,19 @@ export default function Home() {
         console.error(err);
         setClusterSortedMembers([]);
       });
-  }, [datasetBase, dataRefreshKey, generatedRuntimeMatchesCurrent, generatedRuntimePayload]);
+  }, [datasetBase, dataRefreshKey, generatedRuntimeMatchesCurrent, generatedRuntimePayload, selectedDataset, selectedClustering, selectedDataSplit, buildDataFileUrl]);
 
   useEffect(() => {
     if (generatedRuntimeMatchesCurrent) {
       setSubstructures(generatedRuntimePayload?.substructures ?? []);
       return;
     }
-    fetch(`${sectionBaseFor("substructures")}/cluster_substructures.json`)
+    fetch(
+      buildDataFileUrl({
+        section: "substructures",
+        file: "cluster_substructures.json",
+      })
+    )
       .then((res) => {
         // Some datasets may not provide substructure files yet; treat missing file as empty.
         if (res.status === 404) return [];
@@ -1215,7 +1338,7 @@ export default function Home() {
         console.error(err);
         setSubstructures([]);
       });
-  }, [datasetBase, dataRefreshKey, generatedRuntimeMatchesCurrent, generatedRuntimePayload]);
+  }, [datasetBase, dataRefreshKey, generatedRuntimeMatchesCurrent, generatedRuntimePayload, buildDataFileUrl]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1460,7 +1583,12 @@ export default function Home() {
 
   function resolveImageSrc(realId: string | number, imageType: string) {
     const key = sanitizePathKey(String(realId).trim());
-    return `${assetBase}/molecule_images/${key}_${imageType}.png`;
+    return buildDataFileUrl({
+      dataset: selectedDataset,
+      dataSplit: selectedDataSplit,
+      file: `${effectiveDataSplitForFiles(selectedDataSplit)}/molecule_images/${key}_${imageType}.png`,
+      datasetRoot: true,
+    });
   }
 
   function getSmilesById(realId: string | number): string | null {
@@ -1653,8 +1781,26 @@ export default function Home() {
                     ? buildAllSankeyPath(selectedDataset, selectedClustering, "test")
                     : undefined
                 }
-                metricsPath={`${datasetBase}/bic_aic/avg_fmi_cspa_by_layer.json`}
-                transitionStatsPath={`${sectionBaseFor("clustering_metrics")}/layer_transition_by_epoch.json`}
+                metricsPath={withVersion(
+                  buildDataFileUrl({
+                    dataset: selectedDataset,
+                    clustering: selectedClustering,
+                    dataSplit: selectedDataSplit,
+                    section: "bic_aic",
+                    file: "avg_fmi_cspa_by_layer.json",
+                  }),
+                  dataRefreshKey
+                )}
+                transitionStatsPath={withVersion(
+                  buildDataFileUrl({
+                    dataset: selectedDataset,
+                    clustering: selectedClustering,
+                    dataSplit: selectedDataSplit,
+                    section: "clustering_metrics",
+                    file: "layer_transition_by_epoch.json",
+                  }),
+                  dataRefreshKey
+                )}
                 onModelSelect={(model) => {
                   setSankeyPath(buildSankeyModelPath(model));
                   setSelectedModel(model);
@@ -1835,7 +1981,10 @@ export default function Home() {
                   <ScatterPlot
                     dataPathXY={scatterPaths.xy}
                     dataPathCluster={scatterPaths.cluster}
-                    splitMapPath={withVersion("/data/real_id_split_map.json", dataRefreshKey)}
+                    splitMapPath={withVersion(
+                      `${apiBase}/real-id-split-map?dataset=${encodeURIComponent(selectedDataset)}`,
+                      dataRefreshKey
+                    )}
                     splitMapDataset={selectedDataset}
                     dataSplit={selectedDataSplit}
                     secondaryDataPathXY={
