@@ -283,7 +283,6 @@ const LAYER_ORDER = [
 ];
 
 const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
-const MAX_SAMPLE_TRAJECTORY_LINES = 12000;
 // Unsynced layout tweak: negative moves up, positive moves down (after rotated render).
 const UNSYNC_SHIFT_Y = 0;
 const UNSYNC_TOP_PAD = 14;
@@ -672,6 +671,7 @@ export default function SankeyVertical({
       nodes.forEach((node) => {
         const samples = Array.from(nodeSamples.get(node.key) || []);
         if (samples.length === 0) return;
+        samples.sort((a, b) => Number(a) - Number(b));
         samples.forEach((id, i) => {
           const y = node.h <= 1 ? node.y : node.y + (i + 0.5) * (node.h / samples.length);
           if (!sampleNodeY.has(id)) sampleNodeY.set(id, new Map());
@@ -680,22 +680,20 @@ export default function SankeyVertical({
       });
 
       const sampleLines: Array<{ id: string; x1: number; y1: number; x2: number; y2: number }> = [];
-      for (let i = 0; i < combinedRows.length; i += 1) {
-        if (sampleLines.length >= MAX_SAMPLE_TRAJECTORY_LINES) break;
-        const r = combinedRows[i];
+      combinedRows.forEach((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
         const src = `${fromKey}_${r.from_cluster}`;
         const tgt = `${toKey}_${r.to_cluster}`;
         const s = nodeByKey.get(src);
         const t = nodeByKey.get(tgt);
-        if (!s || !t) continue;
+        if (!s || !t) return;
         const id = String(r.real_id);
         const y1 = sampleNodeY.get(id)?.get(src);
         const y2 = sampleNodeY.get(id)?.get(tgt);
-        if (y1 == null || y2 == null) continue;
+        if (y1 == null || y2 == null) return;
         sampleLines.push({ id, x1: s.x + NODE_W, y1, x2: t.x, y2 });
-      }
+      });
 
       let sampleSel: d3.Selection<SVGLineElement, { id: string; x1: number; y1: number; x2: number; y2: number }, SVGGElement, unknown> | null = null;
       if (shouldRenderPaths) {
