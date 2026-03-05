@@ -702,10 +702,10 @@ export default function Home() {
       }
     };
 
-    fetch("/real_id_to_smiles.json")
+    fetch("/id_smiles_y_true_y_pred.json")
       .then(async (res) => {
         if (res.status === 404) return {};
-        if (!res.ok) throw new Error("Failed to load /real_id_to_smiles.json");
+        if (!res.ok) throw new Error("Failed to load /id_smiles_y_true_y_pred.json");
         return res.json();
       })
       .then((primaryJson) => {
@@ -2158,7 +2158,7 @@ export default function Home() {
                     dataPathXY={scatterPaths.xy}
                     dataPathCluster={scatterPaths.cluster}
                     splitMapPath={withVersion(
-                      `${apiBase}/real-id-split-map?dataset=${encodeURIComponent(selectedDataset)}`,
+                      "/id_smiles_y_true_y_pred.json",
                       dataRefreshKey
                     )}
                     splitMapDataset={selectedDataset}
