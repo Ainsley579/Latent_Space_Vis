@@ -24,6 +24,9 @@ app = Flask(__name__)
 GENERATE_RANGE_JOBS: Dict[str, Dict[str, object]] = {}
 GENERATE_RANGE_JOBS_LOCK = threading.Lock()
 MAX_GENERATE_RANGE_JOBS = 64
+SCATTER_CELL_CACHE: Dict[str, Dict[str, object]] = {}
+SCATTER_CELL_CACHE_LOCK = threading.Lock()
+MAX_SCATTER_CELL_CACHE = 256
 
 
 def _resolve_project_root() -> Path:
@@ -241,6 +244,209 @@ def _safe_relpath(raw: str) -> Optional[Path]:
     if any(part in ("", ".", "..") for part in p.parts):
         return None
     return p
+
+
+def _scatter_parse_cell_from_filename(
+    dataset: str,
+    clustering: Optional[str],
+    split_norm: str,
+    file_name: str,
+) -> Optional[Tuple[str, str, str, str]]:
+    """
+    Parse <model>_<layer>_<projection>_(xy|cluster).json into
+    (model, layer, projection, kind). Returns None if not matched.
+    """
+    name = str(file_name or "").strip()
+    if not name.endswith(".json"):
+        return None
+    stem = name[:-5]
+    kind = ""
+    if stem.endswith("_xy"):
+        kind = "xy"
+        stem = stem[:-3]
+    elif stem.endswith("_cluster"):
+        kind = "cluster"
+        stem = stem[:-8]
+    else:
+        return None
+
+    projection = ""
+    for proj in ("pca", "mds", "umap", "tsne"):
+        token = f"_{proj}"
+        if stem.endswith(token):
+            projection = proj
+            stem = stem[: -len(token)]
+            break
+    if not projection:
+        return None
+
+    compat = _materialize_compat_sankey_files(
+        dataset,
+        clustering=clustering,
+        write_files=False,
+        data_split=split_norm,
+    )
+    models = [str(x) for x in (compat.get("models") or [])]
+    layers = [str(x) for x in (compat.get("layers") or [])]
+    for m in models:
+        for l in layers:
+            if f"{m}_{l}" == stem:
+                return m, l, projection, kind
+    return None
+
+
+def _scatter_parse_request_filename(file_name: str) -> Optional[Tuple[str, str, str]]:
+    """
+    Parse requested scatter filename:
+      <cell_core>_<projection>_(xy|cluster).json
+    Returns (cell_core, projection, kind) or None.
+    """
+    name = str(file_name or "").strip()
+    if not name.endswith(".json"):
+        return None
+    stem = name[:-5]
+    if stem.endswith("_xy"):
+        kind = "xy"
+        stem = stem[:-3]
+    elif stem.endswith("_cluster"):
+        kind = "cluster"
+        stem = stem[:-8]
+    else:
+        return None
+    for proj in ("pca", "mds", "umap", "tsne"):
+        token = f"_{proj}"
+        if stem.endswith(token):
+            return stem[: -len(token)], proj, kind
+    return None
+
+
+def _scatter_split_combined_file(combined_path: Path, kind: str) -> Optional[List[Dict[str, object]]]:
+    """
+    Split combined scatter rows (<...>_<projection>.json) into:
+      - xy rows: [{real_id, x, y}]
+      - cluster rows: [{real_id, cluster_id}]
+    """
+    data = _read_json(combined_path, None)
+    if not isinstance(data, list):
+        return None
+    out: List[Dict[str, object]] = []
+    for row in data:
+        if not isinstance(row, dict):
+            continue
+        rid = row.get("real_id")
+        if rid in (None, ""):
+            continue
+        rid_s = str(rid)
+        if kind == "xy":
+            try:
+                x = float(row.get("x", 0) or 0)
+            except Exception:
+                x = 0.0
+            try:
+                y = float(row.get("y", 0) or 0)
+            except Exception:
+                y = 0.0
+            out.append({"real_id": rid_s, "x": x, "y": y})
+        else:
+            try:
+                cid = int(float(row.get("cluster_id", 0) or 0))
+            except Exception:
+                cid = 0
+            out.append({"real_id": rid_s, "cluster_id": cid})
+    return out
+
+
+def _scatter_compute_xy_rows(
+    dataset: str,
+    epoch: str,
+    layer: str,
+    projection: str,
+    split_norm: str,
+) -> List[Dict[str, object]]:
+    import numpy as np
+    from dimensionality_reduction import reduce_embedding
+
+    X, real_ids = _load_embedding_cell(dataset, epoch, layer, data_split=split_norm)
+    X_arr = np.asarray(X)
+    if X_arr.ndim > 2:
+        X_arr = X_arr.reshape(X_arr.shape[0], -1)
+    coords = reduce_embedding(X_arr, method=str(projection), random_state=42)
+    out: List[Dict[str, object]] = []
+    for i in range(coords.shape[0]):
+        rid = str(real_ids[i]) if i < len(real_ids) else str(i)
+        out.append(
+            {
+                "real_id": rid,
+                "x": float(coords[i, 0]),
+                "y": float(coords[i, 1]),
+            }
+        )
+    return out
+
+
+def _scatter_compute_cluster_rows(
+    dataset: str,
+    clustering: str,
+    epoch: str,
+    layer: str,
+    split_norm: str,
+) -> List[Dict[str, object]]:
+    rows, err = _load_cluster_rows_for_cell(dataset, clustering, epoch, layer, [split_norm])
+    if err == "cluster_assignments_not_found":
+        # Fallback from sankey samples if assignment CSV is absent.
+        key = f"{epoch}__{layer}"
+        samples = _read_json(_case_dir(dataset, clustering, split_norm) / "sankey" / "sankey_samples.json", [])
+        derived = _build_scatter_cluster_by_cell_from_samples(samples).get(key, [])
+        return derived if isinstance(derived, list) else []
+    return [
+        {
+            "real_id": str(r.get("real_id", "")),
+            "cluster_id": int(r.get("cluster_id", 0)),
+        }
+        for r in rows
+        if r.get("real_id") not in (None, "")
+    ]
+
+
+def _scatter_legacy_rows(base: Path, model: str, layer: str, projection: str) -> Optional[List[Dict[str, object]]]:
+    """
+    Legacy scatter file fallback:
+      <model>_<layer>_<projection>.json with rows containing x/y/cluster_id/real_id.
+    """
+    legacy = base / f"{model}_{layer}_{projection}.json"
+    if not legacy.is_file():
+        return None
+    data = _read_json(legacy, None)
+    if not isinstance(data, list):
+        return None
+    out: List[Dict[str, object]] = []
+    for row in data:
+        if not isinstance(row, dict):
+            continue
+        rid = row.get("real_id")
+        if rid in (None, ""):
+            continue
+        try:
+            x = float(row.get("x", 0) or 0)
+        except Exception:
+            x = 0.0
+        try:
+            y = float(row.get("y", 0) or 0)
+        except Exception:
+            y = 0.0
+        try:
+            cid = int(float(row.get("cluster_id", 0) or 0))
+        except Exception:
+            cid = 0
+        out.append(
+            {
+                "real_id": str(rid),
+                "x": x,
+                "y": y,
+                "cluster_id": cid,
+            }
+        )
+    return out
 
 
 def _materialize_compat_sankey_files(
@@ -1083,6 +1289,108 @@ def data_file():
         if name == "vertical_model_samples.json":
             rows = compat.get("vertical_samples") or []
             return jsonify(rows if isinstance(rows, list) else [])
+
+    if not target.exists() and (section_rel == Path("scatterplot") if section_rel else False):
+        try:
+            name = target.name
+            req = _scatter_parse_request_filename(name)
+            if req is not None:
+                cell_core, projection, kind = req
+                method = str(clustering or DEFAULT_CLUSTERING).strip().lower()
+                method_dir = "pgmeans" if method in ("pgmeans", "gmm") else method
+                scatter_base_candidates: List[Path] = []
+                # Preferred new layout
+                scatter_base_candidates.append(DATA_ROOT / dataset / split_for_base / "clustering" / method_dir / "scatterplot")
+                # User's current layout: /<dataset>/<split>/<method>/scatterplot
+                scatter_base_candidates.append(DATA_ROOT / dataset / split_for_base / method_dir / "scatterplot")
+                # Legacy pgmeans layout
+                scatter_base_candidates.append(DATA_ROOT / dataset / split_for_base / "scatterplot")
+                # Current resolved base (already includes /scatterplot for most callers)
+                scatter_base_candidates.append(base)
+                seen_bases = set()
+                uniq_bases: List[Path] = []
+                for b in scatter_base_candidates:
+                    bb = b.resolve()
+                    if str(bb) in seen_bases:
+                        continue
+                    seen_bases.add(str(bb))
+                    uniq_bases.append(bb)
+
+                for sb in uniq_bases:
+                    combined = sb / f"{cell_core}_{projection}.json"
+                    if not combined.is_file():
+                        continue
+                    rows = _scatter_split_combined_file(combined, kind)
+                    if rows is not None:
+                        return jsonify(rows)
+
+            parsed = _scatter_parse_cell_from_filename(dataset, clustering, split_for_base, name)
+            if parsed is not None:
+                model, layer, projection, kind = parsed
+                cache_key = f"{dataset}|{str(clustering or DEFAULT_CLUSTERING).lower()}|{split_for_base}|{model}|{layer}|{projection}"
+                try:
+                    with SCATTER_CELL_CACHE_LOCK:
+                        cached = SCATTER_CELL_CACHE.get(cache_key)
+                    if cached is None:
+                        xy_rows = _scatter_compute_xy_rows(dataset, model, layer, projection, split_for_base)
+                        cluster_rows = _scatter_compute_cluster_rows(
+                            dataset,
+                            str(clustering or DEFAULT_CLUSTERING).lower(),
+                            model,
+                            layer,
+                            split_for_base,
+                        )
+                        cached = {"xy": xy_rows, "cluster": cluster_rows}
+                        with SCATTER_CELL_CACHE_LOCK:
+                            if len(SCATTER_CELL_CACHE) >= MAX_SCATTER_CELL_CACHE and SCATTER_CELL_CACHE:
+                                # Drop an arbitrary old entry to bound memory.
+                                SCATTER_CELL_CACHE.pop(next(iter(SCATTER_CELL_CACHE)))
+                            SCATTER_CELL_CACHE[cache_key] = cached
+                    rows = cached.get(kind) if isinstance(cached, dict) else []
+                    return jsonify(rows if isinstance(rows, list) else [])
+                except Exception as e:
+                    # Fallback to legacy combined scatter file if available.
+                    legacy_rows = _scatter_legacy_rows(base, model, layer, projection)
+                    if isinstance(legacy_rows, list):
+                        if kind == "xy":
+                            return jsonify(
+                                [
+                                    {"real_id": r["real_id"], "x": r.get("x", 0), "y": r.get("y", 0)}
+                                    for r in legacy_rows
+                                ]
+                            )
+                        return jsonify(
+                            [
+                                {"real_id": r["real_id"], "cluster_id": int(float(r.get("cluster_id", 0) or 0))}
+                                for r in legacy_rows
+                            ]
+                        )
+                    return jsonify(
+                        {
+                            "ok": False,
+                            "error": "scatter_compute_failed",
+                            "detail": str(e),
+                            "dataset": dataset,
+                            "clustering": str(clustering or DEFAULT_CLUSTERING).lower(),
+                            "split": split_for_base,
+                            "model": model,
+                            "layer": layer,
+                            "projection": projection,
+                            "kind": kind,
+                        }
+                    ), 500
+        except Exception as e:
+            return jsonify(
+                {
+                    "ok": False,
+                    "error": "scatter_route_failed",
+                    "detail": str(e),
+                    "dataset": dataset,
+                    "clustering": str(clustering or DEFAULT_CLUSTERING).lower(),
+                    "split": split_for_base,
+                    "file": str(file_rel),
+                }
+            ), 500
 
     if not target.exists():
         return jsonify({"ok": False, "error": "not_found", "path": str(target)}), 404

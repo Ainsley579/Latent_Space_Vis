@@ -662,14 +662,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    fetch(
-      buildDataFileUrl({
-        dataset: selectedDataset,
-        dataSplit: selectedDataSplit,
-        file: "real_id_to_smiles.json",
-        datasetRoot: true,
-      })
-    )
+    fetch("/real_id_to_smiles.json")
       .then((res) => {
         if (res.status === 404) return {};
         if (!res.ok) throw new Error("Failed to load real_id_to_smiles.json");
@@ -704,7 +697,7 @@ export default function Home() {
         console.error(err);
         setSmilesByRealId({});
       });
-  }, [selectedDataset, selectedDataSplit, buildDataFileUrl]);
+  }, []);
 
   useEffect(() => {
     setSearchResultIds([]);
