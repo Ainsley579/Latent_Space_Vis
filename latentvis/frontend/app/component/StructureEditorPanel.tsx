@@ -213,7 +213,7 @@ export default function StructureEditorPanel({ dataset, dataSplit, onSearchResul
         body: JSON.stringify({
           smiles,
           dataset,
-          data_split: dataSplit === "all" ? "train" : dataSplit,
+          data_split: dataSplit,
         }),
       });
       if (!res.ok) {

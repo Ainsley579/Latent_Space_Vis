@@ -50,9 +50,9 @@ def _resolve_data_root(project_root: Path) -> Path:
         return Path(env_data_root).resolve()
 
     candidates = [
+        _BACKEND_DIR / "data",
         project_root / "latentvis" / "frontend" / "public" / "data",
         _BACKEND_DIR.parent / "frontend" / "public" / "data",
-        _BACKEND_DIR / "data",
     ]
     for candidate in candidates:
         if candidate.exists():
@@ -646,19 +646,35 @@ def _search_smiles_substructure_in_case(case: str, smiles_query: str, data_split
     (query is a substructure; all IDs that contain it are returned).
     Uses RDKit HasSubstructMatch. Returns (matches, error_message).
     """
-    split = _normalize_split(data_split) or "test"
-    mapping_path = DATA_ROOT / case / split / "real_id_to_smiles.json"
-    if not mapping_path.is_file():
-        return [], None
-    try:
-        raw = json.loads(mapping_path.read_text(encoding="utf-8"))
-        if isinstance(raw, list):
-            mapping = {str(r["real_id"]): r["smiles"] for r in raw if isinstance(r, dict) and "real_id" in r and "smiles" in r}
-        else:
-            mapping = {str(k): v for k, v in raw.items()}
-    except Exception as e:
-        print("[flask-backend] failed to load %s: %s" % (mapping_path, e), flush=True)
-        return [], None
+    split_selector = (str(data_split).strip().lower() if data_split is not None else "all") or "all"
+    if split_selector not in ("all", "train", "test", "val"):
+        split_selector = "all"
+
+    meta_path = DATA_ROOT / case / "id_smiles_y_true_y_pred.json"
+    rows: List[dict] = []
+    if meta_path.is_file():
+        try:
+            raw = json.loads(meta_path.read_text(encoding="utf-8"))
+            if isinstance(raw, list):
+                rows = [r for r in raw if isinstance(r, dict)]
+        except Exception as e:
+            print("[flask-backend] failed to load %s: %s" % (meta_path, e), flush=True)
+            return [], None
+    else:
+        # Backward compatibility for older layouts.
+        legacy_split = "test" if split_selector == "all" else split_selector
+        legacy_path = DATA_ROOT / case / legacy_split / "real_id_to_smiles.json"
+        if not legacy_path.is_file():
+            return [], None
+        try:
+            raw = json.loads(legacy_path.read_text(encoding="utf-8"))
+            if isinstance(raw, list):
+                rows = [r for r in raw if isinstance(r, dict)]
+            elif isinstance(raw, dict):
+                rows = [{"real_id": k, "smiles": v, "split": legacy_split} for k, v in raw.items()]
+        except Exception as e:
+            print("[flask-backend] failed to load %s: %s" % (legacy_path, e), flush=True)
+            return [], None
     q = _normalize_smiles(smiles_query)
     if not q:
         return [], "empty_smiles"
@@ -671,14 +687,25 @@ def _search_smiles_substructure_in_case(case: str, smiles_query: str, data_split
         print("[flask-backend] rdkit/query mol failed: %s" % e, flush=True)
         return [], "invalid_query_smiles"
     matches = []
-    for real_id, smi in mapping.items():
-        smi = _normalize_smiles(str(smi))
+    seen_ids = set()
+    for row in rows:
+        row_split = str(row.get("split") or "").strip().lower()
+        if split_selector != "all" and row_split != split_selector:
+            continue
+        real_id = row.get("real_id", row.get("id"))
+        if real_id is None:
+            continue
+        rid = str(real_id)
+        if rid in seen_ids:
+            continue
+        smi = _normalize_smiles(str(row.get("smiles", "")))
         if not smi:
             continue
         try:
             mol = Chem.MolFromSmiles(smi)
             if mol is not None and mol.HasSubstructMatch(query_mol):
-                matches.append(str(real_id))
+                seen_ids.add(rid)
+                matches.append(rid)
         except Exception:
             continue
     return matches, None

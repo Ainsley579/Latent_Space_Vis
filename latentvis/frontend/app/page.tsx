@@ -10,6 +10,7 @@ import StructureEditorPanel from "./component/StructureEditorPanel";
 import SyncControlPanel from "./component/SyncControlPanel";
 import ClusterContainmentHeatmap from "./component/ClusterContainmentHeatmap";
 import { CLUSTER_COLORS } from "./theme/colors";
+import { fetchJsonCached } from "./utils/fetchCache";
 
 type SankeySampleRow = {
   real_id: string | number;
@@ -104,6 +105,8 @@ export default function Home() {
   const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("all");
   const [generatedSankeyPayloads, setGeneratedSankeyPayloads] = useState<Record<string, GeneratedSankeyPayload>>({});
   const [generatedRuntimePayloads, setGeneratedRuntimePayloads] = useState<Record<string, GeneratedRuntimePayload>>({});
+  const generatedSankeyPayloadsRef = useRef<Record<string, GeneratedSankeyPayload>>({});
+  const preloadInFlightRef = useRef<Set<string>>(new Set());
   const generatedSankeyBlobUrlsRef = useRef<Map<string, string>>(new Map());
   const effectiveDataSplitForFiles = (dataSplit: DataSplitKey): "test" | "train" =>
     dataSplit === "all" ? "train" : dataSplit;
@@ -156,6 +159,10 @@ export default function Home() {
   const generatedRuntimePayload = generatedRuntimePayloads[currentRuntimeKey] ?? null;
   const generatedMatchesCurrent = !!generatedSankeyPayload;
   const generatedRuntimeMatchesCurrent = !!generatedRuntimePayload;
+  const PRELOAD_SANKEY_COMPAT_ON_BOOT = false;
+  useEffect(() => {
+    generatedSankeyPayloadsRef.current = generatedSankeyPayloads;
+  }, [generatedSankeyPayloads]);
   const apiBase = (process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001").replace(/\/+$/, "");
   const buildDataFileUrl = useCallback(
     ({
@@ -970,25 +977,33 @@ export default function Home() {
   }
 
   useEffect(() => {
+    if (!PRELOAD_SANKEY_COMPAT_ON_BOOT) return;
     const controller = new AbortController();
     const preload = async (cacheSplit: DataSplitKey, requestSplit: "train" | "test") => {
       const key = runtimeKeyFor(selectedDataset, selectedClustering, cacheSplit);
-      if (generatedSankeyPayloads[key]) return;
-      const res = await fetch(`${apiBase}/materialize-sankey-files`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          dataset: selectedDataset,
-          clustering: selectedClustering,
-          data_split: requestSplit,
-          include_payload: true,
-          write_files: false,
-        }),
-        signal: controller.signal,
-      });
-      if (!res.ok) throw new Error(`preload sankey failed: ${res.status}`);
-      const json = await res.json();
-      applySankeyCompatPayload(json?.payload, selectedDataset, selectedClustering, cacheSplit);
+      if (generatedSankeyPayloadsRef.current[key]) return;
+      const inflightKey = `${key}::${requestSplit}`;
+      if (preloadInFlightRef.current.has(inflightKey)) return;
+      preloadInFlightRef.current.add(inflightKey);
+      try {
+        const res = await fetch(`${apiBase}/materialize-sankey-files`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            dataset: selectedDataset,
+            clustering: selectedClustering,
+            data_split: requestSplit,
+            include_payload: true,
+            write_files: false,
+          }),
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error(`preload sankey failed: ${res.status}`);
+        const json = await res.json();
+        applySankeyCompatPayload(json?.payload, selectedDataset, selectedClustering, cacheSplit);
+      } finally {
+        preloadInFlightRef.current.delete(inflightKey);
+      }
     };
 
     (async () => {
@@ -1008,7 +1023,7 @@ export default function Home() {
     })();
 
     return () => controller.abort();
-  }, [apiBase, selectedDataset, selectedClustering, selectedDataSplit, generatedSankeyPayloads]);
+  }, [apiBase, selectedDataset, selectedClustering, selectedDataSplit, PRELOAD_SANKEY_COMPAT_ON_BOOT]);
 
   async function generateFromRange(minValue: number, maxValue: number) {
     if (isGeneratingRange) return;
@@ -1149,9 +1164,7 @@ export default function Home() {
   useEffect(() => {
     const isBlobPath = typeof activeSankeyPath === "string" && activeSankeyPath.startsWith("blob:");
     const fetchRows = async (path: string): Promise<SankeySampleRow[]> => {
-      const res = await fetch(path);
-      if (!res.ok) throw new Error("Failed to load active sankey rows");
-      const json = await res.json();
+      const json = await fetchJsonCached(path);
       return Array.isArray(json) ? (json as SankeySampleRow[]) : [];
     };
     const mergeRows = (a: SankeySampleRow[], b: SankeySampleRow[]) => {
@@ -1401,6 +1414,10 @@ export default function Home() {
 
   useEffect(() => {
     const controller = new AbortController();
+    if (!selectedNode) {
+      setIsKnnTopmLoading(false);
+      return () => controller.abort();
+    }
     const fetchCellTopm = async () => {
       setIsKnnTopmLoading(true);
       try {
@@ -1493,6 +1510,7 @@ export default function Home() {
     selectedDataSplit,
     selectedModel,
     selectedLayer,
+    selectedNode,
     knnTopm,
     generatedRuntimeMatchesCurrent,
   ]);
