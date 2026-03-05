@@ -676,7 +676,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const normalizeJsonInto = (json: unknown, out: Record<string, string>, splitTag: "train" | "test" | null) => {
+    const normalizeJsonInto = (json: unknown, out: Record<string, string>) => {
       if (Array.isArray(json)) {
         json.forEach((row) => {
           if (!row || typeof row !== "object") return;
@@ -687,11 +687,6 @@ export default function Home() {
           out[rid.trim()] = smiles;
           out[rid.toLowerCase()] = smiles;
           out[rid.trim().toLowerCase()] = smiles;
-          if (splitTag) {
-            const tagged = `${splitTag}::${rid}`;
-            out[tagged] = smiles;
-            out[tagged.toLowerCase()] = smiles;
-          }
         });
         return;
       }
@@ -703,51 +698,26 @@ export default function Home() {
           out[key.trim()] = smiles;
           out[key.toLowerCase()] = smiles;
           out[key.trim().toLowerCase()] = smiles;
-          if (splitTag) {
-            const tagged = `${splitTag}::${key}`;
-            out[tagged] = smiles;
-            out[tagged.toLowerCase()] = smiles;
-          }
         });
       }
     };
 
-    const fetchSmiles = async (split: "train" | "test") => {
-      const url = buildDataFileUrl({
-        dataset: selectedDataset,
-        dataSplit: split,
-        file: `${split}/real_id_to_smiles.json`,
-        datasetRoot: true,
-      });
-      const res = await fetch(url);
-      if (res.status === 404) return {};
-      if (!res.ok) throw new Error("Failed to load real_id_to_smiles.json");
-      return res.json();
-    };
-
-    const primarySplit = effectiveDataSplitForFiles(selectedDataSplit);
-    fetchSmiles(primarySplit)
-      .then(async (primaryJson) => {
+    fetch("/real_id_to_smiles.json")
+      .then(async (res) => {
+        if (res.status === 404) return {};
+        if (!res.ok) throw new Error("Failed to load /real_id_to_smiles.json");
+        return res.json();
+      })
+      .then((primaryJson) => {
         const out: Record<string, string> = {};
-        if (selectedDataSplit === "all") {
-          normalizeJsonInto(primaryJson, out, primarySplit);
-          const otherSplit: "train" | "test" = primarySplit === "train" ? "test" : "train";
-          try {
-            const otherJson = await fetchSmiles(otherSplit);
-            normalizeJsonInto(otherJson, out, otherSplit);
-          } catch (err) {
-            console.error("Failed to load secondary split smiles mapping:", err);
-          }
-        } else {
-          normalizeJsonInto(primaryJson, out, null);
-        }
+        normalizeJsonInto(primaryJson, out);
         setSmilesByRealId(out);
       })
       .catch((err) => {
         console.error(err);
         setSmilesByRealId({});
       });
-  }, [buildDataFileUrl, selectedDataset, selectedDataSplit]);
+  }, []);
 
   useEffect(() => {
     setSearchResultIds([]);
