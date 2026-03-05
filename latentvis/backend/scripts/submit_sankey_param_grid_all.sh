@@ -6,8 +6,9 @@
 #
 set -euo pipefail
 
-BACKEND_DIR="/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend"
-SCRIPT="$BACKEND_DIR/scripts/submit_sankey_param_grid.slurm"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+BACKEND_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPT="$SCRIPT_DIR/submit_sankey_param_grid.slurm"
 
 if [[ ! -f "$SCRIPT" ]]; then
   echo "Missing script: $SCRIPT"

@@ -117,6 +117,7 @@ def _expand_split_selector(value: Optional[str]) -> List[str]:
     """
     Expand split selector to concrete split list.
     Supports: train/test/val, train+test, test+train, all.
+    For this app, "all" means train+test.
     """
     if value is None:
         return ["test"]
@@ -124,7 +125,7 @@ def _expand_split_selector(value: Optional[str]) -> List[str]:
     if not raw:
         return ["test"]
     if raw == "all":
-        return ["train", "test", "val"]
+        return ["train", "test"]
     if "+" in raw:
         out: List[str] = []
         for token in [p.strip() for p in raw.split("+") if p.strip()]:
@@ -134,6 +135,24 @@ def _expand_split_selector(value: Optional[str]) -> List[str]:
         return out
     sp = _normalize_split(raw)
     return [sp] if sp else []
+
+
+def _resolve_train_test_splits(value: Optional[str], default: str = "test") -> List[str]:
+    """
+    Resolve split selector for APIs backed by train/test artifacts.
+    Accepts all/train/test/train+test/test+train.
+    """
+    raw = "" if value is None else str(value).strip().lower()
+    if not raw:
+        return [default]
+    if raw == "all":
+        return ["train", "test"]
+    if raw in ("train+test", "test+train"):
+        return ["train", "test"] if raw.startswith("train") else ["test", "train"]
+    sp = _normalize_split(raw)
+    if sp in ("train", "test"):
+        return [sp]
+    return [default]
 
 
 def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[str] = None) -> Path:
@@ -711,7 +730,10 @@ def _search_smiles_substructure_in_case(case: str, smiles_query: str, data_split
     seen_ids = set()
     for row in rows:
         row_split = str(row.get("split") or "").strip().lower()
-        if split_selector != "all" and row_split != split_selector:
+        if split_selector == "all":
+            if row_split and row_split not in ("train", "test"):
+                continue
+        elif row_split != split_selector:
             continue
         real_id = row.get("real_id", row.get("id"))
         if real_id is None:
@@ -1522,28 +1544,38 @@ def cluster_containment():
     if clustering not in ("gmm", "agglomerative", "hdbscan", "knn"):
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
-    case_dir = _case_dir(dataset, clustering, data_split)
-    cm_subdir = "clustering_metrics"
-    csv_path = case_dir / cm_subdir / "cluster_assignments_with_real_id.csv"
-    if not csv_path.is_file():
-        return jsonify({"ok": False, "error": "cluster_assignments_not_found", "path": str(csv_path)}), 404
-
     import csv as csv_module
+    splits = _resolve_train_test_splits(data_split, default="test")
     our_rid_to_cluster: Dict[str, int] = {}
     layer_col = "{}_cluster".format(str(layer).strip())
-    with csv_path.open("r", encoding="utf-8") as f:
-        reader = csv_module.DictReader(f)
-        for row in reader:
-            if str(row.get("epoch")) != str(epoch):
-                continue
-            rid = row.get("real_id")
-            if rid is None:
-                continue
-            try:
-                val = row.get(layer_col)
-                our_rid_to_cluster[str(rid)] = int(float(val)) if val not in (None, "") else -1
-            except (ValueError, TypeError):
-                our_rid_to_cluster[str(rid)] = -1
+    saw_csv = False
+    checked_paths: List[str] = []
+    for split in splits:
+        case_dir = _case_dir(dataset, clustering, split)
+        csv_path = case_dir / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
+        checked_paths.append(str(csv_path))
+        if not csv_path.is_file():
+            continue
+        saw_csv = True
+        with csv_path.open("r", encoding="utf-8") as f:
+            reader = csv_module.DictReader(f)
+            for row in reader:
+                if str(row.get("epoch")) != str(epoch):
+                    continue
+                rid = row.get("real_id")
+                if rid is None:
+                    continue
+                rid_s = str(rid)
+                key = f"{split}::{rid_s}" if len(splits) > 1 else rid_s
+                try:
+                    val = row.get(layer_col)
+                    cid = int(float(val)) if val not in (None, "") else -1
+                except (ValueError, TypeError):
+                    cid = -1
+                our_rid_to_cluster[key] = cid
+                our_rid_to_cluster.setdefault(rid_s, cid)
+    if not saw_csv:
+        return jsonify({"ok": False, "error": "cluster_assignments_not_found", "checked_paths": checked_paths}), 404
 
     user_rid_to_cluster: Dict[str, int] = {}
     for item in user_clustering:
@@ -1570,7 +1602,17 @@ def cluster_containment():
     user_sizes: Dict[int, int] = {}
     for rid, u_cid in user_rid_to_cluster.items():
         user_sizes[u_cid] = user_sizes.get(u_cid, 0) + 1
-        o_cid = our_rid_to_cluster.get(rid, -1)
+        o_cid = -1
+        if "::" in rid:
+            o_cid = our_rid_to_cluster.get(rid, -1)
+        else:
+            for sp in splits:
+                c = our_rid_to_cluster.get(f"{sp}::{rid}", None)
+                if c is not None:
+                    o_cid = c
+                    break
+            if o_cid < 0:
+                o_cid = our_rid_to_cluster.get(rid, -1)
         if o_cid < 0:
             continue
         counts[(u_cid, o_cid)] = counts.get((u_cid, o_cid), 0) + 1
@@ -1598,6 +1640,7 @@ def cluster_containment():
         "epoch": str(epoch),
         "layer": layer,
         "clustering": clustering,
+        "resolved_splits": splits,
         "user_cluster_ids": user_cids,
         "our_cluster_ids": our_cids,
         "matrix": matrix,
@@ -1650,12 +1693,6 @@ def cell_cluster_metrics():
     if not user_rid_to_cluster:
         return jsonify({"ok": False, "error": "empty_user_clustering"}), 400
 
-    case_dir = _case_dir(dataset, clustering, data_split)
-    cm_subdir = "clustering_metrics"
-    csv_path = case_dir / cm_subdir / "cluster_assignments_with_real_id.csv"
-    if not csv_path.is_file():
-        return jsonify({"ok": False, "error": "cluster_assignments_not_found", "path": str(csv_path)}), 404
-
     try:
         from sklearn.metrics import (
             adjusted_mutual_info_score,
@@ -1679,40 +1716,57 @@ def cell_cluster_metrics():
         "fowlkes_mallows",
     ]
 
+    splits = _resolve_train_test_splits(data_split, default="test")
     # cell_key -> (y_true_list, y_pred_list)
     cell_truth: Dict[str, List[int]] = {}
     cell_pred: Dict[str, List[int]] = {}
     layer_cols: List[str] = []
-    with csv_path.open("r", encoding="utf-8") as f:
-        reader = csv_module.DictReader(f)
-        fields = list(reader.fieldnames or [])
-        layer_cols = [c for c in fields if c.endswith("_cluster")]
-        for row in reader:
-            rid = row.get("real_id")
-            epoch = row.get("epoch")
-            if rid is None or epoch is None:
-                continue
-            u = user_rid_to_cluster.get(str(rid))
-            if u is None:
-                continue
-            epoch_key = str(epoch)
-            for col in layer_cols:
-                raw = row.get(col)
-                if raw in (None, ""):
+    saw_csv = False
+    checked_paths: List[str] = []
+    for split in splits:
+        case_dir = _case_dir(dataset, clustering, split)
+        csv_path = case_dir / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
+        checked_paths.append(str(csv_path))
+        if not csv_path.is_file():
+            continue
+        saw_csv = True
+        with csv_path.open("r", encoding="utf-8") as f:
+            reader = csv_module.DictReader(f)
+            fields = list(reader.fieldnames or [])
+            layer_cols = [c for c in fields if c.endswith("_cluster")]
+            for row in reader:
+                rid = row.get("real_id")
+                epoch = row.get("epoch")
+                if rid is None or epoch is None:
                     continue
-                try:
-                    pred = int(float(raw))
-                except (ValueError, TypeError):
+                rid_s = str(rid)
+                u = None
+                for candidate in _split_tagged_id_candidates(rid_s, split=split):
+                    u = user_rid_to_cluster.get(candidate)
+                    if u is not None:
+                        break
+                if u is None:
                     continue
-                if pred < 0:
-                    continue
-                layer = col[: -len("_cluster")]
-                cell_key = f"{epoch_key}|{layer}"
-                if cell_key not in cell_truth:
-                    cell_truth[cell_key] = []
-                    cell_pred[cell_key] = []
-                cell_truth[cell_key].append(u)
-                cell_pred[cell_key].append(pred)
+                epoch_key = str(epoch)
+                for col in layer_cols:
+                    raw = row.get(col)
+                    if raw in (None, ""):
+                        continue
+                    try:
+                        pred = int(float(raw))
+                    except (ValueError, TypeError):
+                        continue
+                    if pred < 0:
+                        continue
+                    layer = col[: -len("_cluster")]
+                    cell_key = f"{epoch_key}|{layer}"
+                    if cell_key not in cell_truth:
+                        cell_truth[cell_key] = []
+                        cell_pred[cell_key] = []
+                    cell_truth[cell_key].append(u)
+                    cell_pred[cell_key].append(pred)
+    if not saw_csv:
+        return jsonify({"ok": False, "error": "cluster_assignments_not_found", "checked_paths": checked_paths}), 404
 
     metrics_by_cell: Dict[str, Dict[str, Optional[float]]] = {}
     for cell_key, y_true in cell_truth.items():
@@ -1750,6 +1804,7 @@ def cell_cluster_metrics():
         "ok": True,
         "dataset": dataset,
         "clustering": clustering,
+        "resolved_splits": splits,
         "metric_names": metric_names,
         "layer_columns": layer_cols,
         "metrics_by_cell": metrics_by_cell,
@@ -2004,34 +2059,68 @@ def _parse_bool(v, default=False) -> bool:
 
 
 def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[str, str]:
-    split = _normalize_split(data_split) or "test"
-    mapping_path = DATA_ROOT / dataset / split / "real_id_to_smiles.json"
-    if not mapping_path.is_file():
-        return {}
-    try:
-        raw = json.loads(mapping_path.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-
-    split_norm = _normalize_split(data_split)
+    splits = _resolve_train_test_splits(data_split, default="test")
     out: Dict[str, str] = {}
-    if isinstance(raw, list):
-        for row in raw:
-            if not isinstance(row, dict):
-                continue
-            rid = row.get("real_id")
-            smi = row.get("smiles")
-            if rid is None or smi is None:
-                continue
-            if split_norm:
-                row_split = _normalize_split(row.get("split"))
-                if row_split is not None and row_split != split_norm:
+
+    # Prefer consolidated metadata file when available.
+    meta_path = DATA_ROOT / dataset / "id_smiles_y_true_y_pred.json"
+    if meta_path.is_file():
+        try:
+            raw = json.loads(meta_path.read_text(encoding="utf-8"))
+        except Exception:
+            raw = []
+        if isinstance(raw, list):
+            allow = set(splits)
+            for row in raw:
+                if not isinstance(row, dict):
                     continue
-            out[str(rid)] = str(smi)
-        return out
-    if isinstance(raw, dict):
-        return {str(k): str(v) for k, v in raw.items()}
-    return {}
+                rid = row.get("real_id", row.get("id"))
+                smi = row.get("smiles")
+                sp = str(row.get("split", "")).strip().lower()
+                if rid is None or smi is None:
+                    continue
+                if sp and sp not in allow:
+                    continue
+                rid_s = str(rid)
+                smi_s = str(smi)
+                if rid_s not in out:
+                    out[rid_s] = smi_s
+                if sp in ("train", "test"):
+                    out[f"{sp}::{rid_s}"] = smi_s
+            if out:
+                return out
+
+    # Fallback to per-split real_id_to_smiles.json
+    for split in splits:
+        mapping_path = DATA_ROOT / dataset / split / "real_id_to_smiles.json"
+        if not mapping_path.is_file():
+            continue
+        try:
+            raw = json.loads(mapping_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if isinstance(raw, list):
+            for row in raw:
+                if not isinstance(row, dict):
+                    continue
+                rid = row.get("real_id")
+                smi = row.get("smiles")
+                if rid is None or smi is None:
+                    continue
+                rid_s = str(rid)
+                smi_s = str(smi)
+                if rid_s not in out:
+                    out[rid_s] = smi_s
+                out[f"{split}::{rid_s}"] = smi_s
+            continue
+        if isinstance(raw, dict):
+            for k, v in raw.items():
+                rid_s = str(k)
+                smi_s = str(v)
+                if rid_s not in out:
+                    out[rid_s] = smi_s
+                out[f"{split}::{rid_s}"] = smi_s
+    return out
 
 
 def _load_cluster_rows_for_cell(
@@ -2074,6 +2163,18 @@ def _load_cluster_rows_for_cell(
     if not saw_csv:
         return [], "cluster_assignments_not_found"
     return out, None
+
+
+def _split_tagged_id_candidates(rid: str, split: Optional[str] = None) -> List[str]:
+    rid_s = str(rid)
+    out: List[str] = []
+    if split in ("train", "test", "val"):
+        out.append(f"{split}::{rid_s}")
+    out.append(rid_s)
+    raw = rid_s.strip()
+    if raw != rid_s:
+        out.append(raw)
+    return out
 
 
 def _average_tanimoto(smiles_list: List[str], radius: int = 2, n_bits: int = 2048) -> Tuple[float, int, int]:
@@ -2229,56 +2330,86 @@ def substructures_cluster_topm():
         except (TypeError, ValueError):
             return jsonify({"ok": False, "error": "invalid_m"}), 400
 
-    case_dir = _case_dir(dataset, clustering, data_split)
-    sorted_path = case_dir / "topk" / "cluster_sorted_members.json"
-    if not sorted_path.is_file():
-        return jsonify({"ok": False, "error": "sorted_members_not_found", "path": str(sorted_path)}), 404
-
-    rows = _read_json(sorted_path, [])
-    if not isinstance(rows, list):
-        rows = []
-
+    splits = _resolve_train_test_splits(data_split, default="test")
     targets = []
-    for row in rows:
-        if not isinstance(row, dict):
+    checked_paths: List[str] = []
+    for split in splits:
+        case_dir = _case_dir(dataset, clustering, split)
+        sorted_path = case_dir / "topk" / "cluster_sorted_members.json"
+        checked_paths.append(str(sorted_path))
+        if not sorted_path.is_file():
             continue
-        if str(row.get("model_type")) != str(epoch):
+        rows = _read_json(sorted_path, [])
+        if not isinstance(rows, list):
             continue
-        if str(row.get("layer_name")) != str(layer):
-            continue
-        try:
-            row_cluster = int(row.get("cluster_id"))
-        except (TypeError, ValueError):
-            continue
-        if cluster_all or row_cluster == cluster_id:
-            targets.append(row)
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            if str(row.get("model_type")) != str(epoch):
+                continue
+            if str(row.get("layer_name")) != str(layer):
+                continue
+            try:
+                row_cluster = int(row.get("cluster_id"))
+            except (TypeError, ValueError):
+                continue
+            if cluster_all or row_cluster == cluster_id:
+                item = dict(row)
+                item["_split"] = split
+                targets.append(item)
 
     if not targets:
         if cluster_all:
-            return jsonify({"ok": False, "error": "cell_not_found"}), 404
-        return jsonify({"ok": False, "error": "cluster_not_found"}), 404
+            return jsonify({"ok": False, "error": "cell_not_found", "checked_paths": checked_paths}), 404
+        return jsonify({"ok": False, "error": "cluster_not_found", "checked_paths": checked_paths}), 404
 
     id_to_smiles = _load_id_to_smiles(dataset, data_split=data_split)
     out_rows = []
     cluster_summary = []
+    by_cluster: Dict[int, List[str]] = {}
+    by_cluster_split: Dict[int, List[str]] = {}
+    multi_split = len(splits) > 1
     for target in targets:
         row_cluster = int(target.get("cluster_id"))
+        split_name = str(target.get("_split", "test"))
         sorted_real_ids = target.get("sorted_real_ids") or []
         if not isinstance(sorted_real_ids, list):
-            sorted_real_ids = []
+            continue
+        tagged = [f"{split_name}::{str(x)}" if multi_split else str(x) for x in sorted_real_ids]
+        by_cluster.setdefault(row_cluster, [])
+        by_cluster_split.setdefault(row_cluster, [])
+        by_cluster[row_cluster].extend(tagged)
+        by_cluster_split[row_cluster].extend([split_name] * len(tagged))
 
-        m_use = len(sorted_real_ids) if m_all else min(m, len(sorted_real_ids))
-        knn_ids = [str(x) for x in sorted_real_ids[:m_use]]
-        kfn_ids = [str(x) for x in list(reversed(sorted_real_ids[-m_use:]))]
+    for row_cluster in sorted(by_cluster.keys()):
+        sorted_ids = by_cluster.get(row_cluster, [])
+        split_flags = by_cluster_split.get(row_cluster, [])
+        # Preserve first-seen order and keep split alignment.
+        dedup_ids: List[str] = []
+        dedup_split: List[str] = []
+        seen = set()
+        for rid, sp in zip(sorted_ids, split_flags):
+            if rid in seen:
+                continue
+            seen.add(rid)
+            dedup_ids.append(rid)
+            dedup_split.append(sp)
+
+        m_use = len(dedup_ids) if m_all else min(m, len(dedup_ids))
+        knn_ids = dedup_ids[:m_use]
+        knn_splits = dedup_split[:m_use]
+        kfn_ids = list(reversed(dedup_ids[-m_use:]))
+        kfn_splits = list(reversed(dedup_split[-m_use:]))
         cluster_summary.append({
             "cluster_id": row_cluster,
-            "total_members": len(sorted_real_ids),
+            "total_members": len(dedup_ids),
             "m": int(m_use),
         })
         for grp in ("knn", "kfn"):
             if group != "both" and group != grp:
                 continue
             ids = knn_ids if grp == "knn" else kfn_ids
+            id_splits = knn_splits if grp == "knn" else kfn_splits
             mcs = _mcs_for_real_ids(ids, id_to_smiles)
             out_rows.append({
                 "layer_name": str(layer),
@@ -2287,6 +2418,7 @@ def substructures_cluster_topm():
                 "group": grp,
                 "k": int(m_use),
                 "real_ids": ids,
+                "real_id_splits": id_splits,
                 "valid_molecules": mcs["valid_molecules"],
                 "missing_real_ids": mcs["missing_real_ids"],
                 "invalid_smiles_real_ids": mcs["invalid_smiles_real_ids"],
@@ -2302,7 +2434,8 @@ def substructures_cluster_topm():
         "ok": True,
         "dataset": dataset,
         "clustering": clustering,
-        "data_split": _normalize_split(data_split) or "test",
+        "data_split": str(data_split) if data_split is not None else "test",
+        "resolved_splits": splits,
         "use_current": False,
         "epoch": str(epoch),
         "layer": str(layer),

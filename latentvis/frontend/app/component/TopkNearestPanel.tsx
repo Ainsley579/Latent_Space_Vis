@@ -38,6 +38,13 @@ type TopkNearestPanelProps = {
   isKnnTopmLoading?: boolean;
 };
 
+function parseSplitTaggedId(value: string | number): { split: "train" | "test" | null; realId: string } {
+  const raw = String(value ?? "").trim();
+  if (raw.startsWith("train::")) return { split: "train", realId: raw.slice("train::".length) };
+  if (raw.startsWith("test::")) return { split: "test", realId: raw.slice("test::".length) };
+  return { split: null, realId: raw };
+}
+
 export default function TopkNearestPanel({
   rows,
   selectedModel,
@@ -244,7 +251,10 @@ export default function TopkNearestPanel({
                               onMouseLeave={() => onHoverIdChange(null)}
                               onClick={() => onToggleHoverId(String(id))}
                             >
-                              {id}
+                              {(() => {
+                                const parsed = parseSplitTaggedId(id);
+                                return parsed.split ? `${parsed.realId} (${parsed.split})` : parsed.realId;
+                              })()}
                             </div>
                           </>
                         )}

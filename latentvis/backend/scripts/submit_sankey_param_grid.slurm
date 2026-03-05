@@ -49,11 +49,11 @@ esac
 #   AGG_LINKAGES=complete,average  (default: ward,complete,average)
 AGG_LINKAGES_RAW="${AGG_LINKAGES:-ward,complete,average}"
 
-BACKEND_DIR="/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend"
-SCRIPT_DIR="$BACKEND_DIR/scripts"
-FRONTEND_DATA="/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/frontend/public/data"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+BACKEND_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+DATA_ROOT="${LATENTVIS_DATA_ROOT:-$BACKEND_DIR/data}"
 INPUT="/global/cfs/projectdirs/m636/nhadler/projects/esol/data/${DATASET}-embeddings.pt"
-OUT_ROOT="$FRONTEND_DATA/$DATASET/$SPLIT/sweeps/$METHOD"
+OUT_ROOT="$DATA_ROOT/$DATASET/$SPLIT/sweeps/$METHOD"
 
 if [[ ! -d "$BACKEND_DIR" ]]; then echo "ERROR: BACKEND_DIR missing: $BACKEND_DIR"; exit 1; fi
 if [[ ! -f "$BACKEND_DIR/run_pipeline_from_embeddings.py" ]]; then echo "ERROR: run_pipeline_from_embeddings.py not found"; exit 1; fi
