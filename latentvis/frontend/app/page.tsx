@@ -1837,6 +1837,10 @@ export default function Home() {
     nowTs - (syncSourceRef.current?.ts ?? 0) < 180;
   const sankeyViewExternalTransform =
     syncLinkedSankeyViews && !viewIsSyncSource ? sankeyTransform : undefined;
+  const globalHighlightIds =
+    showSearchResultsInMembers
+      ? searchResultIds
+      : (selectedIds && selectedIds.length > 0 ? selectedIds : null);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -1959,7 +1963,7 @@ export default function Home() {
                     : null
                 }
                 highlightId={hoveredId}
-                highlightIds={showSearchResultsInMembers ? searchResultIds : null}
+                highlightIds={globalHighlightIds}
                 onNodeSelect={(sel) => {
                   if (!sel.model || sel.layer == null) return;
                   toggleNode({ model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster, ids: sel.ids });
@@ -2006,7 +2010,7 @@ export default function Home() {
                     : null
                 }
                 highlightId={hoveredId}
-                highlightIds={showSearchResultsInMembers ? searchResultIds : null}
+                highlightIds={globalHighlightIds}
                 onNodeSelect={(sel) => {
                   if (!sel.layer || !sel.model) return;
                   toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: sel.ids });
@@ -2101,6 +2105,14 @@ export default function Home() {
                     modelKey={selectedModel}
                     layerKey={selectedLayer}
                     onPointHoverIdChange={(id) => setHoverFromMouse(id)}
+                    onHighlightIdsSelect={(ids) => {
+                      setSelectedNode(null);
+                      setSelectedIds(ids);
+                      setHoveredId(null);
+                      setHoverLock(false);
+                      setSuppressScatterCluster(true);
+                      setShowSearchResultsInMembers(false);
+                    }}
                     onPointSelect={(sel) => {
                       if (!sel.model || !sel.layer) return;
                       setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });

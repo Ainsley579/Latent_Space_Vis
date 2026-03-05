@@ -34,6 +34,7 @@ type ScatterPlotProps = {
   onPointSelect?: (sel: { model?: string; layer?: string; cluster: number; real_id: string }) => void;
   onPointHoverIdChange?: (id: string | null) => void;
   onClusterSelect?: (sel: { model?: string; layer?: string; cluster: number; real_ids: string[] }) => void;
+  onHighlightIdsSelect?: (ids: string[]) => void;
   onClearSelection?: () => void;
   resolveImageSrc?: (realId: string | number, imageType: string) => string;
   getSmilesById?: (realId: string | number) => string | null;
@@ -64,6 +65,7 @@ export default function ScatterPlot({
   onPointSelect,
   onPointHoverIdChange,
   onClusterSelect,
+  onHighlightIdsSelect,
   onClearSelection,
   resolveImageSrc,
   getSmilesById,
@@ -167,6 +169,30 @@ export default function ScatterPlot({
     colorModeRef.current = next;
     setColorMode(next);
     requestAnimationFrame(() => repaintBaseFillForMode(next));
+  }
+
+  function emitHighlightIds(ids: string[]) {
+    const uniq = Array.from(new Set(ids.map((x) => String(x)).filter((x) => x.length > 0)));
+    onHighlightIdsSelect?.(uniq);
+  }
+
+  function idsForSplit(target: "train" | "test"): string[] {
+    const rows = rowsRef.current ?? [];
+    return rows.filter((d) => d.split === target).map((d) => String(d.real_id));
+  }
+
+  function idsForLabel(targetLabel: string): string[] {
+    const rows = rowsRef.current ?? [];
+    return rows
+      .filter((d) => {
+        const rid = String(d.real_id);
+        const direct = lookupLabelById(labelById, rid);
+        if (direct) return direct === targetLabel;
+        const smiles = getSmilesByIdRef.current?.(rid);
+        if (!smiles) return false;
+        return (labelBySmiles[String(smiles).trim()] ?? "") === targetLabel;
+      })
+      .map((d) => String(d.real_id));
   }
 
   useEffect(() => {
@@ -761,26 +787,42 @@ export default function ScatterPlot({
         )}
         {colorMode === "split" && (
           <div className="flex flex-nowrap gap-x-3 gap-y-1 min-w-max text-[11px] text-zinc-700">
-            <span className="inline-flex items-center gap-1">
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
+              onClick={() => emitHighlightIds(idsForSplit("train"))}
+              title="Highlight train points"
+            >
               <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#f59e0b" }} />
               train
-            </span>
-            <span className="inline-flex items-center gap-1">
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
+              onClick={() => emitHighlightIds(idsForSplit("test"))}
+              title="Highlight test points"
+            >
               <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#2563eb" }} />
               test
-            </span>
+            </button>
           </div>
         )}
         {colorMode === "label" && (
           <div className="flex flex-nowrap gap-x-3 gap-y-1 min-w-max">
             {labelLegend.map((label) => (
-              <div key={label} className="flex items-center gap-1">
+              <button
+                key={label}
+                type="button"
+                className="flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
+                onClick={() => emitHighlightIds(idsForLabel(label))}
+                title={`Highlight label: ${label}`}
+              >
                 <span
                   className="inline-block w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: labelColors[label] ?? "#9ca3af" }}
                 />
                 <span className="text-xs text-zinc-700">{label}</span>
-              </div>
+              </button>
             ))}
             {labelLegend.length === 0 && (
               <span className="text-xs text-zinc-500">Upload a CSV with `label` and `real_id`/`id` columns.</span>

@@ -311,6 +311,7 @@ export default function SankeyView({
   const [linkValueMin, setLinkValueMin] = useState(0);
   const [linkValueMax, setLinkValueMax] = useState(Number.MAX_SAFE_INTEGER);
   const [linkValueMaxBound, setLinkValueMaxBound] = useState(1);
+  const autoInitLinkMaxRef = useRef(true);
   const [hoveredCellInfo, setHoveredCellInfo] = useState<CellInfoTag | null>(null);
   const [pinnedCellInfo, setPinnedCellInfo] = useState<CellInfoTag | null>(null);
   const [hoverTooltip, setHoverTooltip] = useState<HoverTooltip | null>(null);
@@ -335,8 +336,9 @@ export default function SankeyView({
       shouldReplace = true;
     }
     if (!p.has("max")) {
-      p.set("max", "812");
+      p.set("max", "1015");
       shouldReplace = true;
+      autoInitLinkMaxRef.current = false;
     }
     if (!p.has("epochMin")) {
       p.set("epochMin", "0");
@@ -351,6 +353,7 @@ export default function SankeyView({
     if (Number.isFinite(q) && q >= 0) setEpochTransitionThreshold(q);
     const qMin = Number(p.get("min"));
     const qMax = Number(p.get("max"));
+    if (Number.isFinite(qMax) && qMax >= 0) autoInitLinkMaxRef.current = false;
     if (Number.isFinite(qMin) && qMin >= 0) setLinkValueMin(qMin);
     if (Number.isFinite(qMax) && qMax >= 0) setLinkValueMax(qMax);
   }, []);
@@ -1042,7 +1045,17 @@ export default function SankeyView({
         const nextMaxBound = Math.max(1, Math.ceil(maxEdgeVal), Math.ceil(maxCellTotal));
         setLinkValueMaxBound(nextMaxBound);
         setLinkValueMin((v) => Math.max(0, Math.min(v, nextMaxBound)));
-        setLinkValueMax((v) => Math.max(0, Math.min(v, nextMaxBound)));
+        if (autoInitLinkMaxRef.current) {
+          setLinkValueMax(nextMaxBound);
+          const p = new URLSearchParams(window.location.search);
+          p.set("max", String(nextMaxBound));
+          p.set("min", String(Math.max(0, Math.min(linkValueMin, nextMaxBound))));
+          p.set("epochMin", String(epochTransitionThreshold.toFixed(2)));
+          window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+          autoInitLinkMaxRef.current = false;
+        } else {
+          setLinkValueMax((v) => Math.max(0, Math.min(v, nextMaxBound)));
+        }
         const linkWidthScale = d3.scaleSqrt().domain([0, maxEdgeVal]).range([0.5, 20]).clamp(true);
 
         function appendLinkPath(
@@ -2142,6 +2155,7 @@ export default function SankeyView({
                 onChange={(e) => {
                   const next = Number(e.target.value);
                   const clamped = Math.max(0, Math.min(next, linkValueMaxBound));
+                  autoInitLinkMaxRef.current = false;
                   setLinkValueMin(Math.min(clamped, normalizedLinkMax));
                   const p = new URLSearchParams(window.location.search);
                   p.set("min", String(clamped));
@@ -2161,6 +2175,7 @@ export default function SankeyView({
                 onChange={(e) => {
                   const next = Number(e.target.value);
                   const clamped = Math.max(0, Math.min(next, linkValueMaxBound));
+                  autoInitLinkMaxRef.current = false;
                   setLinkValueMax(Math.max(clamped, normalizedLinkMin));
                   const p = new URLSearchParams(window.location.search);
                   p.set("min", String(normalizedLinkMin));
