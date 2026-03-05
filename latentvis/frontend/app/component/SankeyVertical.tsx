@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal, SankeyLink, SankeyNode } from "d3-sankey";
 import { CLUSTER_COLORS, SANKEY_NODE_COLOR, SANKEY_LINK_COLOR, HIGHLIGHT_RED } from "../theme/colors";
+import { fetchJsonCached } from "../utils/fetchCache";
 
 type SampleRow = {
   real_id: string | number;
@@ -845,13 +846,10 @@ export default function SankeyVertical({
     }
 
     Promise.all([
-      fetch(dataPath).then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch noaug_sankey_samples.json");
-        return res.json();
-      }),
+      fetchJsonCached(dataPath),
       secondaryDataPath
-        ? fetch(secondaryDataPath)
-            .then((res) => (res.ok ? res.json() : null))
+        ? fetchJsonCached(secondaryDataPath)
+            .then((json) => json ?? null)
             .catch(() => null)
         : Promise.resolve(null),
     ])

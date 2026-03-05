@@ -944,6 +944,72 @@ export default function Home() {
     setSubstructures(Array.isArray(casePayload.substructures) ? casePayload.substructures : []);
   }
 
+  function applySankeyCompatPayload(
+    payloadByDataset: any,
+    dataset: DatasetKey,
+    clustering: ClusteringKey,
+    dataSplit: DataSplitKey
+  ) {
+    const casePayload = payloadByDataset?.[dataset];
+    if (!casePayload || typeof casePayload !== "object") return;
+    const key = runtimeKeyFor(dataset, clustering, dataSplit);
+    setGeneratedSankeyPayloads((prev) => ({
+      ...prev,
+      [key]: {
+        dataset,
+        clustering,
+        dataSplit,
+        allSankey: (casePayload as any).all_sankey ?? { epoch: {}, layer: {} },
+        modelSamples: ((casePayload as any).model_samples ?? {}) as Record<string, SankeySampleRow[]>,
+        verticalSamplesByLayer: ((casePayload as any).vertical_samples_by_layer ?? {}) as Record<
+          string,
+          SankeySampleRow[]
+        >,
+      },
+    }));
+  }
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const preload = async (cacheSplit: DataSplitKey, requestSplit: "train" | "test") => {
+      const key = runtimeKeyFor(selectedDataset, selectedClustering, cacheSplit);
+      if (generatedSankeyPayloads[key]) return;
+      const res = await fetch(`${apiBase}/materialize-sankey-files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dataset: selectedDataset,
+          clustering: selectedClustering,
+          data_split: requestSplit,
+          include_payload: true,
+          write_files: false,
+        }),
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(`preload sankey failed: ${res.status}`);
+      const json = await res.json();
+      applySankeyCompatPayload(json?.payload, selectedDataset, selectedClustering, cacheSplit);
+    };
+
+    (async () => {
+      try {
+        if (selectedDataSplit === "all") {
+          await preload("all", "train");
+          await preload("test", "test");
+        } else if (selectedDataSplit === "train") {
+          await preload("train", "train");
+        } else {
+          await preload("test", "test");
+        }
+      } catch (err) {
+        if ((err as Error)?.name === "AbortError") return;
+        console.error("Failed to preload sankey compat payload:", err);
+      }
+    })();
+
+    return () => controller.abort();
+  }, [apiBase, selectedDataset, selectedClustering, selectedDataSplit, generatedSankeyPayloads]);
+
   async function generateFromRange(minValue: number, maxValue: number) {
     if (isGeneratingRange) return;
     const dataset = selectedDataset;

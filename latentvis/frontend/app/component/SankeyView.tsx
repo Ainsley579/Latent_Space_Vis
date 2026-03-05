@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import ZoomPan from "./ZoomPan";
 import { CLUSTER_COLORS, SANKEY_2D_COLUMN_LINK_COLOR, SANKEY_2D_ROW_LINK_COLOR } from "../theme/colors";
+import { fetchJsonCached } from "../utils/fetchCache";
 
 const SHOW_FMI_CSPA = false;
 
@@ -398,20 +399,17 @@ export default function SankeyView({
     })();
 
     Promise.all([
-      fetch(dataPath).then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch all_sankey.json");
-        return res.json();
-      }),
+      fetchJsonCached(dataPath),
       secondaryDataPath
-        ? fetch(secondaryDataPath)
-            .then((res) => (res.ok ? res.json() : null))
+        ? fetchJsonCached(secondaryDataPath)
+            .then((json) => json ?? null)
             .catch(() => null)
         : Promise.resolve(null),
-      fetch(transitionStatsPath)
-        .then((res) => (res.ok ? res.json() : null))
+      fetchJsonCached(transitionStatsPath)
+        .then((json) => json ?? null)
         .catch(() => null),
-      fetch(transitionLayerPath)
-        .then((res) => (res.ok ? res.json() : null))
+      fetchJsonCached(transitionLayerPath)
+        .then((json) => json ?? null)
         .catch(() => null),
     ])
       .then(([rawData, secondaryRawData, transitionJson, transitionLayerJson]) => {
