@@ -27,6 +27,9 @@ MAX_GENERATE_RANGE_JOBS = 64
 SCATTER_CELL_CACHE: Dict[str, Dict[str, object]] = {}
 SCATTER_CELL_CACHE_LOCK = threading.Lock()
 MAX_SCATTER_CELL_CACHE = 256
+SCATTER_COMBINED_FILE_CACHE: Dict[str, Dict[str, List[Dict[str, object]]]] = {}
+SCATTER_COMBINED_FILE_CACHE_LOCK = threading.Lock()
+MAX_SCATTER_COMBINED_FILE_CACHE = 256
 
 
 def _resolve_project_root() -> Path:
@@ -345,10 +348,23 @@ def _scatter_split_combined_file(combined_path: Path, kind: str) -> Optional[Lis
       - xy rows: [{real_id, x, y}]
       - cluster rows: [{real_id, cluster_id}]
     """
+    try:
+        st = combined_path.stat()
+        cache_key = f"{combined_path.resolve()}|{int(st.st_mtime_ns)}|{int(st.st_size)}"
+    except Exception:
+        cache_key = str(combined_path.resolve())
+
+    with SCATTER_COMBINED_FILE_CACHE_LOCK:
+        cached = SCATTER_COMBINED_FILE_CACHE.get(cache_key)
+    if isinstance(cached, dict):
+        rows = cached.get(kind)
+        return rows if isinstance(rows, list) else None
+
     data = _read_json(combined_path, None)
     if not isinstance(data, list):
         return None
-    out: List[Dict[str, object]] = []
+    xy_out: List[Dict[str, object]] = []
+    cluster_out: List[Dict[str, object]] = []
     for row in data:
         if not isinstance(row, dict):
             continue
@@ -356,23 +372,28 @@ def _scatter_split_combined_file(combined_path: Path, kind: str) -> Optional[Lis
         if rid in (None, ""):
             continue
         rid_s = str(rid)
-        if kind == "xy":
-            try:
-                x = float(row.get("x", 0) or 0)
-            except Exception:
-                x = 0.0
-            try:
-                y = float(row.get("y", 0) or 0)
-            except Exception:
-                y = 0.0
-            out.append({"real_id": rid_s, "x": x, "y": y})
-        else:
-            try:
-                cid = int(float(row.get("cluster_id", 0) or 0))
-            except Exception:
-                cid = 0
-            out.append({"real_id": rid_s, "cluster_id": cid})
-    return out
+        try:
+            x = float(row.get("x", 0) or 0)
+        except Exception:
+            x = 0.0
+        try:
+            y = float(row.get("y", 0) or 0)
+        except Exception:
+            y = 0.0
+        try:
+            cid = int(float(row.get("cluster_id", 0) or 0))
+        except Exception:
+            cid = 0
+        xy_out.append({"real_id": rid_s, "x": x, "y": y})
+        cluster_out.append({"real_id": rid_s, "cluster_id": cid})
+
+    parsed = {"xy": xy_out, "cluster": cluster_out}
+    with SCATTER_COMBINED_FILE_CACHE_LOCK:
+        if len(SCATTER_COMBINED_FILE_CACHE) >= MAX_SCATTER_COMBINED_FILE_CACHE and SCATTER_COMBINED_FILE_CACHE:
+            SCATTER_COMBINED_FILE_CACHE.pop(next(iter(SCATTER_COMBINED_FILE_CACHE)))
+        SCATTER_COMBINED_FILE_CACHE[cache_key] = parsed
+    rows = parsed.get(kind)
+    return rows if isinstance(rows, list) else None
 
 
 def _scatter_compute_xy_rows(
