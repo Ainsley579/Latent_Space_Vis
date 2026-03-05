@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { CLUSTER_COLORS, HIGHLIGHT_RED } from "../theme/colors";
+import { fetchJsonCached } from "../utils/fetchCache";
 import { renderSmilesSvg } from "./SmilesStructure";
 
 type ScatterPoint = {
@@ -450,33 +451,22 @@ export default function ScatterPlot({
       }
     }
 
-    const buildLegacyScatterUrl = (url: string, kind: "xy" | "cluster") => {
-      const [path, query = ""] = url.split("?");
-      const suffix = kind === "xy" ? "_xy.json" : "_cluster.json";
-      if (!path.endsWith(suffix)) return null;
-      const legacy = path.slice(0, -suffix.length) + ".json";
-      return query ? `${legacy}?${query}` : legacy;
-    };
-
     const fetchScatterJson = async (url: string, kind: "xy" | "cluster") => {
-      const legacyUrl = buildLegacyScatterUrl(url, kind);
-      if (!url.startsWith("blob:") && legacyUrl && legacyUrl !== url) {
-        const legacyRes = await fetch(legacyUrl);
-        if (legacyRes.ok) return legacyRes.json();
-      }
-
-      const res = await fetch(url);
-      if (!res.ok) {
+      try {
+        return await fetchJsonCached(url);
+      } catch {
         throw new Error(`Failed to fetch scatter ${kind} data`);
       }
-      return res.json();
     };
 
     const fetchSplitMap = async () => {
       if (!splitMapPath || !splitMapDataset) return null;
-      const res = await fetch(splitMapPath);
-      if (!res.ok) return null;
-      const json = await res.json();
+      let json: any = null;
+      try {
+        json = await fetchJsonCached(splitMapPath);
+      } catch {
+        return null;
+      }
       const map = json?.datasets?.[splitMapDataset]?.split_by_real_id;
       if (!map || typeof map !== "object") return null;
       return map as Record<string, "train" | "test" | "both">;

@@ -159,7 +159,7 @@ export default function Home() {
   const generatedRuntimePayload = generatedRuntimePayloads[currentRuntimeKey] ?? null;
   const generatedMatchesCurrent = !!generatedSankeyPayload;
   const generatedRuntimeMatchesCurrent = !!generatedRuntimePayload;
-  const PRELOAD_SANKEY_COMPAT_ON_BOOT = false;
+  const PRELOAD_SANKEY_COMPAT_ON_BOOT = true;
   useEffect(() => {
     generatedSankeyPayloadsRef.current = generatedSankeyPayloads;
   }, [generatedSankeyPayloads]);
@@ -1009,8 +1009,12 @@ export default function Home() {
     (async () => {
       try {
         if (selectedDataSplit === "all") {
-          await preload("all", "train");
-          await preload("test", "test");
+          // Preload both train(primary) and test(secondary) payloads up front,
+          // so horizontal/vertical sankey can switch without extra backend compute.
+          await Promise.all([
+            preload("all", "train"),
+            preload("test", "test"),
+          ]);
         } else if (selectedDataSplit === "train") {
           await preload("train", "train");
         } else {

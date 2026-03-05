@@ -281,6 +281,7 @@ const LAYER_ORDER = [
 ];
 
 const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
+const MAX_SAMPLE_TRAJECTORY_LINES = 12000;
 // Unsynced layout tweak: negative moves left, positive moves right.
 const UNSYNC_SHIFT_X = 0;
 const UNSYNC_LEFT_PAD = 20;
@@ -628,11 +629,6 @@ export default function SankeyHorizontal({
         const name = String(node.name || "");
         const samples = Array.from(nodeSamples.get(name) || []);
         if (samples.length === 0) return;
-        samples.sort((a, b) => {
-          const na = Number(a), nb = Number(b);
-          if (!isNaN(na) && !isNaN(nb)) return na - nb;
-          return a < b ? -1 : a > b ? 1 : 0;
-        });
         const y0 = node.y0 ?? 0;
         const y1 = node.y1 ?? 0;
         const h = Math.max(1, y1 - y0);
@@ -644,22 +640,24 @@ export default function SankeyHorizontal({
       });
 
       const sampleLines: Array<{ id: string; x1: number; y1: number; x2: number; y2: number }> = [];
-      combinedGraphRows.forEach((r) => {
+      for (let i = 0; i < combinedGraphRows.length; i += 1) {
+        if (sampleLines.length >= MAX_SAMPLE_TRAJECTORY_LINES) break;
+        const r = combinedGraphRows[i];
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
         const srcName = `${fromKey}_${r.from_cluster}`;
         const tgtName = `${toKey}_${r.to_cluster}`;
         const src = nodeByName.get(srcName);
         const tgt = nodeByName.get(tgtName);
-        if (!src || !tgt) return;
+        if (!src || !tgt) continue;
         const id = String(r.real_id);
         const y1 = sampleNodeYMap.get(id)?.get(srcName);
         const y2 = sampleNodeYMap.get(id)?.get(tgtName);
-        if (y1 == null || y2 == null) return;
+        if (y1 == null || y2 == null) continue;
         const x1 = src.x1;
         const x2 = tgt.x0;
         sampleLines.push({ id, x1, y1, x2, y2 });
-      });
+      }
 
       let sampleSel: d3.Selection<SVGLineElement, { id: string; x1: number; y1: number; x2: number; y2: number }, SVGGElement, unknown> | null = null;
       if (shouldRenderPaths) {
