@@ -140,7 +140,22 @@ def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[
     """
     method = (clustering or DEFAULT_CLUSTERING).strip().lower()
     split = _normalize_split(data_split) or "test"
-    # "pgmeans" is represented as "gmm" in backend APIs.
+    method_dir = "pgmeans" if method in ("pgmeans", "gmm") else method
+
+    # Preferred split-aware layout (new):
+    #   /data/<case>/<split>/clustering/<method>/
+    split_aware_clustering = DATA_ROOT / case / split / "clustering" / method_dir
+    if split_aware_clustering.exists():
+        return split_aware_clustering
+
+    # Alternate split-aware layout:
+    #   /data/<case>/<split>/<method>/
+    split_aware_flat = DATA_ROOT / case / split / method_dir
+    if split_aware_flat.exists():
+        return split_aware_flat
+
+    # "pgmeans" old layout fallback:
+    #   /data/<case>/<split>/
     if method in ("pgmeans", "gmm"):
         return DATA_ROOT / case / split
 
@@ -148,8 +163,8 @@ def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[
     #   /data/<case>/<split>/clustering/<method>/...
     # Keep compatibility with older unsplit layout:
     #   /data/<case>/clustering/<method>/...
-    split_aware = DATA_ROOT / case / split / "clustering" / method
-    legacy = DATA_ROOT / case / "clustering" / method
+    split_aware = DATA_ROOT / case / split / "clustering" / method_dir
+    legacy = DATA_ROOT / case / "clustering" / method_dir
     if split_aware.exists() or not legacy.exists():
         return split_aware
     return legacy
