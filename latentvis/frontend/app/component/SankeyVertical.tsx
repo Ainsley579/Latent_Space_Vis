@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal, SankeyLink, SankeyNode } from "d3-sankey";
 import { CLUSTER_COLORS, SANKEY_NODE_COLOR, SANKEY_LINK_COLOR, HIGHLIGHT_RED } from "../theme/colors";
+import { fetchJsonCached } from "../utils/fetchCache";
 
 type SampleRow = {
   real_id: string | number;
@@ -461,6 +462,7 @@ export default function SankeyVertical({
       const secondaryRowsSynthetic = synthesizeMissingAdjacentRows(secondaryRowsReal, mode, order) as any[];
       const secondaryRows =
         secondaryRowsSynthetic.length > 0 ? [...secondaryRowsReal, ...secondaryRowsSynthetic] : secondaryRowsReal;
+      const combinedRows = secondaryRows.length > 0 ? [...rows, ...secondaryRows] : rows;
       const NODE_W = 12;
       const NODE_PAD = 4;
       const BOTTOM = 28;
@@ -469,7 +471,7 @@ export default function SankeyVertical({
       const bandH = Math.max(1, drawH - TOP - BOTTOM);
 
       const nodeValue = new Map<string, number>();
-      rows.forEach((r) => {
+      combinedRows.forEach((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
         const src = `${fromKey}_${r.from_cluster}`;
@@ -497,11 +499,11 @@ export default function SankeyVertical({
       });
 
       const isSynced = !!syncTransform;
-      const inferredOrder = inferSequenceFromRows(rows as SampleRow[], mode, order);
+      const inferredOrderCombined = inferSequenceFromRows(combinedRows as SampleRow[], mode, order);
       const renderOrder =
         mode === "model" && visibleEpochOrder
           ? visibleEpochOrder
-          : inferredOrder.filter((m) => (nodesByModel.get(m)?.length ?? 0) > 0);
+          : inferredOrderCombined.filter((m) => (nodesByModel.get(m)?.length ?? 0) > 0);
 
       // In rotated rendering, x-axis maps to screen Y (vertical direction).
       const unsyncedLeftPad = UNSYNC_TOP_PAD;
@@ -589,7 +591,7 @@ export default function SankeyVertical({
 
       const nodeByKey = new Map(nodes.map((n) => [n.key, n]));
       const linkMap = new Map<string, number>();
-      rows.forEach((r) => {
+      combinedRows.forEach((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
         const src = `${fromKey}_${r.from_cluster}`;
@@ -652,7 +654,7 @@ export default function SankeyVertical({
       }
 
       const nodeSamples = new Map<string, Set<string>>();
-      rows.forEach((r) => {
+      combinedRows.forEach((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
         const src = `${fromKey}_${r.from_cluster}`;
@@ -677,7 +679,7 @@ export default function SankeyVertical({
         });
       });
 
-      const sampleLines = rows.flatMap((r) => {
+      const sampleLines = combinedRows.flatMap((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
         const src = `${fromKey}_${r.from_cluster}`;
@@ -844,13 +846,10 @@ export default function SankeyVertical({
     }
 
     Promise.all([
-      fetch(dataPath).then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch noaug_sankey_samples.json");
-        return res.json();
-      }),
+      fetchJsonCached(dataPath),
       secondaryDataPath
-        ? fetch(secondaryDataPath)
-            .then((res) => (res.ok ? res.json() : null))
+        ? fetchJsonCached(secondaryDataPath)
+            .then((json) => json ?? null)
             .catch(() => null)
         : Promise.resolve(null),
     ])

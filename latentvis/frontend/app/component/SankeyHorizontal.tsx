@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal, SankeyLink, SankeyNode } from "d3-sankey";
 import { CLUSTER_COLORS, SANKEY_NODE_COLOR, SANKEY_LINK_COLOR, HIGHLIGHT_RED } from "../theme/colors";
+import { fetchJsonCached } from "../utils/fetchCache";
 
 type SampleRow = {
   real_id: string | number;
@@ -453,7 +454,8 @@ export default function SankeyHorizontal({
       const secondarySyntheticRows = synthesizeMissingAdjacentRows(secondaryRenderRows, mode, order);
       const secondaryGraphRows =
         secondarySyntheticRows.length > 0 ? [...secondaryRenderRows, ...secondarySyntheticRows] : secondaryRenderRows;
-      const graph = buildGraph(graphRows);
+      const combinedGraphRows = secondaryGraphRows.length > 0 ? [...graphRows, ...secondaryGraphRows] : graphRows;
+      const graph = buildGraph(combinedGraphRows);
 
       const NODE_W = 12;
       const CELL_W = 120;
@@ -478,7 +480,7 @@ export default function SankeyHorizontal({
       });
 
       // enforce x positions by layer order to align with SankeyView columns
-      const axisRows = filteredRows.length > 0 ? filteredRows : graphRows;
+      const axisRows = combinedGraphRows.length > 0 ? combinedGraphRows : (filteredRows.length > 0 ? filteredRows : graphRows);
       const normalizeAxisKey = (k: string) => (mode === "layer" ? canonicalLayerKey(k) : k);
       const presentLayers = new Set<string>();
       axisRows.forEach((r) => {
@@ -608,7 +610,7 @@ export default function SankeyHorizontal({
 
       // build per-sample trajectories with per-node y offsets (spread inside node height)
       const nodeSamples = new Map<string, Set<string>>();
-      graphRows.forEach((r) => {
+      combinedGraphRows.forEach((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
         const srcName = `${fromKey}_${r.from_cluster}`;
@@ -642,7 +644,7 @@ export default function SankeyHorizontal({
       });
 
       const sampleLines: Array<{ id: string; x1: number; y1: number; x2: number; y2: number }> = [];
-      graphRows.forEach((r) => {
+      combinedGraphRows.forEach((r) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer;
         const srcName = `${fromKey}_${r.from_cluster}`;
@@ -838,13 +840,10 @@ export default function SankeyHorizontal({
     }
 
     Promise.all([
-      fetch(dataPath).then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch noaug_sankey_samples.json");
-        return res.json();
-      }),
+      fetchJsonCached(dataPath),
       secondaryDataPath
-        ? fetch(secondaryDataPath)
-            .then((res) => (res.ok ? res.json() : null))
+        ? fetchJsonCached(secondaryDataPath)
+            .then((json) => json ?? null)
             .catch(() => null)
         : Promise.resolve(null),
     ])
