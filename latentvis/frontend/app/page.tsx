@@ -427,6 +427,7 @@ export default function Home() {
   const [dataRefreshKey, setDataRefreshKey] = useState(0);
   const [isGeneratingRange, setIsGeneratingRange] = useState(false);
   const [generateStatusText, setGenerateStatusText] = useState("");
+  const [isBlockingInitLoading, setIsBlockingInitLoading] = useState(true);
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -1161,12 +1162,14 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch(buildAllSankeyPath(selectedDataset, selectedClustering, selectedDataSplit))
-      .then((res) => {
+    let cancelled = false;
+    setIsBlockingInitLoading(true);
+    (async () => {
+      try {
+        const res = await fetch(buildAllSankeyPath(selectedDataset, selectedClustering, selectedDataSplit));
         if (!res.ok) throw new Error("Failed to load all_sankey.json");
-        return res.json();
-      })
-      .then((data) => {
+        const data = await res.json();
+        if (cancelled) return;
         const models = Object.keys(data?.epoch || {});
         const layers = Object.keys(data?.layer || {});
         if (!models.length || !layers.length) return;
@@ -1187,10 +1190,27 @@ export default function Home() {
         setSelectedNode(null);
         setSelectedIds(null);
         setActiveSankeyRows([]);
-      })
-      .catch((err) => {
+
+        const warmUrls = [
+          buildSankeyModelPath(preferredModel, selectedDataset, selectedClustering, selectedDataSplit, sankeyRefreshKey),
+          buildVerticalPath(preferredLayer, selectedDataset, selectedClustering, selectedDataSplit, sankeyRefreshKey),
+        ];
+        if (selectedDataSplit === "all") {
+          warmUrls.push(
+            buildSankeyModelPath(preferredModel, selectedDataset, selectedClustering, "test", sankeyRefreshKey),
+            buildVerticalPath(preferredLayer, selectedDataset, selectedClustering, "test", sankeyRefreshKey)
+          );
+        }
+        await Promise.all(Array.from(new Set(warmUrls)).map((u) => fetchJsonCached(u).catch(() => null)));
+      } catch (err) {
         console.error(err);
-      });
+      } finally {
+        if (!cancelled) setIsBlockingInitLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [datasetBase, selectedDataset, selectedClustering, selectedDataSplit, sankeyRefreshKey, generatedSankeyPayload]);
 
   useEffect(() => {
@@ -2075,6 +2095,7 @@ export default function Home() {
       ? searchResultIds
       : (selectedIds && selectedIds.length > 0 ? selectedIds : null);
   const showRightDetailPanels = cellSelected || selectedNode != null;
+  const shouldShowBlockingOverlay = isBlockingInitLoading || isGeneratingRange;
 
   return (
     <div className="flex min-h-screen w-full">
@@ -2087,10 +2108,10 @@ export default function Home() {
             gridTemplateRows: `${topRowPct}% ${midRowPct}% ${bottomRowPct}%`,
           }}
         >
-          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "1 / 2" }}>
+          <div className="p-1 box-border min-h-0 min-w-0" style={{ gridColumn: "1 / 2", gridRow: "1 / 2" }}>
             <div
               id="sankey2d"
-              className="w-full h-full border border-zinc-400"
+              className="w-full h-full min-h-0 min-w-0 overflow-hidden border border-zinc-400"
             >
               <SankeyView
                 key={`sankeyview-${selectedDataset}-${selectedClustering}-${selectedDataSplit}-${sankeyRefreshKey}`}
@@ -2162,7 +2183,7 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="p-1 box-border" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
+          <div className="p-1 box-border min-h-0 min-w-0" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
             <div
               id="sankeyVertical"
               className="w-full h-full border border-zinc-400 min-h-0 relative"
@@ -2209,7 +2230,7 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "2 / 4" }}>
+          <div className="p-1 box-border min-h-0 min-w-0" style={{ gridColumn: "1 / 2", gridRow: "2 / 4" }}>
             <div
               id="sankeyHorizontal"
               className="w-full h-full border border-zinc-400 relative"
@@ -2825,6 +2846,16 @@ export default function Home() {
                 <SmilesStructure smiles={hoverPreview.smiles} className="w-full h-full" />
               </div>
             )}
+          </div>
+        )}
+        {shouldShowBlockingOverlay && (
+          <div className="fixed inset-0 z-[12000] bg-white/70 backdrop-blur-[1px] flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 px-5 py-4 rounded-lg border border-zinc-300 bg-white shadow">
+              <div className="h-8 w-8 rounded-full border-4 border-zinc-300 border-t-zinc-700 animate-spin" />
+              <div className="text-sm text-zinc-700">
+                {isGeneratingRange ? "Computing, please wait..." : "Loading data, please wait..."}
+              </div>
+            </div>
           </div>
         )}
         
