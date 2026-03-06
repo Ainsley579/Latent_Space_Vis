@@ -1,0 +1,4802 @@
+[
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "12",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Oxadiazon",
+      "Phosalone",
+      "Propiconazole",
+      "Anilofos",
+      "Ethalfluralin"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Monotropitoside"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "12",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "4-Isopropyltoluene",
+      "Isobutylbenzene",
+      "t-Butylbenzene ",
+      "indoline",
+      "2,4,6-Trimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Salicin",
+      "tubercidin",
+      "gentisin",
+      "Reposal",
+      "Thalidomide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "12",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Metolachlor",
+      "alachlor",
+      "Neburon",
+      "Hexestrol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Digitoxin",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "12",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "N,N-Dimethylaniline",
+      "2,4-Dimethylphenol",
+      "N-Ethylaniline",
+      "2,6-Dimethylphenol",
+      "3,5-Dimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "1-Methylphenanthrene",
+      "2-Methylanthracene",
+      "2,2'-PCB",
+      "2,6-PCB",
+      "2,4'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "12",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvone",
+      "isophorone",
+      "2,4,6-Trimethylphenol",
+      "allicin",
+      "3,5-Dimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Lactose",
+      "Amigdalin",
+      "Sucrose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "12",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Procymidone",
+      "RTI 20",
+      "Oxadiazon",
+      "Bromophos",
+      "Ronnel"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "12",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvone",
+      "isophorone",
+      "2,4,6-Trimethylphenol",
+      "allicin",
+      "3,5-Dimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Lactose",
+      "Amigdalin",
+      "Sucrose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "12",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Procymidone",
+      "RTI 20",
+      "Oxadiazon",
+      "Bromophos",
+      "Ronnel"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "12",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Phenacetin",
+      "Thymol",
+      "simazine",
+      "Risocaine",
+      "Carvacrol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Lactose",
+      "Sucrose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "12",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "DDD",
+      "O,P'-DDD",
+      "Abate",
+      "2,4',5-PCB",
+      "2,3',5-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "12",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "o-Xylene ",
+      "Diethyldisulfide",
+      "1-Hexanol",
+      "Caproaldehyde",
+      "p-Xylene "
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Sorbitol",
+      "d-inositol",
+      "Fructose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "12",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-Methylanthracene",
+      "Pencycuron",
+      "Isopropalin",
+      "3-Hexanoyloxymethylphenyltoin",
+      "Medrogestone"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "15",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Oxadiazon",
+      "Phosalone",
+      "Anilofos",
+      "Equilenin",
+      "Methoxychlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Monotropitoside"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "15",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "4-Isopropyltoluene",
+      "Isobutylbenzene",
+      "2,4,6-Trimethylphenol",
+      "indoline",
+      "t-Butylbenzene "
+    ],
+    "top_k_farthest_real_ids": [
+      "Salicin",
+      "tubercidin",
+      "gentisin",
+      "Reposal",
+      "Chloramphenicol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "15",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Eugenol",
+      "Estragole",
+      "Risocaine",
+      "Carvone",
+      "Ethyl benzoate "
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Monotropitoside"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "15",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Equilenin",
+      "Pencycuron",
+      "Methoxychlor",
+      "Ethalfluralin",
+      "Dinitramine"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Kepone",
+      "Eicosane"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "15",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvone",
+      "allicin",
+      "2-Ethyl-2-hexanal",
+      "isophorone",
+      "2,4,6-Trimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Lactose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "15",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Neburon",
+      "Napropamide",
+      "Procymidone",
+      "Flurochloridone",
+      "Rovral"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "15",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvone",
+      "allicin",
+      "2-Ethyl-2-hexanal",
+      "isophorone",
+      "2,4,6-Trimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Lactose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "15",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Neburon",
+      "Napropamide",
+      "Procymidone",
+      "Flurochloridone",
+      "Rovral"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "15",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Anilofos",
+      "chlorpyrifos",
+      "Neburon",
+      "Dinitramine",
+      "Phosalone"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "15",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "o-Nitroanisole",
+      "3,5-Dimethylphenol",
+      "allicin",
+      "Carvone",
+      "2,4,6-Trimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Amigdalin",
+      "Lactose",
+      "Sucrose",
+      "Monotropitoside",
+      "Sorbitol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "15",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Quinonamid",
+      "Warfarin",
+      "1-Decene",
+      "3-Chlorobiphenyl",
+      "Ditalimfos"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "15",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cyclohexanol ",
+      "3-Hexanone",
+      "Phenylhydrazine",
+      "1,1-Dichloroethane",
+      "2-Methyl-1-Butene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Sorbitol",
+      "d-inositol",
+      "Fructose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "10",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Propiconazole",
+      "Phosalone",
+      "Oxadiazon",
+      "Anilofos",
+      "Ethalfluralin"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "bromadiolone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "10",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "4-Isopropyltoluene",
+      "Isobutylbenzene",
+      "indoline",
+      "t-Butylbenzene ",
+      "2,4,6-Trimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Reposal",
+      "Phenytoin",
+      "Thalidomide",
+      "methyl laurate",
+      "1-Dodecanol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "10",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Pencycuron",
+      "Ethalfluralin",
+      "Oxadiazon",
+      "Dinitramine",
+      "Equilenin"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Mirex",
+      "Lactose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "10",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Estragole",
+      "Eugenol",
+      "Carvacrol",
+      "Thymol",
+      "2,4,6-Trimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "DEF",
+      "Benfuracarb",
+      "Abate",
+      "Dialifor",
+      "Dialifos"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "10",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Butamben",
+      "Bromacil",
+      "Isoproturon",
+      "Carbofuran",
+      "pyracarbolid"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "dioctyl phthalate",
+      "Eicosane",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Cyhalothrin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "10",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,3',4,4'-PCB",
+      "2,2',3,4,6-PCB",
+      "2,2,4,6,6'-PCB",
+      "5-Methylchrysene",
+      "6-Methylchrysene"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "1-Methylphenanthrene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "10",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Butamben",
+      "Bromacil",
+      "Isoproturon",
+      "Carbofuran",
+      "pyracarbolid"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "dioctyl phthalate",
+      "Eicosane",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Cyhalothrin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "10",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,3',4,4'-PCB",
+      "2,2',3,4,6-PCB",
+      "2,2,4,6,6'-PCB",
+      "5-Methylchrysene",
+      "6-Methylchrysene"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "1-Methylphenanthrene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "10",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Risocaine",
+      "Atrazine",
+      "Thymol",
+      "Ametryn",
+      "XMC"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Lactose",
+      "Sucrose",
+      "Etoposide (148-167,25mg/ml)"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "10",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Atovaquone(0,430mg/ml) - neutral",
+      "Etofenprox",
+      "Cyfluthrin",
+      "9,10-Dimethylanthracene",
+      "2,4,6-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "10",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "8-quinolinol",
+      "Cyclohexyl-5-spirobarbituric acid",
+      "2,6-Dinitrotoluene",
+      "hydrobenzoin",
+      "Diethyldisulfide"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Sorbitol",
+      "Fructose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "10",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-Methylanthracene",
+      "Epitostanol",
+      "Pencycuron",
+      "Tetradecane",
+      "Danazol"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "4",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Propiconazole",
+      "Phosalone",
+      "Equilenin",
+      "Methoxychlor",
+      "Equilin"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Mirex"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "4",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-Phenoxyethanol",
+      "styrene oxide",
+      "4-Isopropyltoluene",
+      "Isopropylbenzene ",
+      "Phenetole"
+    ],
+    "top_k_farthest_real_ids": [
+      "Isofenphos",
+      "Anilofos",
+      "Salicin",
+      "gentisin",
+      "Reposal"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "4",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvone",
+      "Ethyl benzoate ",
+      "2-Phenoxyethanol",
+      "benzylurea",
+      "Isopropylbenzene "
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Trimazosin",
+      "Riboflavin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "4",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Procymidone",
+      "Flurochloridone",
+      "Pencycuron",
+      "Propiconazole",
+      "RTI 20"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "bromadiolone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "4",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Ethyl-p-hydroxybenzoate ",
+      "benzylurea",
+      "Ethyl benzoate ",
+      "3,5-Dimethylphenol",
+      "N,N-Dimethylaniline"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Trimazosin",
+      "Riboflavin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "4",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Indapamide",
+      "Methoxychlor",
+      "RTI 20",
+      "3-Heptanoyloxymethylphenytoin",
+      "Flutriafol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "4",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Ethyl-p-hydroxybenzoate ",
+      "benzylurea",
+      "Ethyl benzoate ",
+      "3,5-Dimethylphenol",
+      "N,N-Dimethylaniline"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Trimazosin",
+      "Riboflavin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "4",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Indapamide",
+      "Methoxychlor",
+      "RTI 20",
+      "3-Heptanoyloxymethylphenytoin",
+      "Flutriafol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "4",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Eugenol",
+      "Sulfanilamide",
+      "2,4,6-Trimethylphenol",
+      "Phenacetin",
+      "Cyclopentyl-5-spirobarbituric acid"
+    ],
+    "top_k_farthest_real_ids": [
+      "Tricresyl phosphate",
+      "3-Propanoyloxymethylphenytoin",
+      "Phosalone",
+      "Oxadiazon",
+      "phenothrin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "4",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "P,P'-DDE",
+      "Fenarimol",
+      "9,10-Dimethylanthracene",
+      "Coumatetralyl",
+      "Equilenin"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "4",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Chlorobenzene",
+      "Pentobarbital",
+      "1-Iodoheptane",
+      "Ethyl octanoate",
+      "Butethal"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Quinonamid",
+      "Oxadiazon",
+      "Tricresyl phosphate",
+      "phenylbutazone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "4",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "phenolphthalein",
+      "Fenarimol",
+      "Cyhalothrin",
+      "Bendroflumethiazide",
+      "Spironolactone"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "t-Butylbenzene ",
+      "1,2-Diethylbenzene",
+      "1,4-Diethylbenzene ",
+      "4-Isopropyltoluene",
+      "Isobutylbenzene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Flumetralin",
+      "Abate",
+      "dioctyl phthalate",
+      "diisooctyl phthalate",
+      "Mirex"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "bromopropylate",
+      "Equilenin",
+      "Methoxychlor",
+      "nevirapine",
+      "Pencycuron"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "bromadiolone",
+      "Etoposide (148-167,25mg/ml)",
+      "Sulfanilamide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "isophorone",
+      "2-Ethyl pyridine",
+      "Sulfallate",
+      "d-Limonene",
+      "Furfural"
+    ],
+    "top_k_farthest_real_ids": [
+      "diisooctyl phthalate",
+      "dioctyl phthalate",
+      "Dihexyl phthalate",
+      "chlorothiazide",
+      "hydrochlorothiazide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "O,P'-DDD",
+      "DDD",
+      "Rovral",
+      "Napropamide",
+      "Methyldymron"
+    ],
+    "top_k_farthest_real_ids": [
+      "bromadiolone",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Benzo[ghi]perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "thioanisole",
+      "3,5-Dimethylpyridine",
+      "Ethylbenzene",
+      "2,6-Dimethylpyridine",
+      "2,4-Dimethylpyridine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Monotropitoside",
+      "Amigdalin",
+      "benodanil",
+      "salicylanilide",
+      "Benznidazole"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "bromopropylate",
+      "Methoxychlor",
+      "fluconazole",
+      "RTI 20",
+      "Phenytoin"
+    ],
+    "top_k_farthest_real_ids": [
+      "bromadiolone",
+      "Benzo[ghi]perylene",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "thioanisole",
+      "3,5-Dimethylpyridine",
+      "Ethylbenzene",
+      "2,6-Dimethylpyridine",
+      "2,4-Dimethylpyridine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Monotropitoside",
+      "Amigdalin",
+      "benodanil",
+      "salicylanilide",
+      "Benznidazole"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "bromopropylate",
+      "Methoxychlor",
+      "fluconazole",
+      "RTI 20",
+      "Phenytoin"
+    ],
+    "top_k_farthest_real_ids": [
+      "bromadiolone",
+      "Benzo[ghi]perylene",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "isophorone",
+      "Furfural",
+      "Toluene ",
+      "Thiophenol ",
+      "2-Hydroxypyridine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Pentachlorobenzene",
+      "1,3,5-Trinitrobenzene",
+      "Diethyl phthalate ",
+      "DNOC",
+      "Linuron"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "DDT",
+      "Quinonamid",
+      "diethylstilbestrol",
+      "Amitraz",
+      "Propiconazole"
+    ],
+    "top_k_farthest_real_ids": [
+      "bromadiolone",
+      "Benzo[ghi]perylene",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Acridine",
+      "Prednisolone",
+      "Rovral",
+      "Chlordane",
+      "Benfuracarb"
+    ],
+    "top_k_farthest_real_ids": [
+      "bromadiolone",
+      "Benzo[ghi]perylene",
+      "Etoposide (148-167,25mg/ml)",
+      "Picene",
+      "Mirex"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Hexachloroethane",
+      "isophorone",
+      "2-Hydroxypyridine",
+      "Formothion",
+      "Furfural"
+    ],
+    "top_k_farthest_real_ids": [
+      "mercaptobenzothiazole",
+      "Fenthion",
+      "Siduron",
+      "Chlortoluron",
+      "2,6-Dinitrotoluene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "7",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Hexestrol",
+      "Napropamide",
+      "diethylstilbestrol",
+      "Methoxychlor",
+      "Anilofos"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "bromadiolone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "7",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Isopropylbenzene ",
+      "Phenetole",
+      "N-Ethylaniline",
+      "Isobutylbenzene",
+      "4-Isopropyltoluene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Salicin",
+      "gentisin",
+      "tubercidin",
+      "Reposal",
+      "1-Dodecanol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "7",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvone",
+      "2-Phenoxyethanol",
+      "Ethyl benzoate ",
+      "Cyclobutyl-5-spirobarbituric acid",
+      "Thiram"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Monotropitoside"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "7",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Procymidone",
+      "Flurochloridone",
+      "Trichloronate",
+      "RTI 20",
+      "Pencycuron"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Kepone",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "7",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "simazine",
+      "Thiram",
+      "Carvone",
+      "Atrazine",
+      "2-Phenoxyethanol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Stirofos",
+      "Lactose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "7",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Procymidone",
+      "bromopropylate",
+      "Phosalone",
+      "RTI 20",
+      "Pencycuron"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "7",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "simazine",
+      "Thiram",
+      "Carvone",
+      "Atrazine",
+      "2-Phenoxyethanol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Stirofos",
+      "Lactose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "7",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Procymidone",
+      "bromopropylate",
+      "Phosalone",
+      "RTI 20",
+      "Pencycuron"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "7",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Ethyl benzoate ",
+      "Eugenol",
+      "Phenacetin",
+      "Carvacrol",
+      "Anethole"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Fludrocortisone",
+      "Corticosterone",
+      "Amigdalin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "7",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "DDD",
+      "3-Heptanoyloxymethylphenytoin",
+      "O,P'-DDD",
+      "Cyfluthrin",
+      "2,4',5-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Butabarbital",
+      "1-Methylcyclohexene ",
+      "Eugenol",
+      "m-Xylene ",
+      "Thiram"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Sorbitol",
+      "Fructose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-aminoanthracene",
+      "biquinoline",
+      "2,6-PCB",
+      "Betamethasone-17-valerate",
+      "2,2'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "3",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Propiconazole",
+      "Equilenin",
+      "Methoxychlor",
+      "bromopropylate",
+      "Oxadiazon"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Mirex"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "3",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-Phenoxyethanol",
+      "Phenetole",
+      "4-Isopropyltoluene",
+      "styrene oxide",
+      "Isopropylbenzene "
+    ],
+    "top_k_farthest_real_ids": [
+      "Amigdalin",
+      "Monotropitoside",
+      "nifedipine",
+      "Lactose",
+      "Sucrose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "3",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvone",
+      "2-Phenoxyethanol",
+      "Cyclopropyl-5-spirobarbituric acid",
+      "Phenetole",
+      "3,5-Dimethylpyridine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Tricresyl phosphate",
+      "Trimazosin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "3",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Dichlorophen",
+      "Quinonamid",
+      "Procymidone",
+      "RTI 24",
+      "RTI 20"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "bromadiolone",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "3",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Cyclobutyl-5-spirobarbituric acid",
+      "Sulfallate",
+      "Cyclopentyl-5-spirobarbituric acid",
+      "2-Phenoxyethanol",
+      "simazine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Etoposide (148-167,25mg/ml)",
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Betamethasone-17-valerate",
+      "Riboflavin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "3",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "RTI 20",
+      "2,2'-PCB",
+      "2,6-PCB",
+      "difluron",
+      "9-anthrol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "3",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Cyclobutyl-5-spirobarbituric acid",
+      "Sulfallate",
+      "Cyclopentyl-5-spirobarbituric acid",
+      "2-Phenoxyethanol",
+      "simazine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Etoposide (148-167,25mg/ml)",
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Betamethasone-17-valerate",
+      "Riboflavin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "3",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "RTI 20",
+      "2,2'-PCB",
+      "2,6-PCB",
+      "difluron",
+      "9-anthrol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "3",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,6-PCB",
+      "2-aminoanthracene",
+      "2,2'-PCB",
+      "Flutriafol",
+      "Methaqualone"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "3",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-Phenoxyethanol",
+      "Cyclobutyl-5-spirobarbituric acid",
+      "Phenetole",
+      "1-Phenylethanol",
+      "Acetanilide"
+    ],
+    "top_k_farthest_real_ids": [
+      "Etoposide (148-167,25mg/ml)",
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "benodanil",
+      "aminopyrine"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "3",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Trichloronate",
+      "Carbazole",
+      "RTI 17",
+      "Dichlorophen",
+      "Quinonamid"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Dienochlor",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "3",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "methyl gallate",
+      "p-Aminophenol",
+      "o-Nitrophenol",
+      "Carvone",
+      "metharbital"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Diethyl phthalate ",
+      "chlordimeform"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "6",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Fenothiocarb",
+      "Metolachlor",
+      "butacarb",
+      "alachlor",
+      "Ditalimfos"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Amigdalin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "6",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-Ethyl pyridine",
+      "Ethylbenzene",
+      "1,3-diethylthiourea",
+      "thioanisole",
+      "3,4-Dimethylpyridine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benznidazole",
+      "benodanil",
+      "nitroglycerin",
+      "Dinoseb",
+      "Buturon"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "6",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Pencycuron",
+      "Propiconazole",
+      "Ethalfluralin",
+      "Flurochloridone",
+      "Dinitramine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Kepone",
+      "Lactose",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "6",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Estragole",
+      "Carvacrol",
+      "Thymol",
+      "Eugenol",
+      "Isopropylbenzene "
+    ],
+    "top_k_farthest_real_ids": [
+      "biquinoline",
+      "RTI 20",
+      "1-Methylphenanthrene",
+      "Diazepam",
+      "2-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "6",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvone",
+      "2-Phenoxyethanol",
+      "Cyclobutyl-5-spirobarbituric acid",
+      "simazine",
+      "Phenetole"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Stirofos",
+      "Lactose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "6",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Procymidone",
+      "Flurochloridone",
+      "bromopropylate",
+      "Ethalfluralin",
+      "Phosalone"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "6",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvone",
+      "2-Phenoxyethanol",
+      "Cyclobutyl-5-spirobarbituric acid",
+      "simazine",
+      "Phenetole"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Stirofos",
+      "Lactose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "6",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Procymidone",
+      "Flurochloridone",
+      "bromopropylate",
+      "Ethalfluralin",
+      "Phosalone"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "6",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Thymol",
+      "Carvacrol",
+      "Phenacetin",
+      "Eugenol",
+      "Ethyl benzoate "
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Amigdalin",
+      "phenothrin",
+      "Benfuracarb"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "6",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Etofenprox",
+      "Equilenin",
+      "O,P'-DDD",
+      "3-Heptanoyloxymethylphenytoin",
+      "Cyfluthrin"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "6",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Butabarbital",
+      "Methylcyclopentane",
+      "1,2,4-Trimethylbenzene",
+      "p-Chloronitrobenzene",
+      "Isocarboxazid"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Sorbitol",
+      "Fructose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "6",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2',3,4-PCB",
+      "2,4,6-PCB",
+      "Betamethasone-17-valerate",
+      "Pentachlorobenzene",
+      "Etofenprox"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "19",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Oxadiazon",
+      "Phosalone",
+      "bromopropylate",
+      "Anilofos",
+      "Propiconazole"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Monotropitoside"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "19",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Isobutylbenzene",
+      "4-Isopropyltoluene",
+      "2,4,6-Trimethylphenol",
+      "indoline",
+      "t-Butylbenzene "
+    ],
+    "top_k_farthest_real_ids": [
+      "Salicin",
+      "tubercidin",
+      "gentisin",
+      "Reposal",
+      "Chloramphenicol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "19",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Eugenol",
+      "Risocaine",
+      "Carvacrol",
+      "XMC",
+      "Thymol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Monotropitoside"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "19",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Equilenin",
+      "Ethalfluralin",
+      "Pencycuron",
+      "Methoxychlor",
+      "Isopropalin"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Kepone",
+      "bromadiolone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "19",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Eugenol",
+      "Carvacrol",
+      "Thymol",
+      "isophorone",
+      "simazine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Eicosane",
+      "Digitoxin",
+      "dioctyl phthalate",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "diisooctyl phthalate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "19",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Nitrofen",
+      "Triclosan",
+      "Diazepam",
+      "Bromophos",
+      "Ronnel"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "19",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Eugenol",
+      "Carvacrol",
+      "Thymol",
+      "isophorone",
+      "simazine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Eicosane",
+      "Digitoxin",
+      "dioctyl phthalate",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "diisooctyl phthalate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "19",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Nitrofen",
+      "Triclosan",
+      "Diazepam",
+      "Bromophos",
+      "Ronnel"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "19",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Phosalone",
+      "Anilofos",
+      "Neburon",
+      "phenylbutazone",
+      "chlorpyrifos"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "19",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "3,5-Dimethylphenol",
+      "Carvone",
+      "o-Nitroanisole",
+      "allicin",
+      "4-Heptanone"
+    ],
+    "top_k_farthest_real_ids": [
+      "Amigdalin",
+      "Monotropitoside",
+      "Lactose",
+      "Sucrose",
+      "Sorbitol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "19",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Piperophos",
+      "Acenapthene",
+      "Flurochloridone",
+      "oryzalin",
+      "17a-Methyltestosterone"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "19",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cyclobutyl-5-spirobarbituric acid",
+      "1-Bromopropane",
+      "Pentyl propanoate",
+      "Cycloheptanol",
+      "1-Chloro-2-bromoethane"
+    ],
+    "top_k_farthest_real_ids": [
+      "Sorbitol",
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Fructose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "18",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Mefluidide",
+      "Metolachlor",
+      "Hexestrol",
+      "Ditalimfos"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "bromadiolone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "18",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-Ethyl pyridine",
+      "Ethylbenzene",
+      "1,3-diethylthiourea",
+      "Isopropylbenzene ",
+      "3,4-Dimethylpyridine"
+    ],
+    "top_k_farthest_real_ids": [
+      "methyl laurate",
+      "1-Dodecanol",
+      "Ethyl decanoate",
+      "nitroglycerin",
+      "benodanil"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "18",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Metolachlor",
+      "Rovral",
+      "Anilofos",
+      "dibutylphthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "18",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "N,N-Dimethylaniline",
+      "2,4-Dimethylphenol",
+      "2,6-Dimethylphenol",
+      "Ethylbenzene",
+      "allicin"
+    ],
+    "top_k_farthest_real_ids": [
+      "biquinoline",
+      "1-Methylphenanthrene",
+      "RTI 20",
+      "methyl laurate",
+      "1-Dodecanol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "18",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Isoprocarb",
+      "Bromacil",
+      "Butamben",
+      "Carbofuran",
+      "Aminocarb"
+    ],
+    "top_k_farthest_real_ids": [
+      "Eicosane",
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "dioctyl phthalate",
+      "Cyhalothrin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "18",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,3'-PCB",
+      "2,2',6,6'-PCB",
+      "2,2',3,5'-PCB",
+      "2,2',4,5'-PCB",
+      "6-aminochrysene"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "hydroxychlordene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "18",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Isoprocarb",
+      "Bromacil",
+      "Butamben",
+      "Carbofuran",
+      "Aminocarb"
+    ],
+    "top_k_farthest_real_ids": [
+      "Eicosane",
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "dioctyl phthalate",
+      "Cyhalothrin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "18",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,3'-PCB",
+      "2,2',6,6'-PCB",
+      "2,2',3,5'-PCB",
+      "2,2',4,5'-PCB",
+      "6-aminochrysene"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "hydroxychlordene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "18",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Phosalone",
+      "Anilofos",
+      "Neburon",
+      "Dinitramine",
+      "chlorpyrifos"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "18",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "o-Nitroanisole",
+      "3,5-Dimethylphenol",
+      "Carvone",
+      "p-Nitroanisole",
+      "4-Heptanone"
+    ],
+    "top_k_farthest_real_ids": [
+      "Amigdalin",
+      "Monotropitoside",
+      "Lactose",
+      "Sucrose",
+      "Riboflavin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Rotenone",
+      "Bensulide",
+      "Dibenzothiophene",
+      "Stanolone",
+      "Epiandrosterone"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,4,6-Trimethylphenol",
+      "1,5-Hexadiene ",
+      "Nitrobenzene",
+      "Butanethiol ",
+      "Cycloheptanol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Sorbitol",
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Fructose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "14",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Mefluidide",
+      "Metolachlor",
+      "Hexestrol",
+      "Ditalimfos"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Betamethasone-17-valerate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "14",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Isopropylbenzene ",
+      "N-Ethylaniline",
+      "2-Ethyl pyridine",
+      "3,5-Dimethylphenol",
+      "Ethylbenzene"
+    ],
+    "top_k_farthest_real_ids": [
+      "methyl laurate",
+      "1-Dodecanol",
+      "Ethyl decanoate",
+      "nitroglycerin",
+      "Anthraquinone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "14",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Clomazone",
+      "alachlor",
+      "Napropamide",
+      "Metolachlor",
+      "Neburon"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "14",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-Ethyl pyridine",
+      "2,3-Dimethylpyridine",
+      "2,4-Dimethylpyridine",
+      "Phenetole",
+      "3,5-Dimethylpyridine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Naled",
+      "p-benzidine",
+      "Benzophenone",
+      "p-Phenylphenol",
+      "Methane"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "14",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Isoprocarb",
+      "Carbofuran",
+      "Aminocarb"
+    ],
+    "top_k_farthest_real_ids": [
+      "Eicosane",
+      "dioctyl phthalate",
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Cyhalothrin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "14",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',6,6'-PCB",
+      "2,2',3,3'-PCB",
+      "6-Methylchrysene",
+      "5-Methylchrysene",
+      "6-aminochrysene"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "4,4'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "14",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Isoprocarb",
+      "Carbofuran",
+      "Aminocarb"
+    ],
+    "top_k_farthest_real_ids": [
+      "Eicosane",
+      "dioctyl phthalate",
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Cyhalothrin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "14",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',6,6'-PCB",
+      "2,2',3,3'-PCB",
+      "6-Methylchrysene",
+      "5-Methylchrysene",
+      "6-aminochrysene"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "4,4'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "14",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Amitraz",
+      "Methyldymron",
+      "Quinonamid",
+      "Triallate",
+      "RTI 24"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "14",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "1-Phenylethanol",
+      "3-Hexanone",
+      "1-Pentanol",
+      "4-Methyl-2-pentanone",
+      "Propylisopropylether"
+    ],
+    "top_k_farthest_real_ids": [
+      "Amigdalin",
+      "Lactose",
+      "Monotropitoside",
+      "Sucrose",
+      "Sorbitol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "14",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "1-Decene",
+      "Vinclozolin",
+      "2-bromonaphthalene",
+      "2-Bromonapthalene",
+      "RTI 23"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "14",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "m-Nitrophenol",
+      "3-Methyl-1-Butene",
+      "3-Methyl-2-pentanone",
+      "theobromine",
+      "Sulfanilamide"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Sorbitol",
+      "d-inositol",
+      "Fructose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2-Ethyltoluene",
+      "4-Ethyltoluene",
+      "Propylbenzene ",
+      "1,2-Diethylbenzene",
+      "1,4-Diethylbenzene "
+    ],
+    "top_k_farthest_real_ids": [
+      "Pyrene",
+      "Rovral",
+      "Fluoranthene",
+      "Quinonamid",
+      "Thalidomide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Equilenin",
+      "Propiconazole",
+      "bromopropylate",
+      "Piperine",
+      "Dialifos"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Betamethasone-17-valerate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "1,2-Diethylbenzene",
+      "1,4-Diethylbenzene ",
+      "Isobutylbenzene",
+      "4-Isopropyltoluene",
+      "styrene oxide"
+    ],
+    "top_k_farthest_real_ids": [
+      "Abate",
+      "diisooctyl phthalate",
+      "dioctyl phthalate",
+      "Dialifor",
+      "Dialifos"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Equilenin",
+      "phenylbutazone",
+      "Apazone",
+      "Pencycuron",
+      "Perfluidone"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Betamethasone-17-valerate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Vinclozolin",
+      "Flurochloridone",
+      "DDT",
+      "Ditalimfos"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Kepone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Succinimide",
+      "rhodanine",
+      "Furfural",
+      "Nerol",
+      "Toluene "
+    ],
+    "top_k_farthest_real_ids": [
+      "Dinoseb",
+      "Quintozene",
+      "p-benzidine",
+      "1,3,5-Trinitrobenzene",
+      "p-Phenylphenol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Vinclozolin",
+      "Flurochloridone",
+      "DDT",
+      "Ditalimfos"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Kepone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Succinimide",
+      "rhodanine",
+      "Furfural",
+      "Nerol",
+      "Toluene "
+    ],
+    "top_k_farthest_real_ids": [
+      "Dinoseb",
+      "Quintozene",
+      "p-benzidine",
+      "1,3,5-Trinitrobenzene",
+      "p-Phenylphenol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Triadimefon",
+      "5-Allyl-5-phenylbarbital",
+      "Mefluidide",
+      "Sparsomycin (3,8mg/ml)",
+      "aminopyrine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Kepone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-Ethyl-2-hexanal",
+      "1-Methylcyclohexene ",
+      "tetramethylurea",
+      "Cyclohexanone",
+      "2,4-Dimethyl-3-pentanone"
+    ],
+    "top_k_farthest_real_ids": [
+      "dibutyl sebacate",
+      "Eicosane",
+      "DEF",
+      "1-Octadecanol",
+      "Methane"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Pencycuron",
+      "Methaqualone",
+      "Pyrene",
+      "bromopropylate",
+      "RTI 3"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Kepone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "1,4-Difluorobenzene",
+      "1,3-Difluorobenzene",
+      "3-Chlorophenol",
+      "4-Chlorophenol ",
+      "4-Chlorotoluene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Methane",
+      "Benzophenone",
+      "1-Nitronapthalene",
+      "Cyclopentyl-5-spirobarbituric acid",
+      "Fenthion"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "13",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Anilofos",
+      "Hexestrol",
+      "Napropamide",
+      "Dinitramine",
+      "dibutylphthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Betamethasone-17-valerate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "13",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Isopropylbenzene ",
+      "N-Ethylaniline",
+      "Phenetole",
+      "indoline",
+      "3,5-Dimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "methyl laurate",
+      "1-Dodecanol",
+      "RTI 10",
+      "Methane",
+      "Buthidazole"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "13",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Metolachlor",
+      "alachlor",
+      "Hexestrol",
+      "Rovral"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "13",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "N,N-Dimethylaniline",
+      "allicin",
+      "N-Ethylaniline",
+      "Ethylbenzene",
+      "2,4-Dimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "methyl laurate",
+      "1-Dodecanol",
+      "1-Methylfluorene",
+      "1,2,3,4-Tetrachlorobenzene",
+      "Hexachloroethane"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "13",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Butamben",
+      "Bromacil",
+      "Isoprocarb",
+      "Carbofuran",
+      "pyracarbolid"
+    ],
+    "top_k_farthest_real_ids": [
+      "Eicosane",
+      "dioctyl phthalate",
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "diisooctyl phthalate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "13",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,3'-PCB",
+      "2,2',6,6'-PCB",
+      "2,2',3,5'-PCB",
+      "6-aminochrysene",
+      "Chrysene"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "hydroxychlordene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "13",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Butamben",
+      "Bromacil",
+      "Isoprocarb",
+      "Carbofuran",
+      "pyracarbolid"
+    ],
+    "top_k_farthest_real_ids": [
+      "Eicosane",
+      "dioctyl phthalate",
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "diisooctyl phthalate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "13",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,3'-PCB",
+      "2,2',6,6'-PCB",
+      "2,2',3,5'-PCB",
+      "6-aminochrysene",
+      "Chrysene"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "hydroxychlordene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "13",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Pencycuron",
+      "Equilenin",
+      "Dialifor",
+      "Dialifos",
+      "phenothrin"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "13",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Eugenol",
+      "Ethyl benzoate ",
+      "Dulcin",
+      "Methyl hexanoate",
+      "isophorone"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Amigdalin",
+      "Sucrose",
+      "Monotropitoside",
+      "Sorbitol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "13",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Neburon",
+      "Estrone",
+      "RTI 20",
+      "Rotenone",
+      "Androstenedione"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "13",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-Methylbutane",
+      "Chloropicrin",
+      "4-Nitroacetanilide",
+      "Toluene ",
+      "p-Nitroanisole"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Sorbitol",
+      "d-inositol",
+      "Fructose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "11",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Propiconazole",
+      "Oxadiazon",
+      "Phosalone",
+      "Ethalfluralin",
+      "Anilofos"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "bromadiolone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "11",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "4-Isopropyltoluene",
+      "Isobutylbenzene",
+      "t-Butylbenzene ",
+      "2,4,6-Trimethylphenol",
+      "indoline"
+    ],
+    "top_k_farthest_real_ids": [
+      "Salicin",
+      "tubercidin",
+      "gentisin",
+      "Reposal",
+      "Thalidomide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "11",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Neburon",
+      "Metolachlor",
+      "alachlor",
+      "Hexestrol"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Mirex",
+      "Digitoxin",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "11",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "allicin",
+      "N-Ethylaniline",
+      "Carvone",
+      "N,N-Dimethylaniline",
+      "styrene oxide"
+    ],
+    "top_k_farthest_real_ids": [
+      "1-Dodecanol",
+      "methyl laurate",
+      "Lenacil",
+      "Ethyl decanoate",
+      "Triallate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "11",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvone",
+      "allicin",
+      "2,4-Dimethylphenol",
+      "2-Ethyl pyridine",
+      "2-Phenoxyethanol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Lactose",
+      "Amigdalin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "11",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Neburon",
+      "Flurochloridone",
+      "Procymidone",
+      "Propiconazole"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "11",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvone",
+      "allicin",
+      "2,4-Dimethylphenol",
+      "2-Ethyl pyridine",
+      "2-Phenoxyethanol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Lactose",
+      "Amigdalin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "11",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Neburon",
+      "Flurochloridone",
+      "Procymidone",
+      "Propiconazole"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "11",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Thymol",
+      "Carvacrol",
+      "Risocaine",
+      "simazine",
+      "Phenacetin"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Amigdalin",
+      "Niclosamide",
+      "Sorbitol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "11",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Atovaquone(0,430mg/ml) - neutral",
+      "O,P'-DDD",
+      "Abate",
+      "Deltamethrin",
+      "DDD"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "11",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "RTI 23",
+      "Ethyl decanoate",
+      "Hexachloro-1,3-butadiene",
+      "1-Chloronapthalene",
+      "Quinonamid"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "11",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "3,5-Dimethylpyridine",
+      "Bromodichloromethane",
+      "Sulfanilamide",
+      "Benzotriazole",
+      "1-Chloropropane"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Sorbitol",
+      "d-inositol",
+      "Fructose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "5",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Vinclozolin",
+      "Ditalimfos",
+      "butacarb",
+      "Metolachlor",
+      "hydrochlorothiazide"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Betamethasone-17-valerate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "5",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Methyl pentanoate",
+      "Methyl butyrate",
+      "3-Methyl-2-pentanone",
+      "4-Methyl-2-pentanone",
+      "2-Ethylbutanal"
+    ],
+    "top_k_farthest_real_ids": [
+      "benodanil",
+      "Ethyl decanoate",
+      "2-Undecanol",
+      "Methyl decanoate",
+      "4-hexylresorcinol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "5",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Propiconazole",
+      "Quinonamid",
+      "Procymidone",
+      "Dinitramine",
+      "Trichloronate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Kepone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "5",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2-Phenoxyethanol",
+      "Carvone",
+      "Phenetole",
+      "N-Ethylaniline",
+      "styrene oxide"
+    ],
+    "top_k_farthest_real_ids": [
+      "Riboflavin",
+      "Eriodictyol",
+      "1-Dodecanol",
+      "Phenytoin",
+      "methyl laurate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "5",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Ethyl benzoate ",
+      "Carvacrol",
+      "Phenacetin",
+      "Eugenol",
+      "Thymol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Stirofos",
+      "Flutriafol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "5",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Methoxychlor",
+      "Coumatetralyl",
+      "DDD",
+      "Cyfluthrin",
+      "3-Heptanoyloxymethylphenytoin"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Benzo[ghi]perylene",
+      "Kepone",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "5",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Ethyl benzoate ",
+      "Carvacrol",
+      "Phenacetin",
+      "Eugenol",
+      "Thymol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Stirofos",
+      "Flutriafol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "5",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Methoxychlor",
+      "Coumatetralyl",
+      "DDD",
+      "Cyfluthrin",
+      "3-Heptanoyloxymethylphenytoin"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Benzo[ghi]perylene",
+      "Kepone",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "5",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Coumatetralyl",
+      "DDD",
+      "Methoxychlor",
+      "2-Methylanthracene",
+      "Coumachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Benzo[ghi]perylene",
+      "Kepone",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "5",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Ethyl benzoate ",
+      "Phenacetin",
+      "Eugenol",
+      "Anethole",
+      "Cyclopentyl-5-spirobarbituric acid"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Lactose",
+      "Sucrose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "5",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Propiconazole",
+      "Stirofos",
+      "phenanthridine",
+      "Carbazole",
+      "Deltamethrin"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Benzo[ghi]perylene",
+      "Kepone",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "5",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Thiophenol ",
+      "1,2-Diethoxyethane ",
+      "Pentyl propanoate",
+      "Caffeine",
+      "2-Hexanone"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Amigdalin",
+      "Sorbitol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "17",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Propiconazole",
+      "Oxadiazon",
+      "Phosalone",
+      "Anilofos",
+      "Pencycuron"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Monotropitoside"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "17",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "4-Isopropyltoluene",
+      "Isobutylbenzene",
+      "2,4,6-Trimethylphenol",
+      "Carvacrol",
+      "Thymol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Salicin",
+      "tubercidin",
+      "gentisin",
+      "Khellin",
+      "Reposal"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "17",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Metolachlor",
+      "Anilofos",
+      "Rovral",
+      "dibutylphthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "17",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "N,N-Dimethylaniline",
+      "2,4-Dimethylphenol",
+      "allicin",
+      "2,6-Dimethylphenol",
+      "3,5-Dimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "1-Methylphenanthrene",
+      "methyl laurate",
+      "2-Methylanthracene",
+      "1-Dodecanol",
+      "2,2'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "17",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Eugenol",
+      "Carvone",
+      "2,4,6-Trimethylphenol",
+      "3,5-Dimethylphenol",
+      "isophorone"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Lactose",
+      "Amigdalin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "17",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Equilenin",
+      "Coumatetralyl",
+      "Bromophos",
+      "bromopropylate",
+      "Ronnel"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "17",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Eugenol",
+      "Carvone",
+      "2,4,6-Trimethylphenol",
+      "3,5-Dimethylphenol",
+      "isophorone"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Etoposide (148-167,25mg/ml)",
+      "Lactose",
+      "Amigdalin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "17",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Equilenin",
+      "Coumatetralyl",
+      "Bromophos",
+      "bromopropylate",
+      "Ronnel"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "17",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Equilenin",
+      "Pencycuron",
+      "Ethalfluralin",
+      "Trichloronate",
+      "Fenarimol"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "17",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Eugenol",
+      "Ethyl benzoate ",
+      "1,3-Dinitrobenzene",
+      "1,4-Dinitrobenzene",
+      "1,2-Dinitrobenzene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Amigdalin",
+      "Lactose",
+      "Sucrose",
+      "Monotropitoside",
+      "Sorbitol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Methyldymron",
+      "1-Chloronapthalene",
+      "dibutylphthalate",
+      "1-Decene",
+      "2-Ethylnaphthalene"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "3-Methyl-1-Butene",
+      "2,3-Dimethylpyridine",
+      "Diiodomethane",
+      "methylthiouracil",
+      "Phenylmethanol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Sorbitol",
+      "d-inositol",
+      "Fructose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "2",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2-Phenoxyethanol",
+      "t-Butylbenzene ",
+      "4-Isopropyltoluene",
+      "Isobutylbenzene",
+      "styrene oxide"
+    ],
+    "top_k_farthest_real_ids": [
+      "Flumetralin",
+      "Benfuracarb",
+      "Perfluidone",
+      "fluconazole",
+      "hematein"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "2",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Methoxychlor",
+      "nevirapine",
+      "RTI 20",
+      "RTI 2",
+      "Amitraz"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "bromadiolone",
+      "Etoposide (148-167,25mg/ml)",
+      "L-arabinose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "2",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2-Phenoxyethanol",
+      "Isopropylbenzene ",
+      "1-Phenylethanol",
+      "3,4-Dimethylpyridine",
+      "3,5-Dimethylpyridine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Abate",
+      "Benfuracarb",
+      "Phosalone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "2",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Methoxychlor",
+      "bromopropylate",
+      "RTI 20",
+      "nevirapine",
+      "Pencycuron"
+    ],
+    "top_k_farthest_real_ids": [
+      "bromadiolone",
+      "Mirex",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Kepone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "2",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Quinonamid",
+      "RTI 9",
+      "Phenytoin",
+      "Propiconazole",
+      "1-Methylfluorene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "bromadiolone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "2",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "isophorone",
+      "2-Ethyl pyridine",
+      "Sulfallate",
+      "d-Limonene",
+      "thiouracil"
+    ],
+    "top_k_farthest_real_ids": [
+      "Abate",
+      "Phosalone",
+      "Dialifor",
+      "Dialifos",
+      "Stirofos"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "2",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Quinonamid",
+      "RTI 9",
+      "Phenytoin",
+      "Propiconazole",
+      "1-Methylfluorene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "bromadiolone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "2",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "isophorone",
+      "2-Ethyl pyridine",
+      "Sulfallate",
+      "d-Limonene",
+      "thiouracil"
+    ],
+    "top_k_farthest_real_ids": [
+      "Abate",
+      "Phosalone",
+      "Dialifor",
+      "Dialifos",
+      "Stirofos"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "2",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Isopropylbenzene ",
+      "Propylbenzene ",
+      "o-Xylene ",
+      "N,N-Dimethylaniline",
+      "4-Bromophenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Ancymidol",
+      "Amitraz",
+      "Pentachlorobenzene",
+      "Napropamide",
+      "oryzalin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "2",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "DDT",
+      "Lorazepam",
+      "Flutriafol",
+      "Clonazepam",
+      "2,2',3,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "bromadiolone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "2",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carbazole",
+      "Mefenacet",
+      "Pencycuron",
+      "Ethalfluralin",
+      "Hydrocortisone 21-acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "bromadiolone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "2",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Pentylcyclopentane",
+      "cytosine",
+      "methyl laurate",
+      "Sulfallate",
+      "uracil"
+    ],
+    "top_k_farthest_real_ids": [
+      "Siduron",
+      "Barban",
+      "1,3,5-Trinitrobenzene",
+      "karbutilate",
+      "Buthidazole"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "9",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Propiconazole",
+      "Phosalone",
+      "Oxadiazon",
+      "Ethalfluralin",
+      "Anilofos"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Monotropitoside"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "9",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "4-Isopropyltoluene",
+      "Isobutylbenzene",
+      "Carvacrol",
+      "Thymol",
+      "t-Butylbenzene "
+    ],
+    "top_k_farthest_real_ids": [
+      "Salicin",
+      "gentisin",
+      "tubercidin",
+      "Khellin",
+      "Reposal"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "9",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Anilofos",
+      "Napropamide",
+      "Hexestrol",
+      "Metolachlor",
+      "Phosalone"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "9",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Isopropylbenzene ",
+      "N,N-Dimethylaniline",
+      "Ethylbenzene",
+      "Carvone",
+      "2,4-Dimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "1-Dodecanol",
+      "1-Methylfluorene",
+      "methyl laurate",
+      "Hexachloroethane",
+      "Anthraquinone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "9",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Isoproturon",
+      "Carbofuran",
+      "ethiofencarb"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(a)fluorene",
+      "DDT",
+      "P,P'-DDE",
+      "Quintozene",
+      "9,10-Dimethylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "9",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,3,4,5,6-PCB",
+      "5,6-Dimethylchrysene",
+      "7,12-Dimethylbenz(a)anthracene",
+      "2,2',4,4',5,5'-PCB",
+      "2,2,4,6,6'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Triazolam",
+      "Kepone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "9",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Isoproturon",
+      "Carbofuran",
+      "ethiofencarb"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(a)fluorene",
+      "DDT",
+      "P,P'-DDE",
+      "Quintozene",
+      "9,10-Dimethylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "9",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,3,4,5,6-PCB",
+      "5,6-Dimethylchrysene",
+      "7,12-Dimethylbenz(a)anthracene",
+      "2,2',4,4',5,5'-PCB",
+      "2,2,4,6,6'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Triazolam",
+      "Kepone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "9",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Phenacetin",
+      "Thymol",
+      "Propazine",
+      "Carvacrol",
+      "Atrazine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Lactose",
+      "Sucrose",
+      "Amigdalin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "9",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "DDD",
+      "O,P'-DDD",
+      "Atovaquone(0,430mg/ml) - neutral",
+      "Equilenin",
+      "1-Methylphenanthrene"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "9",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "butacarb",
+      "Prasterone",
+      "RTI 17",
+      "RTI 22",
+      "Anthraquinone"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "9",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,6-Dimethylpyridine",
+      "Cyclopentene ",
+      "1-Chloro-2-bromoethane",
+      "2-Hexanol",
+      "1,4-Dinitrobenzene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Sorbitol",
+      "Amigdalin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "16",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Metolachlor",
+      "dibutylphthalate",
+      "Mefluidide",
+      "Hexestrol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "bromadiolone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "16",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Isopropylbenzene ",
+      "3,5-Dimethylphenol",
+      "N-Ethylaniline",
+      "2,4-Dimethylphenol",
+      "2,6-Dimethylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(a)fluorene",
+      "Pyrene",
+      "Triclosan",
+      "Fluoranthene",
+      "Dichlorophen"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "16",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Metolachlor",
+      "Anilofos",
+      "dibutylphthalate",
+      "alachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "16",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "N,N-Dimethylaniline",
+      "2,4-Dimethylphenol",
+      "2,6-Dimethylphenol",
+      "3,5-Dimethylphenol",
+      "N-Ethylaniline"
+    ],
+    "top_k_farthest_real_ids": [
+      "1-Methylphenanthrene",
+      "2-Methylanthracene",
+      "2,2'-PCB",
+      "2,6-PCB",
+      "2,4'-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "16",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Isoprocarb",
+      "Butamben",
+      "Bromacil",
+      "XMC",
+      "Carbofuran"
+    ],
+    "top_k_farthest_real_ids": [
+      "Eicosane",
+      "Digitoxin",
+      "dioctyl phthalate",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "diisooctyl phthalate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "16",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,5'-PCB",
+      "2,2',3,3'-PCB",
+      "2,2',6,6'-PCB",
+      "2,2',4,5'-PCB",
+      "2,3',4',5-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "hydroxychlordene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "16",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Isoprocarb",
+      "Butamben",
+      "Bromacil",
+      "XMC",
+      "Carbofuran"
+    ],
+    "top_k_farthest_real_ids": [
+      "Eicosane",
+      "Digitoxin",
+      "dioctyl phthalate",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "diisooctyl phthalate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "16",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,5'-PCB",
+      "2,2',3,3'-PCB",
+      "2,2',6,6'-PCB",
+      "2,2',4,5'-PCB",
+      "2,3',4',5-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "hydroxychlordene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "16",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Isoprocarb",
+      "pyracarbolid",
+      "Aminocarb",
+      "Carboxin",
+      "Monuron"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Betamethasone-17-valerate",
+      "dibutyl sebacate",
+      "Etoposide (148-167,25mg/ml)"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "16",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',6,6'-PCB",
+      "2,2',3,3'-PCB",
+      "Flumetralin",
+      "6-Methylchrysene",
+      "5-Methylchrysene"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "1-Tetradecanol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "16",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "1,3-Difluorobenzene",
+      "Trichloroacetonitrile",
+      "indoline",
+      "citral",
+      "Thymol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sorbitol",
+      "Sucrose",
+      "d-inositol",
+      "Fructose"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "16",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "9,10-Dimethylanthracene",
+      "Pentachlorobenzene",
+      "DEF",
+      "2,4',5-PCB",
+      "Tetradecane"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "8",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Propiconazole",
+      "Dialifor",
+      "Dialifos",
+      "Pencycuron",
+      "Phosalone"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Hexachloroethane"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "8",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Carvacrol",
+      "Thymol",
+      "Isobutylbenzene",
+      "4-Isopropyltoluene",
+      "N,N-Diethylaniline"
+    ],
+    "top_k_farthest_real_ids": [
+      "Isofenphos",
+      "Salicin",
+      "Methoxychlor",
+      "Anilofos",
+      "gentisin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "8",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Napropamide",
+      "Metolachlor",
+      "Neburon",
+      "Hexestrol",
+      "alachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Kepone"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "8",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "allicin",
+      "2-Ethyl pyridine",
+      "N-Ethylaniline",
+      "Phenetole",
+      "Carvone"
+    ],
+    "top_k_farthest_real_ids": [
+      "Hexachloroethane",
+      "methyl laurate",
+      "Ethyl decanoate",
+      "2-Undecanol",
+      "1-Decanol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "8",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvacrol",
+      "Thymol",
+      "Ethyl benzoate ",
+      "Eugenol",
+      "Phenacetin"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Glafenine",
+      "Lactose",
+      "Lorazepam"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "8",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Equilenin",
+      "Trichloronate",
+      "Coumatetralyl",
+      "Abate",
+      "Methoxychlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Mirex"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "8",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Carvacrol",
+      "Thymol",
+      "Ethyl benzoate ",
+      "Eugenol",
+      "Phenacetin"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Glafenine",
+      "Lactose",
+      "Lorazepam"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "8",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Equilenin",
+      "Trichloronate",
+      "Coumatetralyl",
+      "Abate",
+      "Methoxychlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Mirex"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "8",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Pencycuron",
+      "Phosalone",
+      "Coumatetralyl",
+      "3,4-PCB",
+      "2,4'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Mirex"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "8",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "simazine",
+      "Eugenol",
+      "Atrazine",
+      "Ethyl benzoate ",
+      "linalool"
+    ],
+    "top_k_farthest_real_ids": [
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Lactose",
+      "Sucrose",
+      "Amigdalin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "XMC",
+      "Anethole",
+      "Cyclohexanone",
+      "1-Iodobutane",
+      "indazole"
+    ],
+    "top_k_farthest_real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Sorbitol",
+      "Amigdalin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "hydroxychlordene",
+      "1-Pentadecanol",
+      "2-Methylanthracene",
+      "Methoxychlor",
+      "2,6-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Mirex"
+    ],
+    "k": 5
+  }
+]

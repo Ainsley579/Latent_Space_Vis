@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Write id/smiles/y_true/y_pred rows (with split) from ESOL-format embedding .pt files.
+Write id/smiles/y_true rows (with split) and per-epoch y_pred from ESOL-format embedding .pt files.
 
 Usage:
   python scripts/write_id_smiles_y_with_split.py --both-cases
 
   python scripts/write_id_smiles_y_with_split.py \
     --input /path/to/chemprop-embeddings.pt \
-    --output ../frontend/public/data/chemprop/id_smiles_y_true_y_pred.json
+    --output ../backend/data/chemprop/id_smiles_y_true_y_pred.json
 """
 
 import argparse
@@ -23,7 +23,7 @@ except ImportError as exc:  # pragma: no cover
 
 
 _BACKEND = Path(__file__).resolve().parent.parent
-FRONTEND_DATA = _BACKEND.resolve().parents[1] / "latentvis" / "frontend" / "public" / "data"
+DATA_ROOT = _BACKEND / "data"
 DEFAULT_CHEMPROP_PT = Path("/global/cfs/projectdirs/m636/nhadler/projects/esol/data/chemprop-embeddings.pt")
 DEFAULT_CHEMELEON_PT = Path("/global/cfs/projectdirs/m636/nhadler/projects/esol/data/chemeleon-embeddings.pt")
 
@@ -51,15 +51,25 @@ def _load_raw_pt(pt_path: Path) -> Any:
         return torch.load(str(pt_path), map_location="cpu")
 
 
+def _epoch_sort_key(value: Any):
+    s = str(value)
+    return (0, int(s), s) if s.isdigit() else (1, s)
+
+
 def load_rows(pt_path: Path, include_splits: List[str]) -> List[Dict[str, Any]]:
     raw = _load_raw_pt(pt_path)
     if not isinstance(raw, dict):
         return []
 
     rows: List[Dict[str, Any]] = []
+    epoch_keys = sorted([str(k) for k in raw.keys()], key=_epoch_sort_key)
     for split_name in include_splits:
-        ids = smiles = y_true = y_pred = None
-        for _, epoch_data in raw.items():
+        base_ids = base_smiles = base_y_true = None
+        base_order: List[str] = []
+        by_id: Dict[str, Dict[str, Any]] = {}
+
+        for epoch_key in epoch_keys:
+            epoch_data = raw.get(epoch_key)
             if not isinstance(epoch_data, dict):
                 continue
             split_data = epoch_data.get(split_name)
@@ -78,23 +88,51 @@ def load_rows(pt_path: Path, include_splits: List[str]) -> List[Dict[str, Any]]:
             smiles = list(smiles_local[:n])
             y_true = list(y_local[:n])
             y_pred = list(y_pred_local[:n])
-            break
 
-        if ids is None or smiles is None or y_true is None or y_pred is None:
+            if base_ids is None:
+                base_ids = ids
+                base_smiles = smiles
+                base_y_true = y_true
+                base_order = [str(x) for x in base_ids]
+                for i in range(n):
+                    rid = str(base_ids[i])
+                    by_id[rid] = {
+                        "id": rid,
+                        "real_id": rid,
+                        "smiles": str(base_smiles[i]),
+                        "y_true": _to_plain_float(base_y_true[i]),
+                        "y_pred_by_epoch": {},
+                        "split": split_name,
+                    }
+
+            for i in range(n):
+                rid = str(ids[i])
+                if rid not in by_id:
+                    by_id[rid] = {
+                        "id": rid,
+                        "real_id": rid,
+                        "smiles": str(smiles[i]),
+                        "y_true": _to_plain_float(y_true[i]),
+                        "y_pred_by_epoch": {},
+                        "split": split_name,
+                    }
+                    base_order.append(rid)
+                by_id[rid]["y_pred_by_epoch"][str(epoch_key)] = _to_plain_float(y_pred[i])
+
+        if not by_id:
             continue
 
-        for i in range(len(ids)):
-            rid = str(ids[i])
-            rows.append(
-                {
-                    "id": rid,
-                    "real_id": rid,
-                    "smiles": str(smiles[i]),
-                    "y_true": _to_plain_float(y_true[i]),
-                    "y_pred": _to_plain_float(y_pred[i]),
-                    "split": split_name,
-                }
-            )
+        # Keep a convenience scalar y_pred as "latest epoch" for backward compatibility.
+        latest_epoch = None
+        if epoch_keys:
+            latest_epoch = str(epoch_keys[-1])
+        for rid in base_order:
+            item = by_id[rid]
+            if latest_epoch is not None:
+                item["y_pred"] = item.get("y_pred_by_epoch", {}).get(latest_epoch)
+            else:
+                item["y_pred"] = None
+            rows.append(item)
     return rows
 
 
@@ -120,7 +158,7 @@ def _write_case(name: str, pt_path: Path, out_path: Path, include_splits: List[s
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Write id/smiles/y_true/y_pred JSON for frontend.")
+    ap = argparse.ArgumentParser(description="Write id/smiles/y_true and per-epoch y_pred JSON.")
     ap.add_argument("--input", type=Path, help="Input ESOL-format .pt")
     ap.add_argument("--output", type=Path, help="Output JSON path")
     ap.add_argument(
@@ -132,7 +170,7 @@ def main() -> int:
     ap.add_argument(
         "--both-cases",
         action="store_true",
-        help="Write both chemprop and chemeleon to frontend/public/data/<case>/id_smiles_y_true_y_pred.json",
+        help="Write both chemprop and chemeleon to backend/data/<case>/id_smiles_y_true_y_pred.json",
     )
     args = ap.parse_args()
 
@@ -146,8 +184,8 @@ def main() -> int:
             print("Do not combine --both-cases with --input/--output.")
             return 1
         cases = [
-            ("chemprop", DEFAULT_CHEMPROP_PT, FRONTEND_DATA / "chemprop" / "id_smiles_y_true_y_pred.json"),
-            ("chemeleon", DEFAULT_CHEMELEON_PT, FRONTEND_DATA / "chemeleon" / "id_smiles_y_true_y_pred.json"),
+            ("chemprop", DEFAULT_CHEMPROP_PT, DATA_ROOT / "chemprop" / "id_smiles_y_true_y_pred.json"),
+            ("chemeleon", DEFAULT_CHEMELEON_PT, DATA_ROOT / "chemeleon" / "id_smiles_y_true_y_pred.json"),
         ]
         failures = 0
         for name, pt_path, out_path in cases:

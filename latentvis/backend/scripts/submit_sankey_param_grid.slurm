@@ -49,7 +49,11 @@ esac
 #   AGG_LINKAGES=complete,average  (default: ward,complete,average)
 AGG_LINKAGES_RAW="${AGG_LINKAGES:-ward,complete,average}"
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [[ -n "${SLURM_SUBMIT_DIR:-}" ]]; then
+  SCRIPT_DIR="$(cd "${SLURM_SUBMIT_DIR}" && pwd)"
+else
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 BACKEND_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 DATA_ROOT="${LATENTVIS_DATA_ROOT:-$BACKEND_DIR/data}"
 INPUT="/global/cfs/projectdirs/m636/nhadler/projects/esol/data/${DATASET}-embeddings.pt"
@@ -58,6 +62,10 @@ OUT_ROOT="$DATA_ROOT/$DATASET/$SPLIT/sweeps/$METHOD"
 if [[ ! -d "$BACKEND_DIR" ]]; then echo "ERROR: BACKEND_DIR missing: $BACKEND_DIR"; exit 1; fi
 if [[ ! -f "$BACKEND_DIR/run_pipeline_from_embeddings.py" ]]; then echo "ERROR: run_pipeline_from_embeddings.py not found"; exit 1; fi
 if [[ ! -f "$INPUT" ]]; then echo "ERROR: Input missing: $INPUT"; exit 1; fi
+echo "[paths] SLURM_SUBMIT_DIR=${SLURM_SUBMIT_DIR:-<unset>}"
+echo "[paths] SCRIPT_DIR=$SCRIPT_DIR"
+echo "[paths] BACKEND_DIR=$BACKEND_DIR"
+echo "[paths] DATA_ROOT=$DATA_ROOT"
 
 mkdir -p "$OUT_ROOT"
 cd "$BACKEND_DIR"
