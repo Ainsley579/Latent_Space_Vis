@@ -412,6 +412,8 @@ export default function Home() {
   >([]);
   const [knnTopm, setKnnTopm] = useState<KnnTopmOption>("5");
   const [isKnnTopmLoading, setIsKnnTopmLoading] = useState(false);
+  const [clusterTanimotoByCluster, setClusterTanimotoByCluster] = useState<Record<number, number | null>>({});
+  const [isClusterTanimotoLoading, setIsClusterTanimotoLoading] = useState(false);
   const [cellSelected, setCellSelected] = useState(false);
   const [swapAxes, setSwapAxes] = useState(false);
   const [reverseEpochOrder, setReverseEpochOrder] = useState(true);
@@ -452,6 +454,8 @@ export default function Home() {
   const [clusterPageSize, setClusterPageSize] = useState(10);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [smilesByRealId, setSmilesByRealId] = useState<Record<string, string>>({});
+  const [yTrueByRealId, setYTrueByRealId] = useState<Record<string, number>>({});
+  const [yPredByRealId, setYPredByRealId] = useState<Record<string, number>>({});
   const [searchResultIds, setSearchResultIds] = useState<string[]>([]);
   const [searchSmiles, setSearchSmiles] = useState<string>("");
   const [showSearchResultsInMembers, setShowSearchResultsInMembers] = useState(false);
@@ -676,17 +680,38 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const normalizeJsonInto = (json: unknown, out: Record<string, string>) => {
+    const normalizeJsonInto = (
+      json: unknown,
+      out: Record<string, string>,
+      yTrueOut: Record<string, number>,
+      yPredOut: Record<string, number>
+    ) => {
       if (Array.isArray(json)) {
         json.forEach((row) => {
           if (!row || typeof row !== "object") return;
           const rid = String((row as any).real_id ?? "").trim();
           if (!rid) return;
           const smiles = typeof (row as any).smiles === "string" ? (row as any).smiles : "";
+          const split = String((row as any).split ?? "").trim().toLowerCase();
+          const yTrue = Number((row as any).y_true);
+          const yPred = Number((row as any).y_pred);
           if (!out[rid]) out[rid] = smiles;
           out[rid.trim()] = smiles;
           out[rid.toLowerCase()] = smiles;
           out[rid.trim().toLowerCase()] = smiles;
+          if (Number.isFinite(yTrue)) {
+            yTrueOut[rid] = yTrue;
+            yTrueOut[rid.toLowerCase()] = yTrue;
+          }
+          if (Number.isFinite(yPred)) {
+            yPredOut[rid] = yPred;
+            yPredOut[rid.toLowerCase()] = yPred;
+          }
+          if (split === "train" || split === "test") {
+            const tagged = `${split}::${rid}`.toLowerCase();
+            if (Number.isFinite(yTrue)) yTrueOut[tagged] = yTrue;
+            if (Number.isFinite(yPred)) yPredOut[tagged] = yPred;
+          }
         });
         return;
       }
@@ -710,12 +735,18 @@ export default function Home() {
       })
       .then((primaryJson) => {
         const out: Record<string, string> = {};
-        normalizeJsonInto(primaryJson, out);
+        const yTrueOut: Record<string, number> = {};
+        const yPredOut: Record<string, number> = {};
+        normalizeJsonInto(primaryJson, out, yTrueOut, yPredOut);
         setSmilesByRealId(out);
+        setYTrueByRealId(yTrueOut);
+        setYPredByRealId(yPredOut);
       })
       .catch((err) => {
         console.error(err);
         setSmilesByRealId({});
+        setYTrueByRealId({});
+        setYPredByRealId({});
       });
   }, []);
 
@@ -1606,6 +1637,80 @@ export default function Home() {
     generatedRuntimeMatchesCurrent,
   ]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchClusterTanimoto = async () => {
+      setIsClusterTanimotoLoading(true);
+      try {
+        const mLimit = knnTopm === "all" ? null : Number(knnTopm);
+        const sortedByCluster = new Map<number, Array<string | number>>();
+        clusterSortedMembers.forEach((d) => {
+          if (String(d.model_type) !== String(selectedModel) || String(d.layer_name) !== String(selectedLayer)) return;
+          if (!Array.isArray(d.sorted_real_ids)) return;
+          sortedByCluster.set(Number(d.cluster_id), d.sorted_real_ids);
+        });
+        const clusterRealIdsByCluster: Record<string, Array<string | number>> = {};
+        topkData
+          .filter((d) => d.model_type === selectedModel && d.layer_name === selectedLayer)
+          .forEach((d) => {
+            const cid = Number(d.cluster_id);
+            if (!Number.isFinite(cid)) return;
+            const sortedIds = sortedByCluster.get(cid);
+            const base = Array.isArray(sortedIds) && sortedIds.length > 0 ? sortedIds : d.top_k_closest_real_ids;
+            const ids = mLimit == null ? base : base.slice(0, mLimit);
+            clusterRealIdsByCluster[String(cid)] = ids.map((x) => String(x));
+          });
+
+        const res = await fetch(`${apiBase}/cluster-tanimoto`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            dataset: selectedDataset,
+            clustering: selectedClustering,
+            data_split: selectedDataSplit,
+            epoch: selectedModel,
+            layer: selectedLayer,
+            cluster_real_ids_by_cluster: clusterRealIdsByCluster,
+          }),
+        });
+        if (res.status === 404) {
+          setClusterTanimotoByCluster({});
+          return;
+        }
+        if (!res.ok) throw new Error(`cluster-tanimoto failed: ${res.status}`);
+        const json = await res.json();
+        const rows = Array.isArray(json?.clusters) ? json.clusters : [];
+        const out: Record<number, number | null> = {};
+        rows.forEach((r: any) => {
+          const cid = Number(r?.cluster_id);
+          if (!Number.isFinite(cid)) return;
+          const t = Number(r?.tanimoto);
+          out[cid] = Number.isFinite(t) ? t : null;
+        });
+        setClusterTanimotoByCluster(out);
+      } catch (err) {
+        if ((err as Error)?.name === "AbortError") return;
+        console.error("Failed to fetch cluster tanimoto:", err);
+        setClusterTanimotoByCluster({});
+      } finally {
+        if (!controller.signal.aborted) setIsClusterTanimotoLoading(false);
+      }
+    };
+    fetchClusterTanimoto();
+    return () => controller.abort();
+  }, [
+    apiBase,
+    selectedDataset,
+    selectedClustering,
+    selectedDataSplit,
+    selectedModel,
+    selectedLayer,
+    knnTopm,
+    topkData,
+    clusterSortedMembers,
+  ]);
+
   const topkNearestRows = useMemo(() => {
     const mLimit = knnTopm === "all" ? null : Number(knnTopm);
     const sortedByCluster = new Map<number, Array<string | number>>();
@@ -1766,6 +1871,22 @@ export default function Home() {
     const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
     const base = parsed.realId.trim().toLowerCase();
     return (tagged ? smilesByRealId[tagged] : undefined) ?? smilesByRealId[base] ?? null;
+  }
+
+  function getYTrueById(realId: string | number): number | null {
+    const parsed = parseSplitTaggedId(realId);
+    const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
+    const base = parsed.realId.trim().toLowerCase();
+    const v = (tagged ? yTrueByRealId[tagged] : undefined) ?? yTrueByRealId[base];
+    return Number.isFinite(Number(v)) ? Number(v) : null;
+  }
+
+  function getYPredById(realId: string | number): number | null {
+    const parsed = parseSplitTaggedId(realId);
+    const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
+    const base = parsed.realId.trim().toLowerCase();
+    const v = (tagged ? yPredByRealId[tagged] : undefined) ?? yPredByRealId[base];
+    return Number.isFinite(Number(v)) ? Number(v) : null;
   }
 
   function clusterBadgeColor(cluster: number) {
@@ -2510,6 +2631,8 @@ export default function Home() {
                   onSelectHoverId={(id) => toggleLockedHighlight(id)}
                   onHoverIdChange={(id) => setHoverFromMouse(id)}
                   getSmilesById={getSmilesById}
+                  getYTrueById={getYTrueById}
+                  getYPredById={getYPredById}
                   substructureByCluster={substructureByCluster}
                   clusterBadgeColor={clusterBadgeColor}
                   onClusterSelect={(cluster) => {
@@ -2529,6 +2652,8 @@ export default function Home() {
                   knnTopm={knnTopm}
                   onKnnTopmChange={setKnnTopm}
                   isKnnTopmLoading={isKnnTopmLoading}
+                  tanimotoByCluster={clusterTanimotoByCluster}
+                  isTanimotoLoading={isClusterTanimotoLoading}
                 />
               </div>
             </div>

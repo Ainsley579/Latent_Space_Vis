@@ -1875,15 +1875,57 @@ def cluster_tanimoto():
 
     cluster_to_smiles: Dict[int, List[str]] = {}
     missing_smiles = 0
+    rid_to_splits: Dict[str, List[str]] = {}
     for row in cluster_rows:
         rid = str(row.get("real_id"))
-        cid = int(row.get("cluster_id"))
         split = str(row.get("split"))
-        smi = smiles_by_split.get(split, {}).get(rid, "")
-        if not smi:
-            missing_smiles += 1
+        if split not in splits:
             continue
-        cluster_to_smiles.setdefault(cid, []).append(smi)
+        rid_to_splits.setdefault(rid, [])
+        if split not in rid_to_splits[rid]:
+            rid_to_splits[rid].append(split)
+
+    cluster_real_ids_by_cluster = payload.get("cluster_real_ids_by_cluster")
+    if isinstance(cluster_real_ids_by_cluster, dict) and cluster_real_ids_by_cluster:
+        for cid_raw, rid_list in cluster_real_ids_by_cluster.items():
+            try:
+                cid = int(cid_raw)
+            except Exception:
+                continue
+            if not isinstance(rid_list, list):
+                continue
+            out_list = cluster_to_smiles.setdefault(cid, [])
+            for rid_item in rid_list:
+                rid_text = str(rid_item)
+                split_tag = None
+                rid = rid_text
+                if "::" in rid_text:
+                    prefix, rest = rid_text.split("::", 1)
+                    if prefix in ("train", "test", "val"):
+                        split_tag = prefix
+                        rid = rest
+                candidate_splits = [split_tag] if split_tag else (rid_to_splits.get(rid) or splits)
+                smi = ""
+                for sp in candidate_splits:
+                    if not sp:
+                        continue
+                    smi = smiles_by_split.get(sp, {}).get(rid, "")
+                    if smi:
+                        break
+                if not smi:
+                    missing_smiles += 1
+                    continue
+                out_list.append(smi)
+    else:
+        for row in cluster_rows:
+            rid = str(row.get("real_id"))
+            cid = int(row.get("cluster_id"))
+            split = str(row.get("split"))
+            smi = smiles_by_split.get(split, {}).get(rid, "")
+            if not smi:
+                missing_smiles += 1
+                continue
+            cluster_to_smiles.setdefault(cid, []).append(smi)
 
     clusters = []
     for cid in sorted(cluster_to_smiles.keys()):
@@ -2062,33 +2104,55 @@ def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[s
     splits = _resolve_train_test_splits(data_split, default="test")
     out: Dict[str, str] = {}
 
-    # Prefer consolidated metadata file when available.
+    def merge_from_meta_list(raw_rows: object, expect_dataset: Optional[str] = None) -> None:
+        if not isinstance(raw_rows, list):
+            return
+        allow = set(splits)
+        for row in raw_rows:
+            if not isinstance(row, dict):
+                continue
+            if expect_dataset:
+                row_ds = str(row.get("dataset", "")).strip().lower()
+                if row_ds and row_ds != expect_dataset:
+                    continue
+            rid = row.get("real_id", row.get("id"))
+            smi = row.get("smiles")
+            sp = str(row.get("split", "")).strip().lower()
+            if rid is None or smi is None:
+                continue
+            if sp and sp not in allow:
+                continue
+            rid_s = str(rid)
+            smi_s = str(smi)
+            if rid_s not in out:
+                out[rid_s] = smi_s
+            if sp in ("train", "test"):
+                out[f"{sp}::{rid_s}"] = smi_s
+
+    # Prefer consolidated metadata file under dataset root when available.
     meta_path = DATA_ROOT / dataset / "id_smiles_y_true_y_pred.json"
     if meta_path.is_file():
         try:
-            raw = json.loads(meta_path.read_text(encoding="utf-8"))
+            merge_from_meta_list(json.loads(meta_path.read_text(encoding="utf-8")))
         except Exception:
-            raw = []
-        if isinstance(raw, list):
-            allow = set(splits)
-            for row in raw:
-                if not isinstance(row, dict):
-                    continue
-                rid = row.get("real_id", row.get("id"))
-                smi = row.get("smiles")
-                sp = str(row.get("split", "")).strip().lower()
-                if rid is None or smi is None:
-                    continue
-                if sp and sp not in allow:
-                    continue
-                rid_s = str(rid)
-                smi_s = str(smi)
-                if rid_s not in out:
-                    out[rid_s] = smi_s
-                if sp in ("train", "test"):
-                    out[f"{sp}::{rid_s}"] = smi_s
-            if out:
-                return out
+            pass
+        if out:
+            return out
+
+    # Fallback: shared metadata file under frontend/public.
+    shared_meta_candidates = [
+        PROJECT_ROOT / "latentvis" / "frontend" / "public" / "id_smiles_y_true_y_pred.json",
+        _BACKEND_DIR.parent / "frontend" / "public" / "id_smiles_y_true_y_pred.json",
+    ]
+    for shared_meta in shared_meta_candidates:
+        if not shared_meta.is_file():
+            continue
+        try:
+            merge_from_meta_list(json.loads(shared_meta.read_text(encoding="utf-8")), expect_dataset=dataset)
+        except Exception:
+            continue
+        if out:
+            return out
 
     # Fallback to per-split real_id_to_smiles.json
     for split in splits:
@@ -2182,15 +2246,19 @@ def _average_tanimoto(smiles_list: List[str], radius: int = 2, n_bits: int = 204
     Mean pairwise Tanimoto for one cluster.
     Returns: (mean_similarity, n_valid_molecules, n_pairs).
     """
-    from rdkit import Chem
-    from rdkit.Chem import DataStructs, rdMolDescriptors
+    from rdkit import Chem, DataStructs
+    from rdkit.Chem import rdFingerprintGenerator
 
+    generator = rdFingerprintGenerator.GetMorganGenerator(
+        radius=int(radius),
+        fpSize=int(n_bits),
+    )
     fps = []
     for smi in smiles_list:
         mol = Chem.MolFromSmiles(_normalize_smiles(str(smi)))
         if mol is None:
             continue
-        fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(mol, int(radius), nBits=int(n_bits))
+        fp = generator.GetFingerprint(mol)
         fps.append(fp)
 
     n = len(fps)
