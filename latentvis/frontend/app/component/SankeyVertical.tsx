@@ -16,6 +16,31 @@ type SampleRow = {
   to_cluster: number;
 };
 
+type SplitTag = "train" | "test";
+
+function inferSplitFromPath(path: string | undefined): SplitTag {
+  const s = String(path ?? "").toLowerCase();
+  return s.includes("split=test") ? "test" : "train";
+}
+
+function stripTaggedRealId(value: string | number): { id: string; split: SplitTag | null } {
+  const raw = String(value ?? "");
+  if (raw.startsWith("train::")) return { id: raw.slice("train::".length), split: "train" };
+  if (raw.startsWith("test::")) return { id: raw.slice("test::".length), split: "test" };
+  return { id: raw, split: null };
+}
+
+function ensureTaggedSampleId(value: string | number, split: SplitTag): string {
+  const parsed = stripTaggedRealId(value);
+  if (parsed.split) return String(value);
+  return `${split}::${parsed.id}`;
+}
+
+function sameSampleId(a: string, b: string): boolean {
+  if (a === b) return true;
+  return stripTaggedRealId(a).id === stripTaggedRealId(b).id;
+}
+
 function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): SampleRow[] {
   if (!Array.isArray(visibleEpochs) || visibleEpochs.length < 2) return [];
   const orderedEpochs = visibleEpochs.map((x) => String(x));
@@ -573,6 +598,14 @@ export default function SankeyVertical({
       }
       const shouldRenderPaths = true;
       const focusGroup = activeModel ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
+      const primarySplit = inferSplitFromPath(dataPath);
+      const secondarySplit: SplitTag = secondaryDataPath
+        ? (String(secondaryDataPath).toLowerCase().includes("split=train") ? "train" : "test")
+        : primarySplit;
+      const primaryRowsWithSplit = rows.map((r) => ({ ...r, __split: primarySplit as SplitTag }));
+      const secondaryRowsWithSplit = secondaryRows.map((r) => ({ ...r, __split: secondarySplit as SplitTag }));
+      const combinedRowsWithSplit =
+        secondaryRowsWithSplit.length > 0 ? [...primaryRowsWithSplit, ...secondaryRowsWithSplit] : primaryRowsWithSplit;
 
       const clusterValues: number[] = [];
       nodes.forEach((n) => {
@@ -654,16 +687,23 @@ export default function SankeyVertical({
       }
 
       const nodeSamples = new Map<string, Set<string>>();
-      combinedRows.forEach((r) => {
+      const focusClusterBySample = new Map<string, number>();
+      combinedRowsWithSplit.forEach((r: any) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
         const src = `${fromKey}_${r.from_cluster}`;
         const tgt = `${toKey}_${r.to_cluster}`;
-        const id = String(r.real_id);
+        const parsed = stripTaggedRealId(r.real_id);
+        const split: SplitTag = (parsed.split ?? r.__split ?? primarySplit) as SplitTag;
+        const sampleId = ensureTaggedSampleId(r.real_id, split);
         if (!nodeSamples.has(src)) nodeSamples.set(src, new Set());
         if (!nodeSamples.has(tgt)) nodeSamples.set(tgt, new Set());
-        nodeSamples.get(src)!.add(id);
-        nodeSamples.get(tgt)!.add(id);
+        nodeSamples.get(src)!.add(sampleId);
+        nodeSamples.get(tgt)!.add(sampleId);
+        if (focusGroup) {
+          if (fromKey === focusGroup) focusClusterBySample.set(sampleId, Number(r.from_cluster));
+          if (toKey === focusGroup) focusClusterBySample.set(sampleId, Number(r.to_cluster));
+        }
       });
       nodeSamplesRef.current = nodeSamples;
 
@@ -679,8 +719,8 @@ export default function SankeyVertical({
         });
       });
 
-      const sampleLines: Array<{ id: string; x1: number; y1: number; x2: number; y2: number }> = [];
-      combinedRows.forEach((r) => {
+      const sampleLines: Array<{ id: string; x1: number; y1: number; x2: number; y2: number; split: SplitTag; baseStroke: string }> = [];
+      combinedRowsWithSplit.forEach((r: any) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
         const src = `${fromKey}_${r.from_cluster}`;
@@ -688,14 +728,23 @@ export default function SankeyVertical({
         const s = nodeByKey.get(src);
         const t = nodeByKey.get(tgt);
         if (!s || !t) return;
-        const id = String(r.real_id);
-        const y1 = sampleNodeY.get(id)?.get(src);
-        const y2 = sampleNodeY.get(id)?.get(tgt);
+        const parsed = stripTaggedRealId(r.real_id);
+        const split: SplitTag = (parsed.split ?? r.__split ?? primarySplit) as SplitTag;
+        const sampleId = ensureTaggedSampleId(r.real_id, split);
+        const y1 = sampleNodeY.get(sampleId)?.get(src);
+        const y2 = sampleNodeY.get(sampleId)?.get(tgt);
         if (y1 == null || y2 == null) return;
-        sampleLines.push({ id, x1: s.x + NODE_W, y1, x2: t.x, y2 });
+        const focusCluster = focusClusterBySample.get(sampleId);
+        const base =
+          focusGroup && Number.isFinite(focusCluster)
+            ? color(Math.max(0, Number(focusCluster)))
+            : SANKEY_LINK_COLOR;
+        const c = d3.color(base);
+        const baseStroke = split === "test" ? (c ? c.darker(0.6).formatHex() : base) : base;
+        sampleLines.push({ id: sampleId, x1: s.x + NODE_W, y1, x2: t.x, y2, split, baseStroke });
       });
 
-      let sampleSel: d3.Selection<SVGLineElement, { id: string; x1: number; y1: number; x2: number; y2: number }, SVGGElement, unknown> | null = null;
+      let sampleSel: d3.Selection<SVGLineElement, { id: string; x1: number; y1: number; x2: number; y2: number; split: SplitTag; baseStroke: string }, SVGGElement, unknown> | null = null;
       if (shouldRenderPaths) {
         sampleSel = sampleGroup
           .selectAll("line")
@@ -706,12 +755,14 @@ export default function SankeyVertical({
           .attr("y1", (d) => d.y1)
           .attr("x2", (d) => d.x2)
           .attr("y2", (d) => d.y2)
-          .attr("stroke", SANKEY_LINK_COLOR)
+          .attr("stroke", (d) => d.baseStroke)
           .attr("vector-effect", "non-scaling-stroke")
           .attr("stroke-width", 1.1)
           .attr("opacity", 0)
-          .attr("class", (d) => `sample-${d.id}`)
-          .attr("data-id", (d) => d.id);
+          .attr("class", "sample-line")
+          .attr("data-id", (d) => d.id)
+          .attr("data-split", (d) => d.split)
+          .attr("data-base-stroke", (d) => d.baseStroke);
       }
 
       const darker = (hex: string) => {
@@ -796,13 +847,13 @@ export default function SankeyVertical({
       nodeGroup.raise();
 
       const baseOpacity = (d: { id: string }) => {
-        const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
-        if (highlightSet.size > 0) {
-          return highlightSet.has(d.id) ? 1 : 0;
+        const highlightList = (highlightIds ?? []).map((x) => String(x));
+        if (highlightList.length > 0) {
+          return highlightList.some((hid) => sameSampleId(hid, d.id)) ? 0.4 : 0;
         }
         if (displayActiveNode) {
           const samples = nodeSamples.get(displayActiveNode) || new Set();
-          return samples.has(d.id) ? 0.8 : 0;
+          return Array.from(samples).some((sid) => sameSampleId(sid, d.id)) ? 0.4 : 0;
         }
         return 0;
       };
@@ -810,17 +861,17 @@ export default function SankeyVertical({
       if (sampleSel) {
         sampleSel
           .attr("opacity", (d) => {
-            const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
-            const isHovered = !!highlightId && d.id === highlightId;
-            const isSearchHit = highlightSet.has(d.id);
-            return (isHovered || isSearchHit) ? 1 : baseOpacity(d);
+            const highlightList = (highlightIds ?? []).map((x) => String(x));
+            const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
+            const isSearchHit = highlightList.some((hid) => sameSampleId(hid, d.id));
+            return (isHovered || isSearchHit) ? 0.4 : baseOpacity(d);
           })
           .attr("stroke", (d) => {
-            const isHovered = !!highlightId && d.id === highlightId;
-            return isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR;
+            const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
+            return isHovered ? HIGHLIGHT_RED : d.baseStroke;
           })
           .attr("stroke-width", (d) => {
-            const isHovered = !!highlightId && d.id === highlightId;
+            const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
             return isHovered ? 2 : 1.1;
           });
       }
@@ -934,21 +985,22 @@ export default function SankeyVertical({
     });
 
     const samplesForActive = activeName ? nodeSamplesRef.current.get(activeName) || new Set<string>() : new Set<string>();
-    const highlightSet = new Set((highlightIds ?? []).map((x) => String(x)));
+    const highlightList = (highlightIds ?? []).map((x) => String(x));
     const lines = Array.from(svg.querySelectorAll("g.sample-trajectories line[data-id]")) as SVGLineElement[];
     lines.forEach((line) => {
       const id = line.getAttribute("data-id") || "";
-      const isHovered = !!highlightId && id === highlightId;
-      const isSearchHit = highlightSet.has(id);
-      const opacity = highlightSet.size > 0
-        ? (isSearchHit ? 1 : 0)
+      const isHovered = !!highlightId && sameSampleId(id, String(highlightId));
+      const isSearchHit = highlightList.some((hid) => sameSampleId(hid, id));
+      const opacity = highlightList.length > 0
+        ? (isSearchHit ? 0.4 : 0)
         : isHovered
-          ? 1
+          ? 0.4
           : activeName
-            ? (samplesForActive.has(id) ? 0.8 : 0)
+            ? (Array.from(samplesForActive).some((sid) => sameSampleId(sid, id)) ? 0.4 : 0)
             : 0;
       line.setAttribute("opacity", String(opacity));
-      line.setAttribute("stroke", isHovered ? HIGHLIGHT_RED : SANKEY_LINK_COLOR);
+      const baseStroke = line.getAttribute("data-base-stroke") || SANKEY_LINK_COLOR;
+      line.setAttribute("stroke", isHovered ? HIGHLIGHT_RED : baseStroke);
       line.setAttribute("stroke-width", isHovered ? "2" : "1.1");
     });
   }, [displayActiveNode, highlightId, highlightIds, mode, modelKey, layerKey]);

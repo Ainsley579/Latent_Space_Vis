@@ -415,6 +415,7 @@ export default function Home() {
   const [clusterTanimotoByCluster, setClusterTanimotoByCluster] = useState<Record<number, number | null>>({});
   const [isClusterTanimotoLoading, setIsClusterTanimotoLoading] = useState(false);
   const [cellSelected, setCellSelected] = useState(false);
+  const [detailsEverShown, setDetailsEverShown] = useState(false);
   const [swapAxes, setSwapAxes] = useState(false);
   const [reverseEpochOrder, setReverseEpochOrder] = useState(true);
   const [visibleEpochs, setVisibleEpochs] = useState<string[] | null>(null);
@@ -534,7 +535,14 @@ export default function Home() {
       return;
     }
     setSelectedNode(sel);
-    setSelectedIds(sel.ids ?? null);
+    if (Array.isArray(sel.ids)) {
+      const normalized = Array.from(
+        new Set(sel.ids.map((id) => parseSplitTaggedId(id).realId))
+      );
+      setSelectedIds(normalized.length > 0 ? normalized : null);
+    } else {
+      setSelectedIds(null);
+    }
     setSuppressScatterCluster(false);
   }
 
@@ -1218,6 +1226,12 @@ export default function Home() {
       setCellSelected(false);
     }
   }, [selectedNode]);
+
+  useEffect(() => {
+    if (cellSelected || selectedNode != null) {
+      setDetailsEverShown(true);
+    }
+  }, [cellSelected, selectedNode]);
 
   useEffect(() => {
     // Keep linked Sankey paths in sync with the current selection state,
@@ -2094,7 +2108,7 @@ export default function Home() {
     showSearchResultsInMembers
       ? searchResultIds
       : (selectedIds && selectedIds.length > 0 ? selectedIds : null);
-  const showRightDetailPanels = cellSelected || selectedNode != null;
+  const showRightDetailPanels = detailsEverShown || cellSelected || selectedNode != null;
   const shouldShowBlockingOverlay = isBlockingInitLoading || isGeneratingRange;
 
   return (
