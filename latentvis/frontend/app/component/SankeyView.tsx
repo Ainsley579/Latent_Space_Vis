@@ -808,23 +808,81 @@ export default function SankeyView({
         const nodeBarOffset = (x.bandwidth() - nodeBarWidth) / 2;
 
         const pctByEpochTransition = new Map<string, number>();
+        const normalizeTransitionLayer = (name: string): string => {
+          const n = String(name ?? "").trim();
+          if (n === "fp") return "fingerprint";
+          if (/^fnn_layer_/.test(n)) return n.replace(/^fnn_layer_/, "ffn_layer_");
+          return n;
+        };
+        const transitionLayerAliases = (name: string): string[] => {
+          const n = normalizeTransitionLayer(name);
+          const out = new Set<string>([n, String(name ?? "").trim()]);
+          if (/^ffn_layer_/.test(n)) out.add(n.replace(/^ffn_layer_/, "fnn_layer_"));
+          if (/^fnn_layer_/.test(n)) out.add(n.replace(/^fnn_layer_/, "ffn_layer_"));
+          if (n === "fingerprint") out.add("fp");
+          if (n === "fp") out.add("fingerprint");
+          return Array.from(out);
+        };
         transitionEntriesByEpoch.forEach((d) => {
           const epoch = String(d?.epoch ?? "").trim();
-          const fromLayer = String(d?.from_layer ?? "").trim();
-          const toLayer = String(d?.to_layer ?? "").trim();
+          const fromLayerRaw = String(d?.from_layer ?? "").trim();
+          const toLayerRaw = String(d?.to_layer ?? "").trim();
           const pct = Number(d?.pct_changed ?? 0);
-          if (!epoch || !fromLayer || !toLayer || !Number.isFinite(pct)) return;
-          pctByEpochTransition.set(`${epoch}|${fromLayer}|${toLayer}`, Math.max(0, pct));
+          if (!epoch || !fromLayerRaw || !toLayerRaw || !Number.isFinite(pct)) return;
+          const fromLayer = normalizeTransitionLayer(fromLayerRaw);
+          const toLayer = normalizeTransitionLayer(toLayerRaw);
+          const next = Math.max(0, pct);
+          const keys = new Set<string>([
+            `${epoch}|${fromLayer}|${toLayer}`,
+            `${epoch}|${fromLayerRaw}|${toLayerRaw}`,
+          ]);
+          transitionLayerAliases(fromLayerRaw).forEach((f) => {
+            transitionLayerAliases(toLayerRaw).forEach((t) => keys.add(`${epoch}|${f}|${t}`));
+          });
+          keys.forEach((key) => {
+            const prev = pctByEpochTransition.get(key) ?? 0;
+            if (next > prev) pctByEpochTransition.set(key, next);
+          });
         });
         const pctByLayerTransition = new Map<string, number>();
         transitionEntriesByLayer.forEach((d) => {
-          const layer = String(d?.layer ?? "").trim();
+          const layerRaw = String(d?.layer ?? "").trim();
           const fromEpoch = String(d?.from_epoch ?? "").trim();
           const toEpoch = String(d?.to_epoch ?? "").trim();
           const pct = Number(d?.pct_changed ?? 0);
-          if (!layer || !fromEpoch || !toEpoch || !Number.isFinite(pct)) return;
-          pctByLayerTransition.set(`${layer}|${fromEpoch}|${toEpoch}`, Math.max(0, pct));
+          if (!layerRaw || !fromEpoch || !toEpoch || !Number.isFinite(pct)) return;
+          const layer = normalizeTransitionLayer(layerRaw);
+          const next = Math.max(0, pct);
+          const keys = new Set<string>([
+            `${layer}|${fromEpoch}|${toEpoch}`,
+            `${layerRaw}|${fromEpoch}|${toEpoch}`,
+          ]);
+          transitionLayerAliases(layerRaw).forEach((l) => keys.add(`${l}|${fromEpoch}|${toEpoch}`));
+          keys.forEach((key) => {
+            const prev = pctByLayerTransition.get(key) ?? 0;
+            if (next > prev) pctByLayerTransition.set(key, next);
+          });
         });
+        const getEpochTransitionPct = (epoch: string, fromLayer: string, toLayer: string): number => {
+          let best = 0;
+          transitionLayerAliases(fromLayer).forEach((f) => {
+            transitionLayerAliases(toLayer).forEach((t) => {
+              const v = pctByEpochTransition.get(`${epoch}|${f}|${t}`) ?? 0;
+              if (v > best) best = v;
+            });
+          });
+          return best;
+        };
+        const getLayerTransitionPct = (layer: string, fromEpoch: string, toEpoch: string): number => {
+          let best = 0;
+          transitionLayerAliases(layer).forEach((l) => {
+            const v1 = pctByLayerTransition.get(`${l}|${fromEpoch}|${toEpoch}`) ?? 0;
+            const v2 = pctByLayerTransition.get(`${l}|${toEpoch}|${fromEpoch}`) ?? 0;
+            if (v1 > best) best = v1;
+            if (v2 > best) best = v2;
+          });
+          return best;
+        };
         const maxGapPct = Math.max(
           1,
           ...Array.from(pctByEpochTransition.values()),
@@ -851,7 +909,7 @@ export default function SankeyView({
             for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
               const fromLayer = COLUMN_NAMES[i];
               const toLayer = COLUMN_NAMES[i + 1];
-              const pct = pctByEpochTransition.get(`${epoch}|${fromLayer}|${toLayer}`) ?? 0;
+              const pct = getEpochTransitionPct(epoch, fromLayer, toLayer);
               const xGap = i * cellStepX + cellW;
               const yGap = rowIdx * cellStepY;
               const gapRect = gapHeatmap
@@ -883,7 +941,7 @@ export default function SankeyView({
             for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
               const fromEpoch = ROW_NAMES[i];
               const toEpoch = ROW_NAMES[i + 1];
-              const pct = pctByLayerTransition.get(`${layer}|${fromEpoch}|${toEpoch}`) ?? 0;
+              const pct = getLayerTransitionPct(layer, fromEpoch, toEpoch);
               const xGap = colIdx * cellStepX;
               const yGap = i * cellStepY + cellH;
               const gapRect = gapHeatmap
@@ -916,7 +974,7 @@ export default function SankeyView({
             for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
               const fromEpoch = ROW_NAMES[i];
               const toEpoch = ROW_NAMES[i + 1];
-              const pct = pctByLayerTransition.get(`${layer}|${fromEpoch}|${toEpoch}`) ?? 0;
+              const pct = getLayerTransitionPct(layer, fromEpoch, toEpoch);
               const xGap = i * cellStepX + cellW;
               const yGap = rowIdx * cellStepY;
               const gapRect = gapHeatmap
@@ -948,7 +1006,7 @@ export default function SankeyView({
             for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
               const fromLayer = COLUMN_NAMES[i];
               const toLayer = COLUMN_NAMES[i + 1];
-              const pct = pctByEpochTransition.get(`${epoch}|${fromLayer}|${toLayer}`) ?? 0;
+              const pct = getEpochTransitionPct(epoch, fromLayer, toLayer);
               const xGap = colIdx * cellStepX;
               const yGap = i * cellStepY + cellH;
               const gapRect = gapHeatmap
