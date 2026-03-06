@@ -304,8 +304,18 @@ export default function SankeyView({
   const [showCellBackground, setShowCellBackground] = useState(true);
   const [showGapHeatmap, setShowGapHeatmap] = useState(true);
   const [epochTransitionThreshold, setEpochTransitionThreshold] = useState(0);
+  const [epochTransitionThresholdUi, setEpochTransitionThresholdUi] = useState(0);
   const [maxEpochTransitionPct, setMaxEpochTransitionPct] = useState(100);
   const [visibleEpochSummary, setVisibleEpochSummary] = useState({ visible: 0, total: 0 });
+  const [epochFilterMeta, setEpochFilterMeta] = useState<{
+    allEpochKeys: string[];
+    lastEpoch: string | null;
+    maxPctByEpoch: Record<string, number>;
+  }>({
+    allEpochKeys: [],
+    lastEpoch: null,
+    maxPctByEpoch: {},
+  });
   const [cellLegendRange, setCellLegendRange] = useState({ min: 0, max: 1 });
   const [gapLegendMax, setGapLegendMax] = useState(1);
   const [linkValueMin, setLinkValueMin] = useState(0);
@@ -350,13 +360,24 @@ export default function SankeyView({
     }
 
     const q = Number(p.get("epochMin"));
-    if (Number.isFinite(q) && q >= 0) setEpochTransitionThreshold(q);
+    if (Number.isFinite(q) && q >= 0) {
+      setEpochTransitionThreshold(q);
+      setEpochTransitionThresholdUi(q);
+    }
     const qMin = Number(p.get("min"));
     const qMax = Number(p.get("max"));
     if (Number.isFinite(qMax) && qMax >= 0) autoInitLinkMaxRef.current = false;
     if (Number.isFinite(qMin) && qMin >= 0) setLinkValueMin(qMin);
     if (Number.isFinite(qMax) && qMax >= 0) setLinkValueMax(qMax);
   }, []);
+
+  useEffect(() => {
+    setEpochTransitionThresholdUi(epochTransitionThreshold);
+  }, [epochTransitionThreshold]);
+
+  useEffect(() => {
+    setEpochTransitionThresholdUi((v) => Math.max(0, Math.min(v, maxEpochTransitionPct)));
+  }, [maxEpochTransitionPct]);
 
   function applyLinkValueFilter(minVal: number, maxVal: number) {
     const container = chartRef.current;
@@ -451,6 +472,11 @@ export default function SankeyView({
 
         const allEpochKeys: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
         const lastEpoch = allEpochKeys.length ? allEpochKeys[allEpochKeys.length - 1] : null;
+        setEpochFilterMeta({
+          allEpochKeys,
+          lastEpoch,
+          maxPctByEpoch: Object.fromEntries(epochMaxTransitionPctByEpoch.entries()),
+        });
         const visibleEpochBase: string[] = allEpochKeys.filter((epoch) => {
           if (lastEpoch != null && epoch === lastEpoch) return true;
           const maxPct = epochMaxTransitionPctByEpoch.get(epoch) ?? 0;
@@ -830,13 +856,17 @@ export default function SankeyView({
               const yGap = rowIdx * cellStepY;
               const gapRect = gapHeatmap
                 .append("rect")
+                .attr("class", "gap-rect")
                 .attr("x", xGap)
                 .attr("y", yGap)
                 .attr("width", CELL_GAP)
                 .attr("height", cellH)
                 .attr("fill", horizontalGapColor(pct))
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 0.7);
+                .attr("stroke-width", 0.7)
+                .attr("data-row", epoch)
+                .attr("data-column-from", fromLayer)
+                .attr("data-column-to", toLayer);
               gapRect
                 .on("mouseenter mousemove", (_event: any) => {
                   placeTooltipFromEvent(event, "Gap Transition", [
@@ -858,13 +888,17 @@ export default function SankeyView({
               const yGap = i * cellStepY + cellH;
               const gapRect = gapHeatmap
                 .append("rect")
+                .attr("class", "gap-rect")
                 .attr("x", xGap)
                 .attr("y", yGap)
                 .attr("width", cellW)
                 .attr("height", CELL_GAP)
                 .attr("fill", verticalGapColor(pct))
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 0.7);
+                .attr("stroke-width", 0.7)
+                .attr("data-column", layer)
+                .attr("data-row-from", fromEpoch)
+                .attr("data-row-to", toEpoch);
               gapRect
                 .on("mouseenter mousemove", (_event: any) => {
                   placeTooltipFromEvent(event, "Gap Transition", [
@@ -887,13 +921,17 @@ export default function SankeyView({
               const yGap = rowIdx * cellStepY;
               const gapRect = gapHeatmap
                 .append("rect")
+                .attr("class", "gap-rect")
                 .attr("x", xGap)
                 .attr("y", yGap)
                 .attr("width", CELL_GAP)
                 .attr("height", cellH)
                 .attr("fill", horizontalGapColor(pct))
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 0.7);
+                .attr("stroke-width", 0.7)
+                .attr("data-column", layer)
+                .attr("data-row-from", fromEpoch)
+                .attr("data-row-to", toEpoch);
               gapRect
                 .on("mouseenter mousemove", (_event: any) => {
                   placeTooltipFromEvent(event, "Gap Transition", [
@@ -915,13 +953,17 @@ export default function SankeyView({
               const yGap = i * cellStepY + cellH;
               const gapRect = gapHeatmap
                 .append("rect")
+                .attr("class", "gap-rect")
                 .attr("x", xGap)
                 .attr("y", yGap)
                 .attr("width", cellW)
                 .attr("height", CELL_GAP)
                 .attr("fill", verticalGapColor(pct))
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 0.7);
+                .attr("stroke-width", 0.7)
+                .attr("data-row", epoch)
+                .attr("data-column-from", fromLayer)
+                .attr("data-column-to", toLayer);
               gapRect
                 .on("mouseenter mousemove", (_event: any) => {
                   placeTooltipFromEvent(event, "Gap Transition", [
@@ -1534,8 +1576,10 @@ export default function SankeyView({
             d3.selectAll('#chart svg g[id^="cell-"] rect').classed("cell-dimmed", false).classed("cell-highlight", false);
             d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
             d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
           } else if (m === "column") {
             d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
             if (!SWAP_AXES) {
               d3.selectAll("g.column-links path.link-path").classed("link-dimmed", false).classed("link-highlight", true);
               d3.selectAll("g.row-links path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
@@ -1545,6 +1589,7 @@ export default function SankeyView({
             }
           } else if (m === "row") {
             d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
             if (!SWAP_AXES) {
               d3.selectAll("g.row-links path.link-path").classed("link-dimmed", false).classed("link-highlight", true);
               d3.selectAll("g.column-links path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
@@ -1568,6 +1613,7 @@ export default function SankeyView({
           if (on) {
             d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", true).classed("cell-highlight", false);
             d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", true);
 
             X_NAMES.forEach((xKey) => {
               const rowName = SWAP_AXES ? xKey : rowKey;
@@ -1584,16 +1630,25 @@ export default function SankeyView({
                 const el = d3.select(this);
                 if (el.attr("data-row") === rowKey) el.classed("link-dimmed", false).classed("link-highlight", true);
               });
+              d3.selectAll("rect.gap-rect").each(function () {
+                const el = d3.select(this);
+                if (el.attr("data-row") === rowKey) el.classed("gap-dimmed", false);
+              });
             } else {
               d3.selectAll("g.column-links path.link-path").each(function () {
                 const el = d3.select(this);
                 if (el.attr("data-column") === rowKey) el.classed("link-dimmed", false).classed("link-highlight", true);
+              });
+              d3.selectAll("rect.gap-rect").each(function () {
+                const el = d3.select(this);
+                if (el.attr("data-row") === rowKey) el.classed("gap-dimmed", false);
               });
             }
           } else {
             d3.selectAll('#chart svg g[id^="cell-"] rect').classed("cell-dimmed", false).classed("cell-highlight", false);
             d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
             d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
           }
         }
 
@@ -1601,6 +1656,7 @@ export default function SankeyView({
           if (on) {
             d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", true).classed("cell-highlight", false);
             d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", true);
 
             Y_NAMES.forEach((yKey) => {
               const rowName = SWAP_AXES ? colKey : yKey;
@@ -1617,16 +1673,25 @@ export default function SankeyView({
                 const el = d3.select(this);
                 if (el.attr("data-column") === colKey) el.classed("link-dimmed", false).classed("link-highlight", true);
               });
+              d3.selectAll("rect.gap-rect").each(function () {
+                const el = d3.select(this);
+                if (el.attr("data-column") === colKey) el.classed("gap-dimmed", false);
+              });
             } else {
               d3.selectAll("g.row-links path.link-path").each(function () {
                 const el = d3.select(this);
                 if (el.attr("data-row") === colKey) el.classed("link-dimmed", false).classed("link-highlight", true);
+              });
+              d3.selectAll("rect.gap-rect").each(function () {
+                const el = d3.select(this);
+                if (el.attr("data-column") === colKey) el.classed("gap-dimmed", false);
               });
             }
           } else {
             d3.selectAll('#chart svg g[id^="cell-"] rect').classed("cell-dimmed", false).classed("cell-highlight", false);
             d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
             d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
           }
         }
 
@@ -1634,6 +1699,7 @@ export default function SankeyView({
           if (on) {
             d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", true).classed("cell-highlight", false);
             d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", true);
 
             ROW_NAMES.forEach((row) => {
               const cellSel = d3.select(`#cell-${row}-${columnName}`);
@@ -1660,10 +1726,17 @@ export default function SankeyView({
               const el = d3.select(this);
               if (el.attr("data-column") === columnName) el.classed("link-dimmed", false).classed("link-highlight", true);
             });
+            d3.selectAll("rect.gap-rect").each(function () {
+              const el = d3.select(this);
+              if (el.attr("data-row") === rowName || el.attr("data-column") === columnName) {
+                el.classed("gap-dimmed", false);
+              }
+            });
           } else {
             d3.selectAll('#chart svg g[id^="cell-"] rect').classed("cell-dimmed", false).classed("cell-highlight", false);
             d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
             d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
           }
         }
 
@@ -2090,8 +2163,32 @@ export default function SankeyView({
   const normalizedLinkMax = Math.max(clampedLinkMin, clampedLinkMax);
   const linkStartPct = linkValueMaxBound > 0 ? (normalizedLinkMin / linkValueMaxBound) * 100 : 0;
   const linkEndPct = linkValueMaxBound > 0 ? (normalizedLinkMax / linkValueMaxBound) * 100 : 100;
-  const normalizedEpochThreshold = Math.max(0, Math.min(maxEpochTransitionPct, epochTransitionThreshold));
-  const epochPctPos = maxEpochTransitionPct > 0 ? (normalizedEpochThreshold / maxEpochTransitionPct) * 100 : 0;
+  const normalizedEpochThresholdUi = Math.max(0, Math.min(maxEpochTransitionPct, epochTransitionThresholdUi));
+  const epochPctPos = maxEpochTransitionPct > 0 ? (normalizedEpochThresholdUi / maxEpochTransitionPct) * 100 : 0;
+  const liveVisibleEpochSummary = (() => {
+    const allEpochKeys = epochFilterMeta.allEpochKeys;
+    const total = allEpochKeys.length || visibleEpochSummary.total;
+    if (!allEpochKeys.length) {
+      return { visible: visibleEpochSummary.visible, total };
+    }
+    const visible = allEpochKeys.reduce((acc, epoch) => {
+      if (epochFilterMeta.lastEpoch != null && epoch === epochFilterMeta.lastEpoch) return acc + 1;
+      const maxPct = Number(epochFilterMeta.maxPctByEpoch[epoch] ?? 0);
+      return maxPct >= normalizedEpochThresholdUi ? acc + 1 : acc;
+    }, 0);
+    return { visible, total };
+  })();
+  const commitEpochThreshold = (nextRaw: number) => {
+    const next = Math.max(0, Math.min(maxEpochTransitionPct, Number(nextRaw) || 0));
+    setEpochTransitionThresholdUi(next);
+    if (Math.abs(epochTransitionThreshold - next) < 1e-6) return;
+    setEpochTransitionThreshold(next);
+    const p = new URLSearchParams(window.location.search);
+    p.set("epochMin", next.toFixed(2));
+    p.set("min", String(normalizedLinkMin));
+    p.set("max", String(normalizedLinkMax));
+    window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+  };
   const cellLegendMinText =
     selectedCellMetric === "cluster_count" ? cellLegendRange.min.toFixed(0) : cellLegendRange.min.toFixed(3);
   const cellLegendMaxText =
@@ -2214,24 +2311,36 @@ export default function SankeyView({
                   min={0}
                   max={maxEpochTransitionPct}
                   step={0.1}
-                  value={normalizedEpochThreshold}
+                  value={normalizedEpochThresholdUi}
                   onChange={(e) => {
                     const next = Number(e.target.value);
-                    setEpochTransitionThreshold(next);
-                    const p = new URLSearchParams(window.location.search);
-                    p.set("epochMin", next.toFixed(2));
-                    p.set("min", String(normalizedLinkMin));
-                    p.set("max", String(normalizedLinkMax));
-                    window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+                    setEpochTransitionThresholdUi(Math.max(0, Math.min(next, maxEpochTransitionPct)));
+                  }}
+                  onPointerUp={(e) => commitEpochThreshold(Number((e.target as HTMLInputElement).value))}
+                  onMouseUp={(e) => commitEpochThreshold(Number((e.target as HTMLInputElement).value))}
+                  onTouchEnd={(e) => commitEpochThreshold(Number((e.target as HTMLInputElement).value))}
+                  onKeyUp={(e) => {
+                    if (
+                      e.key === "ArrowLeft" ||
+                      e.key === "ArrowRight" ||
+                      e.key === "ArrowUp" ||
+                      e.key === "ArrowDown" ||
+                      e.key === "Home" ||
+                      e.key === "End" ||
+                      e.key === "PageUp" ||
+                      e.key === "PageDown"
+                    ) {
+                      commitEpochThreshold(Number((e.target as HTMLInputElement).value));
+                    }
                   }}
                 />
               </div>
             </div>
             <span id="epochThresholdValue" className="range-bound">
-              {normalizedEpochThreshold.toFixed(2)}%
+              {normalizedEpochThresholdUi.toFixed(2)}%
             </span>
             <span className="epoch-visible-summary">
-              Shown: {visibleEpochSummary.visible}/{visibleEpochSummary.total}
+              Shown: {liveVisibleEpochSummary.visible}/{liveVisibleEpochSummary.total}
             </span>
             </div>
           </div>
@@ -2697,6 +2806,10 @@ export default function SankeyView({
 
         :global(.link-dimmed) {
           stroke-opacity: 0.06 !important;
+        }
+
+        :global(.gap-dimmed) {
+          opacity: 0.12 !important;
         }
 
         :global(#chart svg rect.bar.node-highlight) {

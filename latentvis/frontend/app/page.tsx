@@ -1199,6 +1199,27 @@ export default function Home() {
     }
   }, [selectedNode]);
 
+  useEffect(() => {
+    // Keep linked Sankey paths in sync with the current selection state,
+    // so both side Sankey views render immediately on initial load.
+    syncSankeyPaths(
+      selectedModel,
+      selectedLayer,
+      selectedDataset,
+      selectedClustering,
+      selectedDataSplit,
+      sankeyRefreshKey
+    );
+  }, [
+    selectedModel,
+    selectedLayer,
+    selectedDataset,
+    selectedClustering,
+    selectedDataSplit,
+    sankeyRefreshKey,
+    generatedSankeyPayloads,
+  ]);
+
   const activeSankeyPath = useMemo(() => {
     return swapAxes ? sankeyPathVertical : sankeyPath;
   }, [swapAxes, sankeyPath, sankeyPathVertical]);
@@ -2053,6 +2074,7 @@ export default function Home() {
     showSearchResultsInMembers
       ? searchResultIds
       : (selectedIds && selectedIds.length > 0 ? selectedIds : null);
+  const showRightDetailPanels = cellSelected || selectedNode != null;
 
   return (
     <div className="flex min-h-screen w-full">
@@ -2258,6 +2280,13 @@ export default function Home() {
 
           <div className="p-1 box-border" style={{ gridColumn: "3 / 4", gridRow: "1 / 4" }}>
             <div className="w-full h-full min-w-0 flex flex-col gap-0">
+              {!showRightDetailPanels && (
+                <div className="w-full h-full border border-zinc-400 bg-white flex items-center justify-center text-sm text-zinc-500">
+                  Click a Sankey cell/node to show details
+                </div>
+              )}
+              {showRightDetailPanels && (
+              <>
               <div
                 ref={rightTopRowRef}
                 className="min-h-0 flex min-w-0 gap-0"
@@ -2656,6 +2685,8 @@ export default function Home() {
                   isTanimotoLoading={isClusterTanimotoLoading}
                 />
               </div>
+              </>
+              )}
             </div>
           </div>
           <div
