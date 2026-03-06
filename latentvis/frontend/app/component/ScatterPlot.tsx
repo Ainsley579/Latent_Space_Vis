@@ -12,9 +12,11 @@ type ScatterPoint = {
   y: number;
   cluster_id: number;
   split?: "train" | "test";
+  y_true?: number;
+  y_pred?: number;
 };
 
-type ColorMode = "cluster" | "label" | "split";
+type ColorMode = "cluster" | "label" | "split" | "y_true" | "y_pred";
 
 type ScatterPlotProps = {
   dataPathXY: string;
@@ -34,6 +36,7 @@ type ScatterPlotProps = {
   onPointSelect?: (sel: { model?: string; layer?: string; cluster: number; real_id: string }) => void;
   onPointHoverIdChange?: (id: string | null) => void;
   onClusterSelect?: (sel: { model?: string; layer?: string; cluster: number; real_ids: string[] }) => void;
+  onHighlightIdsSelect?: (ids: string[]) => void;
   onClearSelection?: () => void;
   resolveImageSrc?: (realId: string | number, imageType: string) => string;
   getSmilesById?: (realId: string | number) => string | null;
@@ -64,6 +67,7 @@ export default function ScatterPlot({
   onPointSelect,
   onPointHoverIdChange,
   onClusterSelect,
+  onHighlightIdsSelect,
   onClearSelection,
   resolveImageSrc,
   getSmilesById,
@@ -78,6 +82,8 @@ export default function ScatterPlot({
   const getSmilesByIdRef = useRef(getSmilesById);
   const modelKeyRef = useRef(modelKey);
   const layerKeyRef = useRef(layerKey);
+  const yTrueByIdRef = useRef<Record<string, number>>({});
+  const yPredByIdRef = useRef<Record<string, number>>({});
   const [legendClusters, setLegendClusters] = useState<number[]>([]);
   const [legendClusterIds, setLegendClusterIds] = useState<Record<number, string[]>>({});
   const [colorMode, setColorMode] = useState<ColorMode>("cluster");
@@ -88,6 +94,9 @@ export default function ScatterPlot({
   const [labelFileName, setLabelFileName] = useState<string>("");
   const [labelLoadError, setLabelLoadError] = useState<string | null>(null);
   const [hasSplitData, setHasSplitData] = useState(false);
+  const [yTrueRange, setYTrueRange] = useState<{ min: number; max: number } | null>(null);
+  const [yPredRange, setYPredRange] = useState<{ min: number; max: number } | null>(null);
+  const [ySharedRange, setYSharedRange] = useState<{ min: number; max: number } | null>(null);
   const colorModeRef = useRef<ColorMode>("cluster");
 
   function idLookupKeys(raw: string): string[] {
@@ -138,6 +147,20 @@ export default function ScatterPlot({
       }
       return "#9ca3af";
     }
+    if (mode === "y_true") {
+      const v = Number(yTrueByIdRef.current[id]);
+      if (!Number.isFinite(v) || !ySharedRange) return "#9ca3af";
+      const { min, max } = ySharedRange;
+      const t = max > min ? (v - min) / (max - min) : 0.5;
+      return d3.interpolateYlGnBu(Math.max(0, Math.min(1, t)));
+    }
+    if (mode === "y_pred") {
+      const v = Number(yPredByIdRef.current[id]);
+      if (!Number.isFinite(v) || !ySharedRange) return "#9ca3af";
+      const { min, max } = ySharedRange;
+      const t = max > min ? (v - min) / (max - min) : 0.5;
+      return d3.interpolateYlGnBu(Math.max(0, Math.min(1, t)));
+    }
     return CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length];
   }
 
@@ -167,6 +190,30 @@ export default function ScatterPlot({
     colorModeRef.current = next;
     setColorMode(next);
     requestAnimationFrame(() => repaintBaseFillForMode(next));
+  }
+
+  function emitHighlightIds(ids: string[]) {
+    const uniq = Array.from(new Set(ids.map((x) => String(x)).filter((x) => x.length > 0)));
+    onHighlightIdsSelect?.(uniq);
+  }
+
+  function idsForSplit(target: "train" | "test"): string[] {
+    const rows = rowsRef.current ?? [];
+    return rows.filter((d) => d.split === target).map((d) => String(d.real_id));
+  }
+
+  function idsForLabel(targetLabel: string): string[] {
+    const rows = rowsRef.current ?? [];
+    return rows
+      .filter((d) => {
+        const rid = String(d.real_id);
+        const direct = lookupLabelById(labelById, rid);
+        if (direct) return direct === targetLabel;
+        const smiles = getSmilesByIdRef.current?.(rid);
+        if (!smiles) return false;
+        return (labelBySmiles[String(smiles).trim()] ?? "") === targetLabel;
+      })
+      .map((d) => String(d.real_id));
   }
 
   useEffect(() => {
@@ -353,6 +400,8 @@ export default function ScatterPlot({
         .attr("data-id", (d) => String(d.real_id))
         .attr("data-cluster", (d) => String(d.cluster_id))
         .attr("data-split", (d) => String(d.split ?? ""))
+        .attr("data-y-true", (d) => (Number.isFinite(Number(d.y_true)) ? String(d.y_true) : ""))
+        .attr("data-y-pred", (d) => (Number.isFinite(Number(d.y_pred)) ? String(d.y_pred) : ""))
         .attr("data-base-fill", (d) =>
           resolveBaseFillByMode(colorModeRef.current, String(d.real_id), d.cluster_id, d.split)
         )
@@ -467,9 +516,33 @@ export default function ScatterPlot({
       } catch {
         return null;
       }
+      // Preferred schema: flat list rows in /id_smiles_y_true_y_pred.json
+      if (Array.isArray(json)) {
+        const splitById: Record<string, "train" | "test" | "both"> = {};
+        const yTrueById: Record<string, number> = {};
+        const yPredById: Record<string, number> = {};
+        json.forEach((row: any) => {
+          if (!row || typeof row !== "object") return;
+          const ridRaw = row.real_id ?? row.id;
+          if (ridRaw == null) return;
+          const rid = String(ridRaw).trim();
+          if (!rid) return;
+          const splitRaw = String(row.split ?? "").trim().toLowerCase();
+          const split = splitRaw === "train" || splitRaw === "test" ? splitRaw : "";
+          if (!split) return;
+          const prev = splitById[rid];
+          splitById[rid] = prev && prev !== split ? "both" : (split as "train" | "test");
+          const yt = Number(row.y_true);
+          const yp = Number(row.y_pred);
+          if (Number.isFinite(yt)) yTrueById[rid] = yt;
+          if (Number.isFinite(yp)) yPredById[rid] = yp;
+        });
+        return { splitById, yTrueById, yPredById };
+      }
+      // Backward-compatible schema from backend /real-id-split-map
       const map = json?.datasets?.[splitMapDataset]?.split_by_real_id;
       if (!map || typeof map !== "object") return null;
-      return map as Record<string, "train" | "test" | "both">;
+      return { splitById: map as Record<string, "train" | "test" | "both"> };
     };
 
     const requests: Array<Promise<any>> = [
@@ -484,7 +557,10 @@ export default function ScatterPlot({
 
     Promise.all(requests)
       .then((allJson) => {
-        const [xyJson, clusterJson, splitById, secondaryXYJson, secondaryClusterJson] = allJson;
+        const [xyJson, clusterJson, splitMeta, secondaryXYJson, secondaryClusterJson] = allJson;
+        const splitById = splitMeta?.splitById ?? {};
+        const yTrueById = splitMeta?.yTrueById ?? {};
+        const yPredById = splitMeta?.yPredById ?? {};
 
           const parseRows = (
           xySource: any,
@@ -520,6 +596,22 @@ export default function ScatterPlot({
                 y: Number(d?.y ?? 0) || 0,
                 cluster_id: clusterFromMap ?? clusterFromRow,
                 split: splitFromMap ?? split,
+                y_true: (() => {
+                  const keys = idLookupKeys(id);
+                  for (let i = 0; i < keys.length; i += 1) {
+                    const v = Number(yTrueById?.[keys[i]]);
+                    if (Number.isFinite(v)) return v;
+                  }
+                  return undefined;
+                })(),
+                y_pred: (() => {
+                  const keys = idLookupKeys(id);
+                  for (let i = 0; i < keys.length; i += 1) {
+                    const v = Number(yPredById?.[keys[i]]);
+                    if (Number.isFinite(v)) return v;
+                  }
+                  return undefined;
+                })(),
               } as ScatterPoint;
             })
             .filter((d: ScatterPoint | null): d is ScatterPoint => !!d);
@@ -535,9 +627,28 @@ export default function ScatterPlot({
         const splitKinds = new Set(merged.map((d) => d.split).filter((x): x is "train" | "test" => !!x));
         const canUseSplit = splitKinds.size > 0;
         setHasSplitData(canUseSplit);
+        const yTrueVals = merged.map((d) => Number(d.y_true)).filter((v) => Number.isFinite(v));
+        const yPredVals = merged.map((d) => Number(d.y_pred)).filter((v) => Number.isFinite(v));
+        const yAllVals = [...yTrueVals, ...yPredVals];
+        const yTrueByIdNext: Record<string, number> = {};
+        const yPredByIdNext: Record<string, number> = {};
+        merged.forEach((d) => {
+          const rid = String(d.real_id);
+          const yt = Number(d.y_true);
+          const yp = Number(d.y_pred);
+          if (Number.isFinite(yt)) yTrueByIdNext[rid] = yt;
+          if (Number.isFinite(yp)) yPredByIdNext[rid] = yp;
+        });
+        yTrueByIdRef.current = yTrueByIdNext;
+        yPredByIdRef.current = yPredByIdNext;
+        setYTrueRange(yTrueVals.length ? { min: Math.min(...yTrueVals), max: Math.max(...yTrueVals) } : null);
+        setYPredRange(yPredVals.length ? { min: Math.min(...yPredVals), max: Math.max(...yPredVals) } : null);
+        setYSharedRange(yAllVals.length ? { min: Math.min(...yAllVals), max: Math.max(...yAllVals) } : null);
         if (!canUseSplit && colorMode === "split") {
           setColorMode("cluster");
         }
+        if (colorMode === "y_true" && yTrueVals.length === 0) setColorMode("cluster");
+        if (colorMode === "y_pred" && yPredVals.length === 0) setColorMode("cluster");
 
         lastRows = merged;
         rowsRef.current = merged;
@@ -641,7 +752,7 @@ export default function ScatterPlot({
           .style("pointer-events", "none");
       }
     }
-  }, [activeCluster, activeIds, highlightId, colorMode, labelById, labelBySmiles, labelColors]);
+  }, [activeCluster, activeIds, highlightId, colorMode, labelById, labelBySmiles, labelColors, ySharedRange]);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -716,6 +827,28 @@ export default function ScatterPlot({
           >
             split
           </button>
+          <button
+            type="button"
+            className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
+              colorMode === "y_true" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-zinc-300 text-zinc-700 bg-white"
+            } disabled:opacity-50`}
+            onClick={() => setColorModeAndRefresh("y_true")}
+            disabled={!yTrueRange}
+            title={yTrueRange ? "Color points by y_true" : "y_true not available"}
+          >
+            y_true
+          </button>
+          <button
+            type="button"
+            className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
+              colorMode === "y_pred" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-zinc-300 text-zinc-700 bg-white"
+            } disabled:opacity-50`}
+            onClick={() => setColorModeAndRefresh("y_pred")}
+            disabled={!yPredRange}
+            title={yPredRange ? "Color points by y_pred" : "y_pred not available"}
+          >
+            y_pred
+          </button>
           {labelLoadError && <span className="text-[11px] text-red-600 truncate max-w-[240px]">{labelLoadError}</span>}
           <button
             type="button"
@@ -761,30 +894,66 @@ export default function ScatterPlot({
         )}
         {colorMode === "split" && (
           <div className="flex flex-nowrap gap-x-3 gap-y-1 min-w-max text-[11px] text-zinc-700">
-            <span className="inline-flex items-center gap-1">
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
+              onClick={() => emitHighlightIds(idsForSplit("train"))}
+              title="Highlight train points"
+            >
               <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#f59e0b" }} />
               train
-            </span>
-            <span className="inline-flex items-center gap-1">
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
+              onClick={() => emitHighlightIds(idsForSplit("test"))}
+              title="Highlight test points"
+            >
               <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#2563eb" }} />
               test
-            </span>
+            </button>
           </div>
         )}
         {colorMode === "label" && (
           <div className="flex flex-nowrap gap-x-3 gap-y-1 min-w-max">
             {labelLegend.map((label) => (
-              <div key={label} className="flex items-center gap-1">
+              <button
+                key={label}
+                type="button"
+                className="flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
+                onClick={() => emitHighlightIds(idsForLabel(label))}
+                title={`Highlight label: ${label}`}
+              >
                 <span
                   className="inline-block w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: labelColors[label] ?? "#9ca3af" }}
                 />
                 <span className="text-xs text-zinc-700">{label}</span>
-              </div>
+              </button>
             ))}
             {labelLegend.length === 0 && (
               <span className="text-xs text-zinc-500">Upload a CSV with `label` and `real_id`/`id` columns.</span>
             )}
+          </div>
+        )}
+        {colorMode === "y_true" && ySharedRange && (
+          <div className="flex items-center gap-2 min-w-max text-[11px] text-zinc-700">
+            <span>{ySharedRange.min.toFixed(3)}</span>
+            <div
+              className="h-2 w-28 rounded"
+              style={{ background: "linear-gradient(to right, #ffffd9, #081d58)" }}
+            />
+            <span>{ySharedRange.max.toFixed(3)}</span>
+          </div>
+        )}
+        {colorMode === "y_pred" && ySharedRange && (
+          <div className="flex items-center gap-2 min-w-max text-[11px] text-zinc-700">
+            <span>{ySharedRange.min.toFixed(3)}</span>
+            <div
+              className="h-2 w-28 rounded"
+              style={{ background: "linear-gradient(to right, #ffffd9, #081d58)" }}
+            />
+            <span>{ySharedRange.max.toFixed(3)}</span>
           </div>
         )}
       </div>

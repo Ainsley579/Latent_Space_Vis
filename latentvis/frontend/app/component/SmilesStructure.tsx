@@ -13,6 +13,7 @@ const OCL_CDN =
   "https://www.lactame.com/lib/openchemlib/5.2.0/openchemlib-minimal.js";
 
 let oclLoadPromise: Promise<any> | null = null;
+let smilesDrawerLoadPromise: Promise<any> | null = null;
 
 function loadOCL(): Promise<any> {
   if (typeof window === "undefined") return Promise.reject(new Error("no_window"));
@@ -44,6 +45,62 @@ function loadOCL(): Promise<any> {
   return oclLoadPromise;
 }
 
+function loadSmilesDrawer(): Promise<any> {
+  if (smilesDrawerLoadPromise) return smilesDrawerLoadPromise;
+  smilesDrawerLoadPromise = import("smiles-drawer").then((mod: any) => mod?.default ?? mod);
+  return smilesDrawerLoadPromise;
+}
+
+async function renderWithSmilesDrawer(
+  smiles: string,
+  width: number,
+  height: number
+): Promise<string | null> {
+  if (typeof document === "undefined") return null;
+  const SD = await loadSmilesDrawer();
+  return new Promise((resolve) => {
+    const host = document.createElement("div");
+    host.style.position = "fixed";
+    host.style.left = "-99999px";
+    host.style.top = "-99999px";
+    host.style.width = "0";
+    host.style.height = "0";
+    host.style.overflow = "hidden";
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const svgId = `smiles-svg-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    svg.setAttribute("id", svgId);
+    svg.setAttribute("width", String(width));
+    svg.setAttribute("height", String(height));
+    host.appendChild(svg);
+    document.body.appendChild(host);
+
+    const done = (markup: string | null) => {
+      host.remove();
+      resolve(markup ? normalizeSmilesSvgMarkup(markup) : null);
+    };
+
+    try {
+      const drawer = new SD.SvgDrawer({ width, height });
+      SD.parse(
+        smiles,
+        (tree: any) => {
+          try {
+            drawer.draw(tree, svgId, "light", false);
+            const out = svg.outerHTML;
+            done(out && out.includes("<svg") ? out : null);
+          } catch {
+            done(null);
+          }
+        },
+        () => done(null)
+      );
+    } catch {
+      done(null);
+    }
+  });
+}
+
 function normalizeSmilesSvgMarkup(svg: string): string {
   const style =
     "position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:120%;height:120%;display:block;";
@@ -62,21 +119,30 @@ export async function renderSmilesSvg(
 ): Promise<string | null> {
   const s = String(smiles ?? "").trim();
   if (!s) return null;
-  const OCL = await loadOCL();
   const candidates = Array.from(
     new Set(
       [s, s.replace(/:/g, "="), s.replace(/:/g, "")].filter((x) => x.length > 0)
     )
   );
 
-  for (const c of candidates) {
-    try {
-      const mol = OCL.Molecule.fromSmiles(c);
-      const svg = mol.toSVG(width, height, "", { suppressCIPParity: true });
-      if (svg && svg.includes("<svg")) return normalizeSmilesSvgMarkup(svg);
-    } catch {
-      // try next candidate
+  try {
+    const OCL = await loadOCL();
+    for (const c of candidates) {
+      try {
+        const mol = OCL.Molecule.fromSmiles(c);
+        const svg = mol.toSVG(width, height, "", { suppressCIPParity: true });
+        if (svg && svg.includes("<svg")) return normalizeSmilesSvgMarkup(svg);
+      } catch {
+        // try next candidate
+      }
     }
+  } catch {
+    // fallback to smiles-drawer below
+  }
+
+  for (const c of candidates) {
+    const svg = await renderWithSmilesDrawer(c, width, height);
+    if (svg && svg.includes("<svg")) return svg;
   }
   return null;
 }

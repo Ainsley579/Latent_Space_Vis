@@ -304,13 +304,24 @@ export default function SankeyView({
   const [showCellBackground, setShowCellBackground] = useState(true);
   const [showGapHeatmap, setShowGapHeatmap] = useState(true);
   const [epochTransitionThreshold, setEpochTransitionThreshold] = useState(0);
+  const [epochTransitionThresholdUi, setEpochTransitionThresholdUi] = useState(0);
   const [maxEpochTransitionPct, setMaxEpochTransitionPct] = useState(100);
   const [visibleEpochSummary, setVisibleEpochSummary] = useState({ visible: 0, total: 0 });
+  const [epochFilterMeta, setEpochFilterMeta] = useState<{
+    allEpochKeys: string[];
+    lastEpoch: string | null;
+    pairPctByEpochPair: Record<string, number>;
+  }>({
+    allEpochKeys: [],
+    lastEpoch: null,
+    pairPctByEpochPair: {},
+  });
   const [cellLegendRange, setCellLegendRange] = useState({ min: 0, max: 1 });
   const [gapLegendMax, setGapLegendMax] = useState(1);
   const [linkValueMin, setLinkValueMin] = useState(0);
   const [linkValueMax, setLinkValueMax] = useState(Number.MAX_SAFE_INTEGER);
   const [linkValueMaxBound, setLinkValueMaxBound] = useState(1);
+  const autoInitLinkMaxRef = useRef(true);
   const [hoveredCellInfo, setHoveredCellInfo] = useState<CellInfoTag | null>(null);
   const [pinnedCellInfo, setPinnedCellInfo] = useState<CellInfoTag | null>(null);
   const [hoverTooltip, setHoverTooltip] = useState<HoverTooltip | null>(null);
@@ -335,8 +346,9 @@ export default function SankeyView({
       shouldReplace = true;
     }
     if (!p.has("max")) {
-      p.set("max", "812");
+      p.set("max", "1015");
       shouldReplace = true;
+      autoInitLinkMaxRef.current = false;
     }
     if (!p.has("epochMin")) {
       p.set("epochMin", "0");
@@ -348,12 +360,24 @@ export default function SankeyView({
     }
 
     const q = Number(p.get("epochMin"));
-    if (Number.isFinite(q) && q >= 0) setEpochTransitionThreshold(q);
+    if (Number.isFinite(q) && q >= 0) {
+      setEpochTransitionThreshold(q);
+      setEpochTransitionThresholdUi(q);
+    }
     const qMin = Number(p.get("min"));
     const qMax = Number(p.get("max"));
+    if (Number.isFinite(qMax) && qMax >= 0) autoInitLinkMaxRef.current = false;
     if (Number.isFinite(qMin) && qMin >= 0) setLinkValueMin(qMin);
     if (Number.isFinite(qMax) && qMax >= 0) setLinkValueMax(qMax);
   }, []);
+
+  useEffect(() => {
+    setEpochTransitionThresholdUi(epochTransitionThreshold);
+  }, [epochTransitionThreshold]);
+
+  useEffect(() => {
+    setEpochTransitionThresholdUi((v) => Math.max(0, Math.min(v, maxEpochTransitionPct)));
+  }, [maxEpochTransitionPct]);
 
   function applyLinkValueFilter(minVal: number, maxVal: number) {
     const container = chartRef.current;
@@ -437,24 +461,59 @@ export default function SankeyView({
           (Array.isArray((transitionJson as any)?.by_layer) ? (transitionJson as any).by_layer : null) ||
           (Array.isArray((transitionLayerJson as any)?.by_layer) ? (transitionLayerJson as any).by_layer : []);
 
-        const epochMaxTransitionPctByEpoch = new Map<string, number>();
-        transitionEntriesByEpoch.forEach((d) => {
-          const epoch = String(d?.epoch ?? "").trim();
-          const pct = Number(d?.pct_changed ?? 0);
-          if (!epoch || !Number.isFinite(pct)) return;
-          const prev = epochMaxTransitionPctByEpoch.get(epoch) ?? 0;
-          if (pct > prev) epochMaxTransitionPctByEpoch.set(epoch, pct);
-        });
-
         const allEpochKeys: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
         const lastEpoch = allEpochKeys.length ? allEpochKeys[allEpochKeys.length - 1] : null;
-        const visibleEpochBase: string[] = allEpochKeys.filter((epoch) => {
-          if (lastEpoch != null && epoch === lastEpoch) return true;
-          const maxPct = epochMaxTransitionPctByEpoch.get(epoch) ?? 0;
-          return maxPct >= epochTransitionThreshold;
+        const epochPairMaxTransitionPct = new Map<string, number>();
+        transitionEntriesByLayer.forEach((d) => {
+          const fromEpoch = String(d?.from_epoch ?? "").trim();
+          const toEpoch = String(d?.to_epoch ?? "").trim();
+          const pct = Number(d?.pct_changed ?? 0);
+          if (!fromEpoch || !toEpoch || !Number.isFinite(pct)) return;
+          const key = `${fromEpoch}|${toEpoch}`;
+          const prev = epochPairMaxTransitionPct.get(key) ?? 0;
+          if (pct > prev) epochPairMaxTransitionPct.set(key, pct);
         });
+        const epochOrderIndex = new Map(allEpochKeys.map((e, i) => [e, i]));
+        const getEpochPairTransitionPct = (fromEpoch: string, toEpoch: string): number => {
+          let best = 0;
+          const direct = epochPairMaxTransitionPct.get(`${fromEpoch}|${toEpoch}`) ?? 0;
+          const reverse = epochPairMaxTransitionPct.get(`${toEpoch}|${fromEpoch}`) ?? 0;
+          best = Math.max(best, direct, reverse);
+          const fromIdx = epochOrderIndex.get(fromEpoch);
+          const toIdx = epochOrderIndex.get(toEpoch);
+          if (fromIdx == null || toIdx == null || fromIdx === toIdx) return best;
+          const start = Math.min(fromIdx, toIdx);
+          const end = Math.max(fromIdx, toIdx);
+          for (let i = start; i < end; i += 1) {
+            const a = allEpochKeys[i];
+            const b = allEpochKeys[i + 1];
+            const seg = Math.max(
+              epochPairMaxTransitionPct.get(`${a}|${b}`) ?? 0,
+              epochPairMaxTransitionPct.get(`${b}|${a}`) ?? 0
+            );
+            if (seg > best) best = seg;
+          }
+          return best;
+        };
+        setEpochFilterMeta({
+          allEpochKeys,
+          lastEpoch,
+          pairPctByEpochPair: Object.fromEntries(epochPairMaxTransitionPct.entries()),
+        });
+        const visibleEpochSet = new Set<string>();
+        for (let i = 0; i < allEpochKeys.length - 1; i += 1) {
+          const fromEpoch = allEpochKeys[i];
+          const toEpoch = allEpochKeys[i + 1];
+          const pairPct = getEpochPairTransitionPct(fromEpoch, toEpoch);
+          if (pairPct >= epochTransitionThreshold) {
+            visibleEpochSet.add(fromEpoch);
+            visibleEpochSet.add(toEpoch);
+          }
+        }
+        if (lastEpoch != null) visibleEpochSet.add(lastEpoch);
+        const visibleEpochBase: string[] = allEpochKeys.filter((epoch) => visibleEpochSet.has(epoch));
         const ROW_NAMES: string[] = reverseEpochOrder ? [...visibleEpochBase].reverse() : visibleEpochBase;
-        const maxEpochPct = Math.max(0, ...Array.from(epochMaxTransitionPctByEpoch.values()));
+        const maxEpochPct = Math.max(0, ...Array.from(epochPairMaxTransitionPct.values()));
         setMaxEpochTransitionPct(maxEpochPct);
         setVisibleEpochSummary({ visible: ROW_NAMES.length, total: allEpochKeys.length });
         onVisibleEpochsChange?.(visibleEpochBase);
@@ -779,23 +838,96 @@ export default function SankeyView({
         const nodeBarOffset = (x.bandwidth() - nodeBarWidth) / 2;
 
         const pctByEpochTransition = new Map<string, number>();
+        const normalizeTransitionLayer = (name: string): string => {
+          const n = String(name ?? "").trim();
+          if (n === "fp") return "fingerprint";
+          if (/^fnn_layer_/.test(n)) return n.replace(/^fnn_layer_/, "ffn_layer_");
+          return n;
+        };
+        const transitionLayerAliases = (name: string): string[] => {
+          const n = normalizeTransitionLayer(name);
+          const out = new Set<string>([n, String(name ?? "").trim()]);
+          if (/^ffn_layer_/.test(n)) out.add(n.replace(/^ffn_layer_/, "fnn_layer_"));
+          if (/^fnn_layer_/.test(n)) out.add(n.replace(/^fnn_layer_/, "ffn_layer_"));
+          if (n === "fingerprint") out.add("fp");
+          if (n === "fp") out.add("fingerprint");
+          return Array.from(out);
+        };
         transitionEntriesByEpoch.forEach((d) => {
           const epoch = String(d?.epoch ?? "").trim();
-          const fromLayer = String(d?.from_layer ?? "").trim();
-          const toLayer = String(d?.to_layer ?? "").trim();
+          const fromLayerRaw = String(d?.from_layer ?? "").trim();
+          const toLayerRaw = String(d?.to_layer ?? "").trim();
           const pct = Number(d?.pct_changed ?? 0);
-          if (!epoch || !fromLayer || !toLayer || !Number.isFinite(pct)) return;
-          pctByEpochTransition.set(`${epoch}|${fromLayer}|${toLayer}`, Math.max(0, pct));
+          if (!epoch || !fromLayerRaw || !toLayerRaw || !Number.isFinite(pct)) return;
+          const fromLayer = normalizeTransitionLayer(fromLayerRaw);
+          const toLayer = normalizeTransitionLayer(toLayerRaw);
+          const next = Math.max(0, pct);
+          const keys = new Set<string>([
+            `${epoch}|${fromLayer}|${toLayer}`,
+            `${epoch}|${fromLayerRaw}|${toLayerRaw}`,
+          ]);
+          transitionLayerAliases(fromLayerRaw).forEach((f) => {
+            transitionLayerAliases(toLayerRaw).forEach((t) => keys.add(`${epoch}|${f}|${t}`));
+          });
+          keys.forEach((key) => {
+            const prev = pctByEpochTransition.get(key) ?? 0;
+            if (next > prev) pctByEpochTransition.set(key, next);
+          });
         });
         const pctByLayerTransition = new Map<string, number>();
         transitionEntriesByLayer.forEach((d) => {
-          const layer = String(d?.layer ?? "").trim();
+          const layerRaw = String(d?.layer ?? "").trim();
           const fromEpoch = String(d?.from_epoch ?? "").trim();
           const toEpoch = String(d?.to_epoch ?? "").trim();
           const pct = Number(d?.pct_changed ?? 0);
-          if (!layer || !fromEpoch || !toEpoch || !Number.isFinite(pct)) return;
-          pctByLayerTransition.set(`${layer}|${fromEpoch}|${toEpoch}`, Math.max(0, pct));
+          if (!layerRaw || !fromEpoch || !toEpoch || !Number.isFinite(pct)) return;
+          const layer = normalizeTransitionLayer(layerRaw);
+          const next = Math.max(0, pct);
+          const keys = new Set<string>([
+            `${layer}|${fromEpoch}|${toEpoch}`,
+            `${layerRaw}|${fromEpoch}|${toEpoch}`,
+          ]);
+          transitionLayerAliases(layerRaw).forEach((l) => keys.add(`${l}|${fromEpoch}|${toEpoch}`));
+          keys.forEach((key) => {
+            const prev = pctByLayerTransition.get(key) ?? 0;
+            if (next > prev) pctByLayerTransition.set(key, next);
+          });
         });
+        const getEpochTransitionPct = (epoch: string, fromLayer: string, toLayer: string): number => {
+          let best = 0;
+          transitionLayerAliases(fromLayer).forEach((f) => {
+            transitionLayerAliases(toLayer).forEach((t) => {
+              const v = pctByEpochTransition.get(`${epoch}|${f}|${t}`) ?? 0;
+              if (v > best) best = v;
+            });
+          });
+          return best;
+        };
+        const getLayerTransitionPct = (layer: string, fromEpoch: string, toEpoch: string): number => {
+          let best = 0;
+          transitionLayerAliases(layer).forEach((l) => {
+            const v1 = pctByLayerTransition.get(`${l}|${fromEpoch}|${toEpoch}`) ?? 0;
+            const v2 = pctByLayerTransition.get(`${l}|${toEpoch}|${fromEpoch}`) ?? 0;
+            if (v1 > best) best = v1;
+            if (v2 > best) best = v2;
+            const fromIdx = allEpochKeys.indexOf(fromEpoch);
+            const toIdx = allEpochKeys.indexOf(toEpoch);
+            if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+              const start = Math.min(fromIdx, toIdx);
+              const end = Math.max(fromIdx, toIdx);
+              for (let i = start; i < end; i += 1) {
+                const a = allEpochKeys[i];
+                const b = allEpochKeys[i + 1];
+                const seg = Math.max(
+                  pctByLayerTransition.get(`${l}|${a}|${b}`) ?? 0,
+                  pctByLayerTransition.get(`${l}|${b}|${a}`) ?? 0
+                );
+                if (seg > best) best = seg;
+              }
+            }
+          });
+          return best;
+        };
         const maxGapPct = Math.max(
           1,
           ...Array.from(pctByEpochTransition.values()),
@@ -822,18 +954,22 @@ export default function SankeyView({
             for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
               const fromLayer = COLUMN_NAMES[i];
               const toLayer = COLUMN_NAMES[i + 1];
-              const pct = pctByEpochTransition.get(`${epoch}|${fromLayer}|${toLayer}`) ?? 0;
+              const pct = getEpochTransitionPct(epoch, fromLayer, toLayer);
               const xGap = i * cellStepX + cellW;
               const yGap = rowIdx * cellStepY;
               const gapRect = gapHeatmap
                 .append("rect")
+                .attr("class", "gap-rect")
                 .attr("x", xGap)
                 .attr("y", yGap)
                 .attr("width", CELL_GAP)
                 .attr("height", cellH)
                 .attr("fill", horizontalGapColor(pct))
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 0.7);
+                .attr("stroke-width", 0.7)
+                .attr("data-row", epoch)
+                .attr("data-column-from", fromLayer)
+                .attr("data-column-to", toLayer);
               gapRect
                 .on("mouseenter mousemove", (_event: any) => {
                   placeTooltipFromEvent(event, "Gap Transition", [
@@ -850,18 +986,22 @@ export default function SankeyView({
             for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
               const fromEpoch = ROW_NAMES[i];
               const toEpoch = ROW_NAMES[i + 1];
-              const pct = pctByLayerTransition.get(`${layer}|${fromEpoch}|${toEpoch}`) ?? 0;
+              const pct = getLayerTransitionPct(layer, fromEpoch, toEpoch);
               const xGap = colIdx * cellStepX;
               const yGap = i * cellStepY + cellH;
               const gapRect = gapHeatmap
                 .append("rect")
+                .attr("class", "gap-rect")
                 .attr("x", xGap)
                 .attr("y", yGap)
                 .attr("width", cellW)
                 .attr("height", CELL_GAP)
                 .attr("fill", verticalGapColor(pct))
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 0.7);
+                .attr("stroke-width", 0.7)
+                .attr("data-column", layer)
+                .attr("data-row-from", fromEpoch)
+                .attr("data-row-to", toEpoch);
               gapRect
                 .on("mouseenter mousemove", (_event: any) => {
                   placeTooltipFromEvent(event, "Gap Transition", [
@@ -879,18 +1019,22 @@ export default function SankeyView({
             for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
               const fromEpoch = ROW_NAMES[i];
               const toEpoch = ROW_NAMES[i + 1];
-              const pct = pctByLayerTransition.get(`${layer}|${fromEpoch}|${toEpoch}`) ?? 0;
+              const pct = getLayerTransitionPct(layer, fromEpoch, toEpoch);
               const xGap = i * cellStepX + cellW;
               const yGap = rowIdx * cellStepY;
               const gapRect = gapHeatmap
                 .append("rect")
+                .attr("class", "gap-rect")
                 .attr("x", xGap)
                 .attr("y", yGap)
                 .attr("width", CELL_GAP)
                 .attr("height", cellH)
                 .attr("fill", horizontalGapColor(pct))
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 0.7);
+                .attr("stroke-width", 0.7)
+                .attr("data-column", layer)
+                .attr("data-row-from", fromEpoch)
+                .attr("data-row-to", toEpoch);
               gapRect
                 .on("mouseenter mousemove", (_event: any) => {
                   placeTooltipFromEvent(event, "Gap Transition", [
@@ -907,18 +1051,22 @@ export default function SankeyView({
             for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
               const fromLayer = COLUMN_NAMES[i];
               const toLayer = COLUMN_NAMES[i + 1];
-              const pct = pctByEpochTransition.get(`${epoch}|${fromLayer}|${toLayer}`) ?? 0;
+              const pct = getEpochTransitionPct(epoch, fromLayer, toLayer);
               const xGap = colIdx * cellStepX;
               const yGap = i * cellStepY + cellH;
               const gapRect = gapHeatmap
                 .append("rect")
+                .attr("class", "gap-rect")
                 .attr("x", xGap)
                 .attr("y", yGap)
                 .attr("width", cellW)
                 .attr("height", CELL_GAP)
                 .attr("fill", verticalGapColor(pct))
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 0.7);
+                .attr("stroke-width", 0.7)
+                .attr("data-row", epoch)
+                .attr("data-column-from", fromLayer)
+                .attr("data-column-to", toLayer);
               gapRect
                 .on("mouseenter mousemove", (_event: any) => {
                   placeTooltipFromEvent(event, "Gap Transition", [
@@ -1042,7 +1190,17 @@ export default function SankeyView({
         const nextMaxBound = Math.max(1, Math.ceil(maxEdgeVal), Math.ceil(maxCellTotal));
         setLinkValueMaxBound(nextMaxBound);
         setLinkValueMin((v) => Math.max(0, Math.min(v, nextMaxBound)));
-        setLinkValueMax((v) => Math.max(0, Math.min(v, nextMaxBound)));
+        if (autoInitLinkMaxRef.current) {
+          setLinkValueMax(nextMaxBound);
+          const p = new URLSearchParams(window.location.search);
+          p.set("max", String(nextMaxBound));
+          p.set("min", String(Math.max(0, Math.min(linkValueMin, nextMaxBound))));
+          p.set("epochMin", String(epochTransitionThreshold.toFixed(2)));
+          window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+          autoInitLinkMaxRef.current = false;
+        } else {
+          setLinkValueMax((v) => Math.max(0, Math.min(v, nextMaxBound)));
+        }
         const linkWidthScale = d3.scaleSqrt().domain([0, maxEdgeVal]).range([0.5, 20]).clamp(true);
 
         function appendLinkPath(
@@ -1521,8 +1679,10 @@ export default function SankeyView({
             d3.selectAll('#chart svg g[id^="cell-"] rect').classed("cell-dimmed", false).classed("cell-highlight", false);
             d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
             d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
           } else if (m === "column") {
             d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
             if (!SWAP_AXES) {
               d3.selectAll("g.column-links path.link-path").classed("link-dimmed", false).classed("link-highlight", true);
               d3.selectAll("g.row-links path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
@@ -1532,6 +1692,7 @@ export default function SankeyView({
             }
           } else if (m === "row") {
             d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
             if (!SWAP_AXES) {
               d3.selectAll("g.row-links path.link-path").classed("link-dimmed", false).classed("link-highlight", true);
               d3.selectAll("g.column-links path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
@@ -1555,6 +1716,7 @@ export default function SankeyView({
           if (on) {
             d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", true).classed("cell-highlight", false);
             d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", true);
 
             X_NAMES.forEach((xKey) => {
               const rowName = SWAP_AXES ? xKey : rowKey;
@@ -1571,16 +1733,25 @@ export default function SankeyView({
                 const el = d3.select(this);
                 if (el.attr("data-row") === rowKey) el.classed("link-dimmed", false).classed("link-highlight", true);
               });
+              d3.selectAll("rect.gap-rect").each(function () {
+                const el = d3.select(this);
+                if (el.attr("data-row") === rowKey) el.classed("gap-dimmed", false);
+              });
             } else {
               d3.selectAll("g.column-links path.link-path").each(function () {
                 const el = d3.select(this);
                 if (el.attr("data-column") === rowKey) el.classed("link-dimmed", false).classed("link-highlight", true);
+              });
+              d3.selectAll("rect.gap-rect").each(function () {
+                const el = d3.select(this);
+                if (el.attr("data-row") === rowKey) el.classed("gap-dimmed", false);
               });
             }
           } else {
             d3.selectAll('#chart svg g[id^="cell-"] rect').classed("cell-dimmed", false).classed("cell-highlight", false);
             d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
             d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
           }
         }
 
@@ -1588,6 +1759,7 @@ export default function SankeyView({
           if (on) {
             d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", true).classed("cell-highlight", false);
             d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", true);
 
             Y_NAMES.forEach((yKey) => {
               const rowName = SWAP_AXES ? colKey : yKey;
@@ -1604,16 +1776,25 @@ export default function SankeyView({
                 const el = d3.select(this);
                 if (el.attr("data-column") === colKey) el.classed("link-dimmed", false).classed("link-highlight", true);
               });
+              d3.selectAll("rect.gap-rect").each(function () {
+                const el = d3.select(this);
+                if (el.attr("data-column") === colKey) el.classed("gap-dimmed", false);
+              });
             } else {
               d3.selectAll("g.row-links path.link-path").each(function () {
                 const el = d3.select(this);
                 if (el.attr("data-row") === colKey) el.classed("link-dimmed", false).classed("link-highlight", true);
+              });
+              d3.selectAll("rect.gap-rect").each(function () {
+                const el = d3.select(this);
+                if (el.attr("data-column") === colKey) el.classed("gap-dimmed", false);
               });
             }
           } else {
             d3.selectAll('#chart svg g[id^="cell-"] rect').classed("cell-dimmed", false).classed("cell-highlight", false);
             d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
             d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
           }
         }
 
@@ -1621,6 +1802,7 @@ export default function SankeyView({
           if (on) {
             d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", true).classed("cell-highlight", false);
             d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", true);
 
             ROW_NAMES.forEach((row) => {
               const cellSel = d3.select(`#cell-${row}-${columnName}`);
@@ -1647,10 +1829,17 @@ export default function SankeyView({
               const el = d3.select(this);
               if (el.attr("data-column") === columnName) el.classed("link-dimmed", false).classed("link-highlight", true);
             });
+            d3.selectAll("rect.gap-rect").each(function () {
+              const el = d3.select(this);
+              if (el.attr("data-row") === rowName || el.attr("data-column") === columnName) {
+                el.classed("gap-dimmed", false);
+              }
+            });
           } else {
             d3.selectAll('#chart svg g[id^="cell-"] rect').classed("cell-dimmed", false).classed("cell-highlight", false);
             d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
             d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
+            d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
           }
         }
 
@@ -2077,8 +2266,42 @@ export default function SankeyView({
   const normalizedLinkMax = Math.max(clampedLinkMin, clampedLinkMax);
   const linkStartPct = linkValueMaxBound > 0 ? (normalizedLinkMin / linkValueMaxBound) * 100 : 0;
   const linkEndPct = linkValueMaxBound > 0 ? (normalizedLinkMax / linkValueMaxBound) * 100 : 100;
-  const normalizedEpochThreshold = Math.max(0, Math.min(maxEpochTransitionPct, epochTransitionThreshold));
-  const epochPctPos = maxEpochTransitionPct > 0 ? (normalizedEpochThreshold / maxEpochTransitionPct) * 100 : 0;
+  const normalizedEpochThresholdUi = Math.max(0, Math.min(maxEpochTransitionPct, epochTransitionThresholdUi));
+  const epochPctPos = maxEpochTransitionPct > 0 ? (normalizedEpochThresholdUi / maxEpochTransitionPct) * 100 : 0;
+  const liveVisibleEpochSummary = (() => {
+    const allEpochKeys = epochFilterMeta.allEpochKeys;
+    const total = allEpochKeys.length || visibleEpochSummary.total;
+    if (!allEpochKeys.length) {
+      return { visible: visibleEpochSummary.visible, total };
+    }
+    const visibleSet = new Set<string>();
+    for (let i = 0; i < allEpochKeys.length - 1; i += 1) {
+      const fromEpoch = allEpochKeys[i];
+      const toEpoch = allEpochKeys[i + 1];
+      const pairPct = Math.max(
+        Number(epochFilterMeta.pairPctByEpochPair[`${fromEpoch}|${toEpoch}`] ?? 0),
+        Number(epochFilterMeta.pairPctByEpochPair[`${toEpoch}|${fromEpoch}`] ?? 0)
+      );
+      if (pairPct >= normalizedEpochThresholdUi) {
+        visibleSet.add(fromEpoch);
+        visibleSet.add(toEpoch);
+      }
+    }
+    if (epochFilterMeta.lastEpoch != null) visibleSet.add(epochFilterMeta.lastEpoch);
+    const visible = visibleSet.size;
+    return { visible, total };
+  })();
+  const commitEpochThreshold = (nextRaw: number) => {
+    const next = Math.max(0, Math.min(maxEpochTransitionPct, Number(nextRaw) || 0));
+    setEpochTransitionThresholdUi(next);
+    if (Math.abs(epochTransitionThreshold - next) < 1e-6) return;
+    setEpochTransitionThreshold(next);
+    const p = new URLSearchParams(window.location.search);
+    p.set("epochMin", next.toFixed(2));
+    p.set("min", String(normalizedLinkMin));
+    p.set("max", String(normalizedLinkMax));
+    window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+  };
   const cellLegendMinText =
     selectedCellMetric === "cluster_count" ? cellLegendRange.min.toFixed(0) : cellLegendRange.min.toFixed(3);
   const cellLegendMaxText =
@@ -2142,6 +2365,7 @@ export default function SankeyView({
                 onChange={(e) => {
                   const next = Number(e.target.value);
                   const clamped = Math.max(0, Math.min(next, linkValueMaxBound));
+                  autoInitLinkMaxRef.current = false;
                   setLinkValueMin(Math.min(clamped, normalizedLinkMax));
                   const p = new URLSearchParams(window.location.search);
                   p.set("min", String(clamped));
@@ -2161,6 +2385,7 @@ export default function SankeyView({
                 onChange={(e) => {
                   const next = Number(e.target.value);
                   const clamped = Math.max(0, Math.min(next, linkValueMaxBound));
+                  autoInitLinkMaxRef.current = false;
                   setLinkValueMax(Math.max(clamped, normalizedLinkMin));
                   const p = new URLSearchParams(window.location.search);
                   p.set("min", String(normalizedLinkMin));
@@ -2199,24 +2424,36 @@ export default function SankeyView({
                   min={0}
                   max={maxEpochTransitionPct}
                   step={0.1}
-                  value={normalizedEpochThreshold}
+                  value={normalizedEpochThresholdUi}
                   onChange={(e) => {
                     const next = Number(e.target.value);
-                    setEpochTransitionThreshold(next);
-                    const p = new URLSearchParams(window.location.search);
-                    p.set("epochMin", next.toFixed(2));
-                    p.set("min", String(normalizedLinkMin));
-                    p.set("max", String(normalizedLinkMax));
-                    window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+                    setEpochTransitionThresholdUi(Math.max(0, Math.min(next, maxEpochTransitionPct)));
+                  }}
+                  onPointerUp={(e) => commitEpochThreshold(Number((e.target as HTMLInputElement).value))}
+                  onMouseUp={(e) => commitEpochThreshold(Number((e.target as HTMLInputElement).value))}
+                  onTouchEnd={(e) => commitEpochThreshold(Number((e.target as HTMLInputElement).value))}
+                  onKeyUp={(e) => {
+                    if (
+                      e.key === "ArrowLeft" ||
+                      e.key === "ArrowRight" ||
+                      e.key === "ArrowUp" ||
+                      e.key === "ArrowDown" ||
+                      e.key === "Home" ||
+                      e.key === "End" ||
+                      e.key === "PageUp" ||
+                      e.key === "PageDown"
+                    ) {
+                      commitEpochThreshold(Number((e.target as HTMLInputElement).value));
+                    }
                   }}
                 />
               </div>
             </div>
             <span id="epochThresholdValue" className="range-bound">
-              {normalizedEpochThreshold.toFixed(2)}%
+              {normalizedEpochThresholdUi.toFixed(2)}%
             </span>
             <span className="epoch-visible-summary">
-              Shown: {visibleEpochSummary.visible}/{visibleEpochSummary.total}
+              Shown: {liveVisibleEpochSummary.visible}/{liveVisibleEpochSummary.total}
             </span>
             </div>
           </div>
@@ -2682,6 +2919,10 @@ export default function SankeyView({
 
         :global(.link-dimmed) {
           stroke-opacity: 0.06 !important;
+        }
+
+        :global(.gap-dimmed) {
+          opacity: 0.12 !important;
         }
 
         :global(#chart svg rect.bar.node-highlight) {

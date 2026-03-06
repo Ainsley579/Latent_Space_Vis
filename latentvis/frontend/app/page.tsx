@@ -412,7 +412,10 @@ export default function Home() {
   >([]);
   const [knnTopm, setKnnTopm] = useState<KnnTopmOption>("5");
   const [isKnnTopmLoading, setIsKnnTopmLoading] = useState(false);
+  const [clusterTanimotoByCluster, setClusterTanimotoByCluster] = useState<Record<number, number | null>>({});
+  const [isClusterTanimotoLoading, setIsClusterTanimotoLoading] = useState(false);
   const [cellSelected, setCellSelected] = useState(false);
+  const [detailsEverShown, setDetailsEverShown] = useState(false);
   const [swapAxes, setSwapAxes] = useState(false);
   const [reverseEpochOrder, setReverseEpochOrder] = useState(true);
   const [visibleEpochs, setVisibleEpochs] = useState<string[] | null>(null);
@@ -425,6 +428,7 @@ export default function Home() {
   const [dataRefreshKey, setDataRefreshKey] = useState(0);
   const [isGeneratingRange, setIsGeneratingRange] = useState(false);
   const [generateStatusText, setGenerateStatusText] = useState("");
+  const [isBlockingInitLoading, setIsBlockingInitLoading] = useState(true);
   const [topkData, setTopkData] = useState<
     {
       layer_name: string;
@@ -452,6 +456,8 @@ export default function Home() {
   const [clusterPageSize, setClusterPageSize] = useState(10);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [smilesByRealId, setSmilesByRealId] = useState<Record<string, string>>({});
+  const [yTrueByRealId, setYTrueByRealId] = useState<Record<string, number>>({});
+  const [yPredByRealId, setYPredByRealId] = useState<Record<string, number>>({});
   const [searchResultIds, setSearchResultIds] = useState<string[]>([]);
   const [searchSmiles, setSearchSmiles] = useState<string>("");
   const [showSearchResultsInMembers, setShowSearchResultsInMembers] = useState(false);
@@ -529,7 +535,14 @@ export default function Home() {
       return;
     }
     setSelectedNode(sel);
-    setSelectedIds(sel.ids ?? null);
+    if (Array.isArray(sel.ids)) {
+      const normalized = Array.from(
+        new Set(sel.ids.map((id) => parseSplitTaggedId(id).realId))
+      );
+      setSelectedIds(normalized.length > 0 ? normalized : null);
+    } else {
+      setSelectedIds(null);
+    }
     setSuppressScatterCluster(false);
   }
 
@@ -676,21 +689,37 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const normalizeJsonInto = (json: unknown, out: Record<string, string>, splitTag: "train" | "test" | null) => {
+    const normalizeJsonInto = (
+      json: unknown,
+      out: Record<string, string>,
+      yTrueOut: Record<string, number>,
+      yPredOut: Record<string, number>
+    ) => {
       if (Array.isArray(json)) {
         json.forEach((row) => {
           if (!row || typeof row !== "object") return;
           const rid = String((row as any).real_id ?? "").trim();
           if (!rid) return;
           const smiles = typeof (row as any).smiles === "string" ? (row as any).smiles : "";
+          const split = String((row as any).split ?? "").trim().toLowerCase();
+          const yTrue = Number((row as any).y_true);
+          const yPred = Number((row as any).y_pred);
           if (!out[rid]) out[rid] = smiles;
           out[rid.trim()] = smiles;
           out[rid.toLowerCase()] = smiles;
           out[rid.trim().toLowerCase()] = smiles;
-          if (splitTag) {
-            const tagged = `${splitTag}::${rid}`;
-            out[tagged] = smiles;
-            out[tagged.toLowerCase()] = smiles;
+          if (Number.isFinite(yTrue)) {
+            yTrueOut[rid] = yTrue;
+            yTrueOut[rid.toLowerCase()] = yTrue;
+          }
+          if (Number.isFinite(yPred)) {
+            yPredOut[rid] = yPred;
+            yPredOut[rid.toLowerCase()] = yPred;
+          }
+          if (split === "train" || split === "test") {
+            const tagged = `${split}::${rid}`.toLowerCase();
+            if (Number.isFinite(yTrue)) yTrueOut[tagged] = yTrue;
+            if (Number.isFinite(yPred)) yPredOut[tagged] = yPred;
           }
         });
         return;
@@ -703,51 +732,32 @@ export default function Home() {
           out[key.trim()] = smiles;
           out[key.toLowerCase()] = smiles;
           out[key.trim().toLowerCase()] = smiles;
-          if (splitTag) {
-            const tagged = `${splitTag}::${key}`;
-            out[tagged] = smiles;
-            out[tagged.toLowerCase()] = smiles;
-          }
         });
       }
     };
 
-    const fetchSmiles = async (split: "train" | "test") => {
-      const url = buildDataFileUrl({
-        dataset: selectedDataset,
-        dataSplit: split,
-        file: `${split}/real_id_to_smiles.json`,
-        datasetRoot: true,
-      });
-      const res = await fetch(url);
-      if (res.status === 404) return {};
-      if (!res.ok) throw new Error("Failed to load real_id_to_smiles.json");
-      return res.json();
-    };
-
-    const primarySplit = effectiveDataSplitForFiles(selectedDataSplit);
-    fetchSmiles(primarySplit)
-      .then(async (primaryJson) => {
+    fetch("/id_smiles_y_true_y_pred.json")
+      .then(async (res) => {
+        if (res.status === 404) return {};
+        if (!res.ok) throw new Error("Failed to load /id_smiles_y_true_y_pred.json");
+        return res.json();
+      })
+      .then((primaryJson) => {
         const out: Record<string, string> = {};
-        if (selectedDataSplit === "all") {
-          normalizeJsonInto(primaryJson, out, primarySplit);
-          const otherSplit: "train" | "test" = primarySplit === "train" ? "test" : "train";
-          try {
-            const otherJson = await fetchSmiles(otherSplit);
-            normalizeJsonInto(otherJson, out, otherSplit);
-          } catch (err) {
-            console.error("Failed to load secondary split smiles mapping:", err);
-          }
-        } else {
-          normalizeJsonInto(primaryJson, out, null);
-        }
+        const yTrueOut: Record<string, number> = {};
+        const yPredOut: Record<string, number> = {};
+        normalizeJsonInto(primaryJson, out, yTrueOut, yPredOut);
         setSmilesByRealId(out);
+        setYTrueByRealId(yTrueOut);
+        setYPredByRealId(yPredOut);
       })
       .catch((err) => {
         console.error(err);
         setSmilesByRealId({});
+        setYTrueByRealId({});
+        setYPredByRealId({});
       });
-  }, [buildDataFileUrl, selectedDataset, selectedDataSplit]);
+  }, []);
 
   useEffect(() => {
     setSearchResultIds([]);
@@ -1160,12 +1170,14 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch(buildAllSankeyPath(selectedDataset, selectedClustering, selectedDataSplit))
-      .then((res) => {
+    let cancelled = false;
+    setIsBlockingInitLoading(true);
+    (async () => {
+      try {
+        const res = await fetch(buildAllSankeyPath(selectedDataset, selectedClustering, selectedDataSplit));
         if (!res.ok) throw new Error("Failed to load all_sankey.json");
-        return res.json();
-      })
-      .then((data) => {
+        const data = await res.json();
+        if (cancelled) return;
         const models = Object.keys(data?.epoch || {});
         const layers = Object.keys(data?.layer || {});
         if (!models.length || !layers.length) return;
@@ -1186,10 +1198,27 @@ export default function Home() {
         setSelectedNode(null);
         setSelectedIds(null);
         setActiveSankeyRows([]);
-      })
-      .catch((err) => {
+
+        const warmUrls = [
+          buildSankeyModelPath(preferredModel, selectedDataset, selectedClustering, selectedDataSplit, sankeyRefreshKey),
+          buildVerticalPath(preferredLayer, selectedDataset, selectedClustering, selectedDataSplit, sankeyRefreshKey),
+        ];
+        if (selectedDataSplit === "all") {
+          warmUrls.push(
+            buildSankeyModelPath(preferredModel, selectedDataset, selectedClustering, "test", sankeyRefreshKey),
+            buildVerticalPath(preferredLayer, selectedDataset, selectedClustering, "test", sankeyRefreshKey)
+          );
+        }
+        await Promise.all(Array.from(new Set(warmUrls)).map((u) => fetchJsonCached(u).catch(() => null)));
+      } catch (err) {
         console.error(err);
-      });
+      } finally {
+        if (!cancelled) setIsBlockingInitLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [datasetBase, selectedDataset, selectedClustering, selectedDataSplit, sankeyRefreshKey, generatedSankeyPayload]);
 
   useEffect(() => {
@@ -1197,6 +1226,33 @@ export default function Home() {
       setCellSelected(false);
     }
   }, [selectedNode]);
+
+  useEffect(() => {
+    if (cellSelected || selectedNode != null) {
+      setDetailsEverShown(true);
+    }
+  }, [cellSelected, selectedNode]);
+
+  useEffect(() => {
+    // Keep linked Sankey paths in sync with the current selection state,
+    // so both side Sankey views render immediately on initial load.
+    syncSankeyPaths(
+      selectedModel,
+      selectedLayer,
+      selectedDataset,
+      selectedClustering,
+      selectedDataSplit,
+      sankeyRefreshKey
+    );
+  }, [
+    selectedModel,
+    selectedLayer,
+    selectedDataset,
+    selectedClustering,
+    selectedDataSplit,
+    sankeyRefreshKey,
+    generatedSankeyPayloads,
+  ]);
 
   const activeSankeyPath = useMemo(() => {
     return swapAxes ? sankeyPathVertical : sankeyPath;
@@ -1636,6 +1692,80 @@ export default function Home() {
     generatedRuntimeMatchesCurrent,
   ]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchClusterTanimoto = async () => {
+      setIsClusterTanimotoLoading(true);
+      try {
+        const mLimit = knnTopm === "all" ? null : Number(knnTopm);
+        const sortedByCluster = new Map<number, Array<string | number>>();
+        clusterSortedMembers.forEach((d) => {
+          if (String(d.model_type) !== String(selectedModel) || String(d.layer_name) !== String(selectedLayer)) return;
+          if (!Array.isArray(d.sorted_real_ids)) return;
+          sortedByCluster.set(Number(d.cluster_id), d.sorted_real_ids);
+        });
+        const clusterRealIdsByCluster: Record<string, Array<string | number>> = {};
+        topkData
+          .filter((d) => d.model_type === selectedModel && d.layer_name === selectedLayer)
+          .forEach((d) => {
+            const cid = Number(d.cluster_id);
+            if (!Number.isFinite(cid)) return;
+            const sortedIds = sortedByCluster.get(cid);
+            const base = Array.isArray(sortedIds) && sortedIds.length > 0 ? sortedIds : d.top_k_closest_real_ids;
+            const ids = mLimit == null ? base : base.slice(0, mLimit);
+            clusterRealIdsByCluster[String(cid)] = ids.map((x) => String(x));
+          });
+
+        const res = await fetch(`${apiBase}/cluster-tanimoto`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            dataset: selectedDataset,
+            clustering: selectedClustering,
+            data_split: selectedDataSplit,
+            epoch: selectedModel,
+            layer: selectedLayer,
+            cluster_real_ids_by_cluster: clusterRealIdsByCluster,
+          }),
+        });
+        if (res.status === 404) {
+          setClusterTanimotoByCluster({});
+          return;
+        }
+        if (!res.ok) throw new Error(`cluster-tanimoto failed: ${res.status}`);
+        const json = await res.json();
+        const rows = Array.isArray(json?.clusters) ? json.clusters : [];
+        const out: Record<number, number | null> = {};
+        rows.forEach((r: any) => {
+          const cid = Number(r?.cluster_id);
+          if (!Number.isFinite(cid)) return;
+          const t = Number(r?.tanimoto);
+          out[cid] = Number.isFinite(t) ? t : null;
+        });
+        setClusterTanimotoByCluster(out);
+      } catch (err) {
+        if ((err as Error)?.name === "AbortError") return;
+        console.error("Failed to fetch cluster tanimoto:", err);
+        setClusterTanimotoByCluster({});
+      } finally {
+        if (!controller.signal.aborted) setIsClusterTanimotoLoading(false);
+      }
+    };
+    fetchClusterTanimoto();
+    return () => controller.abort();
+  }, [
+    apiBase,
+    selectedDataset,
+    selectedClustering,
+    selectedDataSplit,
+    selectedModel,
+    selectedLayer,
+    knnTopm,
+    topkData,
+    clusterSortedMembers,
+  ]);
+
   const topkNearestRows = useMemo(() => {
     const mLimit = knnTopm === "all" ? null : Number(knnTopm);
     const sortedByCluster = new Map<number, Array<string | number>>();
@@ -1798,6 +1928,22 @@ export default function Home() {
     return (tagged ? smilesByRealId[tagged] : undefined) ?? smilesByRealId[base] ?? null;
   }
 
+  function getYTrueById(realId: string | number): number | null {
+    const parsed = parseSplitTaggedId(realId);
+    const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
+    const base = parsed.realId.trim().toLowerCase();
+    const v = (tagged ? yTrueByRealId[tagged] : undefined) ?? yTrueByRealId[base];
+    return Number.isFinite(Number(v)) ? Number(v) : null;
+  }
+
+  function getYPredById(realId: string | number): number | null {
+    const parsed = parseSplitTaggedId(realId);
+    const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
+    const base = parsed.realId.trim().toLowerCase();
+    const v = (tagged ? yPredByRealId[tagged] : undefined) ?? yPredByRealId[base];
+    return Number.isFinite(Number(v)) ? Number(v) : null;
+  }
+
   function clusterBadgeColor(cluster: number) {
     const len = CLUSTER_COLORS.length || 1;
     const idx = ((cluster % len) + len) % len;
@@ -1958,6 +2104,12 @@ export default function Home() {
     nowTs - (syncSourceRef.current?.ts ?? 0) < 180;
   const sankeyViewExternalTransform =
     syncLinkedSankeyViews && !viewIsSyncSource ? sankeyTransform : undefined;
+  const globalHighlightIds =
+    showSearchResultsInMembers
+      ? searchResultIds
+      : (selectedIds && selectedIds.length > 0 ? selectedIds : null);
+  const showRightDetailPanels = detailsEverShown || cellSelected || selectedNode != null;
+  const shouldShowBlockingOverlay = isBlockingInitLoading || isGeneratingRange;
 
   return (
     <div className="flex min-h-screen w-full">
@@ -1970,10 +2122,10 @@ export default function Home() {
             gridTemplateRows: `${topRowPct}% ${midRowPct}% ${bottomRowPct}%`,
           }}
         >
-          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "1 / 2" }}>
+          <div className="p-1 box-border min-h-0 min-w-0" style={{ gridColumn: "1 / 2", gridRow: "1 / 2" }}>
             <div
               id="sankey2d"
-              className="w-full h-full border border-zinc-400"
+              className="w-full h-full min-h-0 min-w-0 overflow-hidden border border-zinc-400"
             >
               <SankeyView
                 key={`sankeyview-${selectedDataset}-${selectedClustering}-${selectedDataSplit}-${sankeyRefreshKey}`}
@@ -2045,7 +2197,7 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="p-1 box-border" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
+          <div className="p-1 box-border min-h-0 min-w-0" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
             <div
               id="sankeyVertical"
               className="w-full h-full border border-zinc-400 min-h-0 relative"
@@ -2080,7 +2232,7 @@ export default function Home() {
                     : null
                 }
                 highlightId={hoveredId}
-                highlightIds={showSearchResultsInMembers ? searchResultIds : null}
+                highlightIds={globalHighlightIds}
                 onNodeSelect={(sel) => {
                   if (!sel.model || sel.layer == null) return;
                   toggleNode({ model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster, ids: sel.ids });
@@ -2092,7 +2244,7 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="p-1 box-border" style={{ gridColumn: "1 / 2", gridRow: "2 / 4" }}>
+          <div className="p-1 box-border min-h-0 min-w-0" style={{ gridColumn: "1 / 2", gridRow: "2 / 4" }}>
             <div
               id="sankeyHorizontal"
               className="w-full h-full border border-zinc-400 relative"
@@ -2127,7 +2279,7 @@ export default function Home() {
                     : null
                 }
                 highlightId={hoveredId}
-                highlightIds={showSearchResultsInMembers ? searchResultIds : null}
+                highlightIds={globalHighlightIds}
                 onNodeSelect={(sel) => {
                   if (!sel.layer || !sel.model) return;
                   toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: sel.ids });
@@ -2163,6 +2315,13 @@ export default function Home() {
 
           <div className="p-1 box-border" style={{ gridColumn: "3 / 4", gridRow: "1 / 4" }}>
             <div className="w-full h-full min-w-0 flex flex-col gap-0">
+              {!showRightDetailPanels && (
+                <div className="w-full h-full border border-zinc-400 bg-white flex items-center justify-center text-sm text-zinc-500">
+                  Click a Sankey cell/node to show details
+                </div>
+              )}
+              {showRightDetailPanels && (
+              <>
               <div
                 ref={rightTopRowRef}
                 className="min-h-0 flex min-w-0 gap-0"
@@ -2184,7 +2343,7 @@ export default function Home() {
                     dataPathXY={scatterPaths.xy}
                     dataPathCluster={scatterPaths.cluster}
                     splitMapPath={withVersion(
-                      `${apiBase}/real-id-split-map?dataset=${encodeURIComponent(selectedDataset)}`,
+                      "/id_smiles_y_true_y_pred.json",
                       dataRefreshKey
                     )}
                     splitMapDataset={selectedDataset}
@@ -2222,6 +2381,14 @@ export default function Home() {
                     modelKey={selectedModel}
                     layerKey={selectedLayer}
                     onPointHoverIdChange={(id) => setHoverFromMouse(id)}
+                    onHighlightIdsSelect={(ids) => {
+                      setSelectedNode(null);
+                      setSelectedIds(ids);
+                      setHoveredId(null);
+                      setHoverLock(false);
+                      setSuppressScatterCluster(true);
+                      setShowSearchResultsInMembers(false);
+                    }}
                     onPointSelect={(sel) => {
                       if (!sel.model || !sel.layer) return;
                       setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
@@ -2528,6 +2695,8 @@ export default function Home() {
                   onSelectHoverId={(id) => toggleLockedHighlight(id)}
                   onHoverIdChange={(id) => setHoverFromMouse(id)}
                   getSmilesById={getSmilesById}
+                  getYTrueById={getYTrueById}
+                  getYPredById={getYPredById}
                   substructureByCluster={substructureByCluster}
                   clusterBadgeColor={clusterBadgeColor}
                   onClusterSelect={(cluster) => {
@@ -2547,8 +2716,12 @@ export default function Home() {
                   knnTopm={knnTopm}
                   onKnnTopmChange={setKnnTopm}
                   isKnnTopmLoading={isKnnTopmLoading}
+                  tanimotoByCluster={clusterTanimotoByCluster}
+                  isTanimotoLoading={isClusterTanimotoLoading}
                 />
               </div>
+              </>
+              )}
             </div>
           </div>
           <div
@@ -2687,6 +2860,16 @@ export default function Home() {
                 <SmilesStructure smiles={hoverPreview.smiles} className="w-full h-full" />
               </div>
             )}
+          </div>
+        )}
+        {shouldShowBlockingOverlay && (
+          <div className="fixed inset-0 z-[12000] bg-white/70 backdrop-blur-[1px] flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 px-5 py-4 rounded-lg border border-zinc-300 bg-white shadow">
+              <div className="h-8 w-8 rounded-full border-4 border-zinc-300 border-t-zinc-700 animate-spin" />
+              <div className="text-sm text-zinc-700">
+                {isGeneratingRange ? "Computing, please wait..." : "Loading data, please wait..."}
+              </div>
+            </div>
           </div>
         )}
         
