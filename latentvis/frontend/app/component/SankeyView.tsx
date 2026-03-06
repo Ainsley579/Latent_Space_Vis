@@ -310,11 +310,11 @@ export default function SankeyView({
   const [epochFilterMeta, setEpochFilterMeta] = useState<{
     allEpochKeys: string[];
     lastEpoch: string | null;
-    maxPctByEpoch: Record<string, number>;
+    pairPctByEpochPair: Record<string, number>;
   }>({
     allEpochKeys: [],
     lastEpoch: null,
-    maxPctByEpoch: {},
+    pairPctByEpochPair: {},
   });
   const [cellLegendRange, setCellLegendRange] = useState({ min: 0, max: 1 });
   const [gapLegendMax, setGapLegendMax] = useState(1);
@@ -461,29 +461,59 @@ export default function SankeyView({
           (Array.isArray((transitionJson as any)?.by_layer) ? (transitionJson as any).by_layer : null) ||
           (Array.isArray((transitionLayerJson as any)?.by_layer) ? (transitionLayerJson as any).by_layer : []);
 
-        const epochMaxTransitionPctByEpoch = new Map<string, number>();
-        transitionEntriesByEpoch.forEach((d) => {
-          const epoch = String(d?.epoch ?? "").trim();
-          const pct = Number(d?.pct_changed ?? 0);
-          if (!epoch || !Number.isFinite(pct)) return;
-          const prev = epochMaxTransitionPctByEpoch.get(epoch) ?? 0;
-          if (pct > prev) epochMaxTransitionPctByEpoch.set(epoch, pct);
-        });
-
         const allEpochKeys: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
         const lastEpoch = allEpochKeys.length ? allEpochKeys[allEpochKeys.length - 1] : null;
+        const epochPairMaxTransitionPct = new Map<string, number>();
+        transitionEntriesByLayer.forEach((d) => {
+          const fromEpoch = String(d?.from_epoch ?? "").trim();
+          const toEpoch = String(d?.to_epoch ?? "").trim();
+          const pct = Number(d?.pct_changed ?? 0);
+          if (!fromEpoch || !toEpoch || !Number.isFinite(pct)) return;
+          const key = `${fromEpoch}|${toEpoch}`;
+          const prev = epochPairMaxTransitionPct.get(key) ?? 0;
+          if (pct > prev) epochPairMaxTransitionPct.set(key, pct);
+        });
+        const epochOrderIndex = new Map(allEpochKeys.map((e, i) => [e, i]));
+        const getEpochPairTransitionPct = (fromEpoch: string, toEpoch: string): number => {
+          let best = 0;
+          const direct = epochPairMaxTransitionPct.get(`${fromEpoch}|${toEpoch}`) ?? 0;
+          const reverse = epochPairMaxTransitionPct.get(`${toEpoch}|${fromEpoch}`) ?? 0;
+          best = Math.max(best, direct, reverse);
+          const fromIdx = epochOrderIndex.get(fromEpoch);
+          const toIdx = epochOrderIndex.get(toEpoch);
+          if (fromIdx == null || toIdx == null || fromIdx === toIdx) return best;
+          const start = Math.min(fromIdx, toIdx);
+          const end = Math.max(fromIdx, toIdx);
+          for (let i = start; i < end; i += 1) {
+            const a = allEpochKeys[i];
+            const b = allEpochKeys[i + 1];
+            const seg = Math.max(
+              epochPairMaxTransitionPct.get(`${a}|${b}`) ?? 0,
+              epochPairMaxTransitionPct.get(`${b}|${a}`) ?? 0
+            );
+            if (seg > best) best = seg;
+          }
+          return best;
+        };
         setEpochFilterMeta({
           allEpochKeys,
           lastEpoch,
-          maxPctByEpoch: Object.fromEntries(epochMaxTransitionPctByEpoch.entries()),
+          pairPctByEpochPair: Object.fromEntries(epochPairMaxTransitionPct.entries()),
         });
-        const visibleEpochBase: string[] = allEpochKeys.filter((epoch) => {
-          if (lastEpoch != null && epoch === lastEpoch) return true;
-          const maxPct = epochMaxTransitionPctByEpoch.get(epoch) ?? 0;
-          return maxPct >= epochTransitionThreshold;
-        });
+        const visibleEpochSet = new Set<string>();
+        for (let i = 0; i < allEpochKeys.length - 1; i += 1) {
+          const fromEpoch = allEpochKeys[i];
+          const toEpoch = allEpochKeys[i + 1];
+          const pairPct = getEpochPairTransitionPct(fromEpoch, toEpoch);
+          if (pairPct >= epochTransitionThreshold) {
+            visibleEpochSet.add(fromEpoch);
+            visibleEpochSet.add(toEpoch);
+          }
+        }
+        if (lastEpoch != null) visibleEpochSet.add(lastEpoch);
+        const visibleEpochBase: string[] = allEpochKeys.filter((epoch) => visibleEpochSet.has(epoch));
         const ROW_NAMES: string[] = reverseEpochOrder ? [...visibleEpochBase].reverse() : visibleEpochBase;
-        const maxEpochPct = Math.max(0, ...Array.from(epochMaxTransitionPctByEpoch.values()));
+        const maxEpochPct = Math.max(0, ...Array.from(epochPairMaxTransitionPct.values()));
         setMaxEpochTransitionPct(maxEpochPct);
         setVisibleEpochSummary({ visible: ROW_NAMES.length, total: allEpochKeys.length });
         onVisibleEpochsChange?.(visibleEpochBase);
@@ -880,6 +910,21 @@ export default function SankeyView({
             const v2 = pctByLayerTransition.get(`${l}|${toEpoch}|${fromEpoch}`) ?? 0;
             if (v1 > best) best = v1;
             if (v2 > best) best = v2;
+            const fromIdx = allEpochKeys.indexOf(fromEpoch);
+            const toIdx = allEpochKeys.indexOf(toEpoch);
+            if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+              const start = Math.min(fromIdx, toIdx);
+              const end = Math.max(fromIdx, toIdx);
+              for (let i = start; i < end; i += 1) {
+                const a = allEpochKeys[i];
+                const b = allEpochKeys[i + 1];
+                const seg = Math.max(
+                  pctByLayerTransition.get(`${l}|${a}|${b}`) ?? 0,
+                  pctByLayerTransition.get(`${l}|${b}|${a}`) ?? 0
+                );
+                if (seg > best) best = seg;
+              }
+            }
           });
           return best;
         };
@@ -2229,11 +2274,21 @@ export default function SankeyView({
     if (!allEpochKeys.length) {
       return { visible: visibleEpochSummary.visible, total };
     }
-    const visible = allEpochKeys.reduce((acc, epoch) => {
-      if (epochFilterMeta.lastEpoch != null && epoch === epochFilterMeta.lastEpoch) return acc + 1;
-      const maxPct = Number(epochFilterMeta.maxPctByEpoch[epoch] ?? 0);
-      return maxPct >= normalizedEpochThresholdUi ? acc + 1 : acc;
-    }, 0);
+    const visibleSet = new Set<string>();
+    for (let i = 0; i < allEpochKeys.length - 1; i += 1) {
+      const fromEpoch = allEpochKeys[i];
+      const toEpoch = allEpochKeys[i + 1];
+      const pairPct = Math.max(
+        Number(epochFilterMeta.pairPctByEpochPair[`${fromEpoch}|${toEpoch}`] ?? 0),
+        Number(epochFilterMeta.pairPctByEpochPair[`${toEpoch}|${fromEpoch}`] ?? 0)
+      );
+      if (pairPct >= normalizedEpochThresholdUi) {
+        visibleSet.add(fromEpoch);
+        visibleSet.add(toEpoch);
+      }
+    }
+    if (epochFilterMeta.lastEpoch != null) visibleSet.add(epochFilterMeta.lastEpoch);
+    const visible = visibleSet.size;
     return { visible, total };
   })();
   const commitEpochThreshold = (nextRaw: number) => {
