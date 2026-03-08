@@ -115,7 +115,7 @@ This doc summarizes how the frontend should interact with the updated backend an
 - **Request body (JSON):**
   - `dataset` (string, required): `"chemprop"` or `"chemeleon"`
   - `epoch`, `layer` (required): cell identifiers
-  - `clustering` (string, optional): backend method, e.g. `"pgmeans"` or `"gmm"`
+  - `clustering` (string, optional): backend method, e.g. `"pgmeans"`, `"agglomerative"`, `"hdbscan"`, or `"knn"`
   - `data_split` (string, optional): `"test"` or `"train"`
   - `use_current` (boolean, optional): if true, use `clustering_metrics_current` and backend’s current run; otherwise baseline.
   - `user_clustering` (array, required): list of `{ "real_id": "<id>", "user_cluster_id": <0-based integer> }` (one entry per point in the cell).
@@ -124,5 +124,4 @@ This doc summarizes how the frontend should interact with the updated backend an
   - `matrix`: 2D array, rows = user clusters, cols = our clusters; value = percentage of that user cluster that falls in that our cluster.
   - `entries`: list of `{ "user_cluster_id", "our_cluster_id", "count", "percentage_of_user_cluster" }`.
 - Example: if the user sends 3 clusters and the backend has 4, the result is a 3×4 matrix and 12 entries. See `latentvis/backend/README_CLUSTER_CONTAINMENT.md` for full request/response and usage.
-
 

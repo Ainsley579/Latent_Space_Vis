@@ -51,10 +51,10 @@ def main() -> None:
 
     if resp.status_code == 200 and body.get("ok") is True:
         assert real_id in body.get("matches", {}).get("chemprop", [])
-        print("✅ search-smiles PASS")
+        print(" search-smiles PASS")
     else:
         # RDKit or real_id_to_smiles may be missing in test env
-        print("✅ search-smiles SKIP (backend returned %s; RDKit or data may be missing)" % resp.status_code)
+        print(" search-smiles SKIP (backend returned %s; RDKit or data may be missing)" % resp.status_code)
 
     # ---------- Test 2: /generate-range (response shape only; full run requires embeddings) ----------
     # If chemprop embeddings exist, we can run a real generate-range and check response.
@@ -62,7 +62,7 @@ def main() -> None:
     print("\n[TEST] /generate-range")
     resp2 = client.post(
         "/generate-range",
-        json={"min": 2, "max": 5, "dataset": "chemprop", "clustering": "gmm"},
+        json={"min": 2, "max": 5, "dataset": "chemprop", "clustering": "pgmeans"},
     )
     body2 = resp2.get_json()
     print("status:", resp2.status_code, "body keys:", list(body2.keys()) if body2 else None)
@@ -77,13 +77,13 @@ def main() -> None:
             assert "scatter_files" in updated
             assert "topk_representatives" in updated
             assert "sankey_ok" in updated
-        print("✅ generate-range PASS (full pipeline ran)")
+        print(" generate-range PASS (full pipeline ran)")
     elif resp2.status_code == 404:
         # Embedding file not found (e.g. in CI); accept as skip
-        print("✅ generate-range SKIP (embedding not found)")
+        print(" generate-range SKIP (embedding not found)")
     else:
         assert resp2.status_code in (200, 404), "expected 200 or 404, got %s: %s" % (resp2.status_code, body2)
-    print("✅ generate-range response check done")
+    print(" generate-range response check done")
 
     print("\nALL BACKEND TESTS PASSED.")
 

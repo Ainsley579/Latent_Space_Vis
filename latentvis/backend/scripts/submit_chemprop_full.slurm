@@ -105,7 +105,7 @@ This directory contains pipeline output for the **chemprop** case: embeddings fr
 | `scatterplot/{epoch}_{layer}_tsne.json` | t-SNE projection. |
 | `topk/cluster_representatives.json` | Per (epoch, layer, cluster): top-k closest/farthest real_ids. |
 | `topk/cluster_sorted_members.json` | Per (epoch, layer, cluster): full list of real_ids sorted by distance to center. |
-| `bic_aic/{epoch}_{layer}.json` | BIC/AIC curves for GMM model selection. |
+| `bic_aic/{epoch}_{layer}.json` | BIC/AIC curves for PGMeans model selection. |
 | `clustering_metrics/cluster_assignments_with_real_id.csv` | real_id, epoch, per-layer cluster columns. |
 | `clustering/hdbscan/` | Same layout for HDBSCAN clustering. |
 | `clustering/agglomerative/` | Same layout for Agglomerative clustering. |

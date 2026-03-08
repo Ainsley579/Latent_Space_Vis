@@ -76,7 +76,7 @@ Re-run **Agglomerative clustering** for a single (dataset, epoch, layer) with us
   - `dataset` (string, required): `"chemprop"` or `"chemeleon"`
   - `epoch` (string or number, required): e.g. `"0"`, `"99"`
   - `layer` (string, required): e.g. `"fingerprint"`, `"gnn_layer_1"`
-  - `k` (int, optional): number of clusters. If omitted or `null`, the backend uses BIC (GMM) to choose k in [2, 15].
+  - `k` (int, optional): number of clusters. If omitted or `null`, the backend uses BIC (PGMeans) to choose k in [2, 15].
   - `linkage` (string, optional): `"ward"` (default), `"complete"`, or `"average"`.
 
 - **Response (200):**
@@ -125,7 +125,7 @@ Compare a **user-defined clustering** (e.g. from a spreadsheet) with the backend
 - **Request body (JSON):**
   - `dataset` (string, required): `"chemprop"` or `"chemeleon"`
   - `epoch`, `layer` (required): cell identifiers
-  - `clustering` (string, optional): e.g. `"pgmeans"`, `"gmm"`
+  - `clustering` (string, optional): e.g. `"pgmeans"`, `"agglomerative"`, `"hdbscan"`, `"knn"`
   - `data_split` (string, optional): `"test"` or `"train"` (default `"test"`)
   - `use_current` (boolean, optional): use `clustering_metrics_current` if true; else baseline
   - `user_clustering` (array, required): `[{ "real_id": "<id>", "user_cluster_id": <int> }, ...]`

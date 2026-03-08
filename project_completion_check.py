@@ -26,14 +26,14 @@ def check_phase_1():
         if path.exists():
             if path.is_dir():
                 file_count = len(list(path.glob('*.json')))
-                print(f"✅ {name}")
-                print(f"   📁 {path} ({file_count} JSON files)")
+                print(f" {name}")
+                print(f"    {path} ({file_count} JSON files)")
             else:
                 size_kb = path.stat().st_size / 1024
-                print(f"✅ {name}")
-                print(f"   📄 {path} ({size_kb:.1f} KB)")
+                print(f" {name}")
+                print(f"    {path} ({size_kb:.1f} KB)")
         else:
-            print(f"❌ {name}")
+            print(f" {name}")
             print(f"   Path not found: {path}")
             all_ok = False
     
@@ -59,10 +59,10 @@ def check_phase_2():
     for name, path in modules.items():
         if path.exists():
             lines = len(path.read_text().split('\n'))
-            print(f"✅ {name}")
-            print(f"   📄 {path.name} ({lines} lines)")
+            print(f" {name}")
+            print(f"    {path.name} ({lines} lines)")
         else:
-            print(f"❌ {name}")
+            print(f" {name}")
             print(f"   Path not found: {path}")
             all_ok = False
     
@@ -84,10 +84,10 @@ def check_phase_3_4():
     for name, path in tests.items():
         if path.exists():
             lines = len(path.read_text().split('\n'))
-            print(f"✅ {name}")
-            print(f"   📄 {path.name} ({lines} lines)")
+            print(f" {name}")
+            print(f"    {path.name} ({lines} lines)")
         else:
-            print(f"❌ {name}")
+            print(f" {name}")
             print(f"   Path not found: {path}")
             all_ok = False
     
@@ -101,7 +101,7 @@ def print_completion_summary():
     print("  LATENT SPACE VISUALIZATION - BACKEND MIGRATION COMPLETE")
     print("█" * 70)
     
-    print("\n📊 PROJECT STATISTICS")
+    print("\n PROJECT STATISTICS")
     print("-" * 70)
     
     # Count files
@@ -117,7 +117,7 @@ def print_completion_summary():
     print(f"\nFrontend Data: {len(json_files)} JSON files")
     print(f"  • {len(json_files)//2} layers × 2 models = {len(json_files)} scatterplot JSONs")
     
-    print("\n\n🎯 DELIVERABLES")
+    print("\n\n DELIVERABLES")
     print("-" * 70)
     
     deliverables = [
@@ -134,7 +134,7 @@ def print_completion_summary():
         print(f"\n{i}. {title}")
         print(f"   → {desc}")
     
-    print("\n\n🚀 QUICK START")
+    print("\n\n QUICK START")
     print("-" * 70)
     
     print("\nGenerate frontend data from embeddings:")
@@ -157,7 +157,7 @@ def print_completion_summary():
     python scripts/validate_scatterplot_data.py
     """)
     
-    print("\n\n✨ KEY FEATURES")
+    print("\n\n KEY FEATURES")
     print("-" * 70)
     
     features = [
@@ -172,15 +172,15 @@ def print_completion_summary():
     ]
     
     for feature in features:
-        print(f"  ✓ {feature}")
+        print(f"   {feature}")
     
-    print("\n\n📖 DOCUMENTATION")
+    print("\n\n DOCUMENTATION")
     print("-" * 70)
     print(f"\nMain documentation: latentvis/backend/README.md")
     print(f"API reference: See docstrings in analyzer/, generator/, utils/")
     print(f"Migration plan: MIGRATION_PLAN.md (detailed design doc)")
     
-    print("\n\n✅ STATUS: READY FOR PRODUCTION")
+    print("\n\n STATUS: READY FOR PRODUCTION")
     print("=" * 70)
     print()
 
@@ -201,10 +201,10 @@ def main():
     
     # Overall status
     if phase1_ok and phase2_ok and phase3_4_ok:
-        print("\n✅ ALL PHASES COMPLETE")
+        print("\n ALL PHASES COMPLETE")
         return 0
     else:
-        print("\n⚠️  SOME CHECKS FAILED")
+        print("\n  SOME CHECKS FAILED")
         return 1
 
 

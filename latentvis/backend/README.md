@@ -1,322 +1,76 @@
-# Backend Documentation
+# LatentVis Backend
 
-## Overview
+This README is the lean entry point for the current backend.
 
-The Latent Space Vis backend provides a unified pipeline for generating frontend-ready visualizations from neural network embeddings.
+If you need implementation details, use:
 
-### Features
+- `README_ALGORITHMS.md` for code-accurate algorithm behavior.
+- `README_PIPELINE.md` for full CLI options and workflow examples.
+- `README_API.md` for Flask/backend API endpoints.
+- `README_CLUSTER_CONTAINMENT.md` for user-clustering containment API.
 
-- **GMM Clustering**: Automatic Gaussian Mixture Model clustering with BIC/AIC optimization
-- **Dimensionality Reduction**: PCA or UMAP 2D projections
-- **Cluster Analysis**: Compute transitions across layers (for Sankey diagrams)
-- **Representative Extraction**: Find top-k closest/farthest samples per cluster
-- **Substructure Extraction**: Compute common substructures (MCS) for KNN/KFN sets
-- **Real-ID Tracking**: All data points tracked with real_id for consistency
+## What This Backend Produces
 
-## Directory Structure
+From embeddings (`.pt` or directory of `.pt`/`.npy`), the backend generates frontend-ready data under an output root (usually `frontend/public/data`):
 
-```
-latentvis/backend/
-├── analyzer/
-│   ├── __init__.py
-│   ├── EmbeddingAnalyzer      # GMM clustering
-│   ├── DimensionalityReducer  # PCA/UMAP
-│   ├── SankeyFlowAnalyzer     # Layer transitions
-│   └── ClusterRepresentativesExtractor
-├── generator/
-│   ├── __init__.py
-│   ├── ScatterGenerator       # 2D scatter JSON
-│   ├── SankeyGenerator        # Sankey transitions
-│   └── ClusterRepresentativesGenerator
-├── utils/
-│   ├── __init__.py
-│   ├── EmbeddingLoader        # Load .npy, .npz, pickle
-│   ├── DataValidator          # Check data consistency
-│   └── ConfigManager          # Load config files
-├── scripts/
-│   ├── build_scatter_by_layer.py     # CSV → JSON conversion
-│   └── validate_scatterplot_data.py  # Verify data accuracy
-├── data/
-│   ├── scatter_plots/         # Intermediate CSV files
-│   ├── sankey/                # Transition data
-│   └── cluster_representatives/
-├── generate_frontend_data.py  # Main entry point
-└── config.yaml                # Configuration template
-```
+- `scatterplot/` (default + pca/mds/umap/tsne files)
+- `sankey/` (`all_sankey.json`, `sankey_samples.json`)
+- `topk/` (`cluster_representatives.json`, `cluster_sorted_members.json`)
+- `bic_aic/` (BIC/AIC per model-layer, plus optional FMI/CSPA summary)
+- `clustering_metrics/` (`cluster_assignments_with_real_id.csv`)
+- `substructures/` (`cluster_substructures.json`, when SMILES + RDKit are available)
 
-## Usage
+When `--clustering-method all` is used, additional method-specific outputs are written under:
 
-### 1. Basic Usage (Most Common)
+- `clustering/hdbscan/`
+- `clustering/agglomerative/`
+- `clustering/knn/`
+
+## Quick Start
+
+Run from `latentvis/backend`:
 
 ```bash
-# Generate all frontend data from embedding directory
-cd /path/to/Latent_Space_Vis
-
-python latentvis/backend/generate_frontend_data.py \
-    --embeddings-dir /path/to/embeddings/dimenet10conf \
-    --model-name dimenet10conf \
-    --output-dir latentvis/frontend/public/data
-
-python latentvis/backend/generate_frontend_data.py \
-    --embeddings-dir /path/to/embeddings/dimenet_noaug \
-    --model-name dimenet_noaug \
-    --output-dir latentvis/frontend/public/data
+python3 run_pipeline_from_embeddings.py \
+  --input /path/to/embeddings.pt \
+  --output-dir ./pipeline_output \
+  --default-reduction mds \
+  --clustering-method pgmeans
 ```
 
-### 2. With Custom Configuration
+Write directly to frontend data directory:
 
 ```bash
-python latentvis/backend/generate_frontend_data.py \
-    --embeddings-dir /path/to/embeddings \
-    --model-name mymodel \
-    --config latentvis/backend/config.yaml \
-    --reduction-method umap \
-    --output-dir latentvis/frontend/public/data
+python3 run_pipeline_from_embeddings.py \
+  --input /path/to/embeddings.pt \
+  --output-to-frontend
 ```
 
-### 3. Python API
+Common options:
 
-```python
-from pathlib import Path
-from latentvis.backend.analyzer import EmbeddingAnalyzer, DimensionalityReducer
-from latentvis.backend.generator import ScatterGenerator
-from latentvis.backend.utils import EmbeddingLoader
+- `--input`: `.pt` file or embedding directory (required)
+- `--output-dir`: output root (default `./pipeline_output`)
+- `--model-name`: epoch/model name for directory input
+- `--clustering-method`: `pgmeans`, `hdbscan`, `agglomerative`, `knn`, `all`
+- `--k-min`, `--k-max`: PGMeans component search range
+- `--default-reduction`: `pca`, `mds`, `umap`, `tsne`
+- `--skip-tsne`: write t-SNE file using PCA coordinates (faster)
+- `--smiles-csv`: enable MCS substructure outputs (with RDKit)
+- `--data-split`: choose `train`/`val`/`test` for ESOL-style `.pt`
 
-# Load embeddings
-embeddings_dir = Path('/path/to/embeddings')
-embeddings_dict = {}
-for npy_file in embeddings_dir.glob('*.npy'):
-    layer_name = npy_file.stem
-    embeddings_dict[layer_name] = EmbeddingLoader.load_numpy(npy_file)
+For complete option documentation and examples, see `README_PIPELINE.md`.
 
-# Analyze
-analyzer = EmbeddingAnalyzer()
-gmm_result = analyzer.fit_gmm(embeddings_dict['emb'])
-cluster_result = analyzer.get_cluster_assignments(
-    embeddings_dict['emb'], gmm_result['optimal_gmm']
-)
+## Current Core Files
 
-# Reduce
-reducer = DimensionalityReducer('pca')
-coords_2d = reducer.fit_reduce(embeddings_dict['emb'])
+- `run_pipeline_from_embeddings.py`: end-to-end pipeline entry point
+- `embedding_loader.py`: input normalization (`.pt` and directory modes)
+- `clustering.py`: clustering method implementations
+- `dimensionality_reduction.py`: 2D scatter projection methods
+- `mcs_common.py`: shared MCS helper logic
+- `scripts/`: utility scripts for jobs, validation, copy/sync workflows
 
-# Generate
-scatter_gen = ScatterGenerator()
-scatter_df = scatter_gen.generate_csv(
-    embeddings_dict['emb'], 'emb', 'dimenet10conf',
-    cluster_result['labels'], coords_2d
-)
-```
+## Notes
 
-## Input Formats
-
-### Embeddings
-
-Expected: NumPy arrays in one of these formats:
-- `.npy` files (one per layer): `emb.npy`, `output_block_0.npy`, etc.
-- `.npz` file: single archive with multiple arrays
-- `.pkl` pickle file: dict mapping layer_name → array
-
-Shape: `(n_samples, n_features)` where `n_samples` should be the same across all layers
-
-### Names (Expected DimeNet Layers)
-
-```
-emb, output_block_0, output_block_1, output_block_2, output_block_3,
-output_block_4, u_mlp_input, u_mlp_l1, u_mlp_l2
-```
-
-## Output Formats
-
-### Scatterplot JSON
-
-Location: `frontend/public/data/scatterplot/{model_name}_{layer_name}.json`
-
-Format:
-```json
-[
-  {
-    "real_id": "0",
-    "x": 18.023569107055664,
-    "y": 2446.088134765625,
-    "cluster_id": 1
-  },
-  ...
-]
-```
-
-**Key Points**:
-- `real_id`: Sample index 0 to n_samples-1 (string)
-- `x`, `y`: 2D coordinates from PCA/UMAP (float)
-- `cluster_id`: GMM cluster assignment (int)
-- **All samples must have consecutive real_id 0-(n-1)**
-
-### Sankey Transitions
-
-Location: `backend/data/sankey/{model_name}/*.csv` → generated as needed
-
-Format:
-```csv
-from_components,to_components,from_cluster,to_cluster,count,probability
-2,3,0,0,50,0.333
-2,3,0,1,75,0.500
-2,3,0,2,25,0.167
-```
-
-### Cluster Representatives
-
-Location: `frontend/public/data/cluster_representatives/cluster_representatives.json`
-
-Format:
-```json
-[
-  {
-    "layer_name": "emb",
-    "model_type": "dimenet10conf",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [5, 12, 23, 45, 67],
-    "top_k_farthest_real_ids": [150, 149, 148, 147, 146],
-    "k": 5
-  },
-  ...
-]
-```
-
-### Cluster Substructures (MCS)
-
-Location: `frontend/public/data/substructures/cluster_substructures.json`
-
-Format:
-```json
-[
-  {
-    "layer_name": "emb",
-    "model_type": "dimenet10conf",
-    "cluster_id": 0,
-    "group": "knn",
-    "k": 5,
-    "real_ids": [5, 12, 23, 45, 67],
-    "valid_molecules": 5,
-    "missing_real_ids": [],
-    "invalid_smiles_real_ids": [],
-    "mcs_smarts": "C1=CC=CC=C1",
-    "mcs_smiles": "c1ccccc1"
-  }
-]
-```
-
-## Validation
-
-Verify generated data:
-
-```bash
-python latentvis/backend/scripts/validate_scatterplot_data.py
-```
-
-Checks:
-- ✓ All 18 JSON files exist (9 layers × 2 models)
-- ✓ Each file has 152 points
-- ✓ real_id are consecutive 0-151
-- ✓ Coordinate values match source CSVs
-- ✓ Cluster IDs are valid
-
-## Data Pipeline Flow
-
-```
-User Embeddings (.npy)
-         ↓
-[EmbeddingAnalyzer]
-  - Load & scale
-  - Fit GMM (2-10 components)
-  - Predict clusters
-         ↓
-[DimensionalityReducer]
-  - PCA/UMAP to 2D
-         ↓
-[ScatterGenerator]
-  - Create {model}_{layer}.json
-  - Each: 152 points with real_id
-         ↓
-[SankeyFlowAnalyzer]
-  - Compute layer transitions
-  - Create {model}_transitions.csv
-         ↓
-[ClusterRepresentativesExtractor]
-  - Find top-k closest/farthest
-  - Create cluster_representatives.json
-        ↓
-[SubstructureExtractor]
-  - Compute MCS for KNN/KFN per cluster
-  - Create cluster_substructures.json
-        ↓
-Frontend JSON files
-  latentvis/frontend/public/data/
-    ├── scatterplot/*.json
-    └── cluster_representatives.json
-    └── substructures/cluster_substructures.json
-```
-
-## Configuration Options
-
-See `config.yaml` for defaults:
-
-```yaml
-n_components_range: [2, 10]     # Range to test for optimal GMM
-reduction_method: pca            # 'pca' or 'umap'
-random_state: 42                 # Reproducible results
-scatter_k_samples: 152           # Expected sample count
-cluster_k: 5                      # Top-k best/worst samples per cluster
-```
-
-## Troubleshooting
-
-### "No embeddings found in directory"
-- Ensure embeddings are saved as `.npy` files
-- File names should match layer names (emb.npy, output_block_0.npy, etc.)
-
-### "Inconsistent sample count"
-- All embedding files must have same first dimension (number of samples)
-- Check that all layers were extracted from same model/checkpoint
-
-### JSON validation fails
-- Check `validate_scatterplot_data.py` output
-- Ensure all 18 layer × model combinations are present
-
-### Memory issues
-- Reduce sample count in config
-- Use PCA instead of UMAP for faster reduction
-
-## Development
-
-To add new functionality:
-
-1. **New Analyzer**: Add class to `analyzer/__init__.py`
-2. **New Generator**: Add class to `generator/__init__.py`
-3. **New Utility**: Add to `utils/__init__.py`
-4. **Update Pipeline**: Modify `generate_frontend_data.py` to use new components
-
-Example:
-```python
-# In analyzer/__init__.py
-class MyNewAnalyzer(object):
-    def analyze(self, embeddings):
-        ...
-        return results
-
-# In generate_frontend_data.py line ~140
-my_analyzer = MyNewAnalyzer()
-results = my_analyzer.analyze(embeddings)
-```
-
-## Performance Notes
-
-For 152 samples × 9 layers with 64-128 dimensional embeddings:
-- GMM fitting: ~100ms per layer
-- PCA reduction: ~50ms per layer
-- Total: ~1.5 seconds for all layers
-
-## References
-
-- GMM: scikit-learn GaussianMixture
-- Reduction: scikit-learn PCA / umap-learn
-- Project: Latent Space Visualization for Neural Networks
+- `real_id` is preserved through outputs and is the join key across scatter, Sankey, top-k, and substructures.
+- Layer traversal order is normalized in pipeline logic (documented in `README_ALGORITHMS.md`).
+- For algorithm-level details (fallback behavior, exact preprocessing, per-method internals), use `README_ALGORITHMS.md`.

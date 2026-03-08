@@ -49,7 +49,7 @@ class TestPipelineOutputs(unittest.TestCase):
                 output_dir=str(tmp_path),
                 k_min=2,
                 k_max=5,
-                clustering_method="gmm",
+                clustering_method="pgmeans",
                 skip_tsne=True,
             )
             self.assertTrue(ok)

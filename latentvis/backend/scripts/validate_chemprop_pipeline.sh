@@ -47,8 +47,8 @@ SCATTER_FILES=$(find "$TEST_OUT/chemprop_short/scatterplot" -name "*_pca.json" 2
 SCATTER_MDS=$(find "$TEST_OUT/chemprop_short/scatterplot" -name "*_mds.json" 2>/dev/null | wc -l)
 [[ "$SCATTER_MDS" -ge 1 ]] && echo "  [OK] Scatter (MDS) files exist"
 
-# 3 clustering methods: GMM at root, HDBSCAN/Agglomerative under clustering/
-[[ -f "$TEST_OUT/chemprop_short/sankey/all_sankey.json" ]] && echo "  [OK] GMM output (root)"
+# 3 clustering methods: PGMeans at root, HDBSCAN/Agglomerative under clustering/
+[[ -f "$TEST_OUT/chemprop_short/sankey/all_sankey.json" ]] && echo "  [OK] PGMeans output (root)"
 [[ -d "$TEST_OUT/chemprop_short/clustering/hdbscan" ]] && echo "  [OK] HDBSCAN output"
 [[ -d "$TEST_OUT/chemprop_short/clustering/agglomerative" ]] && echo "  [OK] Agglomerative output"
 

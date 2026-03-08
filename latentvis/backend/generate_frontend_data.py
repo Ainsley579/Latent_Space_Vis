@@ -89,19 +89,19 @@ class FrontendDataPipeline(object):
         """
         print(f"\n[{layer_name}] Processing {embeddings.shape[0]} samples, {embeddings.shape[1]} dims...")
         
-        # 1. Fit GMM and get clusters
-        print(f"[{layer_name}] Fitting GMM...")
-        gmm_result = self.analyzer.fit_gmm(
+        # 1. Fit PGMeans and get clusters
+        print(f"[{layer_name}] Fitting PGMeans...")
+        pgmeans_result = self.analyzer.fit_pgmeans(
             embeddings,
             n_components_range=self.config['n_components_range']
         )
-        optimal_n = gmm_result['optimal_n_components']
-        optimal_gmm = gmm_result['optimal_gmm']
+        optimal_n = pgmeans_result['optimal_n_components']
+        optimal_pgmeans = pgmeans_result['optimal_pgmeans']
         
         print(f"[{layer_name}] Optimal components: {optimal_n}")
         
         # Get cluster assignments
-        cluster_result = self.analyzer.get_cluster_assignments(embeddings, optimal_gmm)
+        cluster_result = self.analyzer.get_cluster_assignments(embeddings, optimal_pgmeans)
         labels = cluster_result['labels']
         
         # 2. Reduce to 2D
@@ -128,7 +128,7 @@ class FrontendDataPipeline(object):
             'optimal_n_components': optimal_n,
             'labels': labels,
             'coords_2d': coords_2d,
-            'gmm': optimal_gmm,
+            'pgmeans': optimal_pgmeans,
             'scatter_df': scatter_df,
             'representatives': reps
         }
@@ -190,7 +190,7 @@ class FrontendDataPipeline(object):
             with open(json_file, 'w') as f:
                 json.dump(json_data, f, indent=2)
             
-            print(f"  ✓ {json_file.name} ({len(json_data)} points)")
+            print(f"   {json_file.name} ({len(json_data)} points)")
     
     def save_representatives(self):
         """Save cluster representatives JSON."""
@@ -204,7 +204,7 @@ class FrontendDataPipeline(object):
         with open(output_file, 'w') as f:
             json.dump(self.all_representatives, f, indent=2)
         
-        print(f"  ✓ {output_file.name} ({len(self.all_representatives)} clusters)")
+        print(f"   {output_file.name} ({len(self.all_representatives)} clusters)")
     
     def run(self, embeddings_dict):
         """
@@ -238,7 +238,7 @@ class FrontendDataPipeline(object):
         self.save_scatter_plots()
         self.save_representatives()
         
-        print(f"\n[Pipeline] ✅ Complete!")
+        print(f"\n[Pipeline]  Complete!")
         return True
 
 

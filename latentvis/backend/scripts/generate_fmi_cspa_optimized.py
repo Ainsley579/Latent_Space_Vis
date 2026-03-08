@@ -8,9 +8,8 @@ import json
 from pathlib import Path
 from multiprocessing import Pool
 import numpy as np
-from sklearn.mixture import GaussianMixture
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import fowlkes_mallows_score
+from clustering import fit_pgmeans_at_k
 
 
 def _load_embeddings(path):
@@ -42,22 +41,11 @@ def _flatten_embeddings(embeddings):
     return embeddings
 
 
-def _get_gmm_labels(embeddings, k, random_state=42):
-    """Get GMM cluster labels for a specific k"""
-    scaler = StandardScaler()
-    embeddings_scaled = scaler.fit_transform(embeddings)
-    
+def _get_pgmeans_labels(embeddings, k, random_state=42):
+    """Get PGMeans cluster labels for a specific k"""
     try:
-        gmm = GaussianMixture(
-            n_components=k,
-            covariance_type="full",
-            random_state=random_state,
-            max_iter=200,
-            n_init=1  # Reduced from default for speed
-        )
-        gmm.fit(embeddings_scaled)
-        labels = gmm.predict(embeddings_scaled)
-        return labels
+        out = fit_pgmeans_at_k(embeddings, k=k, random_state=random_state)
+        return out.get("labels")
     except Exception:
         return None
 
@@ -96,8 +84,8 @@ def compute_fmi_cspa_for_layer(embeddings_10conf, embeddings_noaug, k_values):
     labels_no_dict = {}
     
     for k in k_values:
-        labels_10_dict[k] = _get_gmm_labels(embeddings_10conf, k)
-        labels_no_dict[k] = _get_gmm_labels(embeddings_noaug, k)
+        labels_10_dict[k] = _get_pgmeans_labels(embeddings_10conf, k)
+        labels_no_dict[k] = _get_pgmeans_labels(embeddings_noaug, k)
     
     # Compute metrics for each k
     fmi_values = []

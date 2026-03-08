@@ -15,7 +15,7 @@ Base URL is the same as the Flask API (e.g. `http://127.0.0.1:5001`).
 | `dataset`        | string  | yes      | `"chemprop"` or `"chemeleon"` |
 | `epoch`          | string or number | yes | Epoch id for the cell, e.g. `"0"`, `"26"` |
 | `layer`          | string  | yes      | Layer id, e.g. `"fingerprint"`, `"gnn_layer_1"` |
-| `clustering`     | string  | no       | Backend clustering method (e.g. `"pgmeans"`, `"gmm"`). Default depends on backend. |
+| `clustering`     | string  | no       | Backend clustering method (e.g. `"pgmeans"`, `"agglomerative"`, `"hdbscan"`, `"knn"`). Default depends on backend. |
 | `data_split`     | string  | no       | `"test"` or `"train"`. Default: `"test"`. |
 | `use_current`    | boolean | no       | If `true`, use assignments from the last interactive run (`clustering_metrics_current`). If `false`, use baseline. Default: `false`. |
 | `user_clustering`| array   | yes      | List of objects: `{ "real_id": "<id>", "user_cluster_id": <integer> }`. One entry per point; `user_cluster_id` is 0-based. |

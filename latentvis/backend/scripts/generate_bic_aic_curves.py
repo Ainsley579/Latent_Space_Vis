@@ -10,8 +10,7 @@ import json
 from pathlib import Path
 
 import numpy as np
-from sklearn.mixture import GaussianMixture
-from sklearn.preprocessing import StandardScaler
+from clustering import fit_pgmeans
 
 
 def _load_embeddings(path):
@@ -42,29 +41,8 @@ def _flatten_embeddings(embeddings):
 
 
 def _compute_bic_aic(embeddings, k_min, k_max):
-    scaler = StandardScaler()
-    embeddings_scaled = scaler.fit_transform(embeddings)
-
-    k_values = list(range(k_min, k_max + 1))
-    bic_scores = []
-    aic_scores = []
-
-    for k in k_values:
-        try:
-            gmm = GaussianMixture(
-                n_components=k,
-                covariance_type="full",
-                random_state=42,
-                max_iter=200,
-            )
-            gmm.fit(embeddings_scaled)
-            bic_scores.append(float(gmm.bic(embeddings_scaled)))
-            aic_scores.append(float(gmm.aic(embeddings_scaled)))
-        except Exception:
-            bic_scores.append(float("inf"))
-            aic_scores.append(float("inf"))
-
-    return k_values, bic_scores, aic_scores
+    out = fit_pgmeans(embeddings, k_min=k_min, k_max=k_max, random_state=42)
+    return out["k_values"], out["bic"], out["aic"]
 
 
 def _layer_file_map(model_key):

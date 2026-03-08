@@ -22,10 +22,10 @@ CASES = ("chemprop", "chemeleon")
 
 def _find_assignment_csvs(case_dir: Path):
     """Yield (method_name, csv_path) for each cluster_assignments_with_real_id.csv."""
-    # Root: clustering_metrics/... -> gmm
+    # Root: clustering_metrics/... -> pgmeans
     root_ca = case_dir / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
     if root_ca.is_file():
-        yield "gmm", root_ca
+        yield "pgmeans", root_ca
     # clustering/<method>/clustering_metrics/...
     clustering = case_dir / "clustering"
     if clustering.is_dir():

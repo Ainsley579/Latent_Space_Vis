@@ -4,7 +4,7 @@ Generate FMI and CSPA values for each model+layer combination.
 
 This script:
 1. Loads embeddings for dimenet10conf and dimenet_noaug models
-2. Performs GMM clustering for multiple k values
+2. Performs PGMeans clustering for multiple k values
 3. Computes FMI (Fowlkes-Mallows Index) between model pairs
 4. Computes CSPA (Cluster-based Similarity Partitioning Algorithm) metrics
 5. Updates or creates JSON files with these metrics
@@ -16,9 +16,8 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 import numpy as np
-from sklearn.mixture import GaussianMixture
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import fowlkes_mallows_score
+from clustering import fit_pgmeans_at_k
 
 
 def _load_embeddings(path):
@@ -50,23 +49,13 @@ def _flatten_embeddings(embeddings):
     return embeddings
 
 
-def _get_gmm_labels(embeddings, k, random_state=42):
-    """Get GMM cluster labels for a specific k"""
-    scaler = StandardScaler()
-    embeddings_scaled = scaler.fit_transform(embeddings)
-    
+def _get_pgmeans_labels(embeddings, k, random_state=42):
+    """Get PGMeans cluster labels for a specific k"""
     try:
-        gmm = GaussianMixture(
-            n_components=k,
-            covariance_type="full",
-            random_state=random_state,
-            max_iter=200,
-        )
-        gmm.fit(embeddings_scaled)
-        labels = gmm.predict(embeddings_scaled)
-        return labels
+        out = fit_pgmeans_at_k(embeddings, k=k, random_state=random_state)
+        return out.get("labels")
     except Exception as e:
-        print("  Error computing GMM for k={}: {}".format(k, e))
+        print("  Error computing PGMeans for k={}: {}".format(k, e))
         return None
 
 
@@ -165,8 +154,8 @@ def compute_fmi_cspa_for_layer(
     
     for k in k_values:
         # Get labels for both models
-        labels_10 = _get_gmm_labels(embeddings_10conf, k)
-        labels_no = _get_gmm_labels(embeddings_noaug, k)
+        labels_10 = _get_pgmeans_labels(embeddings_10conf, k)
+        labels_no = _get_pgmeans_labels(embeddings_noaug, k)
         
         # Compute FMI
         fmi = compute_fmi_for_k(labels_10, labels_no, k)

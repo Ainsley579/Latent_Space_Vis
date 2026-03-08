@@ -165,7 +165,7 @@ def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[
     """
     method = (clustering or DEFAULT_CLUSTERING).strip().lower()
     split = _normalize_split(data_split) or "test"
-    method_dir = "pgmeans" if method in ("pgmeans", "gmm") else method
+    method_dir = "pgmeans" if method == "pgmeans" else method
 
     # Preferred split-aware layout (new):
     #   /data/<case>/<split>/clustering/<method>/
@@ -181,7 +181,7 @@ def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[
 
     # "pgmeans" old layout fallback:
     #   /data/<case>/<split>/
-    if method in ("pgmeans", "gmm"):
+    if method == "pgmeans":
         return DATA_ROOT / case / split
 
     # Non-pgmeans methods are split-aware in current frontend data layout:
@@ -928,11 +928,9 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
     if linkage not in ("ward", "complete", "average"):
         linkage = "ward"
     dataset = payload.get("dataset")
-    clustering = (payload.get("clustering") or "gmm").lower().strip()
+    clustering = (payload.get("clustering") or DEFAULT_CLUSTERING).lower().strip()
     data_split = payload.get("data_split") or payload.get("preferred_split")
 
-    if clustering == "pgmeans":
-        clustering = "gmm"
 
     # Optional substructure member cap for MCS (first M nearest / farthest per cluster)
     sub_m = payload.get("substructure_max_members") or payload.get("sub_m")
@@ -998,7 +996,7 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
 
     if not dataset or dataset not in DEFAULT_CASES:
         return {"ok": False, "error": "invalid_dataset"}, 400
-    if clustering not in ("gmm", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
         return {"ok": False, "error": "invalid_clustering"}, 400
 
     input_path = EMBEDDING_PATHS.get(dataset)
@@ -1367,7 +1365,7 @@ def data_file():
             if req is not None:
                 cell_core, projection, kind = req
                 method = str(clustering or DEFAULT_CLUSTERING).strip().lower()
-                method_dir = "pgmeans" if method in ("pgmeans", "gmm") else method
+                method_dir = "pgmeans" if method == "pgmeans" else method
                 scatter_base_candidates: List[Path] = []
                 # Preferred new layout
                 scatter_base_candidates.append(DATA_ROOT / dataset / split_for_base / "clustering" / method_dir / "scatterplot")
@@ -1529,8 +1527,6 @@ def cluster_containment():
     epoch = payload.get("epoch")
     layer = payload.get("layer")
     clustering = (payload.get("clustering") or DEFAULT_CLUSTERING).strip().lower()
-    if clustering == "pgmeans":
-        clustering = "gmm"
     data_split = payload.get("data_split")
     _ = payload.get("use_current")  # deprecated, ignored
     user_clustering = payload.get("user_clustering")
@@ -1541,7 +1537,7 @@ def cluster_containment():
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
     if epoch is None or layer is None:
         return jsonify({"ok": False, "error": "missing_epoch_or_layer"}), 400
-    if clustering not in ("gmm", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
     import csv as csv_module
@@ -1665,8 +1661,6 @@ def cell_cluster_metrics():
     payload = request.get_json(silent=True) or {}
     dataset = payload.get("dataset")
     clustering = (payload.get("clustering") or DEFAULT_CLUSTERING).strip().lower()
-    if clustering == "pgmeans":
-        clustering = "gmm"
     data_split = payload.get("data_split")
     _ = payload.get("use_current")  # deprecated, ignored
     user_clustering = payload.get("user_clustering")
@@ -1675,7 +1669,7 @@ def cell_cluster_metrics():
 
     if not dataset or dataset not in DEFAULT_CASES:
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
-    if clustering not in ("gmm", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
     user_rid_to_cluster: Dict[str, int] = {}
@@ -1819,7 +1813,7 @@ def cluster_tanimoto():
       - dataset: chemprop|chemeleon
       - epoch: model/epoch key
       - layer: layer key
-      - clustering: pgmeans|gmm|agglomerative|hdbscan|knn (optional, default pgmeans)
+      - clustering: pgmeans|agglomerative|hdbscan|knn (optional, default pgmeans)
       - data_split: train|test|val|train+test|all (optional, default test)
       - radius: Morgan radius (default 2)
       - n_bits: fingerprint bits (default 2048)
@@ -1832,8 +1826,6 @@ def cluster_tanimoto():
     epoch = payload.get("epoch")
     layer = payload.get("layer")
     clustering = str(payload.get("clustering") or DEFAULT_CLUSTERING).strip().lower()
-    if clustering == "pgmeans":
-        clustering = "gmm"
     split_selector = payload.get("data_split")
     splits = _expand_split_selector(split_selector)
 
@@ -1847,7 +1839,7 @@ def cluster_tanimoto():
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
     if epoch is None or layer is None:
         return jsonify({"ok": False, "error": "missing_epoch_or_layer"}), 400
-    if clustering not in ("gmm", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
     if not splits:
         return jsonify({"ok": False, "error": "invalid_data_split"}), 400

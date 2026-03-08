@@ -1,5 +1,6 @@
 """
-Clustering methods for latent space: GMM (with BIC/AIC), HDBSCAN, Agglomerative.
+Clustering methods for latent space: PGMeans-style Gaussian mixtures (with BIC/AIC),
+HDBSCAN, Agglomerative, and KNN connected-components clustering.
 Each returns labels array (non-negative integers; noise in HDBSCAN is remapped to last cluster).
 """
 import numpy as np
@@ -12,43 +13,44 @@ def _flatten(X):
     return X
 
 
-def fit_gmm(emb, k_min=2, k_max=15, random_state=42):
-    """
-    GMM with BIC-based model selection. Returns labels, best_k, k_values, bic_list, aic_list.
-    """
+def _fit_gaussian_mixture_for_k(X, k, random_state=42):
+    """Fit one Gaussian mixture candidate with robust fallbacks."""
     from sklearn.mixture import GaussianMixture
+    for cov_type in ("full", "diag"):
+        for reg in (1e-6, 1e-5, 1e-4, 1e-3, 1e-2):
+            try:
+                model = GaussianMixture(
+                    n_components=k,
+                    covariance_type=cov_type,
+                    random_state=random_state,
+                    max_iter=300,
+                    reg_covar=reg,
+                    n_init=2,
+                )
+                model.fit(X)
+                return model
+            except Exception:
+                continue
+    return None
 
+
+def fit_pgmeans(emb, k_min=2, k_max=15, random_state=42):
+    """
+    PGMeans-style Gaussian mixture selection using BIC/AIC sweeps.
+    Returns labels, best_k, k_values, bic_list, aic_list.
+    """
     # Use float64 to improve numerical stability for covariance estimation.
     X = StandardScaler().fit_transform(_flatten(emb)).astype(np.float64, copy=False)
-
-    def _fit_one(k):
-        # Try progressively stronger regularization; fallback to diag covariance.
-        for cov_type in ("full", "diag"):
-            for reg in (1e-6, 1e-5, 1e-4, 1e-3, 1e-2):
-                try:
-                    gmm = GaussianMixture(
-                        n_components=k,
-                        covariance_type=cov_type,
-                        random_state=random_state,
-                        max_iter=300,
-                        reg_covar=reg,
-                        n_init=2,
-                    )
-                    gmm.fit(X)
-                    return gmm
-                except Exception:
-                    continue
-        return None
 
     k_values = list(range(k_min, k_max + 1))
     bic_list, aic_list = [], []
     fitted_by_k = {}
     for k in k_values:
-        gmm = _fit_one(k)
-        if gmm is not None:
-            fitted_by_k[k] = gmm
-            bic_list.append(float(gmm.bic(X)))
-            aic_list.append(float(gmm.aic(X)))
+        model = _fit_gaussian_mixture_for_k(X, k, random_state=random_state)
+        if model is not None:
+            fitted_by_k[k] = model
+            bic_list.append(float(model.bic(X)))
+            aic_list.append(float(model.aic(X)))
         else:
             bic_list.append(float("inf"))
             aic_list.append(float("inf"))
@@ -66,12 +68,12 @@ def fit_gmm(emb, k_min=2, k_max=15, random_state=42):
 
     best_idx = int(np.argmin(bic_list))
     best_k = k_values[best_idx]
-    gmm = fitted_by_k.get(best_k)
-    if gmm is None:
+    model = fitted_by_k.get(best_k)
+    if model is None:
         # np.argmin might point to a failed k if BIC ties/edge cases occur.
         best_k = min(fitted_by_k.keys())
-        gmm = fitted_by_k[best_k]
-    labels = gmm.predict(X)
+        model = fitted_by_k[best_k]
+    labels = model.predict(X)
     return {
         "labels": labels,
         "k": best_k,
@@ -79,6 +81,35 @@ def fit_gmm(emb, k_min=2, k_max=15, random_state=42):
         "bic": bic_list,
         "aic": aic_list,
     }
+
+
+def fit_pgmeans_at_k(emb, k, random_state=42, return_model=False):
+    """
+    Fit a single-k PGMeans candidate and return labels (and optional model).
+    """
+    X = StandardScaler().fit_transform(_flatten(emb)).astype(np.float64, copy=False)
+    model = _fit_gaussian_mixture_for_k(X, int(k), random_state=random_state)
+    if model is None:
+        labels = np.zeros(X.shape[0], dtype=int)
+        out = {
+            "labels": labels,
+            "k": 1,
+            "bic": None,
+            "aic": None,
+        }
+        if return_model:
+            out["model"] = None
+        return out
+    labels = model.predict(X)
+    out = {
+        "labels": labels,
+        "k": int(k),
+        "bic": float(model.bic(X)),
+        "aic": float(model.aic(X)),
+    }
+    if return_model:
+        out["model"] = model
+    return out
 
 
 def fit_hdbscan(emb, min_cluster_size=5, min_samples=3, random_state=42):
@@ -119,15 +150,15 @@ def fit_hdbscan(emb, min_cluster_size=5, min_samples=3, random_state=42):
 
 def fit_agglomerative(emb, n_clusters=None, k_min=2, k_max=15, random_state=42, linkage="ward"):
     """
-    Agglomerative Clustering. If n_clusters is None, run GMM once to get best_k and use it.
+    Agglomerative Clustering. If n_clusters is None, run PGMeans once to get best_k and use it.
     linkage: "ward" (default), "complete", or "average". Ward uses Euclidean only.
     Returns dict with labels, k, k_values=[k], bic=[None], aic=[None].
     """
     from sklearn.cluster import AgglomerativeClustering
     X = StandardScaler().fit_transform(_flatten(emb))
     if n_clusters is None:
-        gmm_out = fit_gmm(emb, k_min=k_min, k_max=k_max, random_state=random_state)
-        n_clusters = gmm_out["k"]
+        pg_out = fit_pgmeans(emb, k_min=k_min, k_max=k_max, random_state=random_state)
+        n_clusters = pg_out["k"]
     n_clusters = max(2, min(n_clusters, len(X) - 1))
     link = (linkage or "ward").lower()
     if link not in ("ward", "complete", "average"):
@@ -191,14 +222,14 @@ def fit_knn(emb, n_neighbors=10, random_state=42):
     }
 
 
-def fit_clustering(emb, method="gmm", k_min=2, k_max=15, random_state=42, **kwargs):
+def fit_clustering(emb, method="pgmeans", k_min=2, k_max=15, random_state=42, **kwargs):
     """
-    Single entry: method in ('gmm', 'hdbscan', 'agglomerative', 'knn').
+    Single entry: method in ('pgmeans', 'hdbscan', 'agglomerative', 'knn').
     Returns dict with keys: labels, k, k_values, bic, aic.
     """
-    method = (method or "gmm").lower()
-    if method == "gmm":
-        return fit_gmm(emb, k_min=k_min, k_max=k_max, random_state=random_state)
+    method = (method or "pgmeans").lower()
+    if method == "pgmeans":
+        return fit_pgmeans(emb, k_min=k_min, k_max=k_max, random_state=random_state)
     if method == "hdbscan":
         return fit_hdbscan(
             emb,

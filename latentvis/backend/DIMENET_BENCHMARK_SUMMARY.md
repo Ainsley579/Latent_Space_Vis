@@ -6,12 +6,12 @@ Generated for system testing. All data includes **both dimenet10conf and dimenet
 
 | Data | dimenet10conf | dimenet_noaug |
 |------|---------------|---------------|
-| global_index | ✓ (152 samples) | ✓ (156 samples) |
-| clustering_metrics | ✓ FMI, BIC/AIC | ✓ optimal_n_components |
-| cluster_assignments | ✓ | ✓ |
-| sankey transitions | ✓ | ✓ |
-| scatter_plots | ✓ | ✓ |
-| cluster_representatives | ✓ | ✓ |
+| global_index |  (152 samples) |  (156 samples) |
+| clustering_metrics |  FMI, BIC/AIC |  optimal_n_components |
+| cluster_assignments |  |  |
+| sankey transitions |  |  |
+| scatter_plots |  |  |
+| cluster_representatives |  |  |
 
 ## Directory Structure
 

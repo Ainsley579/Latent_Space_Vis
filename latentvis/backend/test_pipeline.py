@@ -62,24 +62,24 @@ def test_analyzer():
     
     print(f"Input shape: {embeddings.shape}")
     
-    # Fit GMM
-    gmm_result = analyzer.fit_gmm(embeddings, n_components_range=(2, 5))
-    print(f"✓ GMM fit complete")
-    print(f"  Optimal components: {gmm_result['optimal_n_components']}")
-    print(f"  BIC scores: {[f'{s:.2f}' for s in gmm_result['bic_scores']]}")
-    print(f"  AIC scores: {[f'{s:.2f}' for s in gmm_result['aic_scores']]}")
+    # Fit PGMeans
+    pgmeans_result = analyzer.fit_pgmeans(embeddings, n_components_range=(2, 5))
+    print(f" PGMeans fit complete")
+    print(f"  Optimal components: {pgmeans_result['optimal_n_components']}")
+    print(f"  BIC scores: {[f'{s:.2f}' for s in pgmeans_result['bic_scores']]}")
+    print(f"  AIC scores: {[f'{s:.2f}' for s in pgmeans_result['aic_scores']]}")
     
     # Get assignments
     cluster_result = analyzer.get_cluster_assignments(
-        embeddings, gmm_result['optimal_gmm']
+        embeddings, pgmeans_result['optimal_pgmeans']
     )
     labels = cluster_result['labels']
-    print(f"✓ Cluster assignments: {len(np.unique(labels))} clusters")
+    print(f" Cluster assignments: {len(np.unique(labels))} clusters")
     print(f"  Cluster sizes: {np.bincount(labels)}")
     
     # Silhouette
     silhouette = analyzer.compute_silhouette(embeddings, labels)
-    print(f"✓ Silhouette score: {silhouette:.4f}")
+    print(f" Silhouette score: {silhouette:.4f}")
     
     return embeddings, labels
 
@@ -96,7 +96,7 @@ def test_reducer(embeddings):
     
     print(f"Input shape: {embeddings.shape}")
     print(f"Output shape: {coords_2d.shape}")
-    print(f"✓ PCA reduction complete")
+    print(f" PCA reduction complete")
     print(f"  X range: [{coords_2d[:, 0].min():.4f}, {coords_2d[:, 0].max():.4f}]")
     print(f"  Y range: [{coords_2d[:, 1].min():.4f}, {coords_2d[:, 1].max():.4f}]")
     
@@ -116,7 +116,7 @@ def test_scatter_generator(embeddings, labels, coords_2d):
         embeddings, 'emb', 'test_model', labels, coords_2d
     )
     
-    print(f"✓ CSV generated: {df.shape[0]} rows")
+    print(f" CSV generated: {df.shape[0]} rows")
     print(f"  Columns: {list(df.columns)}")
     print(f"  Sample row:")
     print(f"    {df.iloc[0].to_dict()}")
@@ -125,9 +125,9 @@ def test_scatter_generator(embeddings, labels, coords_2d):
     real_ids = df['real_id'].unique()
     print(f"  Real IDs: {len(real_ids)} unique values")
     if list(sorted(real_ids)) == list(range(len(real_ids))):
-        print(f"  ✓ Real IDs are sequential 0-{len(real_ids)-1}")
+        print(f"   Real IDs are sequential 0-{len(real_ids)-1}")
     else:
-        print(f"  ✗ Real IDs are not sequential!")
+        print(f"   Real IDs are not sequential!")
         return None
     
     return df
@@ -144,7 +144,7 @@ def test_sankey_analyzer(labels):
     
     transitions = SankeyFlowAnalyzer.compute_transitions(labels, labels_next)
     
-    print(f"✓ Transitions computed: {len(transitions)} flows")
+    print(f" Transitions computed: {len(transitions)} flows")
     print(f"  Sample transition:")
     print(f"    {transitions[0]}")
     
@@ -161,7 +161,7 @@ def test_cluster_representatives(embeddings, labels):
         embeddings, labels, k=3
     )
     
-    print(f"✓ Representatives extracted: {len(reps)} clusters")
+    print(f" Representatives extracted: {len(reps)} clusters")
     print(f"  Sample cluster:")
     cluster_0 = reps.get(0, {})
     print(f"    Cluster 0: {cluster_0}")
@@ -183,10 +183,10 @@ def test_data_validator():
     }
     
     valid, msg = DataValidator.validate_embeddings(embeddings_dict)
-    print(f"✓ Validation result: {msg}")
+    print(f" Validation result: {msg}")
     
     if not valid:
-        print(f"✗ Validation failed!")
+        print(f" Validation failed!")
         return False
     
     # Test invalid case
@@ -194,7 +194,7 @@ def test_data_validator():
     bad_dict['emb'] = bad_dict['emb'][:50]  # Different size
     
     valid, msg = DataValidator.validate_embeddings(bad_dict)
-    print(f"✓ Invalid case correctly detected: {msg}")
+    print(f" Invalid case correctly detected: {msg}")
     
     return True
 
@@ -233,14 +233,14 @@ def test_full_pipeline(output_dir):
         print(" TEST SUMMARY")
         print("█" * 60)
         
-        print("\n✅ ALL TESTS PASSED!")
+        print("\n ALL TESTS PASSED!")
         print("\nBackend components verified:")
-        print("  ✓ EmbeddingAnalyzer (GMM fitting, cluster assignment)")
-        print("  ✓ DimensionalityReducer (PCA projection)")
-        print("  ✓ ScatterGenerator (JSON generation)")
-        print("  ✓ SankeyFlowAnalyzer (cluster transitions)")
-        print("  ✓ ClusterRepresentativesExtractor (top-k samples)")
-        print("  ✓ DataValidator (data consistency checks)")
+        print("   EmbeddingAnalyzer (PGMeans fitting, cluster assignment)")
+        print("   DimensionalityReducer (PCA projection)")
+        print("   ScatterGenerator (JSON generation)")
+        print("   SankeyFlowAnalyzer (cluster transitions)")
+        print("   ClusterRepresentativesExtractor (top-k samples)")
+        print("   DataValidator (data consistency checks)")
         
         print("\nReady for production use!")
         print("See README.md for usage instructions.")
@@ -248,7 +248,7 @@ def test_full_pipeline(output_dir):
         return True
     
     except Exception as e:
-        print(f"\n❌ TEST FAILED: {e}")
+        print(f"\n TEST FAILED: {e}")
         import traceback
         traceback.print_exc()
         return False

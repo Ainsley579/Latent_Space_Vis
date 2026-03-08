@@ -1,0 +1,8034 @@
+[
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "12",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Risocaine",
+      "Chlortoluron",
+      "Propanil"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "12",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Betamethasone-17-valerate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "12",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "ethiofencarb",
+      "Isoproturon",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&R]-&!@[#6&!R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "12",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "12",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Chloropham",
+      "Diethyl phthalate ",
+      "Isoproturon",
+      "Primidone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "12",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "12",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Chloropham",
+      "Diethyl phthalate ",
+      "Isoproturon",
+      "Primidone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "12",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "12",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Chlortoluron",
+      "Cyanazine",
+      "Dinoseb",
+      "Azintamide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "12",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "12",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Etofenprox",
+      "3-Octanoyloxymethylphenytoin",
+      "1-Hexadecanol",
+      "Chlordane",
+      "Atovaquone(0,430mg/ml) - neutral"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "12",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "12",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Khellin",
+      "Vinclozolin",
+      "kebuzone",
+      "Oxazepam",
+      "1,2,4-tribromobenzene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "12",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "1,2,3,5-Tetrachlorobenzene",
+      "Anilofos",
+      "Androsterone",
+      "Epiandrosterone",
+      "Bendroflumethiazide"
+    ],
+    "valid_molecules": 4,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "12",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Iodobenzene",
+      "Cycloheptene",
+      "Nerol",
+      "Naled",
+      "Risocaine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "12",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Fenitrothion",
+      "1,2-Dichlorobenzene",
+      "o-Chlorobromobenzene",
+      "1,2-Dibromobenzene",
+      "Buturon"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "12",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Chloroethylene",
+      "2,2-Dimethylpropanol",
+      "Furane",
+      "2-Methyl-3-pentanol",
+      "2,4-Dimethyl-3-pentanol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "12",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Sorbitol",
+      "d-inositol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "15",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Risocaine",
+      "Chlortoluron",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "15",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "bromadiolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#8]-,:;@[#6]-,:;@[#6]-,:;@[#6](-,:;@[#6]-,:;@1)-&!@[#8&!R]",
+    "mcs_smiles": "OC1CCOCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "15",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoproturon",
+      "ethiofencarb",
+      "Chlortoluron",
+      "Bromacil",
+      "Butamben"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "15",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "15",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Isoproturon",
+      "Chloropham",
+      "Glutethimide",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "15",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "15",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Isoproturon",
+      "Chloropham",
+      "Glutethimide",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "15",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "15",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Chloropham",
+      "Isoproturon",
+      "Chlortoluron",
+      "aminopyrine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "15",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "15",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "4,4'-PCB",
+      "Tricresyl phosphate",
+      "Ethisterone",
+      "2-aminoanthracene",
+      "megestrol acetate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "15",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "15",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "1-Bromohexane",
+      "Ethylcyclohexane",
+      "Ethirimol",
+      "Thiram",
+      "Prometryn"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "15",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "4-hexylresorcinol",
+      "Butylate",
+      "3,4-Dichloronitrobenzene",
+      "3-Methylheptane",
+      "Hydrocortisone 21-acetate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "15",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Benznidazole",
+      "1,2,3-Trimethylbenzene ",
+      "Simetryn",
+      "p-Chloronitrobenzene",
+      "Methylcyclopentane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "15",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "dimethirimol",
+      "RTI 10",
+      "aminopyrine",
+      "1,3-Dichlorobenzene",
+      "Propazine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "15",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Chloroacetonitrile",
+      "2-Pentanone",
+      "Bromoethane",
+      "1,1-Diethoxyethane ",
+      "3,3-Dimethyl-2-butanone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "15",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Sorbitol",
+      "d-inositol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "10",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Risocaine",
+      "Propanil",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "10",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Betamethasone-17-valerate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@1",
+    "mcs_smiles": "C1CCCCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "10",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "ethiofencarb",
+      "Butamben",
+      "chlordimeform",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "10",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Kepone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "10",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Diethyl phthalate ",
+      "Chloropham",
+      "Primidone",
+      "Fenitrothion"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "10",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "10",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Diethyl phthalate ",
+      "Chloropham",
+      "Primidone",
+      "Fenitrothion"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "10",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "10",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Azintamide",
+      "ethiofencarb",
+      "Fenitrothion",
+      "Diethyl phthalate ",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "10",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "10",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "2-Methylanthracene",
+      "Epitostanol",
+      "Pencycuron",
+      "Tetradecane",
+      "Danazol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "10",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "10",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "cis-1,2-Dimethylcyclohexane",
+      "Heptane",
+      "p-Chloroiodobenzene",
+      "Mefluidide",
+      "m-Chlorobromobenzene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "10",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Dimefuron",
+      "RTI 16",
+      "1-Decene",
+      "Vinclozolin",
+      "Flumethasone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "10",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Pentane",
+      "1,3,5-Trinitrobenzene",
+      "Pirimicarb",
+      "3,3-Dimethyl-1-butanol",
+      "styrene oxide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "10",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "1,1,2-Trichloroethane",
+      "o-Xylene ",
+      "linalool",
+      "2-Methyl-1-Pentene",
+      "1,2-Diethoxyethane "
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "10",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Furane",
+      "Isopropyl acetate",
+      "o-Aminophenol",
+      "Ethyl vinyl ether",
+      "Chloroethylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "10",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Sorbitol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "10",
+    "cluster_id": 4,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "2,4-Dimethyl-2-pentanol ",
+      "benzylurea",
+      "Ethyl propyl ether",
+      "1-Pentanol",
+      "2-Ethyl pyridine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "10",
+    "cluster_id": 4,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "4-Chlorophenol ",
+      "3,5-Dimethylphenol",
+      "2-Hexanone",
+      "Formetanate",
+      "5-Ethyl-5-isopropylbarbituric acid"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "4",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Butamben",
+      "Bromacil",
+      "Risocaine",
+      "Propanil",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "4",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Betamethasone-17-valerate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@1",
+    "mcs_smiles": "C1CCCCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "4",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Azintamide",
+      "Chlortoluron",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "4",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "bromadiolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "4",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Carbofuran",
+      "Barban",
+      "Chlortoluron",
+      "Fenthion",
+      "Diethyl phthalate "
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "4",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "4",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Carbofuran",
+      "Barban",
+      "Chlortoluron",
+      "Fenthion",
+      "Diethyl phthalate "
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "4",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "4",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Barban",
+      "Chlorzoxazone",
+      "bromoxynil",
+      "Pentamethylbenzene",
+      "Siduron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "4",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "4",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "4,4'-PCB",
+      "Dibenzothiophene",
+      "Dinitramine",
+      "bromopropylate",
+      "Ethalfluralin"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "4",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "4",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "d-Limonene",
+      "1-Chloroheptane",
+      "Diazinon",
+      "Isoprocarb",
+      "styrene oxide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "4",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "hydrazobenzene",
+      "Pyrolan",
+      "1,4-Dibromobenzene",
+      "Azintamide",
+      "1,2,4,5-Tetramethylbenzene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "4",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Simetryn",
+      "1,5-Hexadiene ",
+      "1-Chloropropane",
+      "5-methylcytosine",
+      "Thiophene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "4",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Sorbitol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "4",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Diphenyl ether ",
+      "Quinoline",
+      "Carbofuran",
+      "Indole",
+      "m-Chlorobromobenzene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "4",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Ethyl decanoate",
+      "t-Pentylbenzene",
+      "Fenothiocarb",
+      "1,3-Dibromobenzene",
+      "Pentylbenzene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "4",
+    "cluster_id": 4,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "m-Nitroaniline",
+      "o-Nitroaniline",
+      "Phenylthiourea",
+      "Toluene ",
+      "2-Phenoxyethanol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "4",
+    "cluster_id": 4,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,6-Dimethylphenol",
+      "Cyclopentane ",
+      "Methylparaben",
+      "Cyclohexanol ",
+      "p-Nitroaniline"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "1",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Risocaine",
+      "Isoprocarb",
+      "Phenacetin",
+      "Butamben",
+      "Chloropham"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "1",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "bromadiolone",
+      "Etoposide (148-167,25mg/ml)",
+      "Benzo[ghi]perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6](:,-;@[#6]:,-;@[#6]:,-;@1):,-;@[#6&R]:,-;@[#6&R]:,-;@[#6&R]",
+    "mcs_smiles": "C:C:C:C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "1",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "1-Bromobutane",
+      "1-Bromo-2-methylpropane",
+      "1-Bromopropane",
+      "1-Chloro-2-bromoethane",
+      "1-Bromopentane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]-&!@[#35&!R]",
+    "mcs_smiles": "CCBr",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "1",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "1-Bromoheptane",
+      "1-Bromohexane",
+      "Bromoethane",
+      "Dibromomethane",
+      "Bromochloromethane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#35&!R]",
+    "mcs_smiles": "CBr",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "1",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoprocarb",
+      "Butamben",
+      "Chloropham",
+      "Risocaine",
+      "4-hexylresorcinol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "1",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "bromadiolone",
+      "Etoposide (148-167,25mg/ml)",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Benzo[ghi]perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6](:,-;@[#6]:,-;@[#6]:,-;@1):,-;@[#6&R]:,-;@[#6&R]:,-;@[#6&R]",
+    "mcs_smiles": "C:C:C:C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "1",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoprocarb",
+      "ethiofencarb",
+      "Chlorbufam",
+      "chlordimeform",
+      "Ethirimol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#7&!R]",
+    "mcs_smiles": "CN",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "1",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "bromadiolone",
+      "Benzo[ghi]perylene",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "1",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoprocarb",
+      "ethiofencarb",
+      "Chlorbufam",
+      "chlordimeform",
+      "Ethirimol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#7&!R]",
+    "mcs_smiles": "CN",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "1",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "bromadiolone",
+      "Benzo[ghi]perylene",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "1",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoprocarb",
+      "ethiofencarb",
+      "Chlorbufam",
+      "sulfaguanidine",
+      "Ioxynil"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "1",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "bromadiolone",
+      "Benzo[ghi]perylene",
+      "Etoposide (148-167,25mg/ml)",
+      "Picene",
+      "Mirex"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "1",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Fluoromethalone",
+      "megestrol acetate",
+      "1-Methylphenanthrene",
+      "RTI 9",
+      "Spironolactone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "1",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "bromadiolone",
+      "Benzo[ghi]perylene",
+      "Etoposide (148-167,25mg/ml)",
+      "Picene",
+      "Mirex"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "1",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "m-Fluorobromobenzene",
+      "p-Chloroaniline",
+      "2-Bromotoluene",
+      "Nitrobenzene",
+      "2-Chlorotoluene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "1",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Isocarboxazid",
+      "Reposal",
+      "4-Methylbiphenyl",
+      "Metolachlor",
+      "Primidone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "1",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "1-Butene",
+      "1-Iodopropane",
+      "1-Chloropropane",
+      "Methyl propyl ether ",
+      "2-Methylpropan-1-ol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]-&!@[#6&!R]",
+    "mcs_smiles": "CCC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "1",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Methanol",
+      "Ethyne",
+      "Ethane",
+      "Methane",
+      "Bromomethane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "7",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Butamben",
+      "Bromacil",
+      "Risocaine",
+      "Propanil",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "7",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Betamethasone-17-valerate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@1",
+    "mcs_smiles": "C1CCCCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "7",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Butamben",
+      "ethiofencarb",
+      "Bromacil",
+      "Primidone",
+      "Azintamide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "7",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Digitoxin"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "7",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Diethyl phthalate ",
+      "Primidone",
+      "Buturon",
+      "ethiofencarb",
+      "Parathion"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "7",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "7",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "RTI 2",
+      "nevirapine",
+      "RTI 15",
+      "RTI 6",
+      "RTI 3"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#7]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:N:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "7",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "RTI 22",
+      "RTI 24",
+      "RTI 10",
+      "RTI 23",
+      "Ancymidol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "7",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Diethyl phthalate ",
+      "Primidone",
+      "Buturon",
+      "ethiofencarb",
+      "Parathion"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "7",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "7",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "RTI 2",
+      "nevirapine",
+      "RTI 15",
+      "RTI 6",
+      "RTI 3"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#7]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:N:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "7",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "RTI 22",
+      "RTI 24",
+      "RTI 10",
+      "RTI 23",
+      "Ancymidol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "7",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Primidone",
+      "Parathion",
+      "Diethyl phthalate ",
+      "bromoxynil",
+      "Antipyrene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "7",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Cyhalothrin",
+      "2,4,6-PCB",
+      "2',3,4-PCB",
+      "diisooctyl phthalate",
+      "Chlordene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Eriodictyol",
+      "t-Butylbenzene ",
+      "thiopental",
+      "Riboflavin",
+      "Quinoline"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "RTI 3",
+      "Benomyl",
+      "Tricyclazole",
+      "fluconazole",
+      "1-Decanol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "1-Iodopropane",
+      "2-Methylbutane",
+      "3-Methyl-3-pentanol",
+      "Isonazid",
+      "Pirimicarb"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "1,2-Benzenediol",
+      "Propyne",
+      "1-Propanol",
+      "Methyl hydrazine",
+      "Dimethoxymethane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "parabanic acid",
+      "acetazolamide",
+      "Oxamyl",
+      "Salicin",
+      "5,5-Dimethylbarbituric acid"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Sorbitol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 4,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Nimetazepam",
+      "Dexamethasone",
+      "RTI 23",
+      "estriol",
+      "kebuzone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 4,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "1-Ethylnaphthalene ",
+      "oryzalin",
+      "3-Propanoyloxymethylphenytoin",
+      "Flumethasone",
+      "Bensulide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 5,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "2,3,5-Trichlorophenol",
+      "p-benzidine",
+      "2-Methylnapthalene",
+      "1-Nitronapthalene",
+      "Chloroxuron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 5,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Rovral",
+      "Phenytoin",
+      "benodanil",
+      "2,3,4-Trichlorophenol",
+      "Carbaryl"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 6,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "2,3,4-Trimethylpentane",
+      "5-(3-Methyl-2-butenyl)-5-isoPrbarbital",
+      "Acetophenone",
+      "2-Heptanol ",
+      "Benzonitrile"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 6,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "1-Hexanol",
+      "2,2-Dimethylpentanol",
+      "Caproaldehyde",
+      "Styrene",
+      "2-Chloro-2-methylbutane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 7,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "RTI 24",
+      "Hydrocortisone 21-acetate",
+      "Napropamide",
+      "2-Chlorobiphenyl",
+      "Anilofos"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 7,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Hexestrol",
+      "1-Iodonapthalene",
+      "3-Chlorobiphenyl",
+      "Hydrocortisone ",
+      "Acridine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 8,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Hexachloroethane",
+      "1-Dodecanol",
+      "2-Ethylnaphthalene",
+      "3-Ethanoyloxymethylphenytoin",
+      "2-bromonaphthalene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "7",
+    "cluster_id": 8,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mebendazole",
+      "1,4-Dimethylnaphthalene ",
+      "1,5-Dimethlnapthalene",
+      "Lenacil",
+      "methyl laurate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "3",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Butamben",
+      "Risocaine",
+      "Bromacil",
+      "chlordimeform",
+      "Chloropham"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "3",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Betamethasone-17-valerate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@1",
+    "mcs_smiles": "C1CCCCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "3",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "chlordimeform",
+      "Bromacil",
+      "Butamben",
+      "Azintamide",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "3",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "bromadiolone",
+      "Benzo[ghi]perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "3",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Chlortoluron",
+      "Metoxuron",
+      "Pentamethylbenzene",
+      "Carbofuran"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "3",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "3",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Chlortoluron",
+      "Metoxuron",
+      "Pentamethylbenzene",
+      "Carbofuran"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "3",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "3",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Pentamethylbenzene",
+      "Chlortoluron",
+      "6-hydroxyquinoline",
+      "Metoxuron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "3",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "3",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "bromadiolone",
+      "2,2',4,4',5,5'-PCB",
+      "Benzo(k)fluoranthene",
+      "Heptachlor",
+      "2,3,4,5,6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "3",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Dienochlor",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#17&!R]-&!@[#6&R]",
+    "mcs_smiles": "CCl",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "3",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Anthraquinone",
+      "Triclosan",
+      "Betamethasone-17-valerate",
+      "Diosgenin",
+      "2,3,5,6-Tetrachlorophenol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "3",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Fenarimol",
+      "P,P'-DDE",
+      "phenolphthalein",
+      "Atovaquone(0,430mg/ml) - neutral",
+      "Bendroflumethiazide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "3",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Benzyltrifluoride",
+      "bromoxynil",
+      "3-methylindole",
+      "1,2-Dichlorobenzene",
+      "benzhydrol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "3",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Stanolone",
+      "2-bromonaphthalene",
+      "2-Bromonapthalene",
+      "Neburon",
+      "benodanil"
+    ],
+    "valid_molecules": 4,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "3",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "o-Aminophenol",
+      "Cyclohexanone",
+      "Cycloheptanol",
+      "1-Bromohexane",
+      "2-Nonanol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "3",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Sorbitol",
+      "o-Chloroaniline"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "3",
+    "cluster_id": 4,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "RTI 3",
+      "Dialifor",
+      "Dialifos",
+      "Epitostanol",
+      "testosterone propionate"
+    ],
+    "valid_molecules": 4,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "3",
+    "cluster_id": 4,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,3,4-Trichlorophenol",
+      "Methazole",
+      "RTI 2",
+      "3-Chlorobiphenyl",
+      "diisooctyl phthalate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "6",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Butamben",
+      "Bromacil",
+      "Risocaine",
+      "Propanil",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "6",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Betamethasone-17-valerate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@1",
+    "mcs_smiles": "C1CCCCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "6",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "isoguanine",
+      "4-methoxypteridine",
+      "6-methoxypteridine",
+      "7-methoxypteridine",
+      "2-methoxypteridine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#7]:&@[#6]:&@[#7]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:N:C:N:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "6",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Pteridine",
+      "adenine",
+      "Hypoxanthine"
+    ],
+    "valid_molecules": 3,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#7]:&@[#6]:&@[#7]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:N:C:N:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "6",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Butamben",
+      "ethiofencarb",
+      "Bromacil",
+      "Primidone",
+      "Azintamide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "6",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Kepone",
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "6",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Diethyl phthalate ",
+      "Primidone",
+      "Buturon",
+      "Parathion",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "6",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "6",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Diethyl phthalate ",
+      "Primidone",
+      "Buturon",
+      "Parathion",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "6",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "6",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Primidone",
+      "Parathion",
+      "Diethyl phthalate ",
+      "bromoxynil",
+      "2,7-dimethylquinoline"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "6",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "6",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Phenanthrene",
+      "Fludrocortisone",
+      "testosterone acetate",
+      "Rotenone",
+      "Stanolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "6",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "6",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "1-Nonyne ",
+      "benzoin",
+      "1,4-Dichlorobenzene",
+      "brompyrazone",
+      "thiopental"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "6",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Glutethimide",
+      "p-benzidine",
+      "1,2,4-tribromobenzene",
+      "RTI 6",
+      "1,1,2-Trichlorotrifluoroethane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "6",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "uric acid",
+      "Guaiacol",
+      "o-Methoxyphenol",
+      "5-Allyl-5-methylbarbital",
+      "o-Nitrophenol"
+    ],
+    "valid_molecules": 4,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "6",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Sorbitol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "6",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Anethole",
+      "Ethyl benzoate ",
+      "Thiram",
+      "Eugenol",
+      "Phenacetin"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "6",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "o-Chloroaniline",
+      "Talbutal",
+      "Ipazine",
+      "menthol",
+      "3,3-Dimethylpentane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "19",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Risocaine",
+      "Chlortoluron",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "19",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "bromadiolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#8]-,:;@[#6]-,:;@[#6]-,:;@[#6](-,:;@[#6]-,:;@1)-&!@[#8&!R]",
+    "mcs_smiles": "OC1CCOCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "19",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoproturon",
+      "Chlortoluron",
+      "ethiofencarb",
+      "Bromacil",
+      "Butamben"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "19",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "19",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoproturon",
+      "ethiofencarb",
+      "Glutethimide",
+      "Chloropham",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "19",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "19",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoproturon",
+      "ethiofencarb",
+      "Glutethimide",
+      "Chloropham",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "19",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "19",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Isoproturon",
+      "Chloropham",
+      "Glutethimide",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "19",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "19",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Medrogestone",
+      "3-Hexanoyloxymethylphenyltoin",
+      "2-Methylanthracene",
+      "2,6-PCB",
+      "Spironolactone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "19",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "19",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Ipazine",
+      "Piperine",
+      "Chlorbromuron",
+      "Octane",
+      "Phoxim"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "19",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Benzophenone",
+      "2-Undecanol",
+      "piroxicam",
+      "Glutethimide",
+      "Lindane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "19",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "3-Methyl-2-pentanol",
+      "4-Heptanone",
+      "styrene oxide",
+      "Tribromomethane",
+      "Thiamphenicol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "19",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Sorbitol",
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "18",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Risocaine",
+      "Chlortoluron",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "18",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "bromadiolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#8]-,:;@[#6]-,:;@[#6]-,:;@[#6](-,:;@[#6]-,:;@1)-&!@[#8&!R]",
+    "mcs_smiles": "OC1CCOCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "18",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoproturon",
+      "Chlortoluron",
+      "ethiofencarb",
+      "Bromacil",
+      "Butamben"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "18",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "18",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoproturon",
+      "ethiofencarb",
+      "Chloropham",
+      "Glutethimide",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "18",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "18",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoproturon",
+      "ethiofencarb",
+      "Chloropham",
+      "Glutethimide",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "18",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "18",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Isoproturon",
+      "Chloropham",
+      "Glutethimide",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "18",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "1,2,3,5-Tetrachlorobenzene",
+      "Deoxycorticosterone",
+      "butachlor",
+      "Anilofos",
+      "Ethinyl estradiol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "karbutilate",
+      "m-Chlorobromobenzene",
+      "Amobarbital",
+      "5-Ethyl-5-(3-methylbutyl)barbital",
+      "2-Nonanol"
+    ],
+    "valid_molecules": 4,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "D-fenchone",
+      "Cycloheptane",
+      "Propylbenzene ",
+      "chlordimeform",
+      "aminopyrine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "1,3-Difluorobenzene",
+      "Ethylbenzene",
+      "Quinoline",
+      "fluconazole",
+      "Trichloroacetonitrile"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,3-Dimethylpentane",
+      "5-Allyl-5-ethylbarbital",
+      "8-quinolinol",
+      "2-Methylbutane",
+      "Methylcyclohexane "
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Dibromomethane",
+      "5-Methyl-5-ethylbarbituric acid",
+      "2,4-Dimethyl-3-pentanone",
+      "2,6-Dimethylphenol",
+      "2-Methyltetrahydrofurane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "thymine",
+      "1-methyluracil",
+      "3-Pentanol",
+      "Ethyl propionate",
+      "Acrylonitrile"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 4,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "2-butenal",
+      "1,2-Benzenediol",
+      "nitroglycerin",
+      "tetramethylurea",
+      "2-Methylbutan-2-ol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 4,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Methyl hydrazine",
+      "Pyrimidine",
+      "Azodrin",
+      "Acrolein",
+      "3-Methyl-2-butanol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 5,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Glyceryl triacetate",
+      "Urea",
+      "2-cyanoguanidine",
+      "Acetamide",
+      "Methyl acetate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "18",
+    "cluster_id": 5,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Sorbitol",
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "14",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Risocaine",
+      "Chlortoluron",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "14",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Betamethasone-17-valerate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "14",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoproturon",
+      "ethiofencarb",
+      "Chlortoluron",
+      "Butamben",
+      "Bromacil"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "14",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "14",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Isoproturon",
+      "Chloropham",
+      "chlordimeform",
+      "Glutethimide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "14",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "14",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Isoproturon",
+      "Chloropham",
+      "chlordimeform",
+      "Glutethimide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "14",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "14",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Chloropham",
+      "Chlortoluron",
+      "Isoproturon",
+      "aminopyrine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "14",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "14",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "thiamylal",
+      "Carbaryl",
+      "Methoproptryne",
+      "Propylcyclopentane",
+      "Difenoxuron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "14",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "14",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "methyl gallate",
+      "Ethanol",
+      "Pyrimidine",
+      "thymine",
+      "2-Methylpropan-1-ol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "14",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Sorbitol",
+      "d-inositol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "0",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Risocaine",
+      "Bromacil",
+      "Propanil",
+      "Phenacetin",
+      "Chloropham"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "0",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Betamethasone-17-valerate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@1",
+    "mcs_smiles": "C1CCCCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "0",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Chloropham",
+      "Isoprocarb",
+      "ethiofencarb",
+      "Butamben",
+      "Propanil"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "0",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Betamethasone-17-valerate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@1",
+    "mcs_smiles": "C1CCCCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "0",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "1-Bromobutane",
+      "1-Bromopentane",
+      "1-Bromopropane",
+      "1-Chloro-2-bromoethane",
+      "1-Bromohexane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]-&!@[#35&!R]",
+    "mcs_smiles": "CCBr",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "0",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "1-Bromoheptane",
+      "Bromoethane"
+    ],
+    "valid_molecules": 2,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]-&!@[#35&!R]",
+    "mcs_smiles": "CCBr",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "0",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Ethirimol",
+      "Chlortoluron",
+      "ethiofencarb",
+      "Diuron",
+      "Azintamide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#7&!R]-&!@[#6&!R]",
+    "mcs_smiles": "CN",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "0",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Kepone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "0",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Ethirimol",
+      "Chlortoluron",
+      "ethiofencarb",
+      "Diuron",
+      "Azintamide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#7&!R]-&!@[#6&!R]",
+    "mcs_smiles": "CN",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "0",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Kepone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "0",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Chlortoluron",
+      "Diuron",
+      "Ethirimol",
+      "Trietazine",
+      "Azintamide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#7&!R]-&!@[#6&!R]",
+    "mcs_smiles": "CN",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "0",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Kepone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "3-Hexanoyloxymethylphenyltoin",
+      "norethindrone acetate",
+      "Flumetralin",
+      "Benzo(a)pyrene",
+      "Benzo(k)fluoranthene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Mirex",
+      "Kepone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "2-Chlorobiphenyl",
+      "1,3,5-Trinitrobenzene",
+      "Methoproptryne",
+      "1,5-Dimethlnapthalene",
+      "1,4-Dimethylnaphthalene "
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "chlorothiazide",
+      "Isofenphos",
+      "Bensulide",
+      "hydrochlorothiazide",
+      "captafol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Amitraz",
+      "2,2',3,3',5,6-PCB",
+      "difluron",
+      "2,2',3,3',4,4'-PCB",
+      "gentisin"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Dialifos",
+      "Dialifor",
+      "Dihexyl phthalate",
+      "P,P'-DDE",
+      "9-anthrol"
+    ],
+    "valid_molecules": 4,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Ethyl heptanoate",
+      "Nerol",
+      "cis-1,2-Dimethylcyclohexane",
+      "1,2-Dichlorotetrafluoroethane",
+      "Iodobenzene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2-Dimethylpentanol",
+      "Methyl hexanoate",
+      "allicin",
+      "Pentyl propanoate",
+      "Amitrole"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 4,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "p-Chloroiodobenzene",
+      "Methyl decanoate",
+      "p-Chloroaniline",
+      "1,3-Dibromobenzene",
+      "1,4-Dibromobenzene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 4,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "o-Xylene ",
+      "parabanic acid",
+      "1,4-Dichlorobenzene",
+      "1,3-Dichlorobenzene",
+      "2-Methylphenol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 5,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "2-Bromopropane",
+      "1-Iodopropane",
+      "1,2-Dichloroethane",
+      "1-Chloro-2-bromoethane",
+      "Acrylonitrile"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 5,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Thiourea",
+      "Propionitrile",
+      "1,3-Butadiene",
+      "1-Butyne",
+      "Urea"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 6,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Tetrahydrofurane ",
+      "2,2-Dimethylbutane",
+      "2-Methylbutan-2-ol",
+      "2,2-Dimethylpropanol",
+      "1-Heptene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 6,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Benzene ",
+      "2,2,4-Trimethylpentane",
+      "halothane",
+      "Cycloheptene",
+      "2,4-Dimethyl-2-pentanol "
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 7,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isonazid",
+      "1,4-Diethylbenzene ",
+      "2,6-Dichlorophenol",
+      "Methyl benzoate ",
+      "1,2,3-Trichlorobenzene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 7,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "indoline",
+      "p-Nitroanisole",
+      "Azodrin",
+      "Hexachloro-1,3-butadiene",
+      "Indan"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 8,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "1,2-Dichlorobenzene",
+      "Tetradecane",
+      "Propylbenzene ",
+      "N-Ethylaniline",
+      "o-Chlorobromobenzene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 8,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Thiometon",
+      "o-Chloroiodobenzene",
+      "2-Chlorotoluene",
+      "o-Aminophenol",
+      "2-Bromotoluene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 9,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Acetonitrile",
+      "Propyne",
+      "Ethanol",
+      "Dimethyl sulfide",
+      "Methyl hydrazine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "0",
+    "cluster_id": 9,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Methane",
+      "Ethyne",
+      "Methanol",
+      "Ethane",
+      "Bromomethane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "13",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Risocaine",
+      "Chlortoluron",
+      "Propanil"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "13",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "Betamethasone-17-valerate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "13",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Bromacil",
+      "Butamben",
+      "Chlortoluron",
+      "Isoproturon"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&R]-&!@[#6&!R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "13",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "13",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Chloropham",
+      "Isoproturon",
+      "Glutethimide",
+      "Diethyl phthalate "
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "13",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "13",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Chloropham",
+      "Isoproturon",
+      "Glutethimide",
+      "Diethyl phthalate "
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "13",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "13",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Chlortoluron",
+      "Dinoseb",
+      "Chloropham",
+      "aminopyrine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "13",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "13",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "3-Methylheptane",
+      "Ioxynil",
+      "3,4-Dichloronitrobenzene",
+      "Butylate",
+      "thiamylal"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "13",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "13",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "thymine",
+      "Pyrimidine",
+      "Nitroethane",
+      "Dimethoxymethane",
+      "methyl gallate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "13",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Sorbitol",
+      "d-inositol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "11",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Risocaine",
+      "Chlortoluron",
+      "Propanil"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "11",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Betamethasone-17-valerate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@1",
+    "mcs_smiles": "C1CCCCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "11",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "ethiofencarb",
+      "Butamben",
+      "chlordimeform",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "11",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "11",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Chloropham",
+      "Diethyl phthalate ",
+      "Primidone",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "11",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "11",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "RTI 5",
+      "RTI 15",
+      "RTI 2",
+      "nevirapine",
+      "RTI 6"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#7]1-&@[#6]:&@[#6]-&@[#7]-&@[#6](-&@[#6]2:&@[#6]-&@1:&@[#7]:&@[#6]:&@[#6]:&@[#6]:&@2)=&!@[#8&!R]",
+    "mcs_smiles": "O=C1NC:CNC2:N:C:C:C:C:21",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "11",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "RTI 22",
+      "RTI 10",
+      "RTI 24",
+      "Reverse Transcriptase inhibitor 1",
+      "RTI 23"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#7]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:N:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "11",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Chloropham",
+      "Diethyl phthalate ",
+      "Primidone",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "11",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "11",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "RTI 5",
+      "RTI 15",
+      "RTI 2",
+      "nevirapine",
+      "RTI 6"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#7]1-&@[#6]:&@[#6]-&@[#7]-&@[#6](-&@[#6]2:&@[#6]-&@1:&@[#7]:&@[#6]:&@[#6]:&@[#6]:&@2)=&!@[#8&!R]",
+    "mcs_smiles": "O=C1NC:CNC2:N:C:C:C:C:21",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "11",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "RTI 22",
+      "RTI 10",
+      "RTI 24",
+      "Reverse Transcriptase inhibitor 1",
+      "RTI 23"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#7]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:N:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "11",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Azintamide",
+      "Diethyl phthalate ",
+      "Cyanazine",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "11",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "11",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "RTI 24",
+      "Niclosamide",
+      "2-Chlorobiphenyl",
+      "Anthraquinone",
+      "Nitrofen"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:&@[#6]:,-;@[#6]:,-;@[#6]:&@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "11",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "11",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Buthidazole",
+      "1-Hexene",
+      "Dulcin",
+      "1-Chlorobutane",
+      "Chloramphenicol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "11",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Cyclooctyl-5-spirobarbituric acid",
+      "Fenfuram",
+      "m-Fluorobromobenzene",
+      "benzoin",
+      "2,2-Dimethylpentane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "11",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Ethylene",
+      "2-Methyl-1,3-Butadiene ",
+      "1,4-Benzenediol",
+      "1,3-Benzenediol",
+      "2-Butanone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "11",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Sorbitol",
+      "d-inositol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "5",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Butamben",
+      "Bromacil",
+      "Risocaine",
+      "Propanil",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "5",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "bromadiolone",
+      "Betamethasone-17-valerate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@[#6]-,:;@1",
+    "mcs_smiles": "C1CCCCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "5",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Butamben",
+      "ethiofencarb",
+      "Bromacil",
+      "Chlortoluron",
+      "Azintamide"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "5",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Kepone",
+      "Digitoxin",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "5",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Fenthion",
+      "Diethyl phthalate ",
+      "Chlortoluron",
+      "Primidone",
+      "Barban"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "5",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Benzo[ghi]perylene",
+      "Kepone",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "5",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Fenthion",
+      "Diethyl phthalate ",
+      "Chlortoluron",
+      "Primidone",
+      "Barban"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "5",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Benzo[ghi]perylene",
+      "Kepone",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "5",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Primidone",
+      "Fenothiocarb",
+      "Antipyrene",
+      "bromoxynil",
+      "benzhydrol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "5",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Benzo[ghi]perylene",
+      "Kepone",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "5",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "DDT",
+      "Chlordene",
+      "Dieldrin",
+      "Heptachlor",
+      "2,3',4',5-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#17&!R]-&!@[#6&R]",
+    "mcs_smiles": "CCl",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "5",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Benzo[ghi]perylene",
+      "Kepone",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "5",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Piperine",
+      "fluconazole",
+      "RTI 15",
+      "Ethyl decanoate",
+      "Napthalene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "5",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Fludrocortisone",
+      "9-anthrol",
+      "1-Hexadecanol",
+      "Procymidone",
+      "Hexadecane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "5",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "4-Pentene-1-ol",
+      "1,4-Cyclohexadiene",
+      "Propazine",
+      "2-Pentanone",
+      "Methyl pentanoate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "5",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Amigdalin",
+      "Sorbitol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "5",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Cycloheptene",
+      "Carvacrol",
+      "Cyclopentane ",
+      "Isocarboxazid",
+      "dimethirimol"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "5",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Azobenzene",
+      "Cyclohexyl-5-spirobarbituric acid",
+      "Phthalonitrile",
+      "Ethyl hexanoate",
+      "Pyrolan"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "17",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Risocaine",
+      "Chlortoluron",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "17",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "bromadiolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#8]-,:;@[#6]-,:;@[#6]-,:;@[#6](-,:;@[#6]-,:;@1)-&!@[#8&!R]",
+    "mcs_smiles": "OC1CCOCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "17",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoproturon",
+      "Chlortoluron",
+      "Bromacil",
+      "ethiofencarb",
+      "Butamben"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "17",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "17",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoproturon",
+      "ethiofencarb",
+      "Chloropham",
+      "Glutethimide",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "17",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "17",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoproturon",
+      "ethiofencarb",
+      "Chloropham",
+      "Glutethimide",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "17",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "17",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Isoproturon",
+      "Chloropham",
+      "Chlortoluron",
+      "aminopyrine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "17",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Medrogestone",
+      "1-Methylphenanthrene",
+      "Trichloronate",
+      "Pencycuron",
+      "Chlordene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Fludrocortisone",
+      "Pebulate",
+      "thiamylal",
+      "Nitrapyrin",
+      "Piperine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Khellin",
+      "Dexamethasone",
+      "Isazofos",
+      "bupirimate",
+      "Octane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Chlorbufam",
+      "2-Nonanol",
+      "Terbumeton",
+      "p-Chlorobromobenzene",
+      "RTI 10"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Indan",
+      "1,3-Dichlorobenzene",
+      "Ametryn",
+      "4-Isopropyltoluene",
+      "bromoxynil"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "1-Chloropropane",
+      "1,2-Dichloroethane",
+      "2-Iodopropane",
+      "Valeraldehyde",
+      "Cyclobutyl-5-spirobarbituric acid"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "Sorbitol",
+      "d-inositol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 4,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "3-methylindole",
+      "d-Limonene",
+      "Triamcinolone",
+      "Prometon",
+      "Methylcyclohexane "
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 4,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "1,2,4,5-Tetramethylbenzene",
+      "karbutilate",
+      "ethiofencarb",
+      "5-Ethyl-5-(3-methylbutyl)barbital",
+      "Amobarbital"
+    ],
+    "valid_molecules": 4,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 5,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Chlorazine",
+      "Lenacil",
+      "Lindane",
+      "Pentylbenzene",
+      "Fluoromethalone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 5,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Anthraquinone",
+      "adrenosterone",
+      "Quinonamid",
+      "1-Nitronapthalene",
+      "2-Methylnapthalene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 6,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "2-Nonanone",
+      "Benzophenone",
+      "p-Phenylphenol",
+      "1-Bromohexane",
+      "1-Napthylamine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 6,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Difenoxuron",
+      "Thiram",
+      "Buturon",
+      "m-Chlorobromobenzene",
+      "Propazine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 7,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Talbutal",
+      "benzhydrol",
+      "Isopropylbenzene ",
+      "1-Heptyne",
+      "Fenfuram"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "17",
+    "cluster_id": 7,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "1-Heptene",
+      "Carboxin"
+    ],
+    "valid_molecules": 2,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "2",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Risocaine",
+      "Butamben",
+      "chlordimeform",
+      "Bromacil",
+      "Chloropham"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "2",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "bromadiolone",
+      "Etoposide (148-167,25mg/ml)",
+      "Benzo[ghi]perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6](:,-;@[#6]:,-;@[#6]:,-;@1):,-;@[#6&R]:,-;@[#6&R]:,-;@[#6&R]",
+    "mcs_smiles": "C:C:C:C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "2",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Butamben",
+      "chlordimeform",
+      "Ethirimol",
+      "4-hexylresorcinol",
+      "ethiofencarb"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "2",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "bromadiolone",
+      "Mirex",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Kepone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "2",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Pentamethylbenzene",
+      "Chlortoluron",
+      "Barban",
+      "Aminocarb",
+      "Dimethyl phthalate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "2",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "bromadiolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "2",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Pentamethylbenzene",
+      "Chlortoluron",
+      "Barban",
+      "Aminocarb",
+      "Dimethyl phthalate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "2",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "bromadiolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "2",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Pentamethylbenzene",
+      "Dimethyl phthalate",
+      "Fenthion",
+      "1,3,5-Trichlorobenzene",
+      "Aminocarb"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "2",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "bromadiolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "2",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "biquinoline",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Fenarimol",
+      "2,2',3,4,6-PCB",
+      "2,3',4,4'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "2",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Mirex",
+      "Kepone",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "bromadiolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "2",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "benzoin",
+      "salicylanilide",
+      "Triadimefon",
+      "1-Methylnaphthalene",
+      "1-Napthylamine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "2",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Niclosamide",
+      "Oxadiazon",
+      "Triamterene",
+      "1-aminoacridine",
+      "piroxicam"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "2",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Benzene ",
+      "Pebulate",
+      "Furfural",
+      "Chloropicrin",
+      "1,1,2,2-Tetrachloroethane"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "2",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "1,3-Dichlorobenzene",
+      "Pteridine",
+      "Thymol",
+      "1,2-Dibromobenzene",
+      "Secobarbital"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "9",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Risocaine",
+      "Propanil",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "9",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "bromadiolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#8]-,:;@[#6]-,:;@[#6]-,:;@[#6](-,:;@[#6]-,:;@1)-&!@[#8&!R]",
+    "mcs_smiles": "OC1CCOCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "9",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "ethiofencarb",
+      "chlordimeform",
+      "Primidone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "9",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "9",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Diethyl phthalate ",
+      "Chloropham",
+      "Fenitrothion",
+      "Primidone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "9",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "9",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Diethyl phthalate ",
+      "Chloropham",
+      "Fenitrothion",
+      "Primidone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "9",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "9",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Fenitrothion",
+      "ethiofencarb",
+      "Diethyl phthalate ",
+      "Azintamide",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "9",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "9",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "o-Chlorobromobenzene",
+      "Reposal",
+      "2-Napthol",
+      "Pentamethylbenzene",
+      "Isazofos"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "9",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Perylene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "9",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "parabanic acid",
+      "acetazolamide",
+      "gentisin",
+      "Glyceryl triacetate",
+      "5,5-Dimethylbarbituric acid"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "9",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Sorbitol",
+      "Amigdalin"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "16",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Bromacil",
+      "Butamben",
+      "Risocaine",
+      "Chlortoluron",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "16",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "bromadiolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#8]-,:;@[#6]-,:;@[#6]-,:;@[#6](-,:;@[#6]-,:;@1)-&!@[#8&!R]",
+    "mcs_smiles": "OC1CCOCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "16",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Isoproturon",
+      "Bromacil",
+      "ethiofencarb",
+      "Chlortoluron",
+      "Butamben"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&R]-&!@[#6&!R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "16",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "2,2',3,3',5,5',6,6'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "16",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Isoproturon",
+      "Chloropham",
+      "Glutethimide",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "16",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "16",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Isoproturon",
+      "Chloropham",
+      "Glutethimide",
+      "chlordimeform"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "16",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "16",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Isoproturon",
+      "Chloropham",
+      "Chlortoluron",
+      "5-Allyl-5-phenylbarbital"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "16",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "2,2',3,3',5,6-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "16",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Chrysene",
+      "6-aminochrysene",
+      "TEFLUBENZURON",
+      "2,2',3,3'-PCB",
+      "2,2',3,5'-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "16",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB",
+      "Picene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "16",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "1-Bromoheptane",
+      "2,3,4-Trichlorophenol",
+      "Isazofos",
+      "1-Nitronapthalene",
+      "Piperine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "16",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "dibutyl sebacate",
+      "Epitostanol",
+      "hydroxychlordene",
+      "Betamethasone-17-valerate",
+      "2-Methylanthracene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "16",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "chloroacetamide",
+      "Thiourea",
+      "Dimethoxymethane",
+      "N,N-Dimethylacetamide",
+      "nitroglycerin"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "16",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sorbitol",
+      "Sucrose",
+      "d-inositol",
+      "Fructose"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "16",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "2,3-Dimethylpyridine",
+      "3-Methylphenol",
+      "p-Cresol",
+      "methylthiouracil",
+      "Benzotriazole"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "16",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "aminothiazole",
+      "2-Methyl-1,3-Butadiene ",
+      "o-Aminophenol",
+      "Ethanethiol",
+      "Amigdalin"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "16",
+    "cluster_id": 4,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "p-Chloroaniline",
+      "Tetrachloromethane",
+      "hydrobenzoin",
+      "Chloramphenicol",
+      "dimetan"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "16",
+    "cluster_id": 4,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "indoline",
+      "Cycloheptene",
+      "Pirimicarb",
+      "Anethole",
+      "Ethylbenzene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "8",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Butamben",
+      "Bromacil",
+      "Risocaine",
+      "Propanil",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "8",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Etoposide (148-167,25mg/ml)",
+      "Amigdalin",
+      "bromadiolone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#8]-,:;@[#6]-,:;@[#6]-,:;@[#6](-,:;@[#6]-,:;@1)-&!@[#8&!R]",
+    "mcs_smiles": "OC1CCOCC1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "8",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Butamben",
+      "ethiofencarb",
+      "Bromacil",
+      "Primidone",
+      "Chlortoluron"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "8",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Mirex",
+      "Digoxin (L1=41,8mg/mL, L2=68,2mg/mL, Z=40,1mg/mL)",
+      "Digitoxin",
+      "Kepone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "8",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Diethyl phthalate ",
+      "Primidone",
+      "Fenitrothion",
+      "Buturon"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "8",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Mirex"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "8",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "ethiofencarb",
+      "Diethyl phthalate ",
+      "Primidone",
+      "Fenitrothion",
+      "Buturon"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "fingerprint",
+    "model_type": "8",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Mirex"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "8",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "bromoxynil",
+      "Azintamide",
+      "Diethyl phthalate ",
+      "Chlortoluron",
+      "ethiofencarb"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "8",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Mirex"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Equilenin",
+      "Etofenprox",
+      "DDD",
+      "Hexadecane",
+      "2,4',5-PCB"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "2,2',3,3',4,4',5,5',6,6'-PCB",
+      "Benzo[ghi]perylene",
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB",
+      "Mirex"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@[#6]:,-;@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "p-Phenylphenol",
+      "Cyclooctane",
+      "Chlorbromuron",
+      "RTI 6",
+      "Benzophenone"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Pentylbenzene",
+      "Biphenyl",
+      "p-benzidine",
+      "triforine",
+      "m-Chlorobromobenzene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Pyrimidine",
+      "2-Methylpropan-1-ol",
+      "4-methoxypteridine",
+      "isoguanine",
+      "2-methoxypteridine"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Lactose",
+      "Sucrose",
+      "d-inositol",
+      "Sorbitol",
+      "Amigdalin"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "3-Heptanol ",
+      "5-(3-Methyl-2-butenyl)-5-isoPrbarbital",
+      "Tetrahydropyran ",
+      "Phenetole",
+      "Pentyl propanoate"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Secobarbital",
+      "Phthalonitrile",
+      "4-Chlorotoluene",
+      "1-Bromopentane",
+      "pyracarbolid"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 4,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Pentylcyclopentane",
+      "2-Chloronapthalene",
+      "Acridine",
+      "Ethyl decanoate",
+      "oryzalin"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 4,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "1,3,5-Trichlorobenzene",
+      "Triallate",
+      "Decalin",
+      "Fluoromethalone",
+      "3-Propanoyloxymethylphenytoin"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 5,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "2-Ethyl-1-hexanol",
+      "Thalidomide",
+      "m-Fluorobromobenzene",
+      "Chlorzoxazone",
+      "Butamben"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 5,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "Cycloheptane",
+      "1,4-Diethylbenzene ",
+      "1-Bromohexane",
+      "Difenoxuron",
+      "p-Chlorobromobenzene"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 6,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      "Vinclozolin",
+      "2,4,5-Trichlorophenol ",
+      "Lovastatin",
+      "Ethyl nonanoate",
+      "3-Ethanoyloxymethylphenytoin"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "ffn_layer_2",
+    "model_type": "8",
+    "cluster_id": 6,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      "nevirapine",
+      "Flumethasone",
+      "Chloroxuron",
+      "1-Nitronapthalene",
+      "Propanil"
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  }
+]

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Full pipeline: load embedding input (.pt file or directory), run GMM clustering,
+Full pipeline: load embedding input (.pt file or directory), run PGMeans clustering,
 BIC/AIC, dimensionality reduction (PCA, MDS, UMAP, t-SNE), Sankey (epoch + layer axes),
 scatter JSONs, cluster representatives, and optional substructures (RDKit).
 
@@ -221,7 +221,7 @@ def run_pipeline(
     smiles_id_column: str = "real_id",
     smiles_smiles_column: str = "smiles",
     random_state: int = 42,
-    clustering_method: str = "gmm",
+    clustering_method: str = "pgmeans",
     max_epochs: Optional[int] = None,
     skip_tsne: bool = False,
     n_clusters_override: Optional[int] = None,
@@ -292,9 +292,9 @@ def run_pipeline(
         print(f"Limited to {len(epoch_keys)} epochs (--max-epochs {max_epochs})")
     print(f"Epoch keys: {epoch_keys}, Layer keys: {layer_keys}, n_samples: {n_samples}")
 
-    # Clustering methods to run: default gmm; if clustering_method=="all" then gmm, hdbscan, agglomerative, knn
+    # Clustering methods to run: default pgmeans; if clustering_method=="all" then pgmeans, hdbscan, agglomerative, knn
     if clustering_method == "all":
-        run_methods = ["gmm", "hdbscan", "agglomerative", "knn"]
+        run_methods = ["pgmeans", "hdbscan", "agglomerative", "knn"]
     else:
         run_methods = [clustering_method]
 
@@ -843,8 +843,8 @@ def main():
     ap.add_argument("--input2", default=None, help="Second embedding dir (for second epoch, e.g. dimenet10conf)")
     ap.add_argument("--model-name2", default=None, help="Model name for second input")
     ap.add_argument("--layer-file-map2", default=None, help="JSON path for second input layer map")
-    ap.add_argument("--clustering-method", default="gmm", choices=["gmm", "hdbscan", "agglomerative", "knn", "all"],
-                    help="Clustering method: gmm (default), hdbscan, agglomerative, knn, or all")
+    ap.add_argument("--clustering-method", default="pgmeans", choices=["pgmeans", "hdbscan", "agglomerative", "knn", "all"],
+                    help="Clustering method: pgmeans (default), hdbscan, agglomerative, knn, or all")
     ap.add_argument(
         "--agg-k",
         type=int,

@@ -38,7 +38,7 @@ sbatch scripts/submit_chemeleon_full.slurm
 - `sankey/` - 2D Sankey (epoch × layer)
 - `scatterplot/` - PCA, MDS, UMAP, t-SNE projections
 - `topk/` - cluster representatives and sorted members
-- `bic_aic/` - GMM model selection curves
+- `bic_aic/` - PGMeans model selection curves
 - `clustering_metrics/` - cluster assignments CSV
 - `clustering/hdbscan/`, `clustering/agglomerative/` - alternate clustering outputs
 - `README.md` - data layout and frontend usage (written on successful completion)

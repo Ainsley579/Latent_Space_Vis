@@ -41,7 +41,7 @@ def reorder_epoch_dict(epoch_dict):
 
 def _infer_layer_order_from_csv(all_sankey_path):
     """Find cluster_assignments_with_real_id.csv in the same case dir and return layer order from CSV header."""
-    # all_sankey_path is e.g. .../case/sankey/all_sankey.json or .../case/clustering/gmm/sankey/all_sankey.json
+    # all_sankey_path is e.g. .../case/sankey/all_sankey.json or .../case/clustering/pgmeans/sankey/all_sankey.json
     p = Path(all_sankey_path).resolve()
     for _ in range(5):
         p = p.parent

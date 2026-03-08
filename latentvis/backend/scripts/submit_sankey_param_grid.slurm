@@ -149,7 +149,7 @@ case "$METHOD" in
       for kmax in $(seq "$kmin" 10); do
         tag="kmin_${kmin}_kmax_${kmax}"
         params="{\"k_min\": $kmin, \"k_max\": $kmax}"
-        run_one "$tag" "$params" --clustering-method gmm --k-min "$kmin" --k-max "$kmax" || { resubmit_self; exit 1; }
+        run_one "$tag" "$params" --clustering-method pgmeans --k-min "$kmin" --k-max "$kmax" || { resubmit_self; exit 1; }
       done
     done
     ;;

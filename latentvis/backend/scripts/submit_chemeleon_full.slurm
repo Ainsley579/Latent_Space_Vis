@@ -100,7 +100,7 @@ Same as chemprop (see `../README.md` or parent for full layout):
 | `scatterplot/{epoch}_{layer}_pca.json`, `_mds.json`, `_umap.json`, `_tsne.json` | Alternate projections. |
 | `topk/cluster_representatives.json` | Top-k closest/farthest per cluster. |
 | `topk/cluster_sorted_members.json` | Full sorted list per cluster. |
-| `bic_aic/`, `clustering_metrics/` | GMM curves and cluster assignments. |
+| `bic_aic/`, `clustering_metrics/` | PGMeans curves and cluster assignments. |
 | `clustering/hdbscan/`, `clustering/agglomerative/` | Alternate clustering methods. |
 
 ## Frontend Usage
