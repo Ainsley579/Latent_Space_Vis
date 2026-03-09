@@ -14,6 +14,7 @@ const OCL_CDN =
 
 let oclLoadPromise: Promise<any> | null = null;
 let smilesDrawerLoadPromise: Promise<any> | null = null;
+const smilesSvgCache = new Map<string, string>();
 
 function loadOCL(): Promise<any> {
   if (typeof window === "undefined") return Promise.reject(new Error("no_window"));
@@ -42,12 +43,21 @@ function loadOCL(): Promise<any> {
     document.head.appendChild(script);
   });
 
+  oclLoadPromise = oclLoadPromise.catch((err) => {
+    oclLoadPromise = null;
+    throw err;
+  });
   return oclLoadPromise;
 }
 
 function loadSmilesDrawer(): Promise<any> {
   if (smilesDrawerLoadPromise) return smilesDrawerLoadPromise;
-  smilesDrawerLoadPromise = import("smiles-drawer").then((mod: any) => mod?.default ?? mod);
+  smilesDrawerLoadPromise = import("smiles-drawer")
+    .then((mod: any) => mod?.default ?? mod)
+    .catch((err) => {
+      smilesDrawerLoadPromise = null;
+      throw err;
+    });
   return smilesDrawerLoadPromise;
 }
 
@@ -153,30 +163,32 @@ export default function SmilesStructure({
   height = 220,
   className = "",
 }: SmilesStructureProps) {
-  const [error, setError] = useState<string | null>(null);
   const [svgMarkup, setSvgMarkup] = useState<string>("");
 
   useEffect(() => {
     const s = String(smiles ?? "").trim();
-    if (!s) {
-      setError("null");
-      setSvgMarkup("");
-      return;
-    }
+    if (!s) return;
 
     let alive = true;
     (async () => {
-      try {
-        const svg = await renderSmilesSvg(s, width, height);
-        const ok = !!svg;
+      const cacheKey = `${s}__${width}x${height}`;
+      const cached = smilesSvgCache.get(cacheKey);
+      if (cached && alive) setSvgMarkup(cached);
 
-        if (!alive) return;
-        setSvgMarkup(ok ? (svg as string) : "");
-        setError(ok ? null : "null");
-      } catch {
-        if (!alive) return;
-        setSvgMarkup("");
-        setError("null");
+      const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          const svg = await renderSmilesSvg(s, width, height);
+          if (!alive) return;
+          if (svg) {
+            smilesSvgCache.set(cacheKey, svg);
+            setSvgMarkup(svg);
+            return;
+          }
+        } catch {
+          // retry
+        }
+        if (attempt < 2) await wait(80 * (attempt + 1));
       }
     })();
 
@@ -185,18 +197,7 @@ export default function SmilesStructure({
     };
   }, [smiles, width, height]);
 
-  if (error) {
-    const text = String(smiles ?? "").trim();
-    return (
-      <div
-        className={`w-full h-full flex items-center justify-center p-2 text-[11px] text-zinc-500 ${className}`}
-        title={text || "null"}
-        style={{ wordBreak: "break-all", lineHeight: 1.2, textAlign: "center" }}
-      >
-        {text || "null"}
-      </div>
-    );
-  }
+  if (!String(smiles ?? "").trim()) return null;
 
   return (
     <>

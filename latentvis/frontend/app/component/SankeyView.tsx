@@ -1960,6 +1960,9 @@ export default function SankeyView({
       .classed("link-dimmed", true)
       .classed("link-highlight", false);
     d3.select(container)
+      .selectAll("rect.gap-rect")
+      .classed("gap-dimmed", true);
+    d3.select(container)
       .selectAll("g.row-links path.link-path")
       .each(function () {
         const el = d3.select(this);
@@ -1970,6 +1973,14 @@ export default function SankeyView({
       .each(function () {
         const el = d3.select(this);
         if (el.attr("data-column") === colKey) el.classed("link-dimmed", false).classed("link-highlight", true);
+      });
+    d3.select(container)
+      .selectAll("rect.gap-rect")
+      .each(function () {
+        const el = d3.select(this);
+        if (el.attr("data-row") === rowKey || el.attr("data-column") === colKey) {
+          el.classed("gap-dimmed", false);
+        }
       });
   }, [selectedNode, activeCell]);
 
