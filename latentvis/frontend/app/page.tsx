@@ -219,15 +219,6 @@ export default function Home() {
     dataSplit: DataSplitKey = selectedDataSplit,
     version: number = sankeyRefreshKey
   ) => {
-    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
-    if (
-      payload &&
-      payload.dataset === dataset &&
-      payload.clustering === clustering &&
-      payload.dataSplit === dataSplit
-    ) {
-      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:all_sankey`, payload.allSankey);
-    }
     return withVersion(
       buildDataFileUrl({
         dataset,
@@ -246,16 +237,6 @@ export default function Home() {
     dataSplit: DataSplitKey = selectedDataSplit,
     version: number = sankeyRefreshKey
   ) => {
-    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
-    if (
-      payload &&
-      payload.dataset === dataset &&
-      payload.clustering === clustering &&
-      payload.dataSplit === dataSplit
-    ) {
-      const rows = payload.modelSamples?.[model] ?? [];
-      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:model:${model}`, rows);
-    }
     return withVersion(
       buildDataFileUrl({
         dataset,
@@ -274,16 +255,6 @@ export default function Home() {
     dataSplit: DataSplitKey = selectedDataSplit,
     version: number = sankeyRefreshKey
   ) => {
-    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
-    if (
-      payload &&
-      payload.dataset === dataset &&
-      payload.clustering === clustering &&
-      payload.dataSplit === dataSplit
-    ) {
-      const rows = payload.verticalSamplesByLayer?.[layer] ?? [];
-      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:vertical:${layer}`, rows);
-    }
     return withVersion(
       buildDataFileUrl({
         dataset,
