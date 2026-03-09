@@ -680,6 +680,84 @@ def _load_generated_case_payload(base: Path) -> Dict[str, object]:
     }
 
 
+def _load_sankey_only_payload(base: Path) -> Dict[str, object]:
+    """
+    Lightweight runtime payload:
+    - Reads only sankey/all_sankey.json and sankey/sankey_samples.json
+    - Derives per-model / per-layer compat rows and scatter cluster map from samples
+    """
+    sankey_dir = base / "sankey"
+    all_sankey = _read_json(sankey_dir / "all_sankey.json", {"epoch": {}, "layer": {}})
+    samples = _read_json(sankey_dir / "sankey_samples.json", [])
+    if not isinstance(samples, list):
+        samples = []
+
+    compat = _build_compat_payload_from_sankey(all_sankey, samples)
+    scatter_cluster_by_cell = _build_scatter_cluster_by_cell_from_samples(samples)
+    topk_dir = base / "topk"
+    topk_reps = _read_json(topk_dir / "cluster_representatives.json", [])
+    cluster_sorted = _read_json(topk_dir / "cluster_sorted_members.json", [])
+    if not isinstance(topk_reps, list):
+        topk_reps = []
+    if not isinstance(cluster_sorted, list):
+        cluster_sorted = []
+
+    return {
+        "all_sankey": all_sankey,
+        "model_samples": compat["model_samples"],
+        "vertical_samples_by_layer": compat["vertical_samples_by_layer"],
+        "topk_representatives": topk_reps,
+        "cluster_sorted_members": cluster_sorted,
+        "substructures": [],
+        "scatter_cluster_by_cell": scatter_cluster_by_cell,
+    }
+
+
+def _resolve_precomputed_sweep_base(
+    dataset: str,
+    split_norm: str,
+    clustering: str,
+    *,
+    k_min: int,
+    k_max: int,
+    n_clusters_override: Optional[int],
+    linkage_override: Optional[str],
+    knn_k_override: Optional[int],
+) -> Optional[Path]:
+    """
+    Resolve precomputed sweep directory for generate-range parameters.
+    Expected layout:
+      DATA_ROOT/<dataset>/<split>/sweeps/<clustering>/<sweep_key>/
+    """
+    sweeps_root = DATA_ROOT / dataset / split_norm / "sweeps" / clustering
+    if not sweeps_root.is_dir():
+        return None
+
+    sweep_key: Optional[str] = None
+    if clustering == "pgmeans":
+        sweep_key = f"kmin_{int(k_min)}_kmax_{int(k_max)}"
+    elif clustering == "agglomerative":
+        k_val = int(n_clusters_override) if n_clusters_override is not None else int(k_max)
+        link = (linkage_override or "ward").strip().lower() or "ward"
+        sweep_key = f"k_{k_val}_linkage_{link}"
+    elif clustering == "knn":
+        k_val = int(knn_k_override) if knn_k_override is not None else int(k_max)
+        sweep_key = f"k_{k_val}"
+    elif clustering == "hdbscan":
+        sweep_key = "default"
+
+    if not sweep_key:
+        return None
+    base = sweeps_root / sweep_key
+    if not base.is_dir():
+        return None
+    if not (base / "sankey" / "all_sankey.json").is_file():
+        return None
+    if not (base / "sankey" / "sankey_samples.json").is_file():
+        return None
+    return base
+
+
 def _search_smiles_substructure_in_case(case: str, smiles_query: str, data_split: Optional[str] = None):
     """
     Substructure search: return list of real_ids whose molecule contains the query
@@ -999,11 +1077,51 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
     if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
         return {"ok": False, "error": "invalid_clustering"}, 400
 
+    split_raw = str(data_split or "").strip().lower()
+    if split_raw == "all":
+        split_norm = "train"
+    else:
+        split_norm = _normalize_split(split_raw) or "test"
+    precomputed_base = _resolve_precomputed_sweep_base(
+        dataset,
+        split_norm,
+        clustering,
+        k_min=k_min,
+        k_max=k_max,
+        n_clusters_override=n_clusters_override,
+        linkage_override=linkage_override,
+        knn_k_override=knn_k_override,
+    )
+    if precomputed_base is not None:
+        out: Dict[str, object] = {
+            "ok": True,
+            "min": k_min,
+            "max": k_max,
+            "dataset": dataset,
+            "clustering": clustering,
+            "summary": {
+                dataset: {
+                    "status": "done",
+                    "updated": _collect_updated_results_summary(precomputed_base, output_suffix=""),
+                }
+            },
+            "persist": False,
+            "precomputed": True,
+            "source": str(precomputed_base),
+            "note": "Loaded precomputed sweep from backend/data; no clustering recompute was run.",
+        }
+        if include_payload:
+            out["payload"] = {dataset: _load_sankey_only_payload(precomputed_base)}
+            out["run_id"] = str(int(time.time() * 1000))
+        if n_clusters_override is not None:
+            out["k"] = n_clusters_override
+            out["linkage"] = linkage_override
+        return out, 200
+
     input_path = EMBEDDING_PATHS.get(dataset)
     if not input_path or not input_path.is_file():
         return {"ok": False, "error": "embedding_not_found", "detail": str(input_path)}, 404
 
-    split_norm = _normalize_split(data_split) or "test"
     temp_root: Optional[Path] = None
     if persist:
         case_dir = DATA_ROOT / dataset / split_norm
@@ -1071,12 +1189,12 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
                     except Exception:
                         print("[flask-backend] compute_layer_transition_stats stderr(raw): %r" % (stderr,), flush=True)
 
-    updated = _collect_updated_results_summary(base, output_suffix="")
+    updated = _collect_updated_results_summary(case_dir, output_suffix="")
     summary = {dataset: {"status": "done", "updated": updated}}
 
     out = {"ok": True, "min": k_min, "max": k_max, "dataset": dataset, "clustering": clustering, "summary": summary}
     if include_payload:
-        out["payload"] = {dataset: _load_generated_case_payload(base)}
+        out["payload"] = {dataset: _load_generated_case_payload(case_dir)}
         out["run_id"] = str(int(time.time() * 1000))
     if n_clusters_override is not None:
         out["k"] = n_clusters_override
