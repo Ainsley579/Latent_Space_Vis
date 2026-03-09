@@ -30,6 +30,9 @@ MAX_SCATTER_CELL_CACHE = 256
 SCATTER_COMBINED_FILE_CACHE: Dict[str, Dict[str, List[Dict[str, object]]]] = {}
 SCATTER_COMBINED_FILE_CACHE_LOCK = threading.Lock()
 MAX_SCATTER_COMBINED_FILE_CACHE = 256
+SCATTER_BUNDLE_CACHE: Dict[str, Dict[str, object]] = {}
+SCATTER_BUNDLE_CACHE_LOCK = threading.Lock()
+MAX_SCATTER_BUNDLE_CACHE = 32
 
 
 def _resolve_project_root() -> Path:
@@ -67,6 +70,7 @@ PROJECT_ROOT = _resolve_project_root()
 DATA_ROOT = _resolve_data_root(PROJECT_ROOT)
 DEFAULT_CASES = ("chemprop", "chemeleon")
 DEFAULT_CLUSTERING = "pgmeans"
+ALLOWED_CLUSTERINGS = ("pgmeans", "agglomerative", "hdbscan", "knn")
 
 # Embedding .pt paths (override with env LATENTVIS_CHEMPROP_PT / LATENTVIS_CHEMELEON_PT)
 _DEFAULT_PT_ROOT = Path("/global/cfs/projectdirs/m636/nhadler/projects/esol/data")
@@ -155,6 +159,10 @@ def _resolve_train_test_splits(value: Optional[str], default: str = "test") -> L
     return [default]
 
 
+def _normalize_clustering(clustering: Optional[str]) -> str:
+    return str(clustering or DEFAULT_CLUSTERING).strip().lower()
+
+
 def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[str] = None) -> Path:
     """
     Resolve case directory for a given dataset, clustering method, and data split.
@@ -163,7 +171,7 @@ def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[
     - DATA_ROOT/<case>/test/...  (default when split is None or "test")
     - DATA_ROOT/<case>/train/...
     """
-    method = (clustering or DEFAULT_CLUSTERING).strip().lower()
+    method = _normalize_clustering(clustering)
     split = _normalize_split(data_split) or "test"
     method_dir = "pgmeans" if method == "pgmeans" else method
 
@@ -268,6 +276,49 @@ def _safe_relpath(raw: str) -> Optional[Path]:
     return p
 
 
+def _preferred_cluster_sorted_members_path(dataset: str, clustering: Optional[str] = None) -> Optional[Path]:
+    """
+    User-pinned topk sorted-members source.
+    For now we pin chemprop+agglomerative to:
+      backend/data/chemprop/train/agglomerative/topk/cluster_sorted_members.json
+    """
+    ds = str(dataset or "").strip().lower()
+    if ds != "chemprop":
+        return None
+    method = _normalize_clustering(clustering)
+    if method != "agglomerative":
+        return None
+    p = DATA_ROOT / "chemprop" / "train" / "agglomerative" / "topk" / "cluster_sorted_members.json"
+    return p if p.is_file() else None
+
+
+def _build_cluster_representatives_from_sorted(sorted_rows: object, default_k: int = 32) -> List[Dict[str, object]]:
+    out: List[Dict[str, object]] = []
+    if not isinstance(sorted_rows, list):
+        return out
+    for row in sorted_rows:
+        if not isinstance(row, dict):
+            continue
+        ids = row.get("sorted_real_ids")
+        if not isinstance(ids, list):
+            ids = []
+        ids_norm = [str(x) for x in ids]
+        k = max(1, min(int(row.get("k", default_k) or default_k), len(ids_norm) if ids_norm else default_k))
+        closest = ids_norm[:k]
+        farthest = list(reversed(ids_norm[-k:])) if ids_norm else []
+        out.append(
+            {
+                "model_type": str(row.get("model_type", "")),
+                "layer_name": str(row.get("layer_name", "")),
+                "cluster_id": int(row.get("cluster_id", 0)),
+                "k": int(k),
+                "top_k_closest_real_ids": closest,
+                "top_k_farthest_real_ids": farthest,
+            }
+        )
+    return out
+
+
 def _scatter_parse_cell_from_filename(
     dataset: str,
     clustering: Optional[str],
@@ -308,8 +359,15 @@ def _scatter_parse_cell_from_filename(
         write_files=False,
         data_split=split_norm,
     )
-    models = [str(x) for x in (compat.get("models") or [])]
-    layers = [str(x) for x in (compat.get("layers") or [])]
+    all_sankey = compat.get("all_sankey") if isinstance(compat, dict) else {}
+    if not isinstance(all_sankey, dict):
+        all_sankey = {}
+    models = [str(x) for x in list((all_sankey.get("epoch") or {}).keys())]
+    layers = [str(x) for x in list((all_sankey.get("layer") or {}).keys())]
+    if not models:
+        models = _ordered_models((compat.get("model_samples") or {}).keys())
+    if not layers:
+        layers = _ordered_layers((compat.get("vertical_samples_by_layer") or {}).keys())
     for m in models:
         for l in layers:
             if f"{m}_{l}" == stem:
@@ -446,6 +504,187 @@ def _scatter_compute_cluster_rows(
         for r in rows
         if r.get("real_id") not in (None, "")
     ]
+
+
+def _scatter_get_cell_cached(
+    dataset: str,
+    clustering: str,
+    split_norm: str,
+    model: str,
+    layer: str,
+    projection: str,
+) -> Dict[str, List[Dict[str, object]]]:
+    cache_key = f"{dataset}|{clustering}|{split_norm}|{model}|{layer}|{projection}"
+    with SCATTER_CELL_CACHE_LOCK:
+        cached = SCATTER_CELL_CACHE.get(cache_key)
+    if isinstance(cached, dict):
+        return {
+            "xy": cached.get("xy") if isinstance(cached.get("xy"), list) else [],
+            "cluster": cached.get("cluster") if isinstance(cached.get("cluster"), list) else [],
+        }
+
+    xy_rows = _scatter_compute_xy_rows(dataset, model, layer, projection, split_norm)
+    cluster_rows = _scatter_compute_cluster_rows(
+        dataset,
+        clustering,
+        model,
+        layer,
+        split_norm,
+    )
+    out = {"xy": xy_rows, "cluster": cluster_rows}
+    with SCATTER_CELL_CACHE_LOCK:
+        if len(SCATTER_CELL_CACHE) >= MAX_SCATTER_CELL_CACHE and SCATTER_CELL_CACHE:
+            SCATTER_CELL_CACHE.pop(next(iter(SCATTER_CELL_CACHE)))
+        SCATTER_CELL_CACHE[cache_key] = out
+    return out
+
+
+def _scatter_bundle_path(dataset: str, clustering: str) -> Path:
+    method = (clustering or DEFAULT_CLUSTERING).strip().lower()
+    method_dir = "pgmeans" if method == "pgmeans" else method
+    return DATA_ROOT / dataset / "scatterplot_bundles" / f"{method_dir}_all.json"
+
+
+def _scatter_xy_all_bundle_path(dataset: str) -> Path:
+    return DATA_ROOT / dataset / "xy_all.json"
+
+
+def _load_scatter_bundle_cached(path: Path) -> Optional[Dict[str, object]]:
+    if not path.is_file():
+        return None
+    try:
+        st = path.stat()
+        cache_key = f"{path.resolve()}|{int(st.st_mtime_ns)}|{int(st.st_size)}"
+    except Exception:
+        cache_key = str(path.resolve())
+    with SCATTER_BUNDLE_CACHE_LOCK:
+        cached = SCATTER_BUNDLE_CACHE.get(cache_key)
+    if isinstance(cached, dict):
+        return cached
+    payload = _read_json(path, None)
+    if not isinstance(payload, dict):
+        return None
+    with SCATTER_BUNDLE_CACHE_LOCK:
+        if len(SCATTER_BUNDLE_CACHE) >= MAX_SCATTER_BUNDLE_CACHE and SCATTER_BUNDLE_CACHE:
+            SCATTER_BUNDLE_CACHE.pop(next(iter(SCATTER_BUNDLE_CACHE)))
+        SCATTER_BUNDLE_CACHE[cache_key] = payload
+    return payload
+
+
+def _scatter_bundle_lookup_rows(
+    dataset: str,
+    clustering: str,
+    split_selector: str,
+    model: str,
+    layer: str,
+    projection: str,
+    kind: str,
+) -> Optional[List[Dict[str, object]]]:
+    if kind == "xy":
+        xy_path = _scatter_xy_all_bundle_path(dataset)
+        xy_payload = _load_scatter_bundle_cached(xy_path)
+        if isinstance(xy_payload, dict):
+            cells_xy = xy_payload.get("cells")
+            if isinstance(cells_xy, dict):
+                cell_key_xy = f"{model}__{layer}"
+                cell_payload_xy = cells_xy.get(cell_key_xy)
+                if isinstance(cell_payload_xy, dict):
+                    proj_payload_xy = cell_payload_xy.get(projection)
+                    if isinstance(proj_payload_xy, dict):
+                        rows_xy = proj_payload_xy.get("xy")
+                        if isinstance(rows_xy, list):
+                            split_norm = str(split_selector or "").strip().lower()
+                            if split_norm == "all":
+                                return rows_xy
+                            if split_norm in ("train", "test"):
+                                out_xy: List[Dict[str, object]] = []
+                                for r in rows_xy:
+                                    if not isinstance(r, dict):
+                                        continue
+                                    if str(r.get("split", "")).strip().lower() != split_norm:
+                                        continue
+                                    out_xy.append(r)
+                                return out_xy
+                            return rows_xy
+
+    path = _scatter_bundle_path(dataset, clustering)
+    payload = _load_scatter_bundle_cached(path)
+    if not isinstance(payload, dict):
+        return None
+    cells = payload.get("cells")
+    if not isinstance(cells, dict):
+        return None
+    cell_key = f"{model}__{layer}"
+    cell_payload = cells.get(cell_key)
+    if not isinstance(cell_payload, dict):
+        return None
+    proj_payload = cell_payload.get(projection)
+    if not isinstance(proj_payload, dict):
+        return None
+    rows = proj_payload.get(kind)
+    if not isinstance(rows, list):
+        return None
+
+    split_norm = str(split_selector or "").strip().lower()
+    if split_norm == "all":
+        return rows
+    if split_norm in ("train", "test"):
+        out: List[Dict[str, object]] = []
+        for r in rows:
+            if not isinstance(r, dict):
+                continue
+            if str(r.get("split", "")).strip().lower() != split_norm:
+                continue
+            out.append(r)
+        return out
+    return rows
+
+
+def _scatter_read_cell_from_files(
+    dataset: str,
+    clustering: str,
+    split_norm: str,
+    model: str,
+    layer: str,
+    projection: str,
+) -> Optional[Dict[str, List[Dict[str, object]]]]:
+    case_dir = _case_dir(dataset, clustering, data_split=split_norm)
+    scatter_dir = case_dir / "scatterplot"
+    stem = f"{model}_{layer}_{projection}"
+    xy_path = scatter_dir / f"{stem}_xy.json"
+    cluster_path = scatter_dir / f"{stem}_cluster.json"
+    combined_path = scatter_dir / f"{stem}.json"
+
+    if xy_path.is_file() and cluster_path.is_file():
+        xy_rows = _read_json(xy_path, [])
+        cluster_rows = _read_json(cluster_path, [])
+        if isinstance(xy_rows, list) and isinstance(cluster_rows, list):
+            return {"xy": xy_rows, "cluster": cluster_rows}
+
+    if combined_path.is_file():
+        xy_rows = _scatter_split_combined_file(combined_path, "xy")
+        cluster_rows = _scatter_split_combined_file(combined_path, "cluster")
+        if isinstance(xy_rows, list) and isinstance(cluster_rows, list):
+            return {"xy": xy_rows, "cluster": cluster_rows}
+    return None
+
+
+def _scatter_cluster_rows_from_sankey_samples(
+    dataset: str,
+    clustering: str,
+    split_norm: str,
+    model: str,
+    layer: str,
+) -> List[Dict[str, object]]:
+    samples_path = _case_dir(dataset, clustering, split_norm) / "sankey" / "sankey_samples.json"
+    samples = _read_json(samples_path, [])
+    if not isinstance(samples, list):
+        return []
+    key = f"{model}__{layer}"
+    rows = _build_scatter_cluster_by_cell_from_samples(samples).get(key, [])
+    if not isinstance(rows, list):
+        return []
+    return rows
 
 
 def _scatter_legacy_rows(base: Path, model: str, layer: str, projection: str) -> Optional[List[Dict[str, object]]]:
@@ -678,6 +917,84 @@ def _load_generated_case_payload(base: Path) -> Dict[str, object]:
         "substructures": substructures,
         "scatter_cluster_by_cell": scatter_cluster_by_cell,
     }
+
+
+def _load_sankey_only_payload(base: Path) -> Dict[str, object]:
+    """
+    Lightweight runtime payload:
+    - Reads only sankey/all_sankey.json and sankey/sankey_samples.json
+    - Derives per-model / per-layer compat rows and scatter cluster map from samples
+    """
+    sankey_dir = base / "sankey"
+    all_sankey = _read_json(sankey_dir / "all_sankey.json", {"epoch": {}, "layer": {}})
+    samples = _read_json(sankey_dir / "sankey_samples.json", [])
+    if not isinstance(samples, list):
+        samples = []
+
+    compat = _build_compat_payload_from_sankey(all_sankey, samples)
+    scatter_cluster_by_cell = _build_scatter_cluster_by_cell_from_samples(samples)
+    topk_dir = base / "topk"
+    topk_reps = _read_json(topk_dir / "cluster_representatives.json", [])
+    cluster_sorted = _read_json(topk_dir / "cluster_sorted_members.json", [])
+    if not isinstance(topk_reps, list):
+        topk_reps = []
+    if not isinstance(cluster_sorted, list):
+        cluster_sorted = []
+
+    return {
+        "all_sankey": all_sankey,
+        "model_samples": compat["model_samples"],
+        "vertical_samples_by_layer": compat["vertical_samples_by_layer"],
+        "topk_representatives": topk_reps,
+        "cluster_sorted_members": cluster_sorted,
+        "substructures": [],
+        "scatter_cluster_by_cell": scatter_cluster_by_cell,
+    }
+
+
+def _resolve_precomputed_sweep_base(
+    dataset: str,
+    split_norm: str,
+    clustering: str,
+    *,
+    k_min: int,
+    k_max: int,
+    n_clusters_override: Optional[int],
+    linkage_override: Optional[str],
+    knn_k_override: Optional[int],
+) -> Optional[Path]:
+    """
+    Resolve precomputed sweep directory for generate-range parameters.
+    Expected layout:
+      DATA_ROOT/<dataset>/<split>/sweeps/<clustering>/<sweep_key>/
+    """
+    sweeps_root = DATA_ROOT / dataset / split_norm / "sweeps" / clustering
+    if not sweeps_root.is_dir():
+        return None
+
+    sweep_key: Optional[str] = None
+    if clustering == "pgmeans":
+        sweep_key = f"kmin_{int(k_min)}_kmax_{int(k_max)}"
+    elif clustering == "agglomerative":
+        k_val = int(n_clusters_override) if n_clusters_override is not None else int(k_max)
+        link = (linkage_override or "ward").strip().lower() or "ward"
+        sweep_key = f"k_{k_val}_linkage_{link}"
+    elif clustering == "knn":
+        k_val = int(knn_k_override) if knn_k_override is not None else int(k_max)
+        sweep_key = f"k_{k_val}"
+    elif clustering == "hdbscan":
+        sweep_key = "default"
+
+    if not sweep_key:
+        return None
+    base = sweeps_root / sweep_key
+    if not base.is_dir():
+        return None
+    if not (base / "sankey" / "all_sankey.json").is_file():
+        return None
+    if not (base / "sankey" / "sankey_samples.json").is_file():
+        return None
+    return base
 
 
 def _search_smiles_substructure_in_case(case: str, smiles_query: str, data_split: Optional[str] = None):
@@ -996,14 +1313,54 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
 
     if not dataset or dataset not in DEFAULT_CASES:
         return {"ok": False, "error": "invalid_dataset"}, 400
-    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ALLOWED_CLUSTERINGS:
         return {"ok": False, "error": "invalid_clustering"}, 400
+
+    split_raw = str(data_split or "").strip().lower()
+    if split_raw == "all":
+        split_norm = "train"
+    else:
+        split_norm = _normalize_split(split_raw) or "test"
+    precomputed_base = _resolve_precomputed_sweep_base(
+        dataset,
+        split_norm,
+        clustering,
+        k_min=k_min,
+        k_max=k_max,
+        n_clusters_override=n_clusters_override,
+        linkage_override=linkage_override,
+        knn_k_override=knn_k_override,
+    )
+    if precomputed_base is not None:
+        out: Dict[str, object] = {
+            "ok": True,
+            "min": k_min,
+            "max": k_max,
+            "dataset": dataset,
+            "clustering": clustering,
+            "summary": {
+                dataset: {
+                    "status": "done",
+                    "updated": _collect_updated_results_summary(precomputed_base, output_suffix=""),
+                }
+            },
+            "persist": False,
+            "precomputed": True,
+            "source": str(precomputed_base),
+            "note": "Loaded precomputed sweep from backend/data; no clustering recompute was run.",
+        }
+        if include_payload:
+            out["payload"] = {dataset: _load_sankey_only_payload(precomputed_base)}
+            out["run_id"] = str(int(time.time() * 1000))
+        if n_clusters_override is not None:
+            out["k"] = n_clusters_override
+            out["linkage"] = linkage_override
+        return out, 200
 
     input_path = EMBEDDING_PATHS.get(dataset)
     if not input_path or not input_path.is_file():
         return {"ok": False, "error": "embedding_not_found", "detail": str(input_path)}, 404
 
-    split_norm = _normalize_split(data_split) or "test"
     temp_root: Optional[Path] = None
     if persist:
         case_dir = DATA_ROOT / dataset / split_norm
@@ -1071,12 +1428,12 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
                     except Exception:
                         print("[flask-backend] compute_layer_transition_stats stderr(raw): %r" % (stderr,), flush=True)
 
-    updated = _collect_updated_results_summary(base, output_suffix="")
+    updated = _collect_updated_results_summary(case_dir, output_suffix="")
     summary = {dataset: {"status": "done", "updated": updated}}
 
     out = {"ok": True, "min": k_min, "max": k_max, "dataset": dataset, "clustering": clustering, "summary": summary}
     if include_payload:
-        out["payload"] = {dataset: _load_generated_case_payload(base)}
+        out["payload"] = {dataset: _load_generated_case_payload(case_dir)}
         out["run_id"] = str(int(time.time() * 1000))
     if n_clusters_override is not None:
         out["k"] = n_clusters_override
@@ -1210,11 +1567,13 @@ def materialize_sankey_files():
 
     payload = request.get_json(silent=True) or {}
     dataset = payload.get("dataset")
-    clustering = payload.get("clustering", DEFAULT_CLUSTERING)
+    clustering = _normalize_clustering(payload.get("clustering", DEFAULT_CLUSTERING))
     data_split = payload.get("data_split") or payload.get("preferred_split")
     include_payload = bool(payload.get("include_payload", False))
     write_files = bool(payload.get("write_files", True))
     cases = [dataset] if isinstance(dataset, str) else list(DEFAULT_CASES)
+    if clustering not in ALLOWED_CLUSTERINGS:
+        return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
     summary: Dict[str, Dict[str, int]] = {}
     payload_out: Dict[str, Dict[str, object]] = {}
@@ -1247,6 +1606,127 @@ def materialize_sankey_files():
     if include_payload:
         out["payload"] = payload_out
     return jsonify(out)
+
+
+@app.route("/materialize-scatter-bundle", methods=["POST", "OPTIONS"])
+def materialize_scatter_bundle():
+    """
+    Build one big scatter bundle JSON for a dataset+clustering:
+      DATA_ROOT/<dataset>/scatterplot_bundles/<clustering>_all.json
+    Bundle includes train+test rows with split tags for each cell/projection.
+    """
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    payload = request.get_json(silent=True) or {}
+    dataset = str(payload.get("dataset") or "").strip().lower()
+    clustering = str(payload.get("clustering") or DEFAULT_CLUSTERING).strip().lower()
+    projections = payload.get("projections")
+    if not dataset or dataset not in DEFAULT_CASES:
+        return jsonify({"ok": False, "error": "invalid_dataset"}), 400
+    if clustering not in ALLOWED_CLUSTERINGS:
+        return jsonify({"ok": False, "error": "invalid_clustering"}), 400
+    if not isinstance(projections, list) or not projections:
+        projections = ["pca", "mds", "umap", "tsne"]
+    projections = [str(p).strip().lower() for p in projections if str(p).strip().lower() in ("pca", "mds", "umap", "tsne")]
+    if not projections:
+        return jsonify({"ok": False, "error": "invalid_projections"}), 400
+
+    compat = _materialize_compat_sankey_files(
+        dataset,
+        clustering=clustering,
+        write_files=False,
+        data_split="train",
+    )
+    all_sankey = compat.get("all_sankey") if isinstance(compat, dict) else {}
+    if not isinstance(all_sankey, dict):
+        all_sankey = {}
+    models = [str(x) for x in list((all_sankey.get("epoch") or {}).keys())]
+    layers = [str(x) for x in list((all_sankey.get("layer") or {}).keys())]
+    if not models:
+        models = _ordered_models((compat.get("model_samples") or {}).keys())
+    if not layers:
+        layers = _ordered_layers((compat.get("vertical_samples_by_layer") or {}).keys())
+    cells: Dict[str, Dict[str, Dict[str, List[Dict[str, object]]]]] = {}
+
+    for m in models:
+        for l in layers:
+            cell_key = f"{m}__{l}"
+            cells[cell_key] = {}
+            for proj in projections:
+                train_cell = _scatter_read_cell_from_files(dataset, clustering, "train", m, l, proj)
+                if train_cell is None:
+                    train_cell = _scatter_get_cell_cached(dataset, clustering, "train", m, l, proj)
+                test_cell = _scatter_read_cell_from_files(dataset, clustering, "test", m, l, proj)
+                if test_cell is None:
+                    test_cell = _scatter_get_cell_cached(dataset, clustering, "test", m, l, proj)
+                xy_rows: List[Dict[str, object]] = []
+                cluster_rows: List[Dict[str, object]] = []
+                seen_xy = set()
+                seen_cluster = set()
+
+                for split_tag, rows in (("train", train_cell.get("xy") or []), ("test", test_cell.get("xy") or [])):
+                    for r in rows:
+                        if not isinstance(r, dict):
+                            continue
+                        rid = str(r.get("real_id", "")).strip()
+                        if not rid:
+                            continue
+                        k = f"{split_tag}|{rid}"
+                        if k in seen_xy:
+                            continue
+                        seen_xy.add(k)
+                        try:
+                            x = float(r.get("x", 0) or 0)
+                        except Exception:
+                            x = 0.0
+                        try:
+                            y = float(r.get("y", 0) or 0)
+                        except Exception:
+                            y = 0.0
+                        xy_rows.append({"real_id": rid, "x": x, "y": y, "split": split_tag})
+
+                for split_tag, rows in (("train", train_cell.get("cluster") or []), ("test", test_cell.get("cluster") or [])):
+                    for r in rows:
+                        if not isinstance(r, dict):
+                            continue
+                        rid = str(r.get("real_id", "")).strip()
+                        if not rid:
+                            continue
+                        k = f"{split_tag}|{rid}"
+                        if k in seen_cluster:
+                            continue
+                        seen_cluster.add(k)
+                        try:
+                            cid = int(r.get("cluster_id", 0))
+                        except Exception:
+                            cid = 0
+                        cluster_rows.append({"real_id": rid, "cluster_id": cid, "split": split_tag})
+
+                cells[cell_key][proj] = {"xy": xy_rows, "cluster": cluster_rows}
+
+    out_payload = {
+        "ok": True,
+        "dataset": dataset,
+        "clustering": clustering,
+        "projections": projections,
+        "models": models,
+        "layers": layers,
+        "cells": cells,
+    }
+    out_path = _scatter_bundle_path(dataset, clustering)
+    _write_json(out_path, out_payload)
+    return jsonify(
+        {
+            "ok": True,
+            "dataset": dataset,
+            "clustering": clustering,
+            "path": str(out_path),
+            "models": len(models),
+            "layers": len(layers),
+            "projections": len(projections),
+        }
+    )
 
 
 @app.route("/sankey/all", methods=["GET"])
@@ -1300,7 +1780,8 @@ def data_file():
     Query params:
       - dataset: required (chemprop/chemeleon)
       - split: optional (train/test/val/all; all -> train for base path)
-      - clustering: optional (pgmeans/agglomerative/hdbscan)
+      - clustering: optional (pgmeans/agglomerative/hdbscan/knn)
+      - k: required for knn (route to sweeps/knn/k_<k>; no fallback)
       - section: optional (sankey/scatterplot/topk/substructures/clustering_metrics/bic_aic/...)
       - file: required relative file path under the resolved base
       - dataset_root: optional (1/true), serve from DATA_ROOT/<dataset> directly
@@ -1320,6 +1801,8 @@ def data_file():
     split_raw = str(request.args.get("split", "")).strip().lower()
     split_for_base = "train" if split_raw == "all" else split_raw
     clustering = request.args.get("clustering")
+    clustering_norm = _normalize_clustering(clustering)
+    knn_k_raw = request.args.get("k")
     section_raw = request.args.get("section")
     section_rel = _safe_relpath(section_raw) if section_raw else None
     dataset_root = str(request.args.get("dataset_root", "")).strip().lower() in ("1", "true", "yes")
@@ -1327,7 +1810,22 @@ def data_file():
     if dataset_root:
         base = DATA_ROOT / dataset
     else:
-        base = _case_dir(dataset, clustering, data_split=split_for_base)
+        base_override: Optional[Path] = None
+        if clustering_norm == "knn":
+            try:
+                knn_k = int(knn_k_raw) if knn_k_raw is not None else None
+            except (TypeError, ValueError):
+                knn_k = None
+            split_norm = _normalize_split(split_for_base) or "test"
+            if knn_k is None:
+                return jsonify({"ok": False, "error": "missing_or_invalid_knn_k"}), 400
+            sweep_base = DATA_ROOT / dataset / split_norm / "sweeps" / "knn" / f"k_{knn_k}"
+            if not sweep_base.is_dir():
+                missing_target = sweep_base / section_rel / file_rel if section_rel is not None else sweep_base / file_rel
+                return jsonify({"ok": False, "error": "not_found", "path": str(missing_target)}), 404
+            base_override = sweep_base
+
+        base = base_override if base_override is not None else _case_dir(dataset, clustering, data_split=split_for_base)
         if section_rel is not None:
             base = base / section_rel
 
@@ -1336,6 +1834,97 @@ def data_file():
         target.relative_to(base.resolve())
     except Exception:
         return jsonify({"ok": False, "error": "invalid_path"}), 400
+
+    # Scatter bundle fast-path: one precomputed big JSON for all cells/splits.
+    if section_rel == Path("scatterplot"):
+        req = _scatter_parse_request_filename(target.name)
+        if req is not None:
+            cell_core, projection, kind = req
+            parsed = _scatter_parse_cell_from_filename(dataset, clustering, "train", target.name)
+            if parsed is not None:
+                model, layer, _proj, _kind = parsed
+                rows = _scatter_bundle_lookup_rows(
+                    dataset=dataset,
+                    clustering=str(clustering or DEFAULT_CLUSTERING).strip().lower(),
+                    split_selector=split_raw,
+                    model=model,
+                    layer=layer,
+                    projection=projection,
+                    kind=kind,
+                )
+                if isinstance(rows, list):
+                    return jsonify(rows)
+
+    # Topk sorted-members pinned source fast-path.
+    if section_rel == Path("topk") and target.name == "cluster_sorted_members.json":
+        preferred_sorted = _preferred_cluster_sorted_members_path(
+            dataset,
+            clustering=str(clustering or DEFAULT_CLUSTERING).strip().lower(),
+        )
+        if preferred_sorted is not None:
+            rows = _read_json(preferred_sorted, [])
+            return jsonify(rows if isinstance(rows, list) else [])
+    if section_rel == Path("topk") and target.name == "cluster_representatives.json":
+        preferred_sorted = _preferred_cluster_sorted_members_path(
+            dataset,
+            clustering=str(clustering or DEFAULT_CLUSTERING).strip().lower(),
+        )
+        if preferred_sorted is not None:
+            sorted_rows = _read_json(preferred_sorted, [])
+            reps = _build_cluster_representatives_from_sorted(sorted_rows)
+            return jsonify(reps)
+
+    # Scatter "all" mode: always return merged train+test rows from one response.
+    # This avoids double frontend fetch and keeps one XY source of truth per cell.
+    if (section_rel == Path("scatterplot") if section_rel else False) and split_raw == "all":
+        name = target.name
+        parsed_all = _scatter_parse_cell_from_filename(dataset, clustering, "train", name)
+        if parsed_all is not None:
+            model, layer, projection, kind = parsed_all
+            method = str(clustering or DEFAULT_CLUSTERING).strip().lower()
+            if kind == "xy":
+                train_cell = _scatter_read_cell_from_files(dataset, method, "train", model, layer, projection) or {}
+                test_cell = _scatter_read_cell_from_files(dataset, method, "test", model, layer, projection) or {}
+                out_rows: List[Dict[str, object]] = []
+                seen = set()
+                for split_tag, rows in (("train", train_cell.get("xy") or []), ("test", test_cell.get("xy") or [])):
+                    for r in rows:
+                        rid = str((r or {}).get("real_id", ""))
+                        if not rid:
+                            continue
+                        key = f"{split_tag}|{rid}"
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        out_rows.append(
+                            {
+                                "real_id": rid,
+                                "x": float((r or {}).get("x", 0) or 0),
+                                "y": float((r or {}).get("y", 0) or 0),
+                                "split": split_tag,
+                            }
+                        )
+                return jsonify(out_rows)
+            # cluster rows
+            out_rows = []
+            seen = set()
+            train_cluster_rows = _scatter_cluster_rows_from_sankey_samples(dataset, method, "train", model, layer)
+            test_cluster_rows = _scatter_cluster_rows_from_sankey_samples(dataset, method, "test", model, layer)
+            for split_tag, rows in (("train", train_cluster_rows), ("test", test_cluster_rows)):
+                for r in rows:
+                    rid = str((r or {}).get("real_id", ""))
+                    if not rid:
+                        continue
+                    key = f"{split_tag}|{rid}"
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    try:
+                        cid = int((r or {}).get("cluster_id", 0))
+                    except Exception:
+                        cid = 0
+                    out_rows.append({"real_id": rid, "cluster_id": cid, "split": split_tag})
+            return jsonify(out_rows)
 
     if not target.exists() and (section_rel == Path("sankey") if section_rel else False):
         # Compute compatibility samples from all_sankey + sankey_samples on demand.
@@ -1395,25 +1984,25 @@ def data_file():
             parsed = _scatter_parse_cell_from_filename(dataset, clustering, split_for_base, name)
             if parsed is not None:
                 model, layer, projection, kind = parsed
-                cache_key = f"{dataset}|{str(clustering or DEFAULT_CLUSTERING).lower()}|{split_for_base}|{model}|{layer}|{projection}"
+                method = str(clustering or DEFAULT_CLUSTERING).strip().lower()
                 try:
-                    with SCATTER_CELL_CACHE_LOCK:
-                        cached = SCATTER_CELL_CACHE.get(cache_key)
-                    if cached is None:
-                        xy_rows = _scatter_compute_xy_rows(dataset, model, layer, projection, split_for_base)
-                        cluster_rows = _scatter_compute_cluster_rows(
+                    if kind == "cluster":
+                        rows = _scatter_cluster_rows_from_sankey_samples(
                             dataset,
-                            str(clustering or DEFAULT_CLUSTERING).lower(),
+                            method,
+                            split_for_base,
                             model,
                             layer,
-                            split_for_base,
                         )
-                        cached = {"xy": xy_rows, "cluster": cluster_rows}
-                        with SCATTER_CELL_CACHE_LOCK:
-                            if len(SCATTER_CELL_CACHE) >= MAX_SCATTER_CELL_CACHE and SCATTER_CELL_CACHE:
-                                # Drop an arbitrary old entry to bound memory.
-                                SCATTER_CELL_CACHE.pop(next(iter(SCATTER_CELL_CACHE)))
-                            SCATTER_CELL_CACHE[cache_key] = cached
+                        return jsonify(rows if isinstance(rows, list) else [])
+                    cached = _scatter_get_cell_cached(
+                        dataset,
+                        method,
+                        split_for_base,
+                        model,
+                        layer,
+                        projection,
+                    )
                     rows = cached.get(kind) if isinstance(cached, dict) else []
                     return jsonify(rows if isinstance(rows, list) else [])
                 except Exception as e:
@@ -1537,7 +2126,7 @@ def cluster_containment():
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
     if epoch is None or layer is None:
         return jsonify({"ok": False, "error": "missing_epoch_or_layer"}), 400
-    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ALLOWED_CLUSTERINGS:
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
     import csv as csv_module
@@ -1669,7 +2258,7 @@ def cell_cluster_metrics():
 
     if not dataset or dataset not in DEFAULT_CASES:
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
-    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ALLOWED_CLUSTERINGS:
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
     user_rid_to_cluster: Dict[str, int] = {}
@@ -1839,7 +2428,7 @@ def cluster_tanimoto():
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
     if epoch is None or layer is None:
         return jsonify({"ok": False, "error": "missing_epoch_or_layer"}), 400
-    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ALLOWED_CLUSTERINGS:
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
     if not splits:
         return jsonify({"ok": False, "error": "invalid_data_split"}), 400
@@ -2121,17 +2710,8 @@ def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[s
             if sp in ("train", "test"):
                 out[f"{sp}::{rid_s}"] = smi_s
 
-    # Prefer consolidated metadata file under dataset root when available.
-    meta_path = DATA_ROOT / dataset / "id_smiles_y_true_y_pred.json"
-    if meta_path.is_file():
-        try:
-            merge_from_meta_list(json.loads(meta_path.read_text(encoding="utf-8")))
-        except Exception:
-            pass
-        if out:
-            return out
-
-    # Fallback: shared metadata file under frontend/public.
+    # Preferred source: shared metadata file under frontend/public.
+    # User requirement: always use this file for SMILES when available.
     shared_meta_candidates = [
         PROJECT_ROOT / "latentvis" / "frontend" / "public" / "id_smiles_y_true_y_pred.json",
         _BACKEND_DIR.parent / "frontend" / "public" / "id_smiles_y_true_y_pred.json",
@@ -2143,6 +2723,16 @@ def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[s
             merge_from_meta_list(json.loads(shared_meta.read_text(encoding="utf-8")), expect_dataset=dataset)
         except Exception:
             continue
+        if out:
+            return out
+
+    # Fallback: consolidated metadata file under dataset root.
+    meta_path = DATA_ROOT / dataset / "id_smiles_y_true_y_pred.json"
+    if meta_path.is_file():
+        try:
+            merge_from_meta_list(json.loads(meta_path.read_text(encoding="utf-8")))
+        except Exception:
+            pass
         if out:
             return out
 
@@ -2361,12 +2951,14 @@ def substructures_cluster_topm():
     cluster_id_raw = pick("cluster_id")
     m_raw = pick("m", 32)
     group = str(pick("group", "both")).strip().lower()
-    clustering = str(pick("clustering", DEFAULT_CLUSTERING)).strip().lower()
+    clustering = _normalize_clustering(pick("clustering", DEFAULT_CLUSTERING))
     data_split = pick("data_split") or pick("preferred_split")
     _ = pick("use_current", None)  # deprecated, ignored
 
     if dataset not in DEFAULT_CASES:
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
+    if clustering not in ALLOWED_CLUSTERINGS:
+        return jsonify({"ok": False, "error": "invalid_clustering"}), 400
     if epoch is None or layer is None:
         return jsonify({"ok": False, "error": "missing_args"}), 400
     if group not in ("knn", "kfn", "both"):
@@ -2393,30 +2985,51 @@ def substructures_cluster_topm():
     splits = _resolve_train_test_splits(data_split, default="test")
     targets = []
     checked_paths: List[str] = []
-    for split in splits:
-        case_dir = _case_dir(dataset, clustering, split)
-        sorted_path = case_dir / "topk" / "cluster_sorted_members.json"
-        checked_paths.append(str(sorted_path))
-        if not sorted_path.is_file():
-            continue
-        rows = _read_json(sorted_path, [])
-        if not isinstance(rows, list):
-            continue
-        for row in rows:
-            if not isinstance(row, dict):
+    preferred_sorted = _preferred_cluster_sorted_members_path(dataset, clustering=clustering)
+    if preferred_sorted is not None:
+        checked_paths.append(str(preferred_sorted))
+        rows = _read_json(preferred_sorted, [])
+        if isinstance(rows, list):
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                if str(row.get("model_type")) != str(epoch):
+                    continue
+                if str(row.get("layer_name")) != str(layer):
+                    continue
+                try:
+                    row_cluster = int(row.get("cluster_id"))
+                except (TypeError, ValueError):
+                    continue
+                if cluster_all or row_cluster == cluster_id:
+                    item = dict(row)
+                    item["_split"] = "train"
+                    targets.append(item)
+    else:
+        for split in splits:
+            case_dir = _case_dir(dataset, clustering, split)
+            sorted_path = case_dir / "topk" / "cluster_sorted_members.json"
+            checked_paths.append(str(sorted_path))
+            if not sorted_path.is_file():
                 continue
-            if str(row.get("model_type")) != str(epoch):
+            rows = _read_json(sorted_path, [])
+            if not isinstance(rows, list):
                 continue
-            if str(row.get("layer_name")) != str(layer):
-                continue
-            try:
-                row_cluster = int(row.get("cluster_id"))
-            except (TypeError, ValueError):
-                continue
-            if cluster_all or row_cluster == cluster_id:
-                item = dict(row)
-                item["_split"] = split
-                targets.append(item)
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                if str(row.get("model_type")) != str(epoch):
+                    continue
+                if str(row.get("layer_name")) != str(layer):
+                    continue
+                try:
+                    row_cluster = int(row.get("cluster_id"))
+                except (TypeError, ValueError):
+                    continue
+                if cluster_all or row_cluster == cluster_id:
+                    item = dict(row)
+                    item["_split"] = split
+                    targets.append(item)
 
     if not targets:
         if cluster_all:
@@ -2424,6 +3037,17 @@ def substructures_cluster_topm():
         return jsonify({"ok": False, "error": "cluster_not_found", "checked_paths": checked_paths}), 404
 
     id_to_smiles = _load_id_to_smiles(dataset, data_split=data_split)
+    def lookup_smiles_for_id(rid: str) -> Optional[str]:
+        s = str(rid)
+        v = id_to_smiles.get(s)
+        if isinstance(v, str) and v:
+            return v
+        if "::" in s:
+            _, base = s.split("::", 1)
+            v2 = id_to_smiles.get(base)
+            if isinstance(v2, str) and v2:
+                return v2
+        return None
     out_rows = []
     cluster_summary = []
     by_cluster: Dict[int, List[str]] = {}
@@ -2471,6 +3095,7 @@ def substructures_cluster_topm():
             ids = knn_ids if grp == "knn" else kfn_ids
             id_splits = knn_splits if grp == "knn" else kfn_splits
             mcs = _mcs_for_real_ids(ids, id_to_smiles)
+            member_smiles = [lookup_smiles_for_id(x) for x in ids]
             out_rows.append({
                 "layer_name": str(layer),
                 "model_type": str(epoch),
@@ -2478,6 +3103,7 @@ def substructures_cluster_topm():
                 "group": grp,
                 "k": int(m_use),
                 "real_ids": ids,
+                "real_id_smiles": member_smiles,
                 "real_id_splits": id_splits,
                 "valid_molecules": mcs["valid_molecules"],
                 "missing_real_ids": mcs["missing_real_ids"],

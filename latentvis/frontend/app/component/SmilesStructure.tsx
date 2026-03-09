@@ -186,11 +186,14 @@ export default function SmilesStructure({
   }, [smiles, width, height]);
 
   if (error) {
+    const text = String(smiles ?? "").trim();
     return (
       <div
-        className={`w-full h-full flex items-center justify-center text-sm text-zinc-400 ${className}`}
+        className={`w-full h-full flex items-center justify-center p-2 text-[11px] text-zinc-500 ${className}`}
+        title={text || "null"}
+        style={{ wordBreak: "break-all", lineHeight: 1.2, textAlign: "center" }}
       >
-        null
+        {text || "null"}
       </div>
     );
   }

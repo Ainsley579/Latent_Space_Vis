@@ -110,6 +110,7 @@ export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
   const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("agglomerative");
   const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("all");
+  const [selectedKnnK, setSelectedKnnK] = useState<number>(10);
   const [generatedSankeyPayloads, setGeneratedSankeyPayloads] = useState<Record<string, GeneratedSankeyPayload>>({});
   const [generatedRuntimePayloads, setGeneratedRuntimePayloads] = useState<Record<string, GeneratedRuntimePayload>>({});
   const generatedSankeyPayloadsRef = useRef<Record<string, GeneratedSankeyPayload>>({});
@@ -176,27 +177,37 @@ export default function Home() {
       dataset = selectedDataset,
       clustering = selectedClustering,
       dataSplit = selectedDataSplit,
+      knnK = selectedKnnK,
       section,
       file,
       datasetRoot = false,
+      preserveAllSplit = false,
     }: {
       dataset?: DatasetKey;
       clustering?: ClusteringKey;
       dataSplit?: DataSplitKey;
+      knnK?: number;
       section?: string;
       file: string;
       datasetRoot?: boolean;
+      preserveAllSplit?: boolean;
     }) => {
       const p = new URLSearchParams();
       p.set("dataset", dataset);
       p.set("clustering", clustering);
-      p.set("split", effectiveDataSplitForFiles(dataSplit));
+      p.set(
+        "split",
+        preserveAllSplit && dataSplit === "all"
+          ? "all"
+          : effectiveDataSplitForFiles(dataSplit)
+      );
       if (section) p.set("section", section);
       p.set("file", file);
+      if (String(clustering).trim().toLowerCase() === "knn") p.set("k", String(knnK));
       if (datasetRoot) p.set("dataset_root", "1");
       return `${apiBase}/data-file?${p.toString()}`;
     },
-    [apiBase, selectedDataset, selectedClustering, selectedDataSplit]
+    [apiBase, selectedDataset, selectedClustering, selectedDataSplit, selectedKnnK]
   );
   const withVersion = (url: string, version: number = sankeyRefreshKey) => {
     const sep = url.includes("?") ? "&" : "?";
@@ -302,6 +313,7 @@ export default function Home() {
       dataSplit,
       section: "scatterplot",
       file: xyFile,
+      preserveAllSplit: true,
     });
     const runtimePayload = generatedRuntimePayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
     const cellKey = `${model}__${layer}`;
@@ -312,12 +324,13 @@ export default function Home() {
         : null;
     const clusterUrl = overrideRows
       ? buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:scatter_cluster:${cellKey}`, overrideRows)
-      : buildDataFileUrl({
+        : buildDataFileUrl({
           dataset,
           clustering,
           dataSplit,
           section: "scatterplot",
           file: clusterFile,
+          preserveAllSplit: true,
         });
     const sepXY = xyUrl.includes("?") ? "&" : "?";
     const sepCluster = clusterUrl.startsWith("blob:") ? "" : (clusterUrl.includes("?") ? "&" : "?");
@@ -403,6 +416,7 @@ export default function Home() {
       group: "knn" | "kfn";
       k: number;
       real_ids: Array<string | number>;
+      real_id_smiles?: Array<string | null>;
       valid_molecules: number;
       missing_real_ids: Array<string | number>;
       invalid_smiles_real_ids: Array<string | number>;
@@ -1088,7 +1102,7 @@ export default function Home() {
     const clustering = selectedClustering;
     const dataSplit = selectedDataSplit;
     setIsGeneratingRange(true);
-    setGenerateStatusText(`Generating PGMeans [${minValue}, ${maxValue}] ...`);
+    setGenerateStatusText(`Generating ${clustering} [${minValue}, ${maxValue}] ...`);
     try {
       const json = await submitGenerateRangeJob(
         {
@@ -1098,6 +1112,7 @@ export default function Home() {
           include_payload: true,
           min: minValue,
           max: maxValue,
+          ...(clustering === "knn" ? { k: minValue } : {}),
         },
         `Generating ${clustering} [${minValue}, ${maxValue}]`
       );
@@ -1393,103 +1408,6 @@ export default function Home() {
 
   useEffect(() => {
     if (generatedRuntimeMatchesCurrent) {
-      setTopkData(generatedRuntimePayload?.topkRepresentatives ?? []);
-      return;
-    }
-    const fetchTopk = async (url: string) => {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to load topk data");
-      const json = await res.json();
-      return Array.isArray(json) ? json : [];
-    };
-    const tagRowIds = (rows: any[], split: "train" | "test") =>
-      rows.map((row) => ({
-        ...row,
-        top_k_closest_real_ids: Array.isArray(row?.top_k_closest_real_ids)
-          ? row.top_k_closest_real_ids.map((x: any) => `${split}::${String(x)}`)
-          : [],
-        top_k_farthest_real_ids: Array.isArray(row?.top_k_farthest_real_ids)
-          ? row.top_k_farthest_real_ids.map((x: any) => `${split}::${String(x)}`)
-          : [],
-      }));
-    const mergeTopk = (a: any[], b: any[]) => {
-      const map = new Map<string, any>();
-      const add = (row: any) => {
-        const key = `${String(row?.model_type ?? "")}__${String(row?.layer_name ?? "")}__${String(row?.cluster_id ?? "")}`;
-        if (!map.has(key)) {
-          map.set(key, {
-            ...row,
-            top_k_closest_real_ids: Array.isArray(row?.top_k_closest_real_ids)
-              ? row.top_k_closest_real_ids.map((x: any) => String(x))
-              : [],
-            top_k_farthest_real_ids: Array.isArray(row?.top_k_farthest_real_ids)
-              ? row.top_k_farthest_real_ids.map((x: any) => String(x))
-              : [],
-          });
-          return;
-        }
-        const cur = map.get(key);
-        const mergeArr = (x: any[], y: any[]) => {
-          const seen = new Set<string>(x.map((v) => String(v)));
-          const out = [...x.map((v) => String(v))];
-          y.forEach((v) => {
-            const sv = String(v);
-            if (seen.has(sv)) return;
-            seen.add(sv);
-            out.push(sv);
-          });
-          return out;
-        };
-        cur.top_k_closest_real_ids = mergeArr(cur.top_k_closest_real_ids ?? [], row?.top_k_closest_real_ids ?? []);
-        cur.top_k_farthest_real_ids = mergeArr(cur.top_k_farthest_real_ids ?? [], row?.top_k_farthest_real_ids ?? []);
-        cur.k = Math.max(Number(cur.k ?? 0), Number(row?.k ?? 0));
-      };
-      a.forEach(add);
-      b.forEach(add);
-      return Array.from(map.values());
-    };
-
-    const trainUrl = buildDataFileUrl({
-      section: "topk",
-      file: "cluster_representatives.json",
-    });
-    const testUrl = buildDataFileUrl({
-      dataset: selectedDataset,
-      clustering: selectedClustering,
-      dataSplit: "test",
-      section: "topk",
-      file: "cluster_representatives.json",
-    });
-
-    fetchTopk(trainUrl)
-      .then(async (trainRows) => {
-        if (selectedDataSplit !== "all") return trainRows;
-        try {
-          const testRows = await fetchTopk(testUrl);
-          return mergeTopk(tagRowIds(trainRows, "train"), tagRowIds(testRows, "test"));
-        } catch (err) {
-          console.error("Failed to load test topk representatives:", err);
-          return tagRowIds(trainRows, "train");
-        }
-      })
-      .then((rows) => setTopkData(rows))
-      .catch((err) => {
-        console.error(err);
-        setTopkData([]);
-      });
-  }, [
-    datasetBase,
-    dataRefreshKey,
-    generatedRuntimeMatchesCurrent,
-    generatedRuntimePayload,
-    selectedDataSplit,
-    selectedDataset,
-    selectedClustering,
-    buildDataFileUrl,
-  ]);
-
-  useEffect(() => {
-    if (generatedRuntimeMatchesCurrent) {
       setClusterSortedMembers(generatedRuntimePayload?.clusterSortedMembers ?? []);
       return;
     }
@@ -1564,37 +1482,26 @@ export default function Home() {
   }, [datasetBase, dataRefreshKey, generatedRuntimeMatchesCurrent, generatedRuntimePayload, selectedDataset, selectedClustering, selectedDataSplit, buildDataFileUrl]);
 
   useEffect(() => {
-    if (generatedRuntimeMatchesCurrent) {
-      setSubstructures(generatedRuntimePayload?.substructures ?? []);
-      return;
-    }
-    fetch(
-      buildDataFileUrl({
-        section: "substructures",
-        file: "cluster_substructures.json",
-      })
-    )
-      .then((res) => {
-        // Some datasets may not provide substructure files yet; treat missing file as empty.
-        if (res.status === 404) return [];
-        if (!res.ok) throw new Error("Failed to load substructure data");
-        return res.json();
-      })
-      .then((json) => {
-        setSubstructures(Array.isArray(json) ? json : []);
-      })
-      .catch((err) => {
-        console.error(err);
-        setSubstructures([]);
-      });
-  }, [datasetBase, dataRefreshKey, generatedRuntimeMatchesCurrent, generatedRuntimePayload, buildDataFileUrl]);
+    // Derive top-k representatives directly from sorted members so we don't depend on cluster_representatives.json.
+    const rows = (clusterSortedMembers ?? []).map((row: any) => {
+      const ids = Array.isArray(row?.sorted_real_ids) ? row.sorted_real_ids.map((x: any) => String(x)) : [];
+      const k = Math.max(1, Math.min(32, ids.length || 1));
+      const topClosest = ids.slice(0, k);
+      const topFarthest = [...ids.slice(Math.max(0, ids.length - k))].reverse();
+      return {
+        model_type: String(row?.model_type ?? ""),
+        layer_name: String(row?.layer_name ?? ""),
+        cluster_id: Number(row?.cluster_id ?? 0),
+        k,
+        top_k_closest_real_ids: topClosest,
+        top_k_farthest_real_ids: topFarthest,
+      };
+    });
+    setTopkData(rows);
+  }, [clusterSortedMembers]);
 
   useEffect(() => {
     const controller = new AbortController();
-    if (!selectedNode) {
-      setIsKnnTopmLoading(false);
-      return () => controller.abort();
-    }
     const fetchCellTopm = async () => {
       setIsKnnTopmLoading(true);
       try {
@@ -1637,6 +1544,9 @@ export default function Home() {
             group,
             k: Number(r.k ?? knnTopm),
             real_ids: Array.isArray(r.real_ids) ? (r.real_ids as Array<string | number>) : [],
+            real_id_smiles: Array.isArray(r.real_id_smiles)
+              ? (r.real_id_smiles as Array<string | null>)
+              : undefined,
             valid_molecules: Number(r.valid_molecules ?? 0),
             missing_real_ids: Array.isArray(r.missing_real_ids) ? (r.missing_real_ids as Array<string | number>) : [],
             invalid_smiles_real_ids: Array.isArray(r.invalid_smiles_real_ids)
@@ -1687,7 +1597,6 @@ export default function Home() {
     selectedDataSplit,
     selectedModel,
     selectedLayer,
-    selectedNode,
     knnTopm,
     generatedRuntimeMatchesCurrent,
   ]);
@@ -1768,31 +1677,24 @@ export default function Home() {
 
   const topkNearestRows = useMemo(() => {
     const mLimit = knnTopm === "all" ? null : Number(knnTopm);
-    const sortedByCluster = new Map<number, Array<string | number>>();
-    clusterSortedMembers.forEach((d) => {
-      if (String(d.model_type) !== String(selectedModel) || String(d.layer_name) !== String(selectedLayer)) return;
-      if (!Array.isArray(d.sorted_real_ids)) return;
-      sortedByCluster.set(Number(d.cluster_id), d.sorted_real_ids);
-    });
-    return topkData
-      .filter((d) => d.model_type === selectedModel && d.layer_name === selectedLayer)
-      .sort((a, b) => a.cluster_id - b.cluster_id)
+    const norm = (v: unknown) => String(v ?? "").trim();
+    return clusterSortedMembers
+      .filter(
+        (d) =>
+          norm(d.model_type) === norm(selectedModel) &&
+          norm(d.layer_name) === norm(selectedLayer) &&
+          Array.isArray(d.sorted_real_ids)
+      )
+      .sort((a, b) => Number(a.cluster_id) - Number(b.cluster_id))
       .map((d) => {
-        const sortedIds = sortedByCluster.get(Number(d.cluster_id));
-        if (!sortedIds || sortedIds.length === 0) {
-          return {
-            ...d,
-            top_k_closest_real_ids:
-              mLimit == null ? d.top_k_closest_real_ids : d.top_k_closest_real_ids.slice(0, mLimit),
-          };
-        }
+        const sortedIds = Array.isArray(d.sorted_real_ids) ? d.sorted_real_ids : [];
         const displayIds = mLimit == null ? sortedIds : sortedIds.slice(0, mLimit);
         return {
-          ...d,
+          cluster_id: Number(d.cluster_id),
           top_k_closest_real_ids: displayIds,
         };
       });
-  }, [topkData, clusterSortedMembers, selectedModel, selectedLayer, knnTopm]);
+  }, [clusterSortedMembers, selectedModel, selectedLayer, knnTopm]);
 
 
   const substructureByCluster = useMemo(() => {
@@ -1813,6 +1715,27 @@ export default function Home() {
     });
 
     return map;
+  }, [substructures, selectedModel, selectedLayer]);
+
+  const substructureSmilesByRealId = useMemo(() => {
+    const out: Record<string, string> = {};
+    substructures.forEach((d) => {
+      if (String(d.model_type) !== String(selectedModel) || String(d.layer_name) !== String(selectedLayer)) return;
+      const ids = Array.isArray(d.real_ids) ? d.real_ids.map((x) => String(x)) : [];
+      const smiles = Array.isArray(d.real_id_smiles) ? d.real_id_smiles : [];
+      ids.forEach((rid, idx) => {
+        const smi = typeof smiles[idx] === "string" ? String(smiles[idx]).trim() : "";
+        if (!smi) return;
+        const key = rid.trim().toLowerCase();
+        if (!key) return;
+        if (!out[key]) out[key] = smi;
+        const parsed = parseSplitTaggedId(rid);
+        if (parsed.split) {
+          out[`${parsed.split}::${parsed.realId}`.toLowerCase()] = smi;
+        }
+      });
+    });
+    return out;
   }, [substructures, selectedModel, selectedLayer]);
 
   const sortedMembersByClusterKey = useMemo(() => {
@@ -1925,7 +1848,13 @@ export default function Home() {
     const parsed = parseSplitTaggedId(realId);
     const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
     const base = parsed.realId.trim().toLowerCase();
-    return (tagged ? smilesByRealId[tagged] : undefined) ?? smilesByRealId[base] ?? null;
+    const fromPrimary = (tagged ? smilesByRealId[tagged] : undefined) ?? smilesByRealId[base];
+    if (fromPrimary && String(fromPrimary).trim().length > 0) return fromPrimary;
+    return (
+      (tagged ? substructureSmilesByRealId[tagged] : undefined) ??
+      substructureSmilesByRealId[base] ??
+      null
+    );
   }
 
   function getYTrueById(realId: string | number): number | null {
@@ -2348,30 +2277,8 @@ export default function Home() {
                     )}
                     splitMapDataset={selectedDataset}
                     dataSplit={selectedDataSplit}
-                    secondaryDataPathXY={
-                      selectedDataSplit === "all"
-                        ? buildScatterPaths(
-                            selectedModel,
-                            selectedLayer,
-                            scatterProjection,
-                            selectedDataset,
-                            selectedClustering,
-                            "test"
-                          ).xy
-                        : undefined
-                    }
-                    secondaryDataPathCluster={
-                      selectedDataSplit === "all"
-                        ? buildScatterPaths(
-                            selectedModel,
-                            selectedLayer,
-                            scatterProjection,
-                            selectedDataset,
-                            selectedClustering,
-                            "test"
-                          ).cluster
-                        : undefined
-                    }
+                    secondaryDataPathXY={undefined}
+                    secondaryDataPathCluster={undefined}
                     projection={scatterProjection}
                     onProjectionChange={(next) => setScatterProjection(next)}
                     onUserClusteringUpload={(payload) => setUploadedUserClustering(payload)}
@@ -2790,17 +2697,16 @@ export default function Home() {
                   clustering={selectedClustering}
                   clusteringOptions={CLUSTERING_OPTIONS}
                   onClusteringChange={(c) => {
-                    const next = c as ClusteringKey;
-                    const defaults = DATASET_DEFAULTS[selectedDataset];
+                    const next = String(c).trim().toLowerCase() as ClusteringKey;
                     const nextSplit = selectedDataSplit;
                     setSelectedClustering(next);
-                    setSelectedModel(defaults.model);
-                    setSelectedLayer(defaults.layer);
-                    syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, next, nextSplit);
+                    // Keep current cell selection when switching clustering so Top-k view
+                    // reflects the same model/layer instead of forcing dataset defaults.
+                    syncSankeyPaths(selectedModel, selectedLayer, selectedDataset, next, nextSplit);
                     setScatterPaths(
                       buildScatterPaths(
-                        defaults.model,
-                        defaults.layer,
+                        selectedModel,
+                        selectedLayer,
                         scatterProjection,
                         selectedDataset,
                         next,
@@ -2823,6 +2729,8 @@ export default function Home() {
                   onLargePreviewSizeChange={setLargeHoverPreviewSize}
                   onGenerateRange={generateFromRange}
                   onGenerateAgglomerative={generateAgglomerative}
+                  knnK={selectedKnnK}
+                  onKnnKChange={setSelectedKnnK}
                   generateEnabled={true}
                   generateBusy={isGeneratingRange}
                   generateMessage={generateStatusText}
