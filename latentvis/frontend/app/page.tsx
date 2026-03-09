@@ -219,6 +219,15 @@ export default function Home() {
     dataSplit: DataSplitKey = selectedDataSplit,
     version: number = sankeyRefreshKey
   ) => {
+    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
+    if (
+      payload &&
+      payload.dataset === dataset &&
+      payload.clustering === clustering &&
+      payload.dataSplit === dataSplit
+    ) {
+      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:all_sankey`, payload.allSankey);
+    }
     return withVersion(
       buildDataFileUrl({
         dataset,
@@ -237,6 +246,16 @@ export default function Home() {
     dataSplit: DataSplitKey = selectedDataSplit,
     version: number = sankeyRefreshKey
   ) => {
+    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
+    if (
+      payload &&
+      payload.dataset === dataset &&
+      payload.clustering === clustering &&
+      payload.dataSplit === dataSplit
+    ) {
+      const rows = payload.modelSamples?.[model] ?? [];
+      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:model:${model}`, rows);
+    }
     return withVersion(
       buildDataFileUrl({
         dataset,
@@ -255,6 +274,16 @@ export default function Home() {
     dataSplit: DataSplitKey = selectedDataSplit,
     version: number = sankeyRefreshKey
   ) => {
+    const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
+    if (
+      payload &&
+      payload.dataset === dataset &&
+      payload.clustering === clustering &&
+      payload.dataSplit === dataSplit
+    ) {
+      const rows = payload.verticalSamplesByLayer?.[layer] ?? [];
+      return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:vertical:${layer}`, rows);
+    }
     return withVersion(
       buildDataFileUrl({
         dataset,
@@ -1656,7 +1685,6 @@ export default function Home() {
           norm(d.layer_name) === norm(selectedLayer) &&
           Array.isArray(d.sorted_real_ids)
       )
-      .sort((a, b) => Number(a.cluster_id) - Number(b.cluster_id))
       .map((d) => {
         const sortedIds = Array.isArray(d.sorted_real_ids) ? d.sorted_real_ids : [];
         const displayIds = mLimit == null ? sortedIds : sortedIds.slice(0, mLimit);
@@ -1753,22 +1781,11 @@ export default function Home() {
       if (ordered.length > 0) {
         const orderedSet = new Set(ordered);
         const extras = Array.from(ids).filter((id) => !orderedSet.has(id));
-        extras.sort((a, b) => {
-          const na = Number(a);
-          const nb = Number(b);
-          if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
-          return a.localeCompare(b);
-        });
         return [...ordered, ...extras];
       }
     }
 
-    return Array.from(ids).sort((a, b) => {
-      const na = Number(a);
-      const nb = Number(b);
-      if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
-      return a.localeCompare(b);
-    });
+    return Array.from(ids);
   }, [activeSankeyRows, selectedNode, sortedMembersByClusterKey]);
 
   const displayedMemberIds = useMemo(() => {
