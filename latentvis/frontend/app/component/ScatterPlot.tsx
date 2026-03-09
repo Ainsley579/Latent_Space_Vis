@@ -189,7 +189,9 @@ export default function ScatterPlot({
   function setColorModeAndRefresh(next: ColorMode) {
     colorModeRef.current = next;
     setColorMode(next);
+    // Repaint twice to avoid first-click race with async draw/effect passes.
     requestAnimationFrame(() => repaintBaseFillForMode(next));
+    setTimeout(() => repaintBaseFillForMode(next), 0);
   }
 
   function emitHighlightIds(ids: string[]) {
@@ -219,6 +221,10 @@ export default function ScatterPlot({
   useEffect(() => {
     colorModeRef.current = colorMode;
   }, [colorMode]);
+
+  useEffect(() => {
+    repaintBaseFillForMode(colorMode);
+  }, [colorMode, ySharedRange]);
 
   function handleLabelFileUpload(file: File) {
     setLabelLoadError(null);
