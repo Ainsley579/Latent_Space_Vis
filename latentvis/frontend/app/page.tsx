@@ -1677,31 +1677,24 @@ export default function Home() {
 
   const topkNearestRows = useMemo(() => {
     const mLimit = knnTopm === "all" ? null : Number(knnTopm);
-    const sortedByCluster = new Map<number, Array<string | number>>();
-    clusterSortedMembers.forEach((d) => {
-      if (String(d.model_type) !== String(selectedModel) || String(d.layer_name) !== String(selectedLayer)) return;
-      if (!Array.isArray(d.sorted_real_ids)) return;
-      sortedByCluster.set(Number(d.cluster_id), d.sorted_real_ids);
-    });
-    return topkData
-      .filter((d) => d.model_type === selectedModel && d.layer_name === selectedLayer)
-      .sort((a, b) => a.cluster_id - b.cluster_id)
+    const norm = (v: unknown) => String(v ?? "").trim();
+    return clusterSortedMembers
+      .filter(
+        (d) =>
+          norm(d.model_type) === norm(selectedModel) &&
+          norm(d.layer_name) === norm(selectedLayer) &&
+          Array.isArray(d.sorted_real_ids)
+      )
+      .sort((a, b) => Number(a.cluster_id) - Number(b.cluster_id))
       .map((d) => {
-        const sortedIds = sortedByCluster.get(Number(d.cluster_id));
-        if (!sortedIds || sortedIds.length === 0) {
-          return {
-            ...d,
-            top_k_closest_real_ids:
-              mLimit == null ? d.top_k_closest_real_ids : d.top_k_closest_real_ids.slice(0, mLimit),
-          };
-        }
+        const sortedIds = Array.isArray(d.sorted_real_ids) ? d.sorted_real_ids : [];
         const displayIds = mLimit == null ? sortedIds : sortedIds.slice(0, mLimit);
         return {
-          ...d,
+          cluster_id: Number(d.cluster_id),
           top_k_closest_real_ids: displayIds,
         };
       });
-  }, [topkData, clusterSortedMembers, selectedModel, selectedLayer, knnTopm]);
+  }, [clusterSortedMembers, selectedModel, selectedLayer, knnTopm]);
 
 
   const substructureByCluster = useMemo(() => {
@@ -2705,16 +2698,15 @@ export default function Home() {
                   clusteringOptions={CLUSTERING_OPTIONS}
                   onClusteringChange={(c) => {
                     const next = String(c).trim().toLowerCase() as ClusteringKey;
-                    const defaults = DATASET_DEFAULTS[selectedDataset];
                     const nextSplit = selectedDataSplit;
                     setSelectedClustering(next);
-                    setSelectedModel(defaults.model);
-                    setSelectedLayer(defaults.layer);
-                    syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, next, nextSplit);
+                    // Keep current cell selection when switching clustering so Top-k view
+                    // reflects the same model/layer instead of forcing dataset defaults.
+                    syncSankeyPaths(selectedModel, selectedLayer, selectedDataset, next, nextSplit);
                     setScatterPaths(
                       buildScatterPaths(
-                        defaults.model,
-                        defaults.layer,
+                        selectedModel,
+                        selectedLayer,
                         scatterProjection,
                         selectedDataset,
                         next,
