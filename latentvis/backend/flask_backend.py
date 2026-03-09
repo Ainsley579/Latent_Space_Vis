@@ -70,6 +70,7 @@ PROJECT_ROOT = _resolve_project_root()
 DATA_ROOT = _resolve_data_root(PROJECT_ROOT)
 DEFAULT_CASES = ("chemprop", "chemeleon")
 DEFAULT_CLUSTERING = "pgmeans"
+ALLOWED_CLUSTERINGS = ("pgmeans", "agglomerative", "hdbscan", "knn")
 
 # Embedding .pt paths (override with env LATENTVIS_CHEMPROP_PT / LATENTVIS_CHEMELEON_PT)
 _DEFAULT_PT_ROOT = Path("/global/cfs/projectdirs/m636/nhadler/projects/esol/data")
@@ -158,6 +159,10 @@ def _resolve_train_test_splits(value: Optional[str], default: str = "test") -> L
     return [default]
 
 
+def _normalize_clustering(clustering: Optional[str]) -> str:
+    return str(clustering or DEFAULT_CLUSTERING).strip().lower()
+
+
 def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[str] = None) -> Path:
     """
     Resolve case directory for a given dataset, clustering method, and data split.
@@ -166,7 +171,7 @@ def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[
     - DATA_ROOT/<case>/test/...  (default when split is None or "test")
     - DATA_ROOT/<case>/train/...
     """
-    method = (clustering or DEFAULT_CLUSTERING).strip().lower()
+    method = _normalize_clustering(clustering)
     split = _normalize_split(data_split) or "test"
     method_dir = "pgmeans" if method == "pgmeans" else method
 
@@ -271,14 +276,17 @@ def _safe_relpath(raw: str) -> Optional[Path]:
     return p
 
 
-def _preferred_cluster_sorted_members_path(dataset: str) -> Optional[Path]:
+def _preferred_cluster_sorted_members_path(dataset: str, clustering: Optional[str] = None) -> Optional[Path]:
     """
     User-pinned topk sorted-members source.
-    For now we pin chemprop to:
+    For now we pin chemprop+agglomerative to:
       backend/data/chemprop/train/agglomerative/topk/cluster_sorted_members.json
     """
     ds = str(dataset or "").strip().lower()
     if ds != "chemprop":
+        return None
+    method = _normalize_clustering(clustering)
+    if method != "agglomerative":
         return None
     p = DATA_ROOT / "chemprop" / "train" / "agglomerative" / "topk" / "cluster_sorted_members.json"
     return p if p.is_file() else None
@@ -1305,7 +1313,7 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
 
     if not dataset or dataset not in DEFAULT_CASES:
         return {"ok": False, "error": "invalid_dataset"}, 400
-    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ALLOWED_CLUSTERINGS:
         return {"ok": False, "error": "invalid_clustering"}, 400
 
     split_raw = str(data_split or "").strip().lower()
@@ -1559,11 +1567,13 @@ def materialize_sankey_files():
 
     payload = request.get_json(silent=True) or {}
     dataset = payload.get("dataset")
-    clustering = payload.get("clustering", DEFAULT_CLUSTERING)
+    clustering = _normalize_clustering(payload.get("clustering", DEFAULT_CLUSTERING))
     data_split = payload.get("data_split") or payload.get("preferred_split")
     include_payload = bool(payload.get("include_payload", False))
     write_files = bool(payload.get("write_files", True))
     cases = [dataset] if isinstance(dataset, str) else list(DEFAULT_CASES)
+    if clustering not in ALLOWED_CLUSTERINGS:
+        return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
     summary: Dict[str, Dict[str, int]] = {}
     payload_out: Dict[str, Dict[str, object]] = {}
@@ -1614,7 +1624,7 @@ def materialize_scatter_bundle():
     projections = payload.get("projections")
     if not dataset or dataset not in DEFAULT_CASES:
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
-    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ALLOWED_CLUSTERINGS:
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
     if not isinstance(projections, list) or not projections:
         projections = ["pca", "mds", "umap", "tsne"]
@@ -1770,7 +1780,8 @@ def data_file():
     Query params:
       - dataset: required (chemprop/chemeleon)
       - split: optional (train/test/val/all; all -> train for base path)
-      - clustering: optional (pgmeans/agglomerative/hdbscan)
+      - clustering: optional (pgmeans/agglomerative/hdbscan/knn)
+      - k: required for knn (route to sweeps/knn/k_<k>; no fallback)
       - section: optional (sankey/scatterplot/topk/substructures/clustering_metrics/bic_aic/...)
       - file: required relative file path under the resolved base
       - dataset_root: optional (1/true), serve from DATA_ROOT/<dataset> directly
@@ -1790,6 +1801,8 @@ def data_file():
     split_raw = str(request.args.get("split", "")).strip().lower()
     split_for_base = "train" if split_raw == "all" else split_raw
     clustering = request.args.get("clustering")
+    clustering_norm = _normalize_clustering(clustering)
+    knn_k_raw = request.args.get("k")
     section_raw = request.args.get("section")
     section_rel = _safe_relpath(section_raw) if section_raw else None
     dataset_root = str(request.args.get("dataset_root", "")).strip().lower() in ("1", "true", "yes")
@@ -1797,7 +1810,22 @@ def data_file():
     if dataset_root:
         base = DATA_ROOT / dataset
     else:
-        base = _case_dir(dataset, clustering, data_split=split_for_base)
+        base_override: Optional[Path] = None
+        if clustering_norm == "knn":
+            try:
+                knn_k = int(knn_k_raw) if knn_k_raw is not None else None
+            except (TypeError, ValueError):
+                knn_k = None
+            split_norm = _normalize_split(split_for_base) or "test"
+            if knn_k is None:
+                return jsonify({"ok": False, "error": "missing_or_invalid_knn_k"}), 400
+            sweep_base = DATA_ROOT / dataset / split_norm / "sweeps" / "knn" / f"k_{knn_k}"
+            if not sweep_base.is_dir():
+                missing_target = sweep_base / section_rel / file_rel if section_rel is not None else sweep_base / file_rel
+                return jsonify({"ok": False, "error": "not_found", "path": str(missing_target)}), 404
+            base_override = sweep_base
+
+        base = base_override if base_override is not None else _case_dir(dataset, clustering, data_split=split_for_base)
         if section_rel is not None:
             base = base / section_rel
 
@@ -1829,12 +1857,18 @@ def data_file():
 
     # Topk sorted-members pinned source fast-path.
     if section_rel == Path("topk") and target.name == "cluster_sorted_members.json":
-        preferred_sorted = _preferred_cluster_sorted_members_path(dataset)
+        preferred_sorted = _preferred_cluster_sorted_members_path(
+            dataset,
+            clustering=str(clustering or DEFAULT_CLUSTERING).strip().lower(),
+        )
         if preferred_sorted is not None:
             rows = _read_json(preferred_sorted, [])
             return jsonify(rows if isinstance(rows, list) else [])
     if section_rel == Path("topk") and target.name == "cluster_representatives.json":
-        preferred_sorted = _preferred_cluster_sorted_members_path(dataset)
+        preferred_sorted = _preferred_cluster_sorted_members_path(
+            dataset,
+            clustering=str(clustering or DEFAULT_CLUSTERING).strip().lower(),
+        )
         if preferred_sorted is not None:
             sorted_rows = _read_json(preferred_sorted, [])
             reps = _build_cluster_representatives_from_sorted(sorted_rows)
@@ -2092,7 +2126,7 @@ def cluster_containment():
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
     if epoch is None or layer is None:
         return jsonify({"ok": False, "error": "missing_epoch_or_layer"}), 400
-    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ALLOWED_CLUSTERINGS:
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
     import csv as csv_module
@@ -2224,7 +2258,7 @@ def cell_cluster_metrics():
 
     if not dataset or dataset not in DEFAULT_CASES:
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
-    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ALLOWED_CLUSTERINGS:
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
     user_rid_to_cluster: Dict[str, int] = {}
@@ -2394,7 +2428,7 @@ def cluster_tanimoto():
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
     if epoch is None or layer is None:
         return jsonify({"ok": False, "error": "missing_epoch_or_layer"}), 400
-    if clustering not in ("pgmeans", "agglomerative", "hdbscan", "knn"):
+    if clustering not in ALLOWED_CLUSTERINGS:
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
     if not splits:
         return jsonify({"ok": False, "error": "invalid_data_split"}), 400
@@ -2917,12 +2951,14 @@ def substructures_cluster_topm():
     cluster_id_raw = pick("cluster_id")
     m_raw = pick("m", 32)
     group = str(pick("group", "both")).strip().lower()
-    clustering = str(pick("clustering", DEFAULT_CLUSTERING)).strip().lower()
+    clustering = _normalize_clustering(pick("clustering", DEFAULT_CLUSTERING))
     data_split = pick("data_split") or pick("preferred_split")
     _ = pick("use_current", None)  # deprecated, ignored
 
     if dataset not in DEFAULT_CASES:
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
+    if clustering not in ALLOWED_CLUSTERINGS:
+        return jsonify({"ok": False, "error": "invalid_clustering"}), 400
     if epoch is None or layer is None:
         return jsonify({"ok": False, "error": "missing_args"}), 400
     if group not in ("knn", "kfn", "both"):
@@ -2949,7 +2985,7 @@ def substructures_cluster_topm():
     splits = _resolve_train_test_splits(data_split, default="test")
     targets = []
     checked_paths: List[str] = []
-    preferred_sorted = _preferred_cluster_sorted_members_path(dataset)
+    preferred_sorted = _preferred_cluster_sorted_members_path(dataset, clustering=clustering)
     if preferred_sorted is not None:
         checked_paths.append(str(preferred_sorted))
         rows = _read_json(preferred_sorted, [])

@@ -27,6 +27,8 @@ type SyncControlPanelProps = {
     k: number | null;
     linkage: "ward" | "complete" | "average";
   }) => void;
+  knnK?: number;
+  onKnnKChange?: (k: number) => void;
   generateEnabled?: boolean;
   generateBusy?: boolean;
   generateMessage?: string;
@@ -56,6 +58,8 @@ export default function SyncControlPanel({
   onLargePreviewSizeChange,
   onGenerateRange,
   onGenerateAgglomerative,
+  knnK: knnKProp,
+  onKnnKChange,
   generateEnabled = true,
   generateBusy = false,
   generateMessage = "",
@@ -66,19 +70,24 @@ export default function SyncControlPanel({
   const [maxValue, setMaxValue] = useState(10);
   const [agglomerativeKMode, setAgglomerativeKMode] = useState<"auto" | "manual">("auto");
   const [agglomerativeK, setAgglomerativeK] = useState(6);
+  const [knnKLocal, setKnnKLocal] = useState(10);
   const [agglomerativeLinkage, setAgglomerativeLinkage] =
     useState<"ward" | "complete" | "average">("ward");
-  const isAgglomerative = clustering === "agglomerative";
-  const isPgmeans = clustering === "pgmeans";
+  const clusteringKey = String(clustering ?? "").trim().toLowerCase();
+  const isAgglomerative = clusteringKey === "agglomerative";
+  const isPgmeans = clusteringKey === "pgmeans";
+  const isKnn = clusteringKey === "knn";
+  const knnK = knnKProp ?? knnKLocal;
+  const setKnnK = onKnnKChange ?? setKnnKLocal;
 
   const minOptions = useMemo(() => {
-    const list = Array.from({ length: 19 }, (_, i) => i + 2).filter((v) => v <= maxValue);
+    const list = Array.from({ length: 9 }, (_, i) => i + 2).filter((v) => v <= maxValue);
     return list.length ? list : [2];
   }, [maxValue]);
 
   const maxOptions = useMemo(() => {
-    const list = Array.from({ length: 19 }, (_, i) => i + 2).filter((v) => v >= minValue);
-    return list.length ? list : [20];
+    const list = Array.from({ length: 9 }, (_, i) => i + 2).filter((v) => v >= minValue);
+    return list.length ? list : [10];
   }, [minValue]);
 
   return (
@@ -134,20 +143,38 @@ export default function SyncControlPanel({
         </div>
       )}
       {clustering && clusteringOptions.length > 0 && onClusteringChange && (
-        <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
-          <label className="text-[10px] text-zinc-700 shrink-0">CLUSTERING</label>
-          <select
-            className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
-            value={clustering}
-            onChange={(e) => onClusteringChange(e.target.value)}
-          >
-            {clusteringOptions.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <>
+          <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
+            <label className="text-[10px] text-zinc-700 shrink-0">CLUSTERING</label>
+            <select
+              className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
+              value={clustering}
+              onChange={(e) => onClusteringChange(e.target.value)}
+            >
+              {clusteringOptions.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {isKnn ? (
+            <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
+              <label className="text-[10px] text-zinc-700 shrink-0">KNN K</label>
+              <select
+                className="h-6 w-20 px-1 text-xs border border-zinc-300 rounded bg-white"
+                value={knnK}
+                onChange={(e) => setKnnK(Number(e.target.value))}
+              >
+                {Array.from({ length: 9 }, (_, i) => i + 2).map((v) => (
+                  <option key={`knn-k-inline-${v}`} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+        </>
       )}
       {onCellBgMetricChange && cellBgMetricOptions.length > 0 && (
         <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
@@ -234,7 +261,7 @@ export default function SyncControlPanel({
               onChange={(e) => {
                 const next = Number(e.target.value);
                 setMinValue(next);
-                if (maxValue <= next) setMaxValue(Math.min(20, next + 1));
+                if (maxValue < next) setMaxValue(next);
               }}
             >
               {minOptions.map((v) => (
@@ -253,7 +280,7 @@ export default function SyncControlPanel({
               onChange={(e) => {
                 const next = Number(e.target.value);
                 setMaxValue(next);
-                if (minValue >= next) setMinValue(Math.max(2, next - 1));
+                if (minValue > next) setMinValue(next);
               }}
             >
               {maxOptions.map((v) => (
@@ -310,7 +337,7 @@ export default function SyncControlPanel({
           ) : null}
         </>
       ) : null}
-      {!isPgmeans && !isAgglomerative ? (
+      {!isPgmeans && !isAgglomerative && !isKnn ? (
         <div className="text-[10px] text-zinc-500 text-center">No extra parameters for this method.</div>
       ) : null}
 
@@ -330,6 +357,10 @@ export default function SyncControlPanel({
                 k: agglomerativeKMode === "manual" ? agglomerativeK : null,
                 linkage: agglomerativeLinkage,
               });
+              return;
+            }
+            if (isKnn) {
+              onGenerateRange?.(knnK, knnK);
               return;
             }
             onGenerateRange?.(minValue, maxValue);

@@ -110,6 +110,7 @@ export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
   const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("agglomerative");
   const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("all");
+  const [selectedKnnK, setSelectedKnnK] = useState<number>(10);
   const [generatedSankeyPayloads, setGeneratedSankeyPayloads] = useState<Record<string, GeneratedSankeyPayload>>({});
   const [generatedRuntimePayloads, setGeneratedRuntimePayloads] = useState<Record<string, GeneratedRuntimePayload>>({});
   const generatedSankeyPayloadsRef = useRef<Record<string, GeneratedSankeyPayload>>({});
@@ -176,6 +177,7 @@ export default function Home() {
       dataset = selectedDataset,
       clustering = selectedClustering,
       dataSplit = selectedDataSplit,
+      knnK = selectedKnnK,
       section,
       file,
       datasetRoot = false,
@@ -184,6 +186,7 @@ export default function Home() {
       dataset?: DatasetKey;
       clustering?: ClusteringKey;
       dataSplit?: DataSplitKey;
+      knnK?: number;
       section?: string;
       file: string;
       datasetRoot?: boolean;
@@ -200,10 +203,11 @@ export default function Home() {
       );
       if (section) p.set("section", section);
       p.set("file", file);
+      if (String(clustering).trim().toLowerCase() === "knn") p.set("k", String(knnK));
       if (datasetRoot) p.set("dataset_root", "1");
       return `${apiBase}/data-file?${p.toString()}`;
     },
-    [apiBase, selectedDataset, selectedClustering, selectedDataSplit]
+    [apiBase, selectedDataset, selectedClustering, selectedDataSplit, selectedKnnK]
   );
   const withVersion = (url: string, version: number = sankeyRefreshKey) => {
     const sep = url.includes("?") ? "&" : "?";
@@ -1098,7 +1102,7 @@ export default function Home() {
     const clustering = selectedClustering;
     const dataSplit = selectedDataSplit;
     setIsGeneratingRange(true);
-    setGenerateStatusText(`Generating PGMeans [${minValue}, ${maxValue}] ...`);
+    setGenerateStatusText(`Generating ${clustering} [${minValue}, ${maxValue}] ...`);
     try {
       const json = await submitGenerateRangeJob(
         {
@@ -1108,6 +1112,7 @@ export default function Home() {
           include_payload: true,
           min: minValue,
           max: maxValue,
+          ...(clustering === "knn" ? { k: minValue } : {}),
         },
         `Generating ${clustering} [${minValue}, ${maxValue}]`
       );
@@ -2699,7 +2704,7 @@ export default function Home() {
                   clustering={selectedClustering}
                   clusteringOptions={CLUSTERING_OPTIONS}
                   onClusteringChange={(c) => {
-                    const next = c as ClusteringKey;
+                    const next = String(c).trim().toLowerCase() as ClusteringKey;
                     const defaults = DATASET_DEFAULTS[selectedDataset];
                     const nextSplit = selectedDataSplit;
                     setSelectedClustering(next);
@@ -2732,6 +2737,8 @@ export default function Home() {
                   onLargePreviewSizeChange={setLargeHoverPreviewSize}
                   onGenerateRange={generateFromRange}
                   onGenerateAgglomerative={generateAgglomerative}
+                  knnK={selectedKnnK}
+                  onKnnKChange={setSelectedKnnK}
                   generateEnabled={true}
                   generateBusy={isGeneratingRange}
                   generateMessage={generateStatusText}
