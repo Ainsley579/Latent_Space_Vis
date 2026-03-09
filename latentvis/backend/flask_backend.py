@@ -731,7 +731,7 @@ def _scatter_legacy_rows(base: Path, model: str, layer: str, projection: str) ->
 def _materialize_compat_sankey_files(
     case: str,
     clustering: Optional[str] = None,
-    write_files: bool = True,
+    write_files: bool = False,
     data_split: Optional[str] = None,
 ) -> Dict[str, object]:
     case_dir = _case_dir(case, clustering, data_split=data_split)
@@ -1570,7 +1570,8 @@ def materialize_sankey_files():
     clustering = _normalize_clustering(payload.get("clustering", DEFAULT_CLUSTERING))
     data_split = payload.get("data_split") or payload.get("preferred_split")
     include_payload = bool(payload.get("include_payload", False))
-    write_files = bool(payload.get("write_files", True))
+    # Keep runtime fully in-memory; do not emit per-model/vertical sankey JSON files.
+    write_files = False
     cases = [dataset] if isinstance(dataset, str) else list(DEFAULT_CASES)
     if clustering not in ALLOWED_CLUSTERINGS:
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
@@ -1754,7 +1755,13 @@ def sankey_model():
     path = _case_dir(dataset, clustering, data_split) / "sankey" / f"{model}_sankey_samples.json"
     payload = _read_json(path, None)
     if payload is None:
-        return jsonify({"ok": False, "error": "not_found"}), 404
+        compat = _materialize_compat_sankey_files(
+            dataset,
+            clustering=clustering,
+            write_files=False,
+            data_split=data_split,
+        )
+        payload = (compat.get("model_samples") or {}).get(model, [])
     return jsonify(payload)
 
 
@@ -1769,7 +1776,13 @@ def sankey_vertical():
     path = _case_dir(dataset, clustering, data_split) / "sankey" / f"vertical_model_samples_{layer}.json"
     payload = _read_json(path, None)
     if payload is None:
-        return jsonify({"ok": False, "error": "not_found"}), 404
+        compat = _materialize_compat_sankey_files(
+            dataset,
+            clustering=clustering,
+            write_files=False,
+            data_split=data_split,
+        )
+        payload = (compat.get("vertical_samples_by_layer") or {}).get(layer, [])
     return jsonify(payload)
 
 
@@ -1835,7 +1848,9 @@ def data_file():
     except Exception:
         return jsonify({"ok": False, "error": "invalid_path"}), 400
 
-    # Scatter bundle fast-path: one precomputed big JSON for all cells/splits.
+    # Scatter route policy:
+    # - XY: always read from precomputed xy_all.json bundle (no runtime projection compute).
+    # - Cluster: always derive from sankey_samples (real_id -> cluster_id), never from scatter files.
     if section_rel == Path("scatterplot"):
         req = _scatter_parse_request_filename(target.name)
         if req is not None:
@@ -1843,17 +1858,57 @@ def data_file():
             parsed = _scatter_parse_cell_from_filename(dataset, clustering, "train", target.name)
             if parsed is not None:
                 model, layer, _proj, _kind = parsed
-                rows = _scatter_bundle_lookup_rows(
-                    dataset=dataset,
-                    clustering=str(clustering or DEFAULT_CLUSTERING).strip().lower(),
-                    split_selector=split_raw,
-                    model=model,
-                    layer=layer,
-                    projection=projection,
-                    kind=kind,
-                )
-                if isinstance(rows, list):
-                    return jsonify(rows)
+                method = str(clustering or DEFAULT_CLUSTERING).strip().lower()
+                if kind == "xy":
+                    rows = _scatter_bundle_lookup_rows(
+                        dataset=dataset,
+                        clustering=method,
+                        split_selector=split_raw,
+                        model=model,
+                        layer=layer,
+                        projection=projection,
+                        kind="xy",
+                    )
+                    if isinstance(rows, list):
+                        return jsonify(rows)
+                    return jsonify(
+                        {
+                            "ok": False,
+                            "error": "xy_all_not_found",
+                            "dataset": dataset,
+                            "clustering": method,
+                            "split": split_raw or split_for_base,
+                            "model": model,
+                            "layer": layer,
+                            "projection": projection,
+                        }
+                    ), 404
+
+                # cluster rows
+                if split_raw == "all":
+                    out_rows: List[Dict[str, object]] = []
+                    seen = set()
+                    train_cluster_rows = _scatter_cluster_rows_from_sankey_samples(dataset, method, "train", model, layer)
+                    test_cluster_rows = _scatter_cluster_rows_from_sankey_samples(dataset, method, "test", model, layer)
+                    for split_tag, rows in (("train", train_cluster_rows), ("test", test_cluster_rows)):
+                        for r in rows:
+                            rid = str((r or {}).get("real_id", ""))
+                            if not rid:
+                                continue
+                            key = f"{split_tag}|{rid}"
+                            if key in seen:
+                                continue
+                            seen.add(key)
+                            try:
+                                cid = int((r or {}).get("cluster_id", 0))
+                            except Exception:
+                                cid = 0
+                            out_rows.append({"real_id": rid, "cluster_id": cid, "split": split_tag})
+                    return jsonify(out_rows)
+
+                split_one = _normalize_split(split_for_base) or "test"
+                rows = _scatter_cluster_rows_from_sankey_samples(dataset, method, split_one, model, layer)
+                return jsonify(rows if isinstance(rows, list) else [])
 
     # Topk sorted-members pinned source fast-path.
     if section_rel == Path("topk") and target.name == "cluster_sorted_members.json":
@@ -1873,58 +1928,6 @@ def data_file():
             sorted_rows = _read_json(preferred_sorted, [])
             reps = _build_cluster_representatives_from_sorted(sorted_rows)
             return jsonify(reps)
-
-    # Scatter "all" mode: always return merged train+test rows from one response.
-    # This avoids double frontend fetch and keeps one XY source of truth per cell.
-    if (section_rel == Path("scatterplot") if section_rel else False) and split_raw == "all":
-        name = target.name
-        parsed_all = _scatter_parse_cell_from_filename(dataset, clustering, "train", name)
-        if parsed_all is not None:
-            model, layer, projection, kind = parsed_all
-            method = str(clustering or DEFAULT_CLUSTERING).strip().lower()
-            if kind == "xy":
-                train_cell = _scatter_read_cell_from_files(dataset, method, "train", model, layer, projection) or {}
-                test_cell = _scatter_read_cell_from_files(dataset, method, "test", model, layer, projection) or {}
-                out_rows: List[Dict[str, object]] = []
-                seen = set()
-                for split_tag, rows in (("train", train_cell.get("xy") or []), ("test", test_cell.get("xy") or [])):
-                    for r in rows:
-                        rid = str((r or {}).get("real_id", ""))
-                        if not rid:
-                            continue
-                        key = f"{split_tag}|{rid}"
-                        if key in seen:
-                            continue
-                        seen.add(key)
-                        out_rows.append(
-                            {
-                                "real_id": rid,
-                                "x": float((r or {}).get("x", 0) or 0),
-                                "y": float((r or {}).get("y", 0) or 0),
-                                "split": split_tag,
-                            }
-                        )
-                return jsonify(out_rows)
-            # cluster rows
-            out_rows = []
-            seen = set()
-            train_cluster_rows = _scatter_cluster_rows_from_sankey_samples(dataset, method, "train", model, layer)
-            test_cluster_rows = _scatter_cluster_rows_from_sankey_samples(dataset, method, "test", model, layer)
-            for split_tag, rows in (("train", train_cluster_rows), ("test", test_cluster_rows)):
-                for r in rows:
-                    rid = str((r or {}).get("real_id", ""))
-                    if not rid:
-                        continue
-                    key = f"{split_tag}|{rid}"
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    try:
-                        cid = int((r or {}).get("cluster_id", 0))
-                    except Exception:
-                        cid = 0
-                    out_rows.append({"real_id": rid, "cluster_id": cid, "split": split_tag})
-            return jsonify(out_rows)
 
     if not target.exists() and (section_rel == Path("sankey") if section_rel else False):
         # Compute compatibility samples from all_sankey + sankey_samples on demand.
