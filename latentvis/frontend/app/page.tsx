@@ -403,6 +403,7 @@ export default function Home() {
       group: "knn" | "kfn";
       k: number;
       real_ids: Array<string | number>;
+      real_id_smiles?: Array<string | null>;
       valid_molecules: number;
       missing_real_ids: Array<string | number>;
       invalid_smiles_real_ids: Array<string | number>;
@@ -1393,103 +1394,6 @@ export default function Home() {
 
   useEffect(() => {
     if (generatedRuntimeMatchesCurrent) {
-      setTopkData(generatedRuntimePayload?.topkRepresentatives ?? []);
-      return;
-    }
-    const fetchTopk = async (url: string) => {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to load topk data");
-      const json = await res.json();
-      return Array.isArray(json) ? json : [];
-    };
-    const tagRowIds = (rows: any[], split: "train" | "test") =>
-      rows.map((row) => ({
-        ...row,
-        top_k_closest_real_ids: Array.isArray(row?.top_k_closest_real_ids)
-          ? row.top_k_closest_real_ids.map((x: any) => `${split}::${String(x)}`)
-          : [],
-        top_k_farthest_real_ids: Array.isArray(row?.top_k_farthest_real_ids)
-          ? row.top_k_farthest_real_ids.map((x: any) => `${split}::${String(x)}`)
-          : [],
-      }));
-    const mergeTopk = (a: any[], b: any[]) => {
-      const map = new Map<string, any>();
-      const add = (row: any) => {
-        const key = `${String(row?.model_type ?? "")}__${String(row?.layer_name ?? "")}__${String(row?.cluster_id ?? "")}`;
-        if (!map.has(key)) {
-          map.set(key, {
-            ...row,
-            top_k_closest_real_ids: Array.isArray(row?.top_k_closest_real_ids)
-              ? row.top_k_closest_real_ids.map((x: any) => String(x))
-              : [],
-            top_k_farthest_real_ids: Array.isArray(row?.top_k_farthest_real_ids)
-              ? row.top_k_farthest_real_ids.map((x: any) => String(x))
-              : [],
-          });
-          return;
-        }
-        const cur = map.get(key);
-        const mergeArr = (x: any[], y: any[]) => {
-          const seen = new Set<string>(x.map((v) => String(v)));
-          const out = [...x.map((v) => String(v))];
-          y.forEach((v) => {
-            const sv = String(v);
-            if (seen.has(sv)) return;
-            seen.add(sv);
-            out.push(sv);
-          });
-          return out;
-        };
-        cur.top_k_closest_real_ids = mergeArr(cur.top_k_closest_real_ids ?? [], row?.top_k_closest_real_ids ?? []);
-        cur.top_k_farthest_real_ids = mergeArr(cur.top_k_farthest_real_ids ?? [], row?.top_k_farthest_real_ids ?? []);
-        cur.k = Math.max(Number(cur.k ?? 0), Number(row?.k ?? 0));
-      };
-      a.forEach(add);
-      b.forEach(add);
-      return Array.from(map.values());
-    };
-
-    const trainUrl = buildDataFileUrl({
-      section: "topk",
-      file: "cluster_representatives.json",
-    });
-    const testUrl = buildDataFileUrl({
-      dataset: selectedDataset,
-      clustering: selectedClustering,
-      dataSplit: "test",
-      section: "topk",
-      file: "cluster_representatives.json",
-    });
-
-    fetchTopk(trainUrl)
-      .then(async (trainRows) => {
-        if (selectedDataSplit !== "all") return trainRows;
-        try {
-          const testRows = await fetchTopk(testUrl);
-          return mergeTopk(tagRowIds(trainRows, "train"), tagRowIds(testRows, "test"));
-        } catch (err) {
-          console.error("Failed to load test topk representatives:", err);
-          return tagRowIds(trainRows, "train");
-        }
-      })
-      .then((rows) => setTopkData(rows))
-      .catch((err) => {
-        console.error(err);
-        setTopkData([]);
-      });
-  }, [
-    datasetBase,
-    dataRefreshKey,
-    generatedRuntimeMatchesCurrent,
-    generatedRuntimePayload,
-    selectedDataSplit,
-    selectedDataset,
-    selectedClustering,
-    buildDataFileUrl,
-  ]);
-
-  useEffect(() => {
-    if (generatedRuntimeMatchesCurrent) {
       setClusterSortedMembers(generatedRuntimePayload?.clusterSortedMembers ?? []);
       return;
     }
@@ -1564,37 +1468,26 @@ export default function Home() {
   }, [datasetBase, dataRefreshKey, generatedRuntimeMatchesCurrent, generatedRuntimePayload, selectedDataset, selectedClustering, selectedDataSplit, buildDataFileUrl]);
 
   useEffect(() => {
-    if (generatedRuntimeMatchesCurrent) {
-      setSubstructures(generatedRuntimePayload?.substructures ?? []);
-      return;
-    }
-    fetch(
-      buildDataFileUrl({
-        section: "substructures",
-        file: "cluster_substructures.json",
-      })
-    )
-      .then((res) => {
-        // Some datasets may not provide substructure files yet; treat missing file as empty.
-        if (res.status === 404) return [];
-        if (!res.ok) throw new Error("Failed to load substructure data");
-        return res.json();
-      })
-      .then((json) => {
-        setSubstructures(Array.isArray(json) ? json : []);
-      })
-      .catch((err) => {
-        console.error(err);
-        setSubstructures([]);
-      });
-  }, [datasetBase, dataRefreshKey, generatedRuntimeMatchesCurrent, generatedRuntimePayload, buildDataFileUrl]);
+    // Derive top-k representatives directly from sorted members so we don't depend on cluster_representatives.json.
+    const rows = (clusterSortedMembers ?? []).map((row: any) => {
+      const ids = Array.isArray(row?.sorted_real_ids) ? row.sorted_real_ids.map((x: any) => String(x)) : [];
+      const k = Math.max(1, Math.min(32, ids.length || 1));
+      const topClosest = ids.slice(0, k);
+      const topFarthest = [...ids.slice(Math.max(0, ids.length - k))].reverse();
+      return {
+        model_type: String(row?.model_type ?? ""),
+        layer_name: String(row?.layer_name ?? ""),
+        cluster_id: Number(row?.cluster_id ?? 0),
+        k,
+        top_k_closest_real_ids: topClosest,
+        top_k_farthest_real_ids: topFarthest,
+      };
+    });
+    setTopkData(rows);
+  }, [clusterSortedMembers]);
 
   useEffect(() => {
     const controller = new AbortController();
-    if (!selectedNode) {
-      setIsKnnTopmLoading(false);
-      return () => controller.abort();
-    }
     const fetchCellTopm = async () => {
       setIsKnnTopmLoading(true);
       try {
@@ -1637,6 +1530,9 @@ export default function Home() {
             group,
             k: Number(r.k ?? knnTopm),
             real_ids: Array.isArray(r.real_ids) ? (r.real_ids as Array<string | number>) : [],
+            real_id_smiles: Array.isArray(r.real_id_smiles)
+              ? (r.real_id_smiles as Array<string | null>)
+              : undefined,
             valid_molecules: Number(r.valid_molecules ?? 0),
             missing_real_ids: Array.isArray(r.missing_real_ids) ? (r.missing_real_ids as Array<string | number>) : [],
             invalid_smiles_real_ids: Array.isArray(r.invalid_smiles_real_ids)
@@ -1687,7 +1583,6 @@ export default function Home() {
     selectedDataSplit,
     selectedModel,
     selectedLayer,
-    selectedNode,
     knnTopm,
     generatedRuntimeMatchesCurrent,
   ]);
@@ -1815,6 +1710,27 @@ export default function Home() {
     return map;
   }, [substructures, selectedModel, selectedLayer]);
 
+  const substructureSmilesByRealId = useMemo(() => {
+    const out: Record<string, string> = {};
+    substructures.forEach((d) => {
+      if (String(d.model_type) !== String(selectedModel) || String(d.layer_name) !== String(selectedLayer)) return;
+      const ids = Array.isArray(d.real_ids) ? d.real_ids.map((x) => String(x)) : [];
+      const smiles = Array.isArray(d.real_id_smiles) ? d.real_id_smiles : [];
+      ids.forEach((rid, idx) => {
+        const smi = typeof smiles[idx] === "string" ? String(smiles[idx]).trim() : "";
+        if (!smi) return;
+        const key = rid.trim().toLowerCase();
+        if (!key) return;
+        if (!out[key]) out[key] = smi;
+        const parsed = parseSplitTaggedId(rid);
+        if (parsed.split) {
+          out[`${parsed.split}::${parsed.realId}`.toLowerCase()] = smi;
+        }
+      });
+    });
+    return out;
+  }, [substructures, selectedModel, selectedLayer]);
+
   const sortedMembersByClusterKey = useMemo(() => {
     const map = new Map<string, string[]>();
     clusterSortedMembers.forEach((d) => {
@@ -1925,7 +1841,13 @@ export default function Home() {
     const parsed = parseSplitTaggedId(realId);
     const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
     const base = parsed.realId.trim().toLowerCase();
-    return (tagged ? smilesByRealId[tagged] : undefined) ?? smilesByRealId[base] ?? null;
+    const fromPrimary = (tagged ? smilesByRealId[tagged] : undefined) ?? smilesByRealId[base];
+    if (fromPrimary && String(fromPrimary).trim().length > 0) return fromPrimary;
+    return (
+      (tagged ? substructureSmilesByRealId[tagged] : undefined) ??
+      substructureSmilesByRealId[base] ??
+      null
+    );
   }
 
   function getYTrueById(realId: string | number): number | null {
@@ -2348,30 +2270,8 @@ export default function Home() {
                     )}
                     splitMapDataset={selectedDataset}
                     dataSplit={selectedDataSplit}
-                    secondaryDataPathXY={
-                      selectedDataSplit === "all"
-                        ? buildScatterPaths(
-                            selectedModel,
-                            selectedLayer,
-                            scatterProjection,
-                            selectedDataset,
-                            selectedClustering,
-                            "test"
-                          ).xy
-                        : undefined
-                    }
-                    secondaryDataPathCluster={
-                      selectedDataSplit === "all"
-                        ? buildScatterPaths(
-                            selectedModel,
-                            selectedLayer,
-                            scatterProjection,
-                            selectedDataset,
-                            selectedClustering,
-                            "test"
-                          ).cluster
-                        : undefined
-                    }
+                    secondaryDataPathXY={undefined}
+                    secondaryDataPathCluster={undefined}
                     projection={scatterProjection}
                     onProjectionChange={(next) => setScatterProjection(next)}
                     onUserClusteringUpload={(payload) => setUploadedUserClustering(payload)}
