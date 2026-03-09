@@ -549,6 +549,19 @@ def _scatter_xy_all_bundle_path(dataset: str) -> Path:
     return DATA_ROOT / dataset / "xy_all.json"
 
 
+def _scatter_xy_all_bundle_part_paths(dataset: str) -> List[Path]:
+    base = DATA_ROOT / dataset
+    # Preferred naming:
+    #   xy_all.part1.json, xy_all.part2.json, ...
+    # Backward-compatible naming:
+    #   xy_all_1.json, xy_all_2.json, ...
+    parts = sorted(base.glob("xy_all.part*.json"))
+    if parts:
+        return parts
+    parts = sorted(base.glob("xy_all_[0-9]*.json"))
+    return parts
+
+
 def _load_scatter_bundle_cached(path: Path) -> Optional[Dict[str, object]]:
     if not path.is_file():
         return None
@@ -571,6 +584,58 @@ def _load_scatter_bundle_cached(path: Path) -> Optional[Dict[str, object]]:
     return payload
 
 
+def _load_xy_all_payload(dataset: str) -> Optional[Dict[str, object]]:
+    mono_path = _scatter_xy_all_bundle_path(dataset)
+    if mono_path.is_file():
+        return _load_scatter_bundle_cached(mono_path)
+
+    part_paths = _scatter_xy_all_bundle_part_paths(dataset)
+    if not part_paths:
+        return None
+
+    sig_chunks: List[str] = []
+    part_payloads: List[Dict[str, object]] = []
+    for p in part_paths:
+        try:
+            st = p.stat()
+            sig_chunks.append(f"{p.resolve()}|{int(st.st_mtime_ns)}|{int(st.st_size)}")
+        except Exception:
+            sig_chunks.append(str(p.resolve()))
+        payload = _load_scatter_bundle_cached(p)
+        if not isinstance(payload, dict):
+            continue
+        part_payloads.append(payload)
+    if not part_payloads:
+        return None
+
+    cache_key = "XY_PARTS::" + "||".join(sig_chunks)
+    with SCATTER_BUNDLE_CACHE_LOCK:
+        cached = SCATTER_BUNDLE_CACHE.get(cache_key)
+    if isinstance(cached, dict):
+        return cached
+
+    merged: Dict[str, object] = {}
+    # Keep metadata from the first part.
+    first = part_payloads[0]
+    for k in ("ok", "dataset", "kind", "projections", "models", "layers"):
+        if k in first:
+            merged[k] = first[k]
+    merged_cells: Dict[str, object] = {}
+    for payload in part_payloads:
+        cells = payload.get("cells")
+        if not isinstance(cells, dict):
+            continue
+        for cell_key, cell_val in cells.items():
+            merged_cells[str(cell_key)] = cell_val
+    merged["cells"] = merged_cells
+
+    with SCATTER_BUNDLE_CACHE_LOCK:
+        if len(SCATTER_BUNDLE_CACHE) >= MAX_SCATTER_BUNDLE_CACHE and SCATTER_BUNDLE_CACHE:
+            SCATTER_BUNDLE_CACHE.pop(next(iter(SCATTER_BUNDLE_CACHE)))
+        SCATTER_BUNDLE_CACHE[cache_key] = merged
+    return merged
+
+
 def _scatter_bundle_lookup_rows(
     dataset: str,
     clustering: str,
@@ -581,8 +646,7 @@ def _scatter_bundle_lookup_rows(
     kind: str,
 ) -> Optional[List[Dict[str, object]]]:
     if kind == "xy":
-        xy_path = _scatter_xy_all_bundle_path(dataset)
-        xy_payload = _load_scatter_bundle_cached(xy_path)
+        xy_payload = _load_xy_all_payload(dataset)
         if isinstance(xy_payload, dict):
             cells_xy = xy_payload.get("cells")
             if isinstance(cells_xy, dict):
