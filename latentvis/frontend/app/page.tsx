@@ -179,6 +179,7 @@ export default function Home() {
       section,
       file,
       datasetRoot = false,
+      preserveAllSplit = false,
     }: {
       dataset?: DatasetKey;
       clustering?: ClusteringKey;
@@ -186,11 +187,17 @@ export default function Home() {
       section?: string;
       file: string;
       datasetRoot?: boolean;
+      preserveAllSplit?: boolean;
     }) => {
       const p = new URLSearchParams();
       p.set("dataset", dataset);
       p.set("clustering", clustering);
-      p.set("split", effectiveDataSplitForFiles(dataSplit));
+      p.set(
+        "split",
+        preserveAllSplit && dataSplit === "all"
+          ? "all"
+          : effectiveDataSplitForFiles(dataSplit)
+      );
       if (section) p.set("section", section);
       p.set("file", file);
       if (datasetRoot) p.set("dataset_root", "1");
@@ -302,6 +309,7 @@ export default function Home() {
       dataSplit,
       section: "scatterplot",
       file: xyFile,
+      preserveAllSplit: true,
     });
     const runtimePayload = generatedRuntimePayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
     const cellKey = `${model}__${layer}`;
@@ -312,12 +320,13 @@ export default function Home() {
         : null;
     const clusterUrl = overrideRows
       ? buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:scatter_cluster:${cellKey}`, overrideRows)
-      : buildDataFileUrl({
+        : buildDataFileUrl({
           dataset,
           clustering,
           dataSplit,
           section: "scatterplot",
           file: clusterFile,
+          preserveAllSplit: true,
         });
     const sepXY = xyUrl.includes("?") ? "&" : "?";
     const sepCluster = clusterUrl.startsWith("blob:") ? "" : (clusterUrl.includes("?") ? "&" : "?");
