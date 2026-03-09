@@ -1,0 +1,6072 @@
+[paths] SLURM_SUBMIT_DIR=/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/scripts
+[paths] SCRIPT_DIR=/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/scripts
+[paths] BACKEND_DIR=/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend
+[paths] DATA_ROOT=/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data
+=== Sweep start 2026-03-09T04:34:45-07:00 ===
+dataset=chemeleon split=test method=pgmeans out_root=/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans
+[run] chemeleon/test/pgmeans/kmin_2_kmax_2
+Loading embedding input...
+Topk/sorted-members will use combined train+test assignment (n_samples=1015).
+Epoch keys: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'], Layer keys: ['fingerprint', 'gnn_layer_1', 'gnn_layer_2', 'gnn_layer_3', 'gnn_layer_4', 'gnn_layer_5', 'gnn_layer_6', 'ffn_layer_1', 'ffn_layer_2'], n_samples: 113
+  Processing (15, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+Wrote /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans/kmin_2_kmax_2/real_id_to_smiles.json (113 entries) for frontend molecule lookup.
+Wrote outputs for clustering method: pgmeans -> /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans/kmin_2_kmax_2
+Wrote avg_fmi_cspa_by_layer.json (FMI/CSPA between consecutive epochs).
+[run] chemeleon/test/pgmeans/kmin_2_kmax_3
+Loading embedding input...
+Topk/sorted-members will use combined train+test assignment (n_samples=1015).
+Epoch keys: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'], Layer keys: ['fingerprint', 'gnn_layer_1', 'gnn_layer_2', 'gnn_layer_3', 'gnn_layer_4', 'gnn_layer_5', 'gnn_layer_6', 'ffn_layer_1', 'ffn_layer_2'], n_samples: 113
+  Processing (15, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+Wrote /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans/kmin_2_kmax_3/real_id_to_smiles.json (113 entries) for frontend molecule lookup.
+Wrote outputs for clustering method: pgmeans -> /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans/kmin_2_kmax_3
+Wrote avg_fmi_cspa_by_layer.json (FMI/CSPA between consecutive epochs).
+[run] chemeleon/test/pgmeans/kmin_2_kmax_4
+Loading embedding input...
+Topk/sorted-members will use combined train+test assignment (n_samples=1015).
+Epoch keys: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'], Layer keys: ['fingerprint', 'gnn_layer_1', 'gnn_layer_2', 'gnn_layer_3', 'gnn_layer_4', 'gnn_layer_5', 'gnn_layer_6', 'ffn_layer_1', 'ffn_layer_2'], n_samples: 113
+  Processing (15, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+Wrote /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans/kmin_2_kmax_4/real_id_to_smiles.json (113 entries) for frontend molecule lookup.
+Wrote outputs for clustering method: pgmeans -> /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans/kmin_2_kmax_4
+Wrote avg_fmi_cspa_by_layer.json (FMI/CSPA between consecutive epochs).
+[run] chemeleon/test/pgmeans/kmin_2_kmax_5
+Loading embedding input...
+Topk/sorted-members will use combined train+test assignment (n_samples=1015).
+Epoch keys: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'], Layer keys: ['fingerprint', 'gnn_layer_1', 'gnn_layer_2', 'gnn_layer_3', 'gnn_layer_4', 'gnn_layer_5', 'gnn_layer_6', 'ffn_layer_1', 'ffn_layer_2'], n_samples: 113
+  Processing (15, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+Wrote /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans/kmin_2_kmax_5/real_id_to_smiles.json (113 entries) for frontend molecule lookup.
+Wrote outputs for clustering method: pgmeans -> /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans/kmin_2_kmax_5
+Wrote avg_fmi_cspa_by_layer.json (FMI/CSPA between consecutive epochs).
+[run] chemeleon/test/pgmeans/kmin_2_kmax_6
+Loading embedding input...
+Topk/sorted-members will use combined train+test assignment (n_samples=1015).
+Epoch keys: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'], Layer keys: ['fingerprint', 'gnn_layer_1', 'gnn_layer_2', 'gnn_layer_3', 'gnn_layer_4', 'gnn_layer_5', 'gnn_layer_6', 'ffn_layer_1', 'ffn_layer_2'], n_samples: 113
+  Processing (15, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+Wrote /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans/kmin_2_kmax_6/real_id_to_smiles.json (113 entries) for frontend molecule lookup.
+Wrote outputs for clustering method: pgmeans -> /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans/kmin_2_kmax_6
+Wrote avg_fmi_cspa_by_layer.json (FMI/CSPA between consecutive epochs).
+[run] chemeleon/test/pgmeans/kmin_2_kmax_7
+Loading embedding input...
+Topk/sorted-members will use combined train+test assignment (n_samples=1015).
+Epoch keys: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'], Layer keys: ['fingerprint', 'gnn_layer_1', 'gnn_layer_2', 'gnn_layer_3', 'gnn_layer_4', 'gnn_layer_5', 'gnn_layer_6', 'ffn_layer_1', 'ffn_layer_2'], n_samples: 113
+  Processing (15, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (19, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (0, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (16, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (18, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (9, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (5, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+Wrote /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans/kmin_2_kmax_7/real_id_to_smiles.json (113 entries) for frontend molecule lookup.
+Wrote outputs for clustering method: pgmeans -> /global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemeleon/test/sweeps/pgmeans/kmin_2_kmax_7
+Wrote avg_fmi_cspa_by_layer.json (FMI/CSPA between consecutive epochs).
+[run] chemeleon/test/pgmeans/kmin_2_kmax_8
+Loading embedding input...
+Topk/sorted-members will use combined train+test assignment (n_samples=1015).
+Epoch keys: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'], Layer keys: ['fingerprint', 'gnn_layer_1', 'gnn_layer_2', 'gnn_layer_3', 'gnn_layer_4', 'gnn_layer_5', 'gnn_layer_6', 'ffn_layer_1', 'ffn_layer_2'], n_samples: 113
+  Processing (15, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (15, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (8, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (11, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (13, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (6, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (1, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (3, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (10, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (2, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (12, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (17, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (7, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (14, ffn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_1) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_2) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_3) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_4) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_5) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, gnn_layer_6) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok
+  Processing (4, fingerprint) ...
+    pca ok
+    mds ok
+    umap ok
+    tsne ok

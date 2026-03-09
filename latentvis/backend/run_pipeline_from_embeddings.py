@@ -99,6 +99,61 @@ def _cluster_representatives(emb: np.ndarray, labels: np.ndarray, k: int = 5) ->
     return reps
 
 
+def _cluster_representatives_with_full_assignment(
+    emb_split: np.ndarray,
+    labels_split: np.ndarray,
+    emb_full: np.ndarray,
+    k: int = 5,
+) -> dict:
+    """
+    Build representatives using centroids from split clustering, then assign all full-set
+    samples to nearest centroid so topk/sorted members can be based on train+test jointly.
+    """
+    uniq = np.unique(labels_split)
+    if uniq.size == 0:
+        return {}
+    centroids = []
+    cluster_ids = []
+    for c in uniq:
+        mask = labels_split == c
+        pts = emb_split[mask]
+        if len(pts) == 0:
+            continue
+        centroids.append(pts.mean(axis=0))
+        cluster_ids.append(int(c))
+    if not centroids:
+        return {}
+    centers = np.asarray(centroids, dtype=np.float64)
+    # Assign each full-sample row to nearest centroid
+    dmat = np.linalg.norm(emb_full[:, None, :] - centers[None, :, :], axis=2)
+    nearest = np.argmin(dmat, axis=1)
+    reps = {}
+    for j, cid in enumerate(cluster_ids):
+        member_idx = np.where(nearest == j)[0]
+        if member_idx.size == 0:
+            continue
+        d = dmat[member_idx, j]
+        order = np.argsort(d)
+        sorted_indices = [int(member_idx[o]) for o in order.tolist()]
+        n = min(k, len(sorted_indices))
+        closest = sorted_indices[:n]
+        closest_set = set(closest)
+        farthest = []
+        for idx in reversed(sorted_indices):
+            if idx in closest_set:
+                continue
+            farthest.append(int(idx))
+            if len(farthest) >= n:
+                break
+        reps[int(cid)] = {
+            "top_k_closest": closest,
+            "top_k_farthest": farthest,
+            "k": n,
+            "sorted_indices": sorted_indices,
+        }
+    return reps
+
+
 def _edges_from_transitions(labels_from: np.ndarray, labels_to: np.ndarray, prefix_from: str, prefix_to: str) -> list:
     """Build list of edges with source_label, target_label, value, and node ids."""
     n_from = int(labels_from.max()) + 1
@@ -235,6 +290,7 @@ def run_pipeline(
     interactive_output_suffix: str = "",
     verbose_dr: bool = True,
     resume: bool = True,
+    topk_combine_train_test: bool = False,
 ) -> bool:
     """
     Load embedding input (optionally two directories for two epochs), run full analysis, write all frontend JSONs.
@@ -262,6 +318,27 @@ def run_pipeline(
     n_samples = data["n_samples"]
     real_ids = data.get("real_ids")
     id_to_smiles_from_input = data.get("id_to_smiles") or {}
+    full_data_for_topk = None
+    full_cells = {}
+    full_real_ids = []
+    if topk_combine_train_test and str(data_split).lower() in {"train", "test"}:
+        try:
+            full_data_for_topk = load_embedding_input(
+                input_path,
+                model_name=model_name,
+                layer_file_map=layer_file_map,
+                data_split="train_test",
+            )
+            full_cells = dict(full_data_for_topk.get("cells", {}))
+            full_real_ids = list(full_data_for_topk.get("real_ids") or [])
+            if full_real_ids and len(full_real_ids) != int(full_data_for_topk.get("n_samples", 0)):
+                full_real_ids = []
+            print("Topk/sorted-members will use combined train+test assignment (n_samples={}).".format(
+                int(full_data_for_topk.get("n_samples", 0))
+            ))
+        except Exception as exc:
+            print("Warning: failed to load combined train+test for topk fallback: {}".format(exc))
+            full_data_for_topk = None
 
     if input_path2 and model_name2:
         data2 = load_embedding_input(
@@ -313,6 +390,7 @@ def run_pipeline(
         "max_epochs": max_epochs,
         "n_samples": int(n_samples),
         "random_state": int(random_state),
+        "topk_combine_train_test": bool(topk_combine_train_test),
     }
     signature_id = hashlib.sha1(
         json.dumps(run_signature, sort_keys=True, default=_json_default).encode("utf-8")
@@ -626,14 +704,26 @@ def run_pipeline(
         for (ek, lk) in results:
             r = res(ek, lk, cl_method)
             reps = r.get("reps", {})
+            if full_data_for_topk is not None:
+                emb_split = cells.get((ek, lk))
+                labels_split = r.get("labels")
+                emb_full = full_cells.get((ek, lk))
+                if emb_split is not None and labels_split is not None and emb_full is not None:
+                    reps = _cluster_representatives_with_full_assignment(
+                        emb_split=emb_split,
+                        labels_split=labels_split,
+                        emb_full=emb_full,
+                        k=5,
+                    )
+            ids_for_topk = full_real_ids if full_real_ids else real_ids
             for cid, rep in reps.items():
-                sorted_real_ids = [real_ids[i] if i < len(real_ids) else i for i in rep["sorted_indices"]]
+                sorted_real_ids = [ids_for_topk[i] if i < len(ids_for_topk) else i for i in rep["sorted_indices"]]
                 topk_list.append({
                     "layer_name": lk,
                     "model_type": ek,
                     "cluster_id": cid,
-                    "top_k_closest_real_ids": [real_ids[i] if i < len(real_ids) else i for i in rep["top_k_closest"]],
-                    "top_k_farthest_real_ids": [real_ids[i] if i < len(real_ids) else i for i in rep["top_k_farthest"]],
+                    "top_k_closest_real_ids": [ids_for_topk[i] if i < len(ids_for_topk) else i for i in rep["top_k_closest"]],
+                    "top_k_farthest_real_ids": [ids_for_topk[i] if i < len(ids_for_topk) else i for i in rep["top_k_farthest"]],
                     "k": rep["k"],
                 })
                 sorted_members_list.append({
@@ -879,9 +969,14 @@ def main():
     ap.add_argument(
         "--data-split",
         default=None,
-        choices=["train", "val", "test"],
+        choices=["train", "val", "test", "train_test"],
         help="When input is an ESOL-style .pt (chemprop/chemeleon), restrict to a single split; "
              "default keeps existing preference order test→val→train.",
+    )
+    ap.add_argument(
+        "--topk-combine-train-test",
+        action="store_true",
+        help="For --data-split train/test runs, compute topk/sorted members using train+test jointly.",
     )
     ap.add_argument(
         "--no-fmi-cspa",
@@ -938,6 +1033,7 @@ def main():
         skip_tsne=args.skip_tsne,
         substructure_max_members=args.substructure_max_members,
         data_split=args.data_split,
+        topk_combine_train_test=args.topk_combine_train_test,
         write_fmi_cspa=not args.no_fmi_cspa,
         verbose_dr=not getattr(args, "quiet_dr", False),
         resume=not args.no_resume,

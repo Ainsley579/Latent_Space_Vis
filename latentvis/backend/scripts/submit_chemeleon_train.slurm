@@ -58,7 +58,8 @@ python3 run_pipeline_from_embeddings.py \
   --k-max 8 \
   --default-reduction pca \
   --clustering-method all \
-  --data-split train
+  --data-split train \
+  --topk-combine-train-test
 
 EXIT=$?
 set -e

@@ -48,6 +48,7 @@ esac
 # For METHOD=agglomerative, optionally restrict linkage list via env:
 #   AGG_LINKAGES=complete,average  (default: ward,complete,average)
 AGG_LINKAGES_RAW="${AGG_LINKAGES:-ward,complete,average}"
+FORCE_RERUN="${FORCE_RERUN:-0}"
 
 if [[ -n "${SLURM_SUBMIT_DIR:-}" ]]; then
   SCRIPT_DIR="$(cd "${SLURM_SUBMIT_DIR}" && pwd)"
@@ -90,6 +91,8 @@ is_complete_dir() {
   [[ -f "$d/sankey/all_sankey.json" ]] && \
   [[ -f "$d/sankey/sankey_samples.json" ]] && \
   [[ -f "$d/clustering_metrics/cluster_assignments_with_real_id.csv" ]] && \
+  [[ -f "$d/topk/cluster_representatives.json" ]] && \
+  [[ -f "$d/topk/cluster_sorted_members.json" ]] && \
   [[ -d "$d/scatterplot" ]]
 }
 
@@ -112,7 +115,7 @@ run_one() {
   shift 2
   local out_dir="$OUT_ROOT/$tag"
 
-  if is_complete_dir "$out_dir"; then
+  if [[ "$FORCE_RERUN" != "1" ]] && is_complete_dir "$out_dir"; then
     echo "[skip] complete: $out_dir"
     return 0
   fi
@@ -124,6 +127,7 @@ run_one() {
     --input "$INPUT" \
     --output-dir "$out_dir" \
     --data-split "$SPLIT" \
+    --topk-combine-train-test \
     --default-reduction pca \
     "$@"
   local rc=$?

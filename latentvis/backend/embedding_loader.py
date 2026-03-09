@@ -141,10 +141,76 @@ def load_single_pt(pt_path: Path, preferred_split: Optional[str] = None) -> Dict
         # Use a single split so n_samples is consistent.
         # Default preference keeps existing behavior: test -> val -> train.
         split_order = ["test", "val", "train"]
+        pref = None
         if preferred_split:
             pref = str(preferred_split).strip().lower()
             if pref in split_order:
                 split_order = [pref] + [s for s in split_order if s != pref]
+        if pref in ("train_test", "test_train", "both"):
+            cells_combo = {}
+            epoch_set = set()
+            layer_order: List[str] = []
+            real_ids_combo: List[Any] = []
+            smiles_combo: List[str] = []
+            for epoch_key, epoch_data in raw.items():
+                if not isinstance(epoch_data, dict):
+                    continue
+                split_blocks = []
+                for split_name in ("test", "train"):
+                    split_data = epoch_data.get(split_name)
+                    if isinstance(split_data, dict) and isinstance(split_data.get("embeddings"), dict):
+                        split_blocks.append((split_name, split_data))
+                if not split_blocks:
+                    continue
+                common_layers = None
+                for _, split_data in split_blocks:
+                    layers = set(split_data["embeddings"].keys())
+                    common_layers = layers if common_layers is None else (common_layers & layers)
+                if not common_layers:
+                    continue
+                ordered_layers = []
+                for _, split_data in split_blocks:
+                    for layer_key in split_data["embeddings"].keys():
+                        if layer_key in common_layers and layer_key not in ordered_layers:
+                            ordered_layers.append(layer_key)
+                for layer_key in ordered_layers:
+                    parts = []
+                    for _, split_data in split_blocks:
+                        tensor = split_data["embeddings"].get(layer_key)
+                        if not hasattr(tensor, "shape"):
+                            continue
+                        parts.append(_flatten_2d(_to_numpy(tensor)))
+                    if not parts:
+                        continue
+                    arr = np.concatenate(parts, axis=0)
+                    cells_combo[(str(epoch_key), str(layer_key))] = arr
+                    epoch_set.add(str(epoch_key))
+                    if str(layer_key) not in layer_order:
+                        layer_order.append(str(layer_key))
+                # Build IDs/SMILES once from first valid epoch.
+                if not real_ids_combo:
+                    ids_test = list(epoch_data.get("test", {}).get("id", [])) if isinstance(epoch_data.get("test"), dict) else []
+                    ids_train = list(epoch_data.get("train", {}).get("id", [])) if isinstance(epoch_data.get("train"), dict) else []
+                    smi_test = epoch_data.get("test", {}).get("smiles", []) if isinstance(epoch_data.get("test"), dict) else []
+                    smi_train = epoch_data.get("train", {}).get("smiles", []) if isinstance(epoch_data.get("train"), dict) else []
+                    if isinstance(smi_test, (list, tuple)) and isinstance(smi_train, (list, tuple)):
+                        if len(ids_test) == len(smi_test) and len(ids_train) == len(smi_train):
+                            real_ids_combo = list(ids_test) + list(ids_train)
+                            smiles_combo = [str(s) for s in smi_test] + [str(s) for s in smi_train]
+            if cells_combo:
+                n_s = next(iter(cells_combo.values())).shape[0]
+                id_to_smiles = None
+                if real_ids_combo and len(real_ids_combo) == n_s and len(smiles_combo) == n_s:
+                    id_to_smiles = dict(zip(real_ids_combo, smiles_combo))
+                return {
+                    "cells": cells_combo,
+                    "epoch_keys": sorted(epoch_set),
+                    "layer_keys": layer_order,
+                    "n_samples": n_s,
+                    "real_ids": real_ids_combo if real_ids_combo and len(real_ids_combo) == n_s else None,
+                    "id_to_smiles": id_to_smiles,
+                    "data_split": "train+test",
+                }
         for split_name in split_order:
             cells_esol = {}
             epoch_set = set()
