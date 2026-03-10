@@ -4,18 +4,22 @@ Build a shared XY-only scatter bundle (cluster-agnostic):
   latentvis/backend/data/<dataset>/xy_all.json
 """
 
-from __future__ import annotations
-
 import argparse
 import json
+import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 ROOT = Path(__file__).resolve().parents[1]  # latentvis/backend
 DATA_ROOT = ROOT / "data"
 METHODS = ("pgmeans", "agglomerative", "hdbscan")
 PROJECTIONS = ("pca", "mds", "umap", "tsne")
+
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from embedding_loader import load_embedding_input
 
 
 def read_json(path: Path, default):
@@ -140,7 +144,26 @@ def load_xy_rows_from_dir(
     return out
 
 
-def build_xy_bundle(dataset: str, projections: List[str]) -> Dict[str, object]:
+def load_cell_meta(input_pt: Path) -> Dict[str, Dict[str, object]]:
+    emb = load_embedding_input(input_pt)
+    cells = emb.get("cells") or {}
+    meta: Dict[str, Dict[str, object]] = {}
+    for (model, layer), arr in cells.items():
+        shape = getattr(arr, "shape", ())
+        n_features = int(shape[1]) if len(shape) >= 2 else 1
+        meta[f"{model}__{layer}"] = {
+            "n_features": n_features,
+            "projection_degenerate": n_features < 2,
+            "degenerate_reason": "single_feature_embedding" if n_features < 2 else None,
+        }
+    return meta
+
+
+def build_xy_bundle(
+    dataset: str,
+    projections: List[str],
+    cell_meta: Optional[Dict[str, Dict[str, object]]] = None,
+) -> Dict[str, object]:
     models, layers = ordered_models_layers(dataset)
     cells: Dict[str, Dict[str, Dict[str, List[Dict[str, object]]]]] = {}
     for m in models:
@@ -151,6 +174,8 @@ def build_xy_bundle(dataset: str, projections: List[str]) -> Dict[str, object]:
                 rows_train = load_xy_rows(dataset, "train", m, l, proj)
                 rows_test = load_xy_rows(dataset, "test", m, l, proj)
                 per_proj[proj] = {"xy": [*rows_train, *rows_test]}
+            if cell_meta and cell_key in cell_meta:
+                per_proj["meta"] = cell_meta[cell_key]
             cells[cell_key] = per_proj
     return {
         "ok": True,
@@ -160,6 +185,7 @@ def build_xy_bundle(dataset: str, projections: List[str]) -> Dict[str, object]:
         "models": models,
         "layers": layers,
         "cells": cells,
+        "cell_meta": cell_meta or {},
     }
 
 
@@ -167,7 +193,8 @@ def build_xy_bundle_from_dirs(
     dataset: str,
     projections: List[str],
     train_scatter_dir: Path,
-    test_scatter_dir: Path | None = None,
+    test_scatter_dir: Optional[Path] = None,
+    cell_meta: Optional[Dict[str, Dict[str, object]]] = None,
 ) -> Dict[str, object]:
     models, layers = infer_models_layers_from_dir(train_scatter_dir, projections)
     if test_scatter_dir and test_scatter_dir.is_dir():
@@ -187,6 +214,8 @@ def build_xy_bundle_from_dirs(
                     else []
                 )
                 per_proj[proj] = {"xy": [*rows_train, *rows_test]}
+            if cell_meta and cell_key in cell_meta:
+                per_proj["meta"] = cell_meta[cell_key]
             cells[cell_key] = per_proj
     return {
         "ok": True,
@@ -196,6 +225,7 @@ def build_xy_bundle_from_dirs(
         "models": models,
         "layers": layers,
         "cells": cells,
+        "cell_meta": cell_meta or {},
     }
 
 
@@ -218,6 +248,11 @@ def main() -> int:
         default="",
         help="Optional output path (default: latentvis/backend/data/<dataset>/xy_all.json)",
     )
+    ap.add_argument(
+        "--input-pt",
+        default="",
+        help="Optional source embedding .pt for per-cell metadata (n_features / degenerate projection flag)",
+    )
     args = ap.parse_args()
 
     dataset = str(args.dataset).strip().lower()
@@ -225,15 +260,21 @@ def main() -> int:
     projections = [p for p in projections if p in PROJECTIONS]
     if not projections:
         projections = list(PROJECTIONS)
+    cell_meta = {}
+    if str(args.input_pt).strip():
+        input_pt = Path(str(args.input_pt)).expanduser().resolve()
+        if not input_pt.is_file():
+            raise FileNotFoundError(f"--input-pt is not a file: {input_pt}")
+        cell_meta = load_cell_meta(input_pt)
 
     train_dir = Path(str(args.input_scatter_dir_train)).expanduser().resolve() if str(args.input_scatter_dir_train).strip() else None
     test_dir = Path(str(args.input_scatter_dir_test)).expanduser().resolve() if str(args.input_scatter_dir_test).strip() else None
     if train_dir is not None:
         if not train_dir.is_dir():
             raise FileNotFoundError(f"--input-scatter-dir-train is not a directory: {train_dir}")
-        bundle = build_xy_bundle_from_dirs(dataset, projections, train_dir, test_dir)
+        bundle = build_xy_bundle_from_dirs(dataset, projections, train_dir, test_dir, cell_meta=cell_meta)
     else:
-        bundle = build_xy_bundle(dataset, projections)
+        bundle = build_xy_bundle(dataset, projections, cell_meta=cell_meta)
     out_path = (
         Path(str(args.output_path)).expanduser().resolve()
         if str(args.output_path).strip()
