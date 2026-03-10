@@ -719,7 +719,20 @@ export default function SankeyVertical({
         });
       });
 
-      const sampleLines: Array<{ id: string; x1: number; y1: number; x2: number; y2: number; split: SplitTag; baseStroke: string }> = [];
+      const sampleLines: Array<{
+        id: string;
+        x1: number;
+        y1: number;
+        x2: number;
+        y2: number;
+        split: SplitTag;
+        baseStroke: string;
+        fromKey: string;
+        toKey: string;
+        fromCluster: number;
+        toCluster: number;
+        focusCluster: number;
+      }> = [];
       combinedRowsWithSplit.forEach((r: any) => {
         const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
         const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
@@ -741,10 +754,41 @@ export default function SankeyVertical({
             : SANKEY_LINK_COLOR;
         const c = d3.color(base);
         const baseStroke = split === "test" ? (c ? c.darker(0.6).formatHex() : base) : base;
-        sampleLines.push({ id: sampleId, x1: s.x + NODE_W, y1, x2: t.x, y2, split, baseStroke });
+        sampleLines.push({
+          id: sampleId,
+          x1: s.x + NODE_W,
+          y1,
+          x2: t.x,
+          y2,
+          split,
+          baseStroke,
+          fromKey: String(fromKey),
+          toKey: String(toKey),
+          fromCluster: Number(r.from_cluster),
+          toCluster: Number(r.to_cluster),
+          focusCluster: Number.isFinite(Number(focusCluster)) ? Number(focusCluster) : Number.NaN,
+        });
       });
 
-      let sampleSel: d3.Selection<SVGLineElement, { id: string; x1: number; y1: number; x2: number; y2: number; split: SplitTag; baseStroke: string }, SVGGElement, unknown> | null = null;
+      let sampleSel: d3.Selection<
+        SVGLineElement,
+        {
+          id: string;
+          x1: number;
+          y1: number;
+          x2: number;
+          y2: number;
+          split: SplitTag;
+          baseStroke: string;
+          fromKey: string;
+          toKey: string;
+          fromCluster: number;
+          toCluster: number;
+          focusCluster: number;
+        },
+        SVGGElement,
+        unknown
+      > | null = null;
       if (shouldRenderPaths) {
         sampleSel = sampleGroup
           .selectAll("line")
@@ -762,7 +806,12 @@ export default function SankeyVertical({
           .attr("class", "sample-line")
           .attr("data-id", (d) => d.id)
           .attr("data-split", (d) => d.split)
-          .attr("data-base-stroke", (d) => d.baseStroke);
+          .attr("data-base-stroke", (d) => d.baseStroke)
+          .attr("data-from-key", (d) => d.fromKey)
+          .attr("data-to-key", (d) => d.toKey)
+          .attr("data-from-cluster", (d) => String(d.fromCluster))
+          .attr("data-to-cluster", (d) => String(d.toCluster))
+          .attr("data-focus-cluster", (d) => (Number.isFinite(d.focusCluster) ? String(d.focusCluster) : ""));
       }
 
       const darker = (hex: string) => {
@@ -999,7 +1048,26 @@ export default function SankeyVertical({
             ? (Array.from(samplesForActive).some((sid) => sameSampleId(sid, id)) ? 0.4 : 0)
             : 0;
       line.setAttribute("opacity", String(opacity));
-      const baseStroke = line.getAttribute("data-base-stroke") || SANKEY_LINK_COLOR;
+      const split = (line.getAttribute("data-split") || "train").toLowerCase() === "test" ? "test" : "train";
+      const fromKey = line.getAttribute("data-from-key") || "";
+      const toKey = line.getAttribute("data-to-key") || "";
+      const fromCluster = Number(line.getAttribute("data-from-cluster") || "");
+      const toCluster = Number(line.getAttribute("data-to-cluster") || "");
+      const focusCluster = Number(line.getAttribute("data-focus-cluster") || "");
+      let baseStroke = SANKEY_LINK_COLOR;
+      if (focusGroup) {
+        const cluster = Number.isFinite(focusCluster)
+          ? focusCluster
+          : (fromKey === focusGroup ? fromCluster : (toKey === focusGroup ? toCluster : Number.NaN));
+        if (Number.isFinite(cluster)) {
+          baseStroke = CLUSTER_COLORS[Math.max(0, Number(cluster)) % CLUSTER_COLORS.length];
+        }
+      }
+      if (split === "test") {
+        const c = d3.color(baseStroke);
+        baseStroke = c ? c.darker(0.6).formatHex() : baseStroke;
+      }
+      line.setAttribute("data-base-stroke", baseStroke);
       line.setAttribute("stroke", isHovered ? HIGHLIGHT_RED : baseStroke);
       line.setAttribute("stroke-width", isHovered ? "2" : "1.1");
     });
