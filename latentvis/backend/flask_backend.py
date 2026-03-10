@@ -621,13 +621,20 @@ def _load_xy_all_payload(dataset: str) -> Optional[Dict[str, object]]:
         if k in first:
             merged[k] = first[k]
     merged_cells: Dict[str, object] = {}
+    merged_cell_meta: Dict[str, object] = {}
     for payload in part_payloads:
         cells = payload.get("cells")
         if not isinstance(cells, dict):
-            continue
+            cells = {}
         for cell_key, cell_val in cells.items():
             merged_cells[str(cell_key)] = cell_val
+        cell_meta = payload.get("cell_meta")
+        if isinstance(cell_meta, dict):
+            for cell_key, meta_val in cell_meta.items():
+                merged_cell_meta[str(cell_key)] = meta_val
     merged["cells"] = merged_cells
+    if merged_cell_meta:
+        merged["cell_meta"] = merged_cell_meta
 
     with SCATTER_BUNDLE_CACHE_LOCK:
         if len(SCATTER_BUNDLE_CACHE) >= MAX_SCATTER_BUNDLE_CACHE and SCATTER_BUNDLE_CACHE:

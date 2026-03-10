@@ -79,6 +79,13 @@ def _maxdiff(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.max(np.abs(a - b)))
 
 
+def _intrinsic_rank(X: np.ndarray) -> int:
+    if X.ndim != 2 or X.shape[0] < 2:
+        return 0
+    centered = X - np.mean(X, axis=0, keepdims=True)
+    return int(np.linalg.matrix_rank(centered))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Regenerate PCA/MDS/UMAP/t-SNE scatterplots for a case directory")
     ap.add_argument("--case-dir", required=True, help="Case directory under frontend/public/data/<case>")
@@ -133,10 +140,11 @@ def main() -> int:
             random_state=args.random_state,
             n_iter=args.tsne_iters,
         )
-        # Validate: ensure methods are not identical to PCA
-        for m in ("mds", "umap", "tsne"):
-            if _maxdiff(coords["pca"], coords[m]) == 0.0:
-                raise RuntimeError(f"({epoch}, {layer}) {m} is identical to PCA (likely fallback/bug)")
+        # Single-feature / rank-1 embeddings legitimately collapse to the same coordinates.
+        if _intrinsic_rank(X) > 1:
+            for m in ("mds", "umap", "tsne"):
+                if _maxdiff(coords["pca"], coords[m]) == 0.0:
+                    raise RuntimeError(f"({epoch}, {layer}) {m} is identical to PCA (likely fallback/bug)")
         coords_by_pair[(epoch, layer)] = coords
 
     # Rewrite JSONs while preserving cluster_id from existing points
@@ -180,4 +188,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
