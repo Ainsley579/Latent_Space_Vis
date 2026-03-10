@@ -18,6 +18,27 @@ if str(_BACKEND) not in sys.path:
 PROJECT_ROOT = _BACKEND.resolve().parents[1]  # repo root (parent of latentvis)
 DATA_ROOT = PROJECT_ROOT / "latentvis" / "frontend" / "public" / "data"
 CASES = ("chemprop", "chemeleon")
+DEFAULT_LAYER_ORDER = {
+    "chemprop": [
+        "fingerprint",
+        "gnn_layer_1",
+        "gnn_layer_2",
+        "gnn_layer_3",
+        "ffn_layer_1",
+        "ffn_layer_2",
+    ],
+    "chemeleon": [
+        "fingerprint",
+        "gnn_layer_1",
+        "gnn_layer_2",
+        "gnn_layer_3",
+        "gnn_layer_4",
+        "gnn_layer_5",
+        "gnn_layer_6",
+        "ffn_layer_1",
+        "ffn_layer_2",
+    ],
+}
 
 
 def _find_assignment_csvs(case_dir: Path):
@@ -213,6 +234,12 @@ def main():
         description="Compute layer/epoch transition stats. Layer order must match all_sankey.json."
     )
     ap.add_argument(
+        "--data-root",
+        type=str,
+        default=str(DATA_ROOT),
+        help="Root directory containing dataset case folders (default: frontend/public/data).",
+    )
+    ap.add_argument(
         "--layer-order",
         type=str,
         default="",
@@ -231,15 +258,20 @@ def main():
     if args.layer_order_chemeleon:
         preferred_by_case["chemeleon"] = [s.strip() for s in args.layer_order_chemeleon.split(",") if s.strip()]
     if not preferred_by_case:
-        preferred_by_case = {"chemprop": None, "chemeleon": None}
+        preferred_by_case = {case: list(order) for case, order in DEFAULT_LAYER_ORDER.items()}
     else:
         # If only --layer-order given, use it for chemeleon too (extra layers appended by _reorder_layer_columns).
         if "chemeleon" not in preferred_by_case and "chemprop" in preferred_by_case:
             preferred_by_case["chemeleon"] = preferred_by_case["chemprop"]
+        if "chemprop" not in preferred_by_case:
+            preferred_by_case["chemprop"] = list(DEFAULT_LAYER_ORDER["chemprop"])
+        if "chemeleon" not in preferred_by_case:
+            preferred_by_case["chemeleon"] = list(DEFAULT_LAYER_ORDER["chemeleon"])
 
+    data_root = Path(args.data_root).resolve()
     for case in CASES:
         for split in ("test", "train", ""):
-            case_dir = (DATA_ROOT / case / split) if split else (DATA_ROOT / case)
+            case_dir = (data_root / case / split) if split else (data_root / case)
             if not case_dir.is_dir():
                 continue
             preferred = preferred_by_case.get(case)

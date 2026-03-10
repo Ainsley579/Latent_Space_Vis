@@ -15,15 +15,35 @@ This is intentionally generic so the same command works for other datasets
 under frontend/public/data/*.
 """
 
-from __future__ import annotations
-
 import argparse
 import csv
 import json
 import re
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+
+
+PREFERRED_LAYER_ORDER: Tuple[str, ...] = (
+    "fingerprint",
+    "gnn_layer_1",
+    "gnn_layer_2",
+    "gnn_layer_3",
+    "gnn_layer_4",
+    "gnn_layer_5",
+    "gnn_layer_6",
+    "ffn_layer_1",
+    "ffn_layer_2",
+    "emb",
+    "output_block_0",
+    "output_block_1",
+    "output_block_2",
+    "output_block_3",
+    "output_block_4",
+    "u_mlp_input",
+    "u_mlp_l1",
+    "u_mlp_l2",
+)
 
 
 def infer_layers(fieldnames: Sequence[str]) -> List[str]:
@@ -34,9 +54,28 @@ def infer_layers(fieldnames: Sequence[str]) -> List[str]:
     return layers
 
 
+def canonicalize_layers(layers: Sequence[str]) -> List[str]:
+    seen = set()
+    unique_layers: List[str] = []
+    for layer in layers:
+        norm = str(layer).strip()
+        if norm and norm not in seen:
+            unique_layers.append(norm)
+            seen.add(norm)
+
+    if not unique_layers:
+        return []
+
+    by_name = set(unique_layers)
+    ordered = [layer for layer in PREFERRED_LAYER_ORDER if layer in by_name]
+    ordered_set = set(ordered)
+    ordered.extend(layer for layer in unique_layers if layer not in ordered_set)
+    return ordered
+
+
 def reorder_layers(layers: Sequence[str], preferred: Sequence[str]) -> List[str]:
     if not preferred:
-        return list(layers)
+        return canonicalize_layers(layers)
     seen = set()
     out: List[str] = []
     layer_set = set(layers)
@@ -44,14 +83,14 @@ def reorder_layers(layers: Sequence[str], preferred: Sequence[str]) -> List[str]
         if layer in layer_set and layer not in seen:
             out.append(layer)
             seen.add(layer)
-    for layer in layers:
+    for layer in canonicalize_layers(layers):
         if layer not in seen:
             out.append(layer)
             seen.add(layer)
     return out
 
 
-def parse_int(value: str) -> int | None:
+def parse_int(value: str) -> Optional[int]:
     if value is None:
         return None
     s = str(value).strip()
@@ -362,9 +401,8 @@ def main() -> None:
 
     fieldnames, rows = load_csv(csv_path)
     layers = infer_layers(fieldnames)
-    if args.layer_order.strip():
-        preferred_layers = [s.strip() for s in args.layer_order.split(",") if s.strip()]
-        layers = reorder_layers(layers, preferred_layers)
+    preferred_layers = [s.strip() for s in args.layer_order.split(",") if s.strip()]
+    layers = reorder_layers(layers, preferred_layers)
     if len(layers) < 1:
         raise ValueError(f"No *_cluster columns found in: {csv_path}")
 
