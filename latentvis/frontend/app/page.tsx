@@ -1140,7 +1140,7 @@ export default function Home() {
     );
     try {
       const kMin = config.k == null ? 2 : config.k;
-      const kMax = config.k == null ? 15 : config.k;
+      const kMax = config.k == null ? 10 : config.k;
       const json = await submitGenerateRangeJob(
         {
           dataset,
@@ -1161,7 +1161,7 @@ export default function Home() {
       }
       setSankeyRefreshKey((k) => k + 1);
       setGenerateStatusText(
-        `Agglomerative regenerate finished (in-memory): k=${config.k == null ? "auto(2-15)" : config.k}, linkage=${config.linkage}.`
+        `Agglomerative regenerate finished (in-memory): k=${config.k == null ? "auto(2-10)" : config.k}, linkage=${config.linkage}.`
       );
     } catch (err) {
       console.error("Failed to regenerate all cells for agglomerative:", err);

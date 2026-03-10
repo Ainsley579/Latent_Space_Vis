@@ -151,7 +151,7 @@ export default function TopkNearestPanel({
 
   return (
     <div
-      className="w-full h-full p-2 box-border overflow-auto"
+      className="w-full h-full box-border overflow-auto"
       onMouseLeave={() => {
         onHoverIdChange(null);
         onSmilesPreviewEnd?.();
@@ -163,8 +163,8 @@ export default function TopkNearestPanel({
         </div>
       )}
       {rows.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 w-full min-w-0">
+        <div className="flex flex-col gap-1 px-2 pb-2">
+          <div className="sticky top-0 z-10 bg-white py-1 border-b border-zinc-200 flex items-center gap-2 w-full min-w-0">
             <div className="shrink-0 w-6" />
             <div className={"flex-1 min-w-0 grid items-center " + (hideTopk ? "grid-cols-[1fr_1fr]" : "grid-cols-[1fr_1fr_14px_5fr]")}>
               <div className="text-xs font-semibold text-zinc-700 text-center">Y Ridge</div>

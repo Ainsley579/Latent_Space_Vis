@@ -327,7 +327,7 @@ export default function SyncControlPanel({
                 value={agglomerativeK}
                 onChange={(e) => setAgglomerativeK(Number(e.target.value))}
               >
-                {Array.from({ length: 14 }, (_, i) => i + 2).map((v) => (
+                {Array.from({ length: 9 }, (_, i) => i + 2).map((v) => (
                   <option key={`agg-k-${v}`} value={v}>
                     {v}
                   </option>
