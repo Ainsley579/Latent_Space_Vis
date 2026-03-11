@@ -91,11 +91,11 @@ export default function SyncControlPanel({
   }, [minValue]);
 
   return (
-    <div className="w-full h-full bg-white flex flex-col overflow-hidden">
+    <div className="w-full bg-white flex flex-col overflow-visible">
       <div className="shrink-0 px-2 py-1 text-sm font-semibold text-zinc-700 border-b border-zinc-200">
         Control Panel
       </div>
-      <div className="flex-1 min-h-0 px-2 py-2 flex flex-col gap-2 overflow-y-auto">
+      <div className="px-2 py-2 flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
         <label className="text-[10px] text-zinc-700 shrink-0">DATASET</label>
         <select

@@ -2625,13 +2625,13 @@ export default function Home() {
           >
             <div
               className={
-                "mt-12 h-[420px] bg-white pointer-events-auto overflow-hidden transition-all duration-300 ease-out " +
+                "mt-12 bg-white transition-all duration-300 ease-out " +
                 (isControlPanelOpen
-                  ? "w-56 opacity-100 translate-x-0 border border-zinc-400 shadow-lg"
-                  : "w-0 opacity-0 -translate-x-2 border border-transparent shadow-none")
+                  ? "w-56 opacity-100 translate-x-0 border border-zinc-400 shadow-lg pointer-events-auto overflow-visible"
+                  : "w-0 opacity-0 -translate-x-2 border border-transparent shadow-none pointer-events-none overflow-hidden")
               }
             >
-              <div className={"w-56 h-full transition-opacity duration-200 " + (isControlPanelOpen ? "opacity-100" : "opacity-0")}>
+              <div className={"w-56 transition-opacity duration-200 " + (isControlPanelOpen ? "opacity-100" : "opacity-0")}>
                 <SyncControlPanel
                   dataset={selectedDataset}
                   onDatasetChange={(d) => {
