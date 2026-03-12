@@ -1754,37 +1754,25 @@ export default function Home() {
   const clusterInstanceIds = useMemo(() => {
     if (!selectedNode) return [];
 
+    const key = `${selectedNode.model}__${selectedNode.layer}__${selectedNode.cluster}`;
+    const sorted = sortedMembersByClusterKey.get(key);
+    if (sorted && sorted.length > 0) {
+      return Array.from(new Set(sorted.map((id) => String(id))));
+    }
     const ids = new Set<string>();
     activeSankeyRows.forEach((r) => {
       const fromModel = r.from_model ?? null;
       const toModel = r.to_model ?? null;
-
       const fromMatch =
         r.from_cluster === selectedNode.cluster &&
         r.from_layer === selectedNode.layer &&
         (fromModel == null || fromModel === selectedNode.model);
-
       const toMatch =
         r.to_cluster === selectedNode.cluster &&
         r.to_layer === selectedNode.layer &&
         (toModel == null || toModel === selectedNode.model);
-
-      if (fromMatch || toMatch) {
-        ids.add(String(r.real_id));
-      }
+      if (fromMatch || toMatch) ids.add(String(r.real_id));
     });
-
-    const key = `${selectedNode.model}__${selectedNode.layer}__${selectedNode.cluster}`;
-    const sorted = sortedMembersByClusterKey.get(key);
-    if (sorted && sorted.length > 0) {
-      const ordered = sorted.filter((id) => ids.size === 0 || ids.has(id));
-      if (ordered.length > 0) {
-        const orderedSet = new Set(ordered);
-        const extras = Array.from(ids).filter((id) => !orderedSet.has(id));
-        return [...ordered, ...extras];
-      }
-    }
-
     return Array.from(ids);
   }, [activeSankeyRows, selectedNode, sortedMembersByClusterKey]);
 
