@@ -487,6 +487,7 @@ export default function ScatterPlot({
           const yt = Number(d.y_true);
           const yp = Number(d.y_pred);
           const absErr = Number.isFinite(yt) && Number.isFinite(yp) ? Math.abs(yt - yp) : NaN;
+          const logDiff = Number.isFinite(absErr) ? Math.log(absErr + 1e-6) : NaN;
           const splitText = d.split ? String(d.split) : "N/A";
           tooltipMeta.html(
             [
@@ -497,6 +498,7 @@ export default function ScatterPlot({
               `<div><b>y_true:</b> ${fmtNum(yt)}</div>`,
               `<div><b>y_pred:</b> ${fmtNum(yp)}</div>`,
               `<div><b>|y_true-y_pred|:</b> ${fmtNum(absErr)}</div>`,
+              `<div><b>ln_diff:</b> ${fmtNum(logDiff)}</div>`,
             ].join("")
           );
           const smiles = getSmilesByIdRef.current?.(String(d.real_id)) ?? null;
@@ -715,7 +717,7 @@ export default function ScatterPlot({
           .map((d) => {
             const yt = Number(d.y_true);
             const yp = Number(d.y_pred);
-            return Number.isFinite(yt) && Number.isFinite(yp) ? Math.abs(yt - yp) : Number.NaN;
+            return Number.isFinite(yt) && Number.isFinite(yp) ? Math.log(Math.abs(yt - yp) + 1e-6) : Number.NaN;
           })
           .filter((v) => Number.isFinite(v));
         const yAllVals = [...yTrueVals, ...yPredVals];
@@ -728,7 +730,7 @@ export default function ScatterPlot({
           const yp = Number(d.y_pred);
           if (Number.isFinite(yt)) yTrueByIdNext[rid] = yt;
           if (Number.isFinite(yp)) yPredByIdNext[rid] = yp;
-          if (Number.isFinite(yt) && Number.isFinite(yp)) yAbsErrByIdNext[rid] = Math.abs(yt - yp);
+          if (Number.isFinite(yt) && Number.isFinite(yp)) yAbsErrByIdNext[rid] = Math.log(Math.abs(yt - yp) + 1e-6);
         });
         yTrueByIdRef.current = yTrueByIdNext;
         yPredByIdRef.current = yPredByIdNext;
@@ -949,9 +951,9 @@ export default function ScatterPlot({
             } disabled:opacity-50`}
             onClick={() => setColorModeAndRefresh("y_abs_err")}
             disabled={!yAbsErrRange}
-            title={yAbsErrRange ? "Color points by abs(y_true - y_pred)" : "y_true/y_pred not available"}
+            title={yAbsErrRange ? "Color points by ln(abs(y_true - y_pred) + 1e-6)" : "y_true/y_pred not available"}
           >
-            diff
+            log diff
           </button>
           {labelLoadError && <span className="text-[11px] text-red-600 truncate max-w-[240px]">{labelLoadError}</span>}
           <div className="inline-flex flex-col items-start leading-none">
