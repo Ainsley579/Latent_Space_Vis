@@ -16,7 +16,7 @@ type ScatterPoint = {
   y_pred?: number;
 };
 
-type ColorMode = "cluster" | "label" | "split" | "y_true" | "y_pred";
+type ColorMode = "cluster" | "label" | "split" | "y_true" | "y_pred" | "y_abs_err";
 
 type ScatterPlotProps = {
   dataPathXY: string;
@@ -84,6 +84,8 @@ export default function ScatterPlot({
   const layerKeyRef = useRef(layerKey);
   const yTrueByIdRef = useRef<Record<string, number>>({});
   const yPredByIdRef = useRef<Record<string, number>>({});
+  const yAbsErrByIdRef = useRef<Record<string, number>>({});
+  const splitByIdRef = useRef<Record<string, "train" | "test" | "both">>({});
   const [legendClusters, setLegendClusters] = useState<number[]>([]);
   const [legendClusterIds, setLegendClusterIds] = useState<Record<number, string[]>>({});
   const [colorMode, setColorMode] = useState<ColorMode>("cluster");
@@ -96,6 +98,7 @@ export default function ScatterPlot({
   const [hasSplitData, setHasSplitData] = useState(false);
   const [yTrueRange, setYTrueRange] = useState<{ min: number; max: number } | null>(null);
   const [yPredRange, setYPredRange] = useState<{ min: number; max: number } | null>(null);
+  const [yAbsErrRange, setYAbsErrRange] = useState<{ min: number; max: number } | null>(null);
   const [ySharedRange, setYSharedRange] = useState<{ min: number; max: number } | null>(null);
   const colorModeRef = useRef<ColorMode>("cluster");
 
@@ -161,6 +164,13 @@ export default function ScatterPlot({
       const t = max > min ? (v - min) / (max - min) : 0.5;
       return d3.interpolateYlGnBu(Math.max(0, Math.min(1, t)));
     }
+    if (mode === "y_abs_err") {
+      const v = Number(yAbsErrByIdRef.current[id]);
+      if (!Number.isFinite(v) || !yAbsErrRange) return "#9ca3af";
+      const { min, max } = yAbsErrRange;
+      const t = max > min ? (v - min) / (max - min) : 0.5;
+      return d3.interpolateYlOrRd(Math.max(0, Math.min(1, t)));
+    }
     return CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length];
   }
 
@@ -216,6 +226,52 @@ export default function ScatterPlot({
         return (labelBySmiles[String(smiles).trim()] ?? "") === targetLabel;
       })
       .map((d) => String(d.real_id));
+  }
+
+  function csvEscape(val: string): string {
+    const s = String(val ?? "");
+    if (s.includes(",") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  }
+
+  function downloadDatasetCsv() {
+    const splitMap = splitByIdRef.current ?? {};
+    const lines = ["real_id,smiles,split"];
+    const splitIds = Object.keys(splitMap);
+    if (splitIds.length > 0) {
+      splitIds.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+      splitIds.forEach((rid) => {
+        const split = String(splitMap[rid] ?? "").trim();
+        const smiles = String(getSmilesByIdRef.current?.(rid) ?? "");
+        lines.push([csvEscape(rid), csvEscape(smiles), csvEscape(split)].join(","));
+      });
+    } else {
+      const rows = rowsRef.current ?? [];
+      if (!rows.length) return;
+      const seen = new Set<string>();
+      rows.forEach((d) => {
+        const rid = String(d.real_id ?? "").trim();
+        if (!rid) return;
+        const split = String(d.split ?? "").trim();
+        const key = `${rid}__${split}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        const smiles = String(getSmilesByIdRef.current?.(rid) ?? "");
+        lines.push([csvEscape(rid), csvEscape(smiles), csvEscape(split)].join(","));
+      });
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const datasetName = splitMapDataset ? String(splitMapDataset).trim() : "dataset";
+    a.href = url;
+    a.download = `${datasetName}_scatter_export.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   useEffect(() => {
@@ -423,7 +479,26 @@ export default function ScatterPlot({
         .style("cursor", "pointer")
         .on("mouseover", (event, d) => {
           const token = ++hoverToken;
-          tooltipMeta.html(`<div><b>ID:</b> ${String(d.real_id)}</div>`);
+          const fmtNum = (v: unknown, digits = 5): string => {
+            const n = Number(v);
+            if (!Number.isFinite(n)) return "N/A";
+            return n.toFixed(digits);
+          };
+          const yt = Number(d.y_true);
+          const yp = Number(d.y_pred);
+          const absErr = Number.isFinite(yt) && Number.isFinite(yp) ? Math.abs(yt - yp) : NaN;
+          const splitText = d.split ? String(d.split) : "N/A";
+          tooltipMeta.html(
+            [
+              `<div><b>ID:</b> ${String(d.real_id)}</div>`,
+              `<div><b>cluster_id:</b> ${d.cluster_id}</div>`,
+              `<div><b>split:</b> ${splitText}</div>`,
+              `<div><b>x:</b> ${fmtNum(d.x)} <b>y:</b> ${fmtNum(d.y)}</div>`,
+              `<div><b>y_true:</b> ${fmtNum(yt)}</div>`,
+              `<div><b>y_pred:</b> ${fmtNum(yp)}</div>`,
+              `<div><b>|y_true-y_pred|:</b> ${fmtNum(absErr)}</div>`,
+            ].join("")
+          );
           const smiles = getSmilesByIdRef.current?.(String(d.real_id)) ?? null;
           onPointHoverIdChangeRef.current?.(String(d.real_id));
           tooltipSvgWrap.html(`<div style="width:300px;height:300px;display:flex;align-items:center;justify-content:center;color:#a1a1aa;font-size:14px;">loading</div>`);
@@ -565,6 +640,7 @@ export default function ScatterPlot({
       .then((allJson) => {
         const [xyJson, clusterJson, splitMeta, secondaryXYJson, secondaryClusterJson] = allJson;
         const splitById = splitMeta?.splitById ?? {};
+        splitByIdRef.current = splitById;
         const yTrueById = splitMeta?.yTrueById ?? {};
         const yPredById = splitMeta?.yPredById ?? {};
 
@@ -635,26 +711,38 @@ export default function ScatterPlot({
         setHasSplitData(canUseSplit);
         const yTrueVals = merged.map((d) => Number(d.y_true)).filter((v) => Number.isFinite(v));
         const yPredVals = merged.map((d) => Number(d.y_pred)).filter((v) => Number.isFinite(v));
+        const yAbsErrVals = merged
+          .map((d) => {
+            const yt = Number(d.y_true);
+            const yp = Number(d.y_pred);
+            return Number.isFinite(yt) && Number.isFinite(yp) ? Math.abs(yt - yp) : Number.NaN;
+          })
+          .filter((v) => Number.isFinite(v));
         const yAllVals = [...yTrueVals, ...yPredVals];
         const yTrueByIdNext: Record<string, number> = {};
         const yPredByIdNext: Record<string, number> = {};
+        const yAbsErrByIdNext: Record<string, number> = {};
         merged.forEach((d) => {
           const rid = String(d.real_id);
           const yt = Number(d.y_true);
           const yp = Number(d.y_pred);
           if (Number.isFinite(yt)) yTrueByIdNext[rid] = yt;
           if (Number.isFinite(yp)) yPredByIdNext[rid] = yp;
+          if (Number.isFinite(yt) && Number.isFinite(yp)) yAbsErrByIdNext[rid] = Math.abs(yt - yp);
         });
         yTrueByIdRef.current = yTrueByIdNext;
         yPredByIdRef.current = yPredByIdNext;
+        yAbsErrByIdRef.current = yAbsErrByIdNext;
         setYTrueRange(yTrueVals.length ? { min: Math.min(...yTrueVals), max: Math.max(...yTrueVals) } : null);
         setYPredRange(yPredVals.length ? { min: Math.min(...yPredVals), max: Math.max(...yPredVals) } : null);
+        setYAbsErrRange(yAbsErrVals.length ? { min: Math.min(...yAbsErrVals), max: Math.max(...yAbsErrVals) } : null);
         setYSharedRange(yAllVals.length ? { min: Math.min(...yAllVals), max: Math.max(...yAllVals) } : null);
         if (!canUseSplit && colorMode === "split") {
           setColorMode("cluster");
         }
         if (colorMode === "y_true" && yTrueVals.length === 0) setColorMode("cluster");
         if (colorMode === "y_pred" && yPredVals.length === 0) setColorMode("cluster");
+        if (colorMode === "y_abs_err" && yAbsErrVals.length === 0) setColorMode("cluster");
 
         lastRows = merged;
         rowsRef.current = merged;
@@ -758,7 +846,7 @@ export default function ScatterPlot({
           .style("pointer-events", "none");
       }
     }
-  }, [activeCluster, activeIds, highlightId, colorMode, labelById, labelBySmiles, labelColors, ySharedRange]);
+  }, [activeCluster, activeIds, highlightId, colorMode, labelById, labelBySmiles, labelColors, ySharedRange, yAbsErrRange]);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -774,7 +862,6 @@ export default function ScatterPlot({
         <div className="mt-1 flex items-center gap-1.5 flex-nowrap overflow-x-auto whitespace-nowrap">
           {projection && (
             <>
-              <span className="text-[11px] text-zinc-600">Method:</span>
               <select
                 value={projection}
                 onChange={(e) => onProjectionChange?.(e.target.value as "pca" | "mds" | "umap" | "tsne")}
@@ -855,14 +942,35 @@ export default function ScatterPlot({
           >
             y_pred
           </button>
-          {labelLoadError && <span className="text-[11px] text-red-600 truncate max-w-[240px]">{labelLoadError}</span>}
           <button
             type="button"
-            className="px-0 py-0 text-[11px] leading-4 text-blue-600 underline decoration-1 underline-offset-2 hover:text-blue-700 hover:decoration-2 transition-colors cursor-pointer"
-            onClick={() => fileInputRef.current?.click()}
+            className={`px-1.5 py-0.5 text-[11px] leading-4 rounded border ${
+              colorMode === "y_abs_err" ? "border-blue-600 text-blue-700 bg-blue-50" : "border-zinc-300 text-zinc-700 bg-white"
+            } disabled:opacity-50`}
+            onClick={() => setColorModeAndRefresh("y_abs_err")}
+            disabled={!yAbsErrRange}
+            title={yAbsErrRange ? "Color points by abs(y_true - y_pred)" : "y_true/y_pred not available"}
           >
-            upload
+            diff
           </button>
+          {labelLoadError && <span className="text-[11px] text-red-600 truncate max-w-[240px]">{labelLoadError}</span>}
+          <div className="inline-flex flex-col items-start leading-none">
+            <button
+              type="button"
+              className="px-0 py-0 text-[11px] leading-4 text-blue-600 underline decoration-1 underline-offset-2 hover:text-blue-700 hover:decoration-2 transition-colors cursor-pointer disabled:opacity-50"
+              onClick={downloadDatasetCsv}
+              title="Download current scatter dataset as CSV"
+            >
+              download
+            </button>
+            <button
+              type="button"
+              className="mt-0.5 px-0 py-0 text-[11px] leading-4 text-blue-600 underline decoration-1 underline-offset-2 hover:text-blue-700 hover:decoration-2 transition-colors cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              upload
+            </button>
+          </div>
         </div>
       </div>
       <div ref={containerRef} className="w-full flex-1 min-h-0" />
@@ -960,6 +1068,16 @@ export default function ScatterPlot({
               style={{ background: "linear-gradient(to right, #ffffd9, #081d58)" }}
             />
             <span>{ySharedRange.max.toFixed(3)}</span>
+          </div>
+        )}
+        {colorMode === "y_abs_err" && yAbsErrRange && (
+          <div className="flex items-center gap-2 min-w-max text-[11px] text-zinc-700">
+            <span>{yAbsErrRange.min.toFixed(3)}</span>
+            <div
+              className="h-2 w-28 rounded"
+              style={{ background: "linear-gradient(to right, #ffffcc, #b10026)" }}
+            />
+            <span>{yAbsErrRange.max.toFixed(3)}</span>
           </div>
         )}
       </div>
