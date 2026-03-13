@@ -1883,18 +1883,36 @@ def data_file():
     else:
         base_override: Optional[Path] = None
         if clustering_norm == "knn":
-            try:
-                knn_k = int(knn_k_raw) if knn_k_raw is not None else None
-            except (TypeError, ValueError):
-                knn_k = None
             split_norm = _normalize_split(split_for_base) or "test"
-            if knn_k is None:
-                return jsonify({"ok": False, "error": "missing_or_invalid_knn_k"}), 400
-            sweep_base = DATA_ROOT / dataset / split_norm / "sweeps" / "knn" / f"k_{knn_k}"
-            if not sweep_base.is_dir():
-                missing_target = sweep_base / section_rel / file_rel if section_rel is not None else sweep_base / file_rel
-                return jsonify({"ok": False, "error": "not_found", "path": str(missing_target)}), 404
-            base_override = sweep_base
+            base_knn = _case_dir(dataset, "knn", data_split=split_for_base)
+            candidate_knn = (base_knn / section_rel / file_rel) if section_rel is not None else (base_knn / file_rel)
+            if candidate_knn.exists():
+                base_override = base_knn
+            else:
+                try:
+                    knn_k = int(knn_k_raw) if knn_k_raw is not None else None
+                except (TypeError, ValueError):
+                    knn_k = None
+                if knn_k is None:
+                    return jsonify(
+                        {
+                            "ok": False,
+                            "error": "missing_or_invalid_knn_k",
+                            "tried_path": str(candidate_knn),
+                        }
+                    ), 400
+                sweep_base = DATA_ROOT / dataset / split_norm / "sweeps" / "knn" / f"k_{knn_k}"
+                candidate_sweep = (sweep_base / section_rel / file_rel) if section_rel is not None else (sweep_base / file_rel)
+                if not sweep_base.is_dir():
+                    return jsonify(
+                        {
+                            "ok": False,
+                            "error": "not_found",
+                            "path": str(candidate_sweep),
+                            "tried_path": str(candidate_knn),
+                        }
+                    ), 404
+                base_override = sweep_base
 
         base = base_override if base_override is not None else _case_dir(dataset, clustering, data_split=split_for_base)
         if section_rel is not None:

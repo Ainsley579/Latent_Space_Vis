@@ -70,7 +70,7 @@ export default function SyncControlPanel({
   const [maxValue, setMaxValue] = useState(10);
   const [agglomerativeKMode, setAgglomerativeKMode] = useState<"auto" | "manual">("auto");
   const [agglomerativeK, setAgglomerativeK] = useState(6);
-  const [knnKLocal, setKnnKLocal] = useState(10);
+  const [knnKLocal, setKnnKLocal] = useState(2);
   const [agglomerativeLinkage, setAgglomerativeLinkage] =
     useState<"ward" | "complete" | "average">("ward");
   const clusteringKey = String(clustering ?? "").trim().toLowerCase();
@@ -158,22 +158,6 @@ export default function SyncControlPanel({
               ))}
             </select>
           </div>
-          {isKnn ? (
-            <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
-              <label className="text-[10px] text-zinc-700 shrink-0">KNN K</label>
-              <select
-                className="h-6 w-20 px-1 text-xs border border-zinc-300 rounded bg-white"
-                value={knnK}
-                onChange={(e) => setKnnK(Number(e.target.value))}
-              >
-                {Array.from({ length: 9 }, (_, i) => i + 2).map((v) => (
-                  <option key={`knn-k-inline-${v}`} value={v}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
         </>
       )}
       {onCellBgMetricChange && cellBgMetricOptions.length > 0 && (
@@ -335,6 +319,24 @@ export default function SyncControlPanel({
               </select>
             </div>
           ) : null}
+        </>
+      ) : isKnn ? (
+        <>
+          <div className="text-[10px] text-zinc-500 text-center mb-0.5">KNN parameter</div>
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <label className="text-xs text-zinc-600 shrink-0">k</label>
+            <select
+              className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
+              value={knnK}
+              onChange={(e) => setKnnK(Number(e.target.value))}
+            >
+              {Array.from({ length: 9 }, (_, i) => i + 2).map((v) => (
+                <option key={`knn-k-${v}`} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
         </>
       ) : null}
       {!isPgmeans && !isAgglomerative && !isKnn ? (

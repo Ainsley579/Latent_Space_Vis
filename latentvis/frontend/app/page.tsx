@@ -110,7 +110,10 @@ export default function Home() {
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
   const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("agglomerative");
   const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("all");
-  const [selectedKnnK, setSelectedKnnK] = useState<number>(10);
+  // UI-selected K (does not trigger fetch until Generate is clicked)
+  const [selectedKnnK, setSelectedKnnK] = useState<number>(2);
+  // Applied K used in backend data-file requests
+  const [appliedKnnK, setAppliedKnnK] = useState<number>(2);
   const [generatedSankeyPayloads, setGeneratedSankeyPayloads] = useState<Record<string, GeneratedSankeyPayload>>({});
   const [generatedRuntimePayloads, setGeneratedRuntimePayloads] = useState<Record<string, GeneratedRuntimePayload>>({});
   const generatedSankeyPayloadsRef = useRef<Record<string, GeneratedSankeyPayload>>({});
@@ -177,7 +180,7 @@ export default function Home() {
       dataset = selectedDataset,
       clustering = selectedClustering,
       dataSplit = selectedDataSplit,
-      knnK = selectedKnnK,
+      knnK = appliedKnnK,
       section,
       file,
       datasetRoot = false,
@@ -207,7 +210,7 @@ export default function Home() {
       if (datasetRoot) p.set("dataset_root", "1");
       return `${apiBase}/data-file?${p.toString()}`;
     },
-    [apiBase, selectedDataset, selectedClustering, selectedDataSplit, selectedKnnK]
+    [apiBase, selectedDataset, selectedClustering, selectedDataSplit, appliedKnnK]
   );
   const withVersion = (url: string, version: number = sankeyRefreshKey) => {
     const sep = url.includes("?") ? "&" : "?";
@@ -1116,6 +1119,10 @@ export default function Home() {
         },
         `Generating ${clustering} [${minValue}, ${maxValue}]`
       );
+      if (clustering === "knn") {
+        // Apply K only after user explicitly clicks Generate and backend job succeeds.
+        setAppliedKnnK(minValue);
+      }
       applyGeneratedPayload(json, dataset, clustering, dataSplit);
       setSankeyRefreshKey((k: number) => k + 1);
       setGenerateStatusText("Generate finished.");
@@ -1234,7 +1241,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [datasetBase, selectedDataset, selectedClustering, selectedDataSplit, sankeyRefreshKey, generatedSankeyPayload]);
+  }, [datasetBase, selectedDataset, selectedClustering, selectedDataSplit, appliedKnnK, sankeyRefreshKey, generatedSankeyPayload]);
 
   useEffect(() => {
     if (!selectedNode) {
@@ -1265,6 +1272,7 @@ export default function Home() {
     selectedDataset,
     selectedClustering,
     selectedDataSplit,
+    appliedKnnK,
     sankeyRefreshKey,
     generatedSankeyPayloads,
   ]);
@@ -1277,7 +1285,7 @@ export default function Home() {
     return swapAxes
       ? buildVerticalPath(selectedLayer, selectedDataset, selectedClustering, "test")
       : buildSankeyModelPath(selectedModel, selectedDataset, selectedClustering, "test");
-  }, [selectedDataSplit, swapAxes, selectedLayer, selectedModel, selectedDataset, selectedClustering, dataRefreshKey, sankeyRefreshKey, generatedSankeyPayloads]);
+  }, [selectedDataSplit, swapAxes, selectedLayer, selectedModel, selectedDataset, selectedClustering, appliedKnnK, dataRefreshKey, sankeyRefreshKey, generatedSankeyPayloads]);
 
   useEffect(() => {
     const isBlobPath = typeof activeSankeyPath === "string" && activeSankeyPath.startsWith("blob:");
