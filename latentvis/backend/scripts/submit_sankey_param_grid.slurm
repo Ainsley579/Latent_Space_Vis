@@ -48,13 +48,15 @@ esac
 # For METHOD=agglomerative, optionally restrict linkage list via env:
 #   AGG_LINKAGES=complete,average  (default: ward,complete,average)
 AGG_LINKAGES_RAW="${AGG_LINKAGES:-ward,complete,average}"
+# For METHOD=knn, default to the narrower range that most often yields 3-5 clusters.
+# Override with env when needed, e.g. KNN_K_MIN=2 KNN_K_MAX=5 sbatch ...
+KNN_K_MIN="${KNN_K_MIN:-2}"
+KNN_K_MAX="${KNN_K_MAX:-4}"
+# Set FORCE_RERUN=1 to replace existing completed sweep outputs instead of skipping them.
+FORCE_RERUN="${FORCE_RERUN:-0}"
 
-if [[ -n "${SLURM_SUBMIT_DIR:-}" ]]; then
-  SCRIPT_DIR="$(cd "${SLURM_SUBMIT_DIR}" && pwd)"
-else
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-fi
-BACKEND_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/scripts"
+BACKEND_DIR="/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend"
 DATA_ROOT="${LATENTVIS_DATA_ROOT:-$BACKEND_DIR/data}"
 INPUT="/global/cfs/projectdirs/m636/nhadler/projects/esol/data/${DATASET}-embeddings.pt"
 OUT_ROOT="$DATA_ROOT/$DATASET/$SPLIT/sweeps/$METHOD"
@@ -79,7 +81,8 @@ resubmit_self() {
   fi
 }
 
-trap 'echo "[trap] Received USR1 near time limit"; resubmit_self; exit 0' USR1
+RESUBMITTED_ON_TIMEOUT=0
+trap 'if [[ "$RESUBMITTED_ON_TIMEOUT" -eq 0 ]]; then RESUBMITTED_ON_TIMEOUT=1; echo "[trap] Received USR1 near time limit"; resubmit_self; fi' USR1
 
 module load conda
 conda activate latentvis
@@ -112,9 +115,14 @@ run_one() {
   shift 2
   local out_dir="$OUT_ROOT/$tag"
 
-  if is_complete_dir "$out_dir"; then
+  if [[ "$FORCE_RERUN" != "1" ]] && is_complete_dir "$out_dir"; then
     echo "[skip] complete: $out_dir"
     return 0
+  fi
+
+  if [[ "$FORCE_RERUN" == "1" ]] && [[ -d "$out_dir" ]]; then
+    echo "[overwrite] removing existing output: $out_dir"
+    rm -rf "$out_dir"
   fi
 
   mkdir -p "$out_dir"
@@ -149,7 +157,7 @@ case "$METHOD" in
       for kmax in $(seq "$kmin" 10); do
         tag="kmin_${kmin}_kmax_${kmax}"
         params="{\"k_min\": $kmin, \"k_max\": $kmax}"
-        run_one "$tag" "$params" --clustering-method pgmeans --k-min "$kmin" --k-max "$kmax" || { resubmit_self; exit 1; }
+        run_one "$tag" "$params" --clustering-method pgmeans --k-min "$kmin" --k-max "$kmax" || exit 1
       done
     done
     ;;
@@ -175,24 +183,24 @@ case "$METHOD" in
           --clustering-method agglomerative \
           --agg-k "$k" \
           --agg-linkage "$linkage" \
-          --k-min 2 --k-max 10 || { resubmit_self; exit 1; }
+          --k-min 2 --k-max 10 || exit 1
       done
     done
     ;;
   knn)
-    for k in {2..10}; do
+    for k in $(seq "$KNN_K_MIN" "$KNN_K_MAX"); do
       tag="k_${k}"
       params="{\"k\": $k}"
       run_one "$tag" "$params" \
         --clustering-method knn \
         --knn-k "$k" \
-        --k-min 2 --k-max 10 || { resubmit_self; exit 1; }
+        --k-min 2 --k-max 10 || exit 1
     done
     ;;
   hdbscan)
     tag="default"
     params="{}"
-    run_one "$tag" "$params" --clustering-method hdbscan --k-min 2 --k-max 10 || { resubmit_self; exit 1; }
+    run_one "$tag" "$params" --clustering-method hdbscan --k-min 2 --k-max 10 || exit 1
     ;;
 esac
 

@@ -68,7 +68,7 @@ def _resolve_data_root(project_root: Path) -> Path:
 
 PROJECT_ROOT = _resolve_project_root()
 DATA_ROOT = _resolve_data_root(PROJECT_ROOT)
-DEFAULT_CASES = ("chemprop", "chemeleon")
+DEFAULT_CASES = ("chemprop", "chemeleon", "dimenet")
 DEFAULT_CLUSTERING = "pgmeans"
 ALLOWED_CLUSTERINGS = ("pgmeans", "agglomerative", "hdbscan", "knn")
 
@@ -214,9 +214,16 @@ def _ordered_models(models: Iterable[str]) -> List[str]:
         unique.append(mm)
 
     def rank(name: str) -> Tuple[int, object]:
+        lowered = name.lower()
+        if "noaug" in lowered:
+            return (0, lowered)
+        if "10conf" in lowered:
+            return (1, lowered)
+        if "100conf" in lowered:
+            return (2, lowered)
         if name.isdigit():
-            return (0, int(name))
-        return (1, name)
+            return (3, int(name))
+        return (4, name)
 
     return sorted(unique, key=rank)
 
@@ -3273,18 +3280,11 @@ def recluster_agglomerative():
     if X_flat.ndim > 2:
         X_flat = X_flat.reshape(X_flat.shape[0], -1)
 
-    id_to_smiles = {}
-    case_dir = DATA_ROOT / dataset
-    smiles_path = case_dir / "real_id_to_smiles.json"
-    if smiles_path.is_file():
-        try:
-            raw = json.loads(smiles_path.read_text(encoding="utf-8"))
-            if isinstance(raw, list):
-                id_to_smiles = {str(r["real_id"]): r["smiles"] for r in raw if isinstance(r, dict) and "real_id" in r and "smiles" in r}
-            else:
-                id_to_smiles = {str(k): v for k, v in raw.items()}
-        except Exception as e:
-            print("[flask-backend] recluster load smiles failed: %s" % e, flush=True)
+    try:
+        id_to_smiles = _load_id_to_smiles(dataset, data_split=data_split)
+    except Exception as e:
+        id_to_smiles = {}
+        print("[flask-backend] recluster load smiles failed: %s" % e, flush=True)
 
     substructures = _substructures_for_cell(
         X_flat,
