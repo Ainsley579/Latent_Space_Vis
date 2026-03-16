@@ -16,8 +16,8 @@ if str(_BACKEND) not in sys.path:
     sys.path.insert(0, str(_BACKEND))
 
 PROJECT_ROOT = _BACKEND.resolve().parents[1]  # repo root (parent of latentvis)
-DATA_ROOT = PROJECT_ROOT / "latentvis" / "frontend" / "public" / "data"
-CASES = ("chemprop", "chemeleon")
+DEFAULT_DATA_ROOT = PROJECT_ROOT / "latentvis" / "frontend" / "public" / "data"
+DEFAULT_CASES = ("chemprop", "chemeleon", "dimenet")
 
 
 def _find_assignment_csvs(case_dir: Path):
@@ -224,22 +224,38 @@ def main():
         default="",
         help="Override layer order for chemeleon only (9 layers). If set, used instead of --layer-order for chemeleon.",
     )
+    ap.add_argument(
+        "--data-root",
+        type=str,
+        default=str(DEFAULT_DATA_ROOT),
+        help="Root directory containing <case>/<split>/... data trees.",
+    )
+    ap.add_argument(
+        "--cases",
+        type=str,
+        default=",".join(DEFAULT_CASES),
+        help="Comma-separated case names to process.",
+    )
     args = ap.parse_args()
+    data_root = Path(args.data_root).expanduser().resolve()
+    cases = tuple(s.strip() for s in args.cases.split(",") if s.strip())
     preferred_by_case = {}
     if args.layer_order:
         preferred_by_case["chemprop"] = [s.strip() for s in args.layer_order.split(",") if s.strip()]
     if args.layer_order_chemeleon:
         preferred_by_case["chemeleon"] = [s.strip() for s in args.layer_order_chemeleon.split(",") if s.strip()]
     if not preferred_by_case:
-        preferred_by_case = {"chemprop": None, "chemeleon": None}
+        preferred_by_case = {case: None for case in cases}
     else:
-        # If only --layer-order given, use it for chemeleon too (extra layers appended by _reorder_layer_columns).
-        if "chemeleon" not in preferred_by_case and "chemprop" in preferred_by_case:
-            preferred_by_case["chemeleon"] = preferred_by_case["chemprop"]
+        # If only --layer-order given, use it for any unspecified case too.
+        if "chemprop" in preferred_by_case:
+            default_preferred = preferred_by_case["chemprop"]
+            for case in cases:
+                preferred_by_case.setdefault(case, default_preferred)
 
-    for case in CASES:
+    for case in cases:
         for split in ("test", "train", ""):
-            case_dir = (DATA_ROOT / case / split) if split else (DATA_ROOT / case)
+            case_dir = (data_root / case / split) if split else (data_root / case)
             if not case_dir.is_dir():
                 continue
             preferred = preferred_by_case.get(case)
