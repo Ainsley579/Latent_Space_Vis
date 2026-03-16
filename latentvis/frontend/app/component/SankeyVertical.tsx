@@ -329,6 +329,8 @@ const UNSYNC_TOP_PAD = 14;
 const UNSYNC_BOTTOM_PAD = 14;
 const MIN_LAYER_GAP = 30;
 const MIN_EPOCH_GAP = 60;
+const MAX_LAYER_GAP = 90;
+const MAX_EPOCH_GAP = 140;
 const SYNC_VERTICAL_SHIFT_RATIO = 0.5;
 
 function toShortLayerName(name: string): string {
@@ -552,10 +554,13 @@ export default function SankeyVertical({
       const unsyncedGap =
         renderOrder.length <= 1
           ? 0
-          : Math.max(
-              mode === "model" ? MIN_EPOCH_GAP : MIN_LAYER_GAP,
-              (drawW - unsyncedLeftPad - unsyncedRightPad - NODE_W) / (renderOrder.length - 1)
-            );
+          : (() => {
+              const rawGap =
+                (drawW - unsyncedLeftPad - unsyncedRightPad - NODE_W) / (renderOrder.length - 1);
+              const minGap = mode === "model" ? MIN_EPOCH_GAP : MIN_LAYER_GAP;
+              const maxGap = mode === "model" ? MAX_EPOCH_GAP : MAX_LAYER_GAP;
+              return Math.max(minGap, Math.min(maxGap, rawGap));
+            })();
 
       // Synced mode keeps alignment with 2D; unsynced mode fills available width.
       const MODEL_GAP = isSynced ? CELL_H : unsyncedGap;
