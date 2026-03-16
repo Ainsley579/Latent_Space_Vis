@@ -1,0 +1,76 @@
+{
+  "by_layer": [
+    {
+      "layer": "emb",
+      "from_epoch": "dimenet10conf",
+      "to_epoch": "dimenet_noaug",
+      "n_changed": 18,
+      "n_total": 152,
+      "pct_changed": 11.84
+    },
+    {
+      "layer": "output_block_0",
+      "from_epoch": "dimenet10conf",
+      "to_epoch": "dimenet_noaug",
+      "n_changed": 49,
+      "n_total": 152,
+      "pct_changed": 32.24
+    },
+    {
+      "layer": "output_block_1",
+      "from_epoch": "dimenet10conf",
+      "to_epoch": "dimenet_noaug",
+      "n_changed": 45,
+      "n_total": 152,
+      "pct_changed": 29.61
+    },
+    {
+      "layer": "output_block_2",
+      "from_epoch": "dimenet10conf",
+      "to_epoch": "dimenet_noaug",
+      "n_changed": 12,
+      "n_total": 152,
+      "pct_changed": 7.89
+    },
+    {
+      "layer": "output_block_3",
+      "from_epoch": "dimenet10conf",
+      "to_epoch": "dimenet_noaug",
+      "n_changed": 22,
+      "n_total": 152,
+      "pct_changed": 14.47
+    },
+    {
+      "layer": "output_block_4",
+      "from_epoch": "dimenet10conf",
+      "to_epoch": "dimenet_noaug",
+      "n_changed": 30,
+      "n_total": 152,
+      "pct_changed": 19.74
+    },
+    {
+      "layer": "u_mlp_input",
+      "from_epoch": "dimenet10conf",
+      "to_epoch": "dimenet_noaug",
+      "n_changed": 23,
+      "n_total": 152,
+      "pct_changed": 15.13
+    },
+    {
+      "layer": "u_mlp_l1",
+      "from_epoch": "dimenet10conf",
+      "to_epoch": "dimenet_noaug",
+      "n_changed": 1,
+      "n_total": 152,
+      "pct_changed": 0.66
+    },
+    {
+      "layer": "u_mlp_l2",
+      "from_epoch": "dimenet10conf",
+      "to_epoch": "dimenet_noaug",
+      "n_changed": 36,
+      "n_total": 152,
+      "pct_changed": 23.68
+    }
+  ]
+}
