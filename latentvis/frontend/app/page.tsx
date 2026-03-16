@@ -81,7 +81,7 @@ type DatasetKey = "dimenet" | "chemprop" | "chemeleon";
 type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan" | "knn";
 type DataSplitKey = "all" | "test" | "train";
 const DATASET_OPTIONS: DatasetKey[] = ["dimenet", "chemprop", "chemeleon"];
-const DATASET_OPTIONS_UI: DatasetKey[] = ["chemprop", "chemeleon"];
+const DATASET_OPTIONS_UI: DatasetKey[] = ["dimenet", "chemprop", "chemeleon"];
 const CLUSTERING_OPTIONS: Array<{ value: ClusteringKey; label: string }> = [
   { value: "pgmeans", label: "PG Means" },
   { value: "agglomerative", label: "Agglomerative" },
@@ -119,12 +119,17 @@ export default function Home() {
   const generatedSankeyPayloadsRef = useRef<Record<string, GeneratedSankeyPayload>>({});
   const preloadInFlightRef = useRef<Set<string>>(new Set());
   const generatedSankeyBlobUrlsRef = useRef<Map<string, string>>(new Map());
-  const effectiveDataSplitForFiles = (dataSplit: DataSplitKey): "test" | "train" =>
-    dataSplit === "all" ? "train" : dataSplit;
+  const effectiveDataSplitForFiles = (
+    dataSplit: DataSplitKey,
+    dataset: DatasetKey = selectedDataset
+  ): "test" | "train" => {
+    if (dataset === "dimenet") return "test";
+    return dataSplit === "all" ? "train" : dataSplit;
+  };
   const datasetRootFor = (
     dataset: DatasetKey,
     dataSplit: DataSplitKey = selectedDataSplit
-  ) => `/data/${dataset}/${effectiveDataSplitForFiles(dataSplit)}`;
+  ) => `/data/${dataset}/${effectiveDataSplitForFiles(dataSplit, dataset)}`;
   const datasetBaseFor = (
     dataset: DatasetKey,
     clustering: ClusteringKey = selectedClustering,
@@ -202,7 +207,7 @@ export default function Home() {
         "split",
         preserveAllSplit && dataSplit === "all"
           ? "all"
-          : effectiveDataSplitForFiles(dataSplit)
+          : effectiveDataSplitForFiles(dataSplit, dataset)
       );
       if (section) p.set("section", section);
       p.set("file", file);
@@ -381,6 +386,7 @@ export default function Home() {
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [selectedLayer, setSelectedLayer] = useState("fingerprint");
   const [showFfn2, setShowFfn2] = useState(false);
+  const effectiveShowFfn2 = selectedDataset === "dimenet" ? true : showFfn2;
   const [selectedModel, setSelectedModel] = useState("0");
   const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
   const [scatterPaths, setScatterPaths] = useState({
@@ -707,6 +713,11 @@ export default function Home() {
   }
 
   useEffect(() => {
+    const smilesSourcePath =
+      selectedDataset === "dimenet"
+        ? "/dimnet/real_id_to_smiles.json"
+        : "/id_smiles_y_true_y_pred.json";
+
     const normalizeJsonInto = (
       json: unknown,
       out: Record<string, string>,
@@ -754,10 +765,10 @@ export default function Home() {
       }
     };
 
-    fetch("/id_smiles_y_true_y_pred.json")
+    fetch(smilesSourcePath)
       .then(async (res) => {
         if (res.status === 404) return {};
-        if (!res.ok) throw new Error("Failed to load /id_smiles_y_true_y_pred.json");
+        if (!res.ok) throw new Error(`Failed to load ${smilesSourcePath}`);
         return res.json();
       })
       .then((primaryJson) => {
@@ -775,7 +786,7 @@ export default function Home() {
         setYTrueByRealId({});
         setYPredByRealId({});
       });
-  }, []);
+  }, [selectedDataset]);
 
   useEffect(() => {
     setSearchResultIds([]);
@@ -1251,11 +1262,11 @@ export default function Home() {
   }, [selectedNode]);
 
   useEffect(() => {
-    if (showFfn2) return;
+    if (effectiveShowFfn2) return;
     if (selectedLayer === "ffn_layer_2" || selectedLayer === "fnn_layer_2") {
       setSelectedLayer("ffn_layer_1");
     }
-  }, [showFfn2, selectedLayer]);
+  }, [effectiveShowFfn2, selectedLayer]);
 
   useEffect(() => {
     if (cellSelected || selectedNode != null) {
@@ -2056,7 +2067,7 @@ export default function Home() {
                     ? buildAllSankeyPath(selectedDataset, selectedClustering, "test")
                     : undefined
                 }
-                showFfn2={showFfn2}
+                showFfn2={effectiveShowFfn2}
                 metricsPath={withVersion(
                   buildDataFileUrl({
                     dataset: selectedDataset,
@@ -2137,7 +2148,7 @@ export default function Home() {
                     : undefined
                 }
                 mode={swapAxes ? "layer" : "model"}
-                showFfn2={showFfn2}
+                showFfn2={effectiveShowFfn2}
                 layerKey={selectedLayer}
                 modelKey={selectedModel}
                 reverseEpochOrder={reverseEpochOrder}
@@ -2185,7 +2196,7 @@ export default function Home() {
                     : undefined
                 }
                 mode={swapAxes ? "model" : "layer"}
-                showFfn2={showFfn2}
+                showFfn2={effectiveShowFfn2}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
                 reverseEpochOrder={reverseEpochOrder}
@@ -2267,7 +2278,9 @@ export default function Home() {
                     dataPathXY={scatterPaths.xy}
                     dataPathCluster={scatterPaths.cluster}
                     splitMapPath={withVersion(
-                      "/id_smiles_y_true_y_pred.json",
+                      selectedDataset === "dimenet"
+                        ? "/dimnet/real_id_to_smiles.json"
+                        : "/id_smiles_y_true_y_pred.json",
                       dataRefreshKey
                     )}
                     splitMapDataset={selectedDataset}
@@ -2645,8 +2658,10 @@ export default function Home() {
                     const next = d as DatasetKey;
                     const defaults = DATASET_DEFAULTS[next];
                     const nextClustering = selectedClustering;
-                    const nextSplit = selectedDataSplit;
+                    const nextSplit: DataSplitKey =
+                      next === "dimenet" ? "test" : selectedDataSplit;
                     setSelectedDataset(next);
+                    setSelectedDataSplit(nextSplit);
                     setSelectedModel(defaults.model);
                     setSelectedLayer(defaults.layer);
                     syncSankeyPaths(defaults.model, defaults.layer, next, nextClustering, nextSplit);
@@ -2722,8 +2737,8 @@ export default function Home() {
                   onToggleLargePreview={() => setShowLargeHoverPreview((prev) => !prev)}
                   largePreviewSize={largeHoverPreviewSize}
                   onLargePreviewSizeChange={setLargeHoverPreviewSize}
-                  showFfn2={showFfn2}
-                  onShowFfn2Change={setShowFfn2}
+                  showFfn2={effectiveShowFfn2}
+                  onShowFfn2Change={selectedDataset === "dimenet" ? undefined : setShowFfn2}
                   onGenerateRange={generateFromRange}
                   onGenerateAgglomerative={generateAgglomerative}
                   knnK={selectedKnnK}

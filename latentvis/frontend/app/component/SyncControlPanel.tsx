@@ -119,12 +119,18 @@ export default function SyncControlPanel({
           <label className="text-[10px] text-zinc-700 shrink-0">DATA SPLIT</label>
           <select
             className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
-            value={dataSplit ?? "all"}
+            value={dataset === "dimenet" ? "test" : (dataSplit ?? "all")}
             onChange={(e) => onDataSplitChange(e.target.value as "all" | "test" | "train")}
           >
-            <option value="all">train + test (default)</option>
-            <option value="test">test</option>
-            <option value="train">train</option>
+            {dataset === "dimenet" ? (
+              <option value="test">test</option>
+            ) : (
+              <>
+                <option value="all">train + test (default)</option>
+                <option value="test">test</option>
+                <option value="train">train</option>
+              </>
+            )}
           </select>
         </div>
       )}

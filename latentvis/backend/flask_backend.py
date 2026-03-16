@@ -1937,6 +1937,19 @@ def data_file():
         if req is not None:
             cell_core, projection, kind = req
             parsed = _scatter_parse_cell_from_filename(dataset, clustering, "train", target.name)
+            if parsed is None:
+                # Fallback for datasets without train split artifacts (e.g., dimenet):
+                # resolve model/layer directly from xy_all cell keys.
+                xy_payload = _load_xy_all_payload(dataset)
+                cells_xy = xy_payload.get("cells") if isinstance(xy_payload, dict) else None
+                if isinstance(cells_xy, dict):
+                    for cell_key in cells_xy.keys():
+                        if not isinstance(cell_key, str) or "__" not in cell_key:
+                            continue
+                        model_guess, layer_guess = cell_key.split("__", 1)
+                        if f"{model_guess}_{layer_guess}" == cell_core:
+                            parsed = (model_guess, layer_guess, projection, kind)
+                            break
             if parsed is not None:
                 model, layer, _proj, _kind = parsed
                 rows = _scatter_bundle_lookup_rows(
