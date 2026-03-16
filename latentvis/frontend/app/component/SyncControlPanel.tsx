@@ -22,6 +22,8 @@ type SyncControlPanelProps = {
   onToggleLargePreview: () => void;
   largePreviewSize: number;
   onLargePreviewSizeChange: (size: number) => void;
+  showFfn2?: boolean;
+  onShowFfn2Change?: (show: boolean) => void;
   onGenerateRange?: (minValue: number, maxValue: number) => void;
   onGenerateAgglomerative?: (config: {
     k: number | null;
@@ -56,6 +58,8 @@ export default function SyncControlPanel({
   onToggleLargePreview,
   largePreviewSize,
   onLargePreviewSizeChange,
+  showFfn2 = false,
+  onShowFfn2Change,
   onGenerateRange,
   onGenerateAgglomerative,
   knnK: knnKProp,
@@ -233,6 +237,29 @@ export default function SyncControlPanel({
           className="w-full h-1.5 accent-emerald-500 disabled:cursor-not-allowed"
         />
       </div>
+
+      {onShowFfn2Change && (
+        <div className="flex items-center justify-start gap-2 min-w-0 mb-2">
+          <span className="text-[10px] text-zinc-700">SHOW FFN2</span>
+          <button
+            type="button"
+            onClick={() => onShowFfn2Change(!showFfn2)}
+            className={
+              "relative inline-flex h-5 w-10 items-center rounded-full transition-colors " +
+              (showFfn2 ? "bg-emerald-500" : "bg-zinc-300")
+            }
+            aria-pressed={showFfn2}
+            title={showFfn2 ? "FFN2 visible" : "FFN2 hidden"}
+          >
+            <span
+              className={
+                "inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform " +
+                (showFfn2 ? "translate-x-6" : "translate-x-1")
+              }
+            />
+          </button>
+        </div>
+      )}
 
       {isPgmeans ? (
         <>
