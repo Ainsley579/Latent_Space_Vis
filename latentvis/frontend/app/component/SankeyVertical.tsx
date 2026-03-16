@@ -17,6 +17,20 @@ type SampleRow = {
 };
 
 type SplitTag = "train" | "test";
+const HIDDEN_LAYER = "ffn_layer_2";
+
+function normalizeLayerForVisibility(name: unknown): string {
+  const s = String(name ?? "").trim();
+  if (s === "fp") return "fingerprint";
+  if (/^fnn_layer_/.test(s)) return s.replace(/^fnn_layer_/, "ffn_layer_");
+  return s;
+}
+
+function isVisibleRow(row: SampleRow): boolean {
+  const fromLayer = normalizeLayerForVisibility(row.from_layer);
+  const toLayer = normalizeLayerForVisibility(row.to_layer);
+  return fromLayer !== HIDDEN_LAYER && toLayer !== HIDDEN_LAYER;
+}
 
 function inferSplitFromPath(path: string | undefined): SplitTag {
   const s = String(path ?? "").toLowerCase();
@@ -90,6 +104,7 @@ function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): 
 type SankeyVerticalProps = {
   dataPath?: string;
   secondaryDataPath?: string;
+  showFfn2?: boolean;
   syncTransform?: { x: number; y: number; scale: number };
   onSyncTransform?: (t: { x: number; y: number; scale: number }) => void;
   mode?: "layer" | "model";
@@ -330,6 +345,7 @@ function toShortLayerName(name: string): string {
 export default function SankeyVertical({
   dataPath = "/data/dimenet/sankey/sankey_samples.json",
   secondaryDataPath,
+  showFfn2 = false,
   syncTransform,
   onSyncTransform,
   mode = "model",
@@ -955,8 +971,10 @@ export default function SankeyVertical({
         : Promise.resolve(null),
     ])
       .then(([json, secondaryJson]: [SampleRow[], SampleRow[] | null]) => {
-        lastRows = json;
-        lastSecondaryRows = Array.isArray(secondaryJson) ? secondaryJson : null;
+        const pickRows = (rows: SampleRow[] | null) =>
+          Array.isArray(rows) ? (showFfn2 ? rows : rows.filter(isVisibleRow)) : null;
+        lastRows = pickRows(json) ?? [];
+        lastSecondaryRows = pickRows(secondaryJson);
         draw();
       })
       .catch((err) => {
@@ -990,7 +1008,7 @@ export default function SankeyVertical({
       ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataPath, secondaryDataPath, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, !!syncTransform]);
+  }, [dataPath, secondaryDataPath, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, showFfn2, !!syncTransform]);
 
   useEffect(() => {
     const container = containerRef.current;

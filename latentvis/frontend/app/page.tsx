@@ -380,6 +380,7 @@ export default function Home() {
   );
   const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [selectedLayer, setSelectedLayer] = useState("fingerprint");
+  const [showFfn2, setShowFfn2] = useState(false);
   const [selectedModel, setSelectedModel] = useState("0");
   const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
   const [scatterPaths, setScatterPaths] = useState({
@@ -1250,6 +1251,13 @@ export default function Home() {
   }, [selectedNode]);
 
   useEffect(() => {
+    if (showFfn2) return;
+    if (selectedLayer === "ffn_layer_2" || selectedLayer === "fnn_layer_2") {
+      setSelectedLayer("ffn_layer_1");
+    }
+  }, [showFfn2, selectedLayer]);
+
+  useEffect(() => {
     if (cellSelected || selectedNode != null) {
       setDetailsEverShown(true);
     }
@@ -2048,6 +2056,7 @@ export default function Home() {
                     ? buildAllSankeyPath(selectedDataset, selectedClustering, "test")
                     : undefined
                 }
+                showFfn2={showFfn2}
                 metricsPath={withVersion(
                   buildDataFileUrl({
                     dataset: selectedDataset,
@@ -2128,6 +2137,7 @@ export default function Home() {
                     : undefined
                 }
                 mode={swapAxes ? "layer" : "model"}
+                showFfn2={showFfn2}
                 layerKey={selectedLayer}
                 modelKey={selectedModel}
                 reverseEpochOrder={reverseEpochOrder}
@@ -2175,6 +2185,7 @@ export default function Home() {
                     : undefined
                 }
                 mode={swapAxes ? "model" : "layer"}
+                showFfn2={showFfn2}
                 modelKey={selectedModel}
                 layerKey={selectedLayer}
                 reverseEpochOrder={reverseEpochOrder}
@@ -2711,6 +2722,8 @@ export default function Home() {
                   onToggleLargePreview={() => setShowLargeHoverPreview((prev) => !prev)}
                   largePreviewSize={largeHoverPreviewSize}
                   onLargePreviewSizeChange={setLargeHoverPreviewSize}
+                  showFfn2={showFfn2}
+                  onShowFfn2Change={setShowFfn2}
                   onGenerateRange={generateFromRange}
                   onGenerateAgglomerative={generateAgglomerative}
                   knnK={selectedKnnK}
