@@ -471,6 +471,9 @@ export default function SankeyView({
       return transitionStatsPath;
     })();
 
+    const isDimenetCase = /\/dimenet\//.test(String(dataPath || "")) || /dataset=dimenet/.test(String(dataPath || ""));
+    const shouldHideFfn2Layer = !showFfn2 && !isDimenetCase;
+
     Promise.all([
       fetchJsonCached(dataPath),
       secondaryDataPath
@@ -492,10 +495,15 @@ export default function SankeyView({
           secondaryRawData && typeof secondaryRawData === "object"
             ? mergeSankeyDataForCombinedSplit(rawData, secondaryRawData)
             : null;
-        const data = filterHiddenLayer(
+        let data = filterHiddenLayer(
           mergedForCombined ? mergedForCombined.mergedData : rawData,
-          !showFfn2
+          shouldHideFfn2Layer
         );
+        const epochCount = Object.keys(data?.epoch || {}).length;
+        const layerCount = Object.keys(data?.layer || {}).length;
+        if (shouldHideFfn2Layer && (epochCount === 0 || layerCount === 0)) {
+          data = normalizeSankeyData(mergedForCombined ? mergedForCombined.mergedData : rawData);
+        }
         const secondaryNodeValueByCellCluster =
           mergedForCombined?.secondaryNodeValueByCellCluster ?? new Map<string, number>();
         const transitionEntriesByEpoch: Array<{
@@ -505,7 +513,7 @@ export default function SankeyView({
           pct_changed: number;
         }> = (
           Array.isArray((transitionJson as any)?.by_epoch) ? (transitionJson as any).by_epoch : []
-        ).filter((d: any) => showFfn2 || (!isHiddenLayerName(String(d?.from_layer ?? "")) && !isHiddenLayerName(String(d?.to_layer ?? ""))));
+        ).filter((d: any) => !shouldHideFfn2Layer || (!isHiddenLayerName(String(d?.from_layer ?? "")) && !isHiddenLayerName(String(d?.to_layer ?? ""))));
         const transitionEntriesByLayer: Array<{
           layer: string;
           from_epoch: string;
@@ -515,7 +523,7 @@ export default function SankeyView({
           (
             (Array.isArray((transitionJson as any)?.by_layer) ? (transitionJson as any).by_layer : null) ||
             (Array.isArray((transitionLayerJson as any)?.by_layer) ? (transitionLayerJson as any).by_layer : [])
-          ).filter((d: any) => showFfn2 || !isHiddenLayerName(String(d?.layer ?? "")));
+          ).filter((d: any) => !shouldHideFfn2Layer || !isHiddenLayerName(String(d?.layer ?? "")));
 
         const allEpochKeys: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
         const lastEpoch = allEpochKeys.length ? allEpochKeys[allEpochKeys.length - 1] : null;
