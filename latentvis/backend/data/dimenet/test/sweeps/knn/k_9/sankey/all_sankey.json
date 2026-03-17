@@ -1,0 +1,272 @@
+{
+  "epoch": {
+    "dimenet_noaug": {
+      "type": "spatial_epoch",
+      "epoch": "dimenet_noaug",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "output_block_0_C0",
+          "target_label": "output_block_1_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "output_block_1_C0",
+          "target_label": "output_block_2_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "output_block_2_C0",
+          "target_label": "output_block_3_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "output_block_3_C0",
+          "target_label": "output_block_4_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "output_block_4_C0",
+          "target_label": "u_mlp_input_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "u_mlp_input_C0",
+          "target_label": "u_mlp_l1_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        }
+      ]
+    },
+    "dimenet10conf": {
+      "type": "spatial_epoch",
+      "epoch": "dimenet10conf",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "output_block_0_C0",
+          "target_label": "output_block_1_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "output_block_1_C0",
+          "target_label": "output_block_2_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "output_block_2_C0",
+          "target_label": "output_block_3_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "output_block_3_C0",
+          "target_label": "output_block_4_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "output_block_4_C0",
+          "target_label": "u_mlp_input_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "u_mlp_input_C0",
+          "target_label": "u_mlp_l1_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 1,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        }
+      ]
+    }
+  },
+  "layer": {
+    "emb": {
+      "type": "spatial_layer",
+      "layer": "emb",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 0,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        }
+      ]
+    },
+    "output_block_0": {
+      "type": "spatial_layer",
+      "layer": "output_block_0",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 0,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        }
+      ]
+    },
+    "output_block_1": {
+      "type": "spatial_layer",
+      "layer": "output_block_1",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 0,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        }
+      ]
+    },
+    "output_block_2": {
+      "type": "spatial_layer",
+      "layer": "output_block_2",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 0,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        }
+      ]
+    },
+    "output_block_3": {
+      "type": "spatial_layer",
+      "layer": "output_block_3",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 0,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        }
+      ]
+    },
+    "output_block_4": {
+      "type": "spatial_layer",
+      "layer": "output_block_4",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 0,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        }
+      ]
+    },
+    "u_mlp_input": {
+      "type": "spatial_layer",
+      "layer": "u_mlp_input",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 0,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        }
+      ]
+    },
+    "u_mlp_l1": {
+      "type": "spatial_layer",
+      "layer": "u_mlp_l1",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 0,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        }
+      ]
+    },
+    "u_mlp_l2": {
+      "type": "spatial_layer",
+      "layer": "u_mlp_l2",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 0,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 152,
+          "pct_of_source": 100.0
+        }
+      ]
+    }
+  }
+}
