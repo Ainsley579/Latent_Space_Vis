@@ -715,7 +715,7 @@ export default function Home() {
   useEffect(() => {
     const smilesSourcePath =
       selectedDataset === "dimenet"
-        ? "/dimnet/real_id_to_smiles.json"
+        ? "/dimnet/id_smiles_y_true_y_pred.json"
         : "/id_smiles_y_true_y_pred.json";
 
     const normalizeJsonInto = (
@@ -2279,7 +2279,7 @@ export default function Home() {
                     dataPathCluster={scatterPaths.cluster}
                     splitMapPath={withVersion(
                       selectedDataset === "dimenet"
-                        ? "/dimnet/real_id_to_smiles.json"
+                        ? "/dimnet/id_smiles_y_true_y_pred.json"
                         : "/id_smiles_y_true_y_pred.json",
                       dataRefreshKey
                     )}

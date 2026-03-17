@@ -2819,7 +2819,8 @@ def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[s
             if sp in ("train", "test"):
                 out[f"{sp}::{rid_s}"] = smi_s
 
-    # DimeNet special-case: prefer frontend/public/dimnet/real_id_to_smiles.json directly.
+    # DimeNet special-case: prefer frontend/public/dimnet/id_smiles_y_true_y_pred.json,
+    # then fallback to frontend/public/dimnet/real_id_to_smiles.json.
     # This avoids accidentally loading shared chemprop/chemeleon metadata first.
     if dataset == "dimenet":
         frontend_dir_candidates = [
@@ -2828,37 +2829,30 @@ def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[s
         ]
         for base_dir in frontend_dir_candidates:
             for ds_name in ("dimnet", "dimenet"):
-                p = base_dir / ds_name / "real_id_to_smiles.json"
-                if not p.is_file():
-                    continue
-                try:
-                    raw = json.loads(p.read_text(encoding="utf-8"))
-                except Exception:
-                    continue
-                if isinstance(raw, dict):
-                    for k, v in raw.items():
-                        rid_s = str(k)
-                        smi_s = str(v)
-                        out[rid_s] = smi_s
-                        for split in splits:
-                            out[f"{split}::{rid_s}"] = smi_s
-                    if out:
-                        return out
-                if isinstance(raw, list):
-                    for row in raw:
-                        if not isinstance(row, dict):
-                            continue
-                        rid = row.get("real_id")
-                        smi = row.get("smiles")
-                        if rid is None or smi is None:
-                            continue
-                        rid_s = str(rid)
-                        smi_s = str(smi)
-                        out[rid_s] = smi_s
-                        for split in splits:
-                            out[f"{split}::{rid_s}"] = smi_s
-                    if out:
-                        return out
+                candidates = [
+                    base_dir / ds_name / "id_smiles_y_true_y_pred.json",
+                    base_dir / ds_name / "real_id_to_smiles.json",
+                ]
+                for p in candidates:
+                    if not p.is_file():
+                        continue
+                    try:
+                        raw = json.loads(p.read_text(encoding="utf-8"))
+                    except Exception:
+                        continue
+                    if isinstance(raw, list):
+                        merge_from_meta_list(raw, expect_dataset="dimenet")
+                        if out:
+                            return out
+                    if isinstance(raw, dict):
+                        for k, v in raw.items():
+                            rid_s = str(k)
+                            smi_s = str(v)
+                            out[rid_s] = smi_s
+                            for split in splits:
+                                out[f"{split}::{rid_s}"] = smi_s
+                        if out:
+                            return out
 
     # Preferred source: shared metadata file under frontend/public.
     # User requirement: always use this file for SMILES when available.
