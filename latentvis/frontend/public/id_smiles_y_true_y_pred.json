@@ -9022,5 +9022,2285 @@
     "y_true": -4.89,
     "y_pred": -4.016587257385254,
     "split": "val"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "0",
+    "real_id": "0",
+    "smiles": "CC1=CC(C)=C(OP2OC3=C(C=CC=C3)C4=C(C=CC=C4)O2)C(C5=C(OP6OC7=C(C=CC=C7)C8=C(C=CC=C8)O6)C(C)=CC(C)=C5OP9OC(C=CC=C%10)=C%10C(C=CC=C%11)=C%11O9)=C1OP%12OC(C=CC=C%13)=C%13C(C=CC=C%14)=C%14O%12",
+    "y_true": 2.41,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.4482674598693848,
+      "dimenet10conf": 2.4984652996063232
+    },
+    "y_pred": 2.4984652996063232,
+    "y_pred_noaug": 2.4482674598693848,
+    "y_pred_dimenet10conf": 2.4984652996063232,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "1",
+    "real_id": "1",
+    "smiles": "CCC1=CC(CC)=C(OP2OC3=C(C=CC=C3)C4=C(C=CC=C4)O2)C(C5=C(OP6OC7=C(C=CC=C7)C8=C(C=CC=C8)O6)C(CC)=CC(CC)=C5OP9OC(C=CC=C%10)=C%10C(C=CC=C%11)=C%11O9)=C1OP%12OC(C=CC=C%13)=C%13C(C=CC=C%14)=C%14O%12",
+    "y_true": 1.8,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.188972234725952,
+      "dimenet10conf": 2.4846913814544678
+    },
+    "y_pred": 2.4846913814544678,
+    "y_pred_noaug": 2.188972234725952,
+    "y_pred_dimenet10conf": 2.4846913814544678,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "2",
+    "real_id": "2",
+    "smiles": "C1(OP2OC(C=CC=C3)=C3C(C=CC=C4)=C4O2)=C(C5=CC=CC=C5)C=C(C6=CC=CC=C6)C(OP7OC8=C(C=CC=C8)C9=C(C=CC=C9)O7)=C1C%10=C(OP%11OC(C=CC=C%12)=C%12C(C=CC=C%13)=C%13O%11)C(C%14=CC=CC=C%14)=CC(C%15=CC=CC=C%15)=C%10OP%16OC%17=C(C=CC=C%17)C%18=C(C=CC=C%18)O%16",
+    "y_true": 1.542,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.9261360168457031,
+      "dimenet10conf": 2.1164395809173584
+    },
+    "y_pred": 2.1164395809173584,
+    "y_pred_noaug": 1.9261360168457031,
+    "y_pred_dimenet10conf": 2.1164395809173584,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "3",
+    "real_id": "3",
+    "smiles": "CC(C=C1)=CC=C1C2=CC(C3=CC=C(C)C=C3)=C(OP(OC4=CC=CC=C45)OC6=C5C=CC=C6)C(C7=C(OP8OC9=CC=CC=C9C(C=CC=C%10)=C%10O8)C(C%11=CC=C(C)C=C%11)=CC(C%12=CC=C(C)C=C%12)=C7OP(OC%13=CC=CC=C%13%14)OC%15=C%14C=CC=C%15)=C2OP%16OC%17=CC=CC=C%17C(C=CC=C%18)=C%18O%16",
+    "y_true": 1.542,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.6703256368637085,
+      "dimenet10conf": 2.266566514968872
+    },
+    "y_pred": 2.266566514968872,
+    "y_pred_noaug": 1.6703256368637085,
+    "y_pred_dimenet10conf": 2.266566514968872,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "4",
+    "real_id": "4",
+    "smiles": "CC1(C)C2=CC=CC(P(C3=CC(/N=C(C)/N(C)C)=CC=C3)C4=CC(/N=C(C)/N(C)C)=CC=C4)=C2OC5=C1C=CC=C5P(C6=CC(/N=C(C)\\N(C)C)=CC=C6)C7=CC=CC(/N=C(C)/N(C)C)=C7",
+    "y_true": 2.203,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.6650179624557495,
+      "dimenet10conf": 1.538427472114563
+    },
+    "y_pred": 1.538427472114563,
+    "y_pred_noaug": 0.6650179624557495,
+    "y_pred_dimenet10conf": 1.538427472114563,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "5",
+    "real_id": "5",
+    "smiles": "FC(F)(F)C(C=C1)=CC=C1N(CP(C2=CC=CC=C2)C3=CC=CC=C3)CP(C4=CC=CC=C4)C5=CC=CC=C5",
+    "y_true": 0.268,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.12289782613515854,
+      "dimenet10conf": 0.26848071813583374
+    },
+    "y_pred": 0.26848071813583374,
+    "y_pred_noaug": 0.12289782613515854,
+    "y_pred_dimenet10conf": 0.26848071813583374,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "6",
+    "real_id": "6",
+    "smiles": "CN(C)C(C=C1)=CC=C1N(CP(C2=CC=CC=C2)C3=CC=CC=C3)CP(C4=CC=CC=C4)C5=CC=CC=C5",
+    "y_true": 0.411,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": -0.0018851682543754578,
+      "dimenet10conf": 0.13933700323104858
+    },
+    "y_pred": 0.13933700323104858,
+    "y_pred_noaug": -0.0018851682543754578,
+    "y_pred_dimenet10conf": 0.13933700323104858,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "7",
+    "real_id": "7",
+    "smiles": "C=1C=CC(=CC1)P(C=2C=CC=CC2)CCCP(C=3C=CC=CC3)C=4C=CC=CC4",
+    "y_true": 0.351,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.15090185403823853,
+      "dimenet10conf": 0.3003459870815277
+    },
+    "y_pred": 0.3003459870815277,
+    "y_pred_noaug": 0.15090185403823853,
+    "y_pred_dimenet10conf": 0.3003459870815277,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "8",
+    "real_id": "8",
+    "smiles": "CC1(C)C2=CC=CC(P(C3=CC=CC=C3)C4=CC=CC=C4)=C2OC5=C1C=CC=C5P(C6=CC=CC=C6)C7=CC=CC=C7",
+    "y_true": 2.648,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.6706264019012451,
+      "dimenet10conf": 1.6978405714035034
+    },
+    "y_pred": 1.6978405714035034,
+    "y_pred_noaug": 1.6706264019012451,
+    "y_pred_dimenet10conf": 1.6978405714035034,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "9",
+    "real_id": "9",
+    "smiles": "CC(C=C1)=CC2=C1OC3=C(C=C(C)C=C3)P2C4=CC=CC5=C4OC(C(P6C7=C(C=CC(C)=C7)OC8=C6C=C(C)C=C8)=CC=C9)=C9C5(C)C",
+    "y_true": 2.439,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.8725377321243286,
+      "dimenet10conf": 1.9896403551101685
+    },
+    "y_pred": 1.9896403551101685,
+    "y_pred_noaug": 1.8725377321243286,
+    "y_pred_dimenet10conf": 1.9896403551101685,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "10",
+    "real_id": "10",
+    "smiles": "CC1(C)C2=CC(C)=CC(P3C4=CC(CCC(C)(C)C)=CC=C4OC5=C3C=C(CCC(C)(C)C)C=C5)=C2OC6=C1C=C(C)C=C6P(C7=CC(CCC(C)(C)C)=CC=C7O8)C9=C8C=CC(CCC(C)(C)C)=C9",
+    "y_true": 1.714,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.1432111263275146,
+      "dimenet10conf": 2.0230276584625244
+    },
+    "y_pred": 2.0230276584625244,
+    "y_pred_noaug": 2.1432111263275146,
+    "y_pred_dimenet10conf": 2.0230276584625244,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "11",
+    "real_id": "11",
+    "smiles": "O1C2=CC=C(C=C2P(C3=CC(=CC=C13)CCCCCC)C4=CC(=CC5=C4OC=6C(=CC(=CC6C5(C)C)C)P7C8=CC(=CC=C8OC9=CC=C(C=C97)CCCCCC)CCCCCC)C)CCCCCC",
+    "y_true": 2.066,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.4668399095535278,
+      "dimenet10conf": 1.2979553937911987
+    },
+    "y_pred": 1.2979553937911987,
+    "y_pred_noaug": 1.4668399095535278,
+    "y_pred_dimenet10conf": 1.2979553937911987,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "12",
+    "real_id": "12",
+    "smiles": "O1C2=CC=C(C=C2P(C3=CC(=CC=C13)C)C4=CC(=CC5=C4OC=6C(=CC(=CC6C5(C)C)C(C)C)P7C8=CC(=CC=C8OC9=CC=C(C=C97)C)C)C(C)C)C",
+    "y_true": 2.439,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.6652673482894897,
+      "dimenet10conf": 1.8574211597442627
+    },
+    "y_pred": 1.8574211597442627,
+    "y_pred_noaug": 1.6652673482894897,
+    "y_pred_dimenet10conf": 1.8574211597442627,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "13",
+    "real_id": "13",
+    "smiles": "O1C2=CC=C(C=C2P(C3=CC(=CC=C13)C)C4=CC(=CC5=C4OC=6C(=CC(=CC6C5(C)C)C(C)CC)P7C8=CC(=CC=C8OC9=CC=C(C=C97)C)C)C(C)CC)C",
+    "y_true": 2.439,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.887417197227478,
+      "dimenet10conf": 2.0863113403320312
+    },
+    "y_pred": 2.0863113403320312,
+    "y_pred_noaug": 1.887417197227478,
+    "y_pred_dimenet10conf": 2.0863113403320312,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "14",
+    "real_id": "14",
+    "smiles": "CC1(C)C2=C(C(P3C4=C(C=CC=C4)OC5=C3C=CC=C5)=CC(C(C)(C)C)=C2)OC6=C1C=C(C(C)(C)C)C=C6P7C(C=CC=C8)=C8OC9=C7C=CC=C9",
+    "y_true": 3.225,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.8787195682525635,
+      "dimenet10conf": 2.6509931087493896
+    },
+    "y_pred": 2.6509931087493896,
+    "y_pred_noaug": 1.8787195682525635,
+    "y_pred_dimenet10conf": 2.6509931087493896,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "15",
+    "real_id": "15",
+    "smiles": "CC1(C)C2=CC(CCC(C)(C)C)=CC(P3C4=CC(C)=CC=C4OC5=C3C=C(C)C=C5)=C2OC6=C1C=C(CCC(C)(C)C)C=C6P(C7=CC(C)=CC=C7O8)C9=C8C=CC(C)=C9",
+    "y_true": 2.731,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.157511591911316,
+      "dimenet10conf": 1.2962937355041504
+    },
+    "y_pred": 1.2962937355041504,
+    "y_pred_noaug": 1.157511591911316,
+    "y_pred_dimenet10conf": 1.2962937355041504,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "16",
+    "real_id": "16",
+    "smiles": "CC1(C)C2=CC(CCC(C)(C)C)=CC(P3C4=CC(CCC(C)(C)C)=CC=C4OC5=C3C=C(CCC(C)(C)C)C=C5)=C2OC6=C1C=C(CCC(C)(C)C)C=C6P(C7=CC(CCC(C)(C)C)=CC=C7O8)C9=C8C=CC(CCC(C)(C)C)=C9",
+    "y_true": 2.23,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.6551388502120972,
+      "dimenet10conf": 2.161663055419922
+    },
+    "y_pred": 2.161663055419922,
+    "y_pred_noaug": 1.6551388502120972,
+    "y_pred_dimenet10conf": 2.161663055419922,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "17",
+    "real_id": "17",
+    "smiles": "CCCCCCC1=CC2=C(OC3=CC=C(CCCCCC)C=C3P2C2=CC(CCC(C)(C)C)=CC3=C2OC2=C(C=C(CCC(C)(C)C)C=C2C3(C)C)P2C3=CC(CCCCCC)=CC=C3OC3=C2C=C(CCCCCC)C=C3)C=C1",
+    "y_true": 2.23,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.9064448475837708,
+      "dimenet10conf": 1.1009758710861206
+    },
+    "y_pred": 1.1009758710861206,
+    "y_pred_noaug": 0.9064448475837708,
+    "y_pred_dimenet10conf": 1.1009758710861206,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "18",
+    "real_id": "18",
+    "smiles": "CC1(C)C2=CC(CCCCCC)=CC(P3C4=CC(C)=CC=C4OC5=C3C=C(C)C=C5)=C2OC6=C1C=C(CCCCCC)C=C6P(C7=CC(C)=CC=C7O8)C9=C8C=CC(C)=C9",
+    "y_true": 2.439,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.2144443988800049,
+      "dimenet10conf": 1.2846633195877075
+    },
+    "y_pred": 1.2846633195877075,
+    "y_pred_noaug": 1.2144443988800049,
+    "y_pred_dimenet10conf": 1.2846633195877075,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "19",
+    "real_id": "19",
+    "smiles": "CC1(C)C2=CC(C(C)(CC(C)(C)C)C)=CC(P3C4=CC(C)=CC=C4OC5=C3C=C(C)C=C5)=C2OC6=C1C=C(C(C)(CC(C)(C)C)C)C=C6P(C7=CC(C)=CC=C7O8)C9=C8C=CC(C)=C9",
+    "y_true": 2.23,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.9529520273208618,
+      "dimenet10conf": 2.0031282901763916
+    },
+    "y_pred": 2.0031282901763916,
+    "y_pred_noaug": 1.9529520273208618,
+    "y_pred_dimenet10conf": 2.0031282901763916,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "20",
+    "real_id": "20",
+    "smiles": "COC(C(P(C1=CC=CC=C1)C2=CC=CC=C2)=C3)=CC=C3C(C)(C)C4=CC(P(C5=CC=CC=C5)C6=CC=CC=C6)=C(OC)C=C4",
+    "y_true": 0.723,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.59846031665802,
+      "dimenet10conf": 1.039537787437439
+    },
+    "y_pred": 1.039537787437439,
+    "y_pred_noaug": 0.59846031665802,
+    "y_pred_dimenet10conf": 1.039537787437439,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "21",
+    "real_id": "21",
+    "smiles": "COC(C(P(C1=CC=CC=C1)C2=CC=CC=C2)=C3)=CC=C3C4(C5=CC(P(C6=CC=CC=C6)C7=CC=CC=C7)=C(OC)C=C5)CCCCC4",
+    "y_true": 0.747,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.6321563720703125,
+      "dimenet10conf": 0.6369287967681885
+    },
+    "y_pred": 0.6369287967681885,
+    "y_pred_noaug": 0.6321563720703125,
+    "y_pred_dimenet10conf": 0.6369287967681885,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "22",
+    "real_id": "22",
+    "smiles": "COC(C(P(C1=CC=CC=C1)C2=CC=CC=C2)=C3)=CC=C3[Si](C)(C)C4=CC(P(C5=CC=CC=C5)C6=CC=CC=C6)=C(OC)C=C4",
+    "y_true": 0.747,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.6967047452926636,
+      "dimenet10conf": 0.7573572397232056
+    },
+    "y_pred": 0.7573572397232056,
+    "y_pred_noaug": 0.6967047452926636,
+    "y_pred_dimenet10conf": 0.7573572397232056,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "23",
+    "real_id": "23",
+    "smiles": "O(C1=CC=C(C=C1P(C=2C=CC=CC2)C=3C=CC=CC3)C=4C=CC=CC4C=5C=CC(OC)=C(C5)P(C=6C=CC=CC6)C=7C=CC=CC7)C",
+    "y_true": 0.771,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.5789173245429993,
+      "dimenet10conf": 0.61223304271698
+    },
+    "y_pred": 0.61223304271698,
+    "y_pred_noaug": 0.5789173245429993,
+    "y_pred_dimenet10conf": 0.61223304271698,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "24",
+    "real_id": "24",
+    "smiles": "CC1(C)C2=CC(C)=CC(OP(OC3=C(C(C)(C)C)C=C(C(C)(C)C)C=C34)OC5=C4C=C(C(C)(C)C)C=C5C(C)(C)C)=C2OC6=C1C=C(C)C=C6OP7OC8=C(C(C)(C)C)C=C(C(C)(C)C)C=C8C(C=C(C(C)(C)C)C=C9C(C)(C)C)=C9O7",
+    "y_true": 1.324,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.9882073402404785,
+      "dimenet10conf": 0.8456592559814453
+    },
+    "y_pred": 0.8456592559814453,
+    "y_pred_noaug": 0.9882073402404785,
+    "y_pred_dimenet10conf": 0.8456592559814453,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "25",
+    "real_id": "25",
+    "smiles": "CC(C)(C)C1=CC(C2C3=CC=CC(C4C5=CC(C(C)(C)C)=CC=C5OP(OC6=CC=C(C(C)(C)C)C=C64)OC7=CC=C(C(C)(C)C)C=C7)=C3)=C(OP(OC8=CC=C(C(C)(C)C)C=C8)OC9=CC=C(C(C)(C)C)C=C29)C=C1",
+    "y_true": 1.071,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.6527584195137024,
+      "dimenet10conf": 1.477018117904663
+    },
+    "y_pred": 1.477018117904663,
+    "y_pred_noaug": 0.6527584195137024,
+    "y_pred_dimenet10conf": 1.477018117904663,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "26",
+    "real_id": "26",
+    "smiles": "CC(C)(C)C1=CC(C2C3=CC=CC(C4C5=CC(C(C)(C)C)=CC=C5OP(OC6=CC=C(C(C)(C)C)C=C64)OC7=CC=C(OC)C=C7C(C)(C)C)=C3)=C(OP(OC8=C(C(C)(C)C)C=C(OC)C=C8)OC9=CC=C(C(C)(C)C)C=C29)C=C1",
+    "y_true": 0.697,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.6986127495765686,
+      "dimenet10conf": 0.6856300830841064
+    },
+    "y_pred": 0.6856300830841064,
+    "y_pred_noaug": 0.6986127495765686,
+    "y_pred_dimenet10conf": 0.6856300830841064,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "27",
+    "real_id": "27",
+    "smiles": "CC(C)(C)C1=CC(C2C3=CC=CC(C4C5=CC(C(C)(C)C)=CC=C5OP(OC6=CC=C(C(C)(C)C)C=C64)OC7=C(C)C=CC=C7C(C)(C)C)=C3)=C(OP(OC8=C(C(C)(C)C)C=CC=C8C)OC9=CC=C(C(C)(C)C)C=C29)C=C1",
+    "y_true": 0.697,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.6869267821311951,
+      "dimenet10conf": 1.3167729377746582
+    },
+    "y_pred": 1.3167729377746582,
+    "y_pred_noaug": 0.6869267821311951,
+    "y_pred_dimenet10conf": 1.3167729377746582,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "28",
+    "real_id": "28",
+    "smiles": "P(N1C=CC=C1)(N2C=CC=C2)OC3=CC=CC(OP(N4C=CC=C4)N5C=CC=C5)=C3C6=CC=CC=C6OP(N7C=CC=C7)N8C=CC=C8",
+    "y_true": 0.973,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.9652109146118164,
+      "dimenet10conf": 3.347790479660034
+    },
+    "y_pred": 3.347790479660034,
+    "y_pred_noaug": 2.9652109146118164,
+    "y_pred_dimenet10conf": 3.347790479660034,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "29",
+    "real_id": "29",
+    "smiles": "CC1(C)C2=CC(C(C)(C)C)=CC(P(C3=CC=CC=C3)C4=CC=CC=C4)=C2OC5=C1C=C(C(C)(C)C)C=C5P(C6=CC=CC=C6)C7=CC=CC=C7",
+    "y_true": 2.656,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.5312402248382568,
+      "dimenet10conf": 2.1457157135009766
+    },
+    "y_pred": 2.1457157135009766,
+    "y_pred_noaug": 1.5312402248382568,
+    "y_pred_dimenet10conf": 2.1457157135009766,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "30",
+    "real_id": "30",
+    "smiles": "CC1(C)C2=CC(C(C)(C)C)=CC(P(C3=CC(C)=CC=C3O4)C5=C4C=CC(C)=C5)=C2OC6=C1C=C(C(C)(C)C)C=C6P(C7=CC=CC=C7)C8=CC=CC=C8",
+    "y_true": 2.41,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.9168000221252441,
+      "dimenet10conf": 2.044684648513794
+    },
+    "y_pred": 2.044684648513794,
+    "y_pred_noaug": 1.9168000221252441,
+    "y_pred_dimenet10conf": 2.044684648513794,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "31",
+    "real_id": "31",
+    "smiles": "CC(C=C1P(C2=CC=CC=C2)C3=CC=CC=C3)=CC=C1OC4=CC=C(C)C=C4P(C5=CC=CC=C5)C6=CC=CC=C6",
+    "y_true": 1.385,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.3483847379684448,
+      "dimenet10conf": 1.5648761987686157
+    },
+    "y_pred": 1.5648761987686157,
+    "y_pred_noaug": 1.3483847379684448,
+    "y_pred_dimenet10conf": 1.5648761987686157,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "32",
+    "real_id": "32",
+    "smiles": "CC(C=C1P(C2=CC=CC=C2)C3=CC=CC=C3)=CC=C1OC4=CC=C(C)C=C4P5C6=CC(C)=CC=C6OC7=C5C=C(C)C=C7",
+    "y_true": 0.816,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.9023569226264954,
+      "dimenet10conf": 0.7166712284088135
+    },
+    "y_pred": 0.7166712284088135,
+    "y_pred_noaug": 0.9023569226264954,
+    "y_pred_dimenet10conf": 0.7166712284088135,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "33",
+    "real_id": "33",
+    "smiles": "CC(C=C1P(C2=CC(C)=CC=C2O3)C4=C3C=CC(C)=C4)=CC=C1OC5=CC=C(C)C=C5P6C7=CC(C)=CC=C7OC8=C6C=C(C)C=C8",
+    "y_true": 0.771,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.189806342124939,
+      "dimenet10conf": 1.0012351274490356
+    },
+    "y_pred": 1.0012351274490356,
+    "y_pred_noaug": 1.189806342124939,
+    "y_pred_dimenet10conf": 1.0012351274490356,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "34",
+    "real_id": "34",
+    "smiles": "CC(C=C1)=CC2=C1OC3=CC=C(C)C=C3P2C4=C(P(C(C=C(C)C=C5)=C5O6)C7=C6C=CC(C)=C7)C=CC=C4",
+    "y_true": -0.358,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.25063878297805786,
+      "dimenet10conf": 0.345271497964859
+    },
+    "y_pred": 0.345271497964859,
+    "y_pred_noaug": 0.25063878297805786,
+    "y_pred_dimenet10conf": 0.345271497964859,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "35",
+    "real_id": "35",
+    "smiles": "CC1=CC(SC2=CC(C)=CC(P(C3=CC=C(N(C)C)C=C3)C4=CC=C(N(C)C)C=C4)=C2O5)=C5C(P(C6=CC=C(N(C)C)C=C6)C7=CC=C(N(C)C)C=C7)=C1",
+    "y_true": 2.665,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.132964015007019,
+      "dimenet10conf": 1.877091407775879
+    },
+    "y_pred": 1.877091407775879,
+    "y_pred_noaug": 1.132964015007019,
+    "y_pred_dimenet10conf": 1.877091407775879,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "36",
+    "real_id": "36",
+    "smiles": "CC1=CC(SC2=CC(C)=CC(P(C3=CC=C(OC)C=C3)C4=CC=C(OC)C=C4)=C2O5)=C5C(P(C6=CC=C(OC)C=C6)C7=CC=C(OC)C=C7)=C1",
+    "y_true": 2.532,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.9678322076797485,
+      "dimenet10conf": 2.2825927734375
+    },
+    "y_pred": 2.2825927734375,
+    "y_pred_noaug": 1.9678322076797485,
+    "y_pred_dimenet10conf": 2.2825927734375,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "37",
+    "real_id": "37",
+    "smiles": "O1C2=C(SC=3C=C(C=C(C13)P(C4=CC=C(C=C4)C)C5=CC=C(C=C5)C)C)C=C(C=C2P(C6=CC=C(C=C6)C)C7=CC=C(C=C7)C)C",
+    "y_true": 2.662,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.8746205568313599,
+      "dimenet10conf": 2.501859188079834
+    },
+    "y_pred": 2.501859188079834,
+    "y_pred_noaug": 1.8746205568313599,
+    "y_pred_dimenet10conf": 2.501859188079834,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "38",
+    "real_id": "38",
+    "smiles": "O1C2=C(SC=3C=C(C=C(C13)P(C=4C=CC=CC4)C=5C=CC=CC5)C)C=C(C=C2P(C=6C=CC=CC6)C=7C=CC=CC7)C",
+    "y_true": 2.745,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.858886957168579,
+      "dimenet10conf": 2.2477269172668457
+    },
+    "y_pred": 2.2477269172668457,
+    "y_pred_noaug": 1.858886957168579,
+    "y_pred_dimenet10conf": 2.2477269172668457,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "39",
+    "real_id": "39",
+    "smiles": "CC1=CC(SC2=CC(C)=CC(P(C3=CC=C(F)C=C3)C4=CC=C(F)C=C4)=C2O5)=C5C(P(C6=CC=C(F)C=C6)C7=CC=C(F)C=C7)=C1",
+    "y_true": 2.766,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.130511999130249,
+      "dimenet10conf": 2.434969663619995
+    },
+    "y_pred": 2.434969663619995,
+    "y_pred_noaug": 2.130511999130249,
+    "y_pred_dimenet10conf": 2.434969663619995,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "40",
+    "real_id": "40",
+    "smiles": "CC1=CC(SC2=CC(C)=CC(P(C3=CC=C(C(F)(F)F)C=C3)C4=CC=C(C(F)(F)F)C=C4)=C2O5)=C5C(P(C6=CC=C(C(F)(F)F)C=C6)C7=CC=C(C(F)(F)F)C=C7)=C1",
+    "y_true": 3.13,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.047593355178833,
+      "dimenet10conf": 2.4315593242645264
+    },
+    "y_pred": 2.4315593242645264,
+    "y_pred_noaug": 2.047593355178833,
+    "y_pred_dimenet10conf": 2.4315593242645264,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "41",
+    "real_id": "41",
+    "smiles": "O(C=1C=CC=CC1P(C=2C=CC=CC2)C=3C=CC=CC3)C=4C=CC=CC4P(C=5C=CC=CC5)C=6C=CC=CC6",
+    "y_true": 1.463,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.4609227180480957,
+      "dimenet10conf": 1.6716095209121704
+    },
+    "y_pred": 1.6716095209121704,
+    "y_pred_noaug": 1.4609227180480957,
+    "y_pred_dimenet10conf": 1.6716095209121704,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "42",
+    "real_id": "42",
+    "smiles": "O1C=2C(=CC=CC2[Si](C=3C=CC=C(C13)P(C=4C=CC=CC4)C=5C=CC=CC5)(C)C)P(C=6C=CC=CC6)C=7C=CC=CC7",
+    "y_true": 2.212,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.6220101118087769,
+      "dimenet10conf": 2.0834453105926514
+    },
+    "y_pred": 2.0834453105926514,
+    "y_pred_noaug": 1.6220101118087769,
+    "y_pred_dimenet10conf": 2.0834453105926514,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "43",
+    "real_id": "43",
+    "smiles": "C1(P(C2=CC=CC=C2)C3=CC=CC=C3)=C(OC4=C(P(C5=CC=CC=C5)C6=CC=CC=C6)C=CC=C47)C7=CC=C1",
+    "y_true": 0.762,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.5024588108062744,
+      "dimenet10conf": 1.1702396869659424
+    },
+    "y_pred": 1.1702396869659424,
+    "y_pred_noaug": 1.5024588108062744,
+    "y_pred_dimenet10conf": 1.1702396869659424,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "44",
+    "real_id": "44",
+    "smiles": "C1(C2=C(CP(C3=CC=CC=C3)C4=CC=CC=C4)C=CC=C2)=CC=CC=C1CP(C5=CC=CC=C5)C6=CC=CC=C6",
+    "y_true": 2.529,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.3214852809906006,
+      "dimenet10conf": 2.3994522094726562
+    },
+    "y_pred": 2.3994522094726562,
+    "y_pred_noaug": 1.3214852809906006,
+    "y_pred_dimenet10conf": 2.3994522094726562,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "45",
+    "real_id": "45",
+    "smiles": "P(OCCCOP(OC1=CC=CC=C12)OC3=C2C=CC=C3)(OC4=CC=CC=C45)OC6=C5C=CC=C6",
+    "y_true": 0.553,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.4898625314235687,
+      "dimenet10conf": 0.8223661184310913
+    },
+    "y_pred": 0.8223661184310913,
+    "y_pred_noaug": 0.4898625314235687,
+    "y_pred_dimenet10conf": 0.8223661184310913,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "46",
+    "real_id": "46",
+    "smiles": "CC(C)(C)C(C=C1C(C)(C)C)=CC2=C1OP(OC3=C(C(C)(C)C)C=C(C(C)(C)C)C=C32)OC(C=CC=C4)=C4C5=CC=CC=C5OP6OC7=C(C(C)(C)C)C=C(C(C)(C)C)C=C7C(C=C(C(C)(C)C)C=C8C(C)(C)C)=C8O6",
+    "y_true": 0.128,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.5774965286254883,
+      "dimenet10conf": 1.311837077140808
+    },
+    "y_pred": 1.311837077140808,
+    "y_pred_noaug": 0.5774965286254883,
+    "y_pred_dimenet10conf": 1.311837077140808,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "47",
+    "real_id": "47",
+    "smiles": "P1(OC2=C3C(CCC4(CCC5=C(C(OP6OC7=CC=CC=C7C(C=CC=C8)=C8O6)=CC=C5)O4)O3)=CC=C2)OC9=CC=CC=C9C(C=CC=C%10)=C%10O1",
+    "y_true": 3.271,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.6913809776306152,
+      "dimenet10conf": 3.0731372833251953
+    },
+    "y_pred": 3.0731372833251953,
+    "y_pred_noaug": 2.6913809776306152,
+    "y_pred_dimenet10conf": 3.0731372833251953,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "48",
+    "real_id": "48",
+    "smiles": "ClC1=CC=C(CCC2(CCC3=C(C(OP4OC5=CC=CC=C5C(C=CC=C6)=C6O4)=C(Cl)C=C3)O2)O7)C7=C1OP8OC9=CC=CC=C9C(C=CC=C%10)=C%10O8",
+    "y_true": 3.056,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.8035521507263184,
+      "dimenet10conf": 3.0841243267059326
+    },
+    "y_pred": 3.0841243267059326,
+    "y_pred_noaug": 2.8035521507263184,
+    "y_pred_dimenet10conf": 3.0841243267059326,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "49",
+    "real_id": "49",
+    "smiles": "CC(C1=CC(OP2OC3=CC=CC=C3C(C=CC=C4)=C4O2)=C5C(CCC6(CCC7=C(C(OP8OC9=CC=CC=C9C(C=CC=C%10)=C%10O8)=CC(C(C)(C)C)=C7)O6)O5)=C1)(C)C",
+    "y_true": 3.023,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.551368474960327,
+      "dimenet10conf": 2.7982211112976074
+    },
+    "y_pred": 2.7982211112976074,
+    "y_pred_noaug": 2.551368474960327,
+    "y_pred_dimenet10conf": 2.7982211112976074,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "50",
+    "real_id": "50",
+    "smiles": "FC(C=C1)=CC2=C1OP(OC3=CC=C(F)C=C32)OC4=CC=CC5=C4OC6(CC5)CCC7=CC=CC(OP8OC9=CC=C(F)C=C9C(C=C(F)C=C%10)=C%10O8)=C7O6",
+    "y_true": 3.153,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.562694787979126,
+      "dimenet10conf": 2.89862060546875
+    },
+    "y_pred": 2.89862060546875,
+    "y_pred_noaug": 2.562694787979126,
+    "y_pred_dimenet10conf": 2.89862060546875,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "51",
+    "real_id": "51",
+    "smiles": "COC(C=C1)=CC2=C1OP(OC3=CC=C(OC)C=C32)OC4=CC=CC5=C4OC6(CC5)CCC7=CC=CC(OP8OC9=CC=C(OC)C=C9C(C=C(OC)C=C%10)=C%10O8)=C7O6",
+    "y_true": 3.001,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.5722272396087646,
+      "dimenet10conf": 3.009279251098633
+    },
+    "y_pred": 3.009279251098633,
+    "y_pred_noaug": 2.5722272396087646,
+    "y_pred_dimenet10conf": 3.009279251098633,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "52",
+    "real_id": "52",
+    "smiles": "P1(OC2=C3C(C[C@@H](CCC4)[C@@]5([C@@H]4CC6=C(C(OP7OC8=CC=CC=C8C(C=CC=C9)=C9O7)=CC=C6)O5)O3)=CC=C2)OC%10=CC=CC=C%10C(C=CC=C%11)=C%11O1",
+    "y_true": 1.73,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.416546106338501,
+      "dimenet10conf": 2.3270516395568848
+    },
+    "y_pred": 2.3270516395568848,
+    "y_pred_noaug": 2.416546106338501,
+    "y_pred_dimenet10conf": 2.3270516395568848,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "53",
+    "real_id": "53",
+    "smiles": "CC1(C)C2=CC(C(C)(C)C)=CC(P3C(C=CC=C4)=C4C5=C3C=CC=C5)=C2OC6=C1C=C(C(C)(C)C)C=C6P7C8=C(C=CC=C8)C9=C7C=CC=C9",
+    "y_true": 2.9,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.094569683074951,
+      "dimenet10conf": 2.5584301948547363
+    },
+    "y_pred": 2.5584301948547363,
+    "y_pred_noaug": 2.094569683074951,
+    "y_pred_dimenet10conf": 2.5584301948547363,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "54",
+    "real_id": "54",
+    "smiles": "CC1(C)C2=CC(C(C)(C)C)=CC(P3C(C4=CC=CC=C4)=C(C5=CC=CC=C5)C(C6=CC=CC=C6)=C3C7=CC=CC=C7)=C2OC8=C1C=C(C(C)(C)C)C=C8P(C(C9=CC=CC=C9)=C%10C%11=CC=CC=C%11)C(C%12=CC=CC=C%12)=C%10C%13=CC=CC=C%13",
+    "y_true": 0.918,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.265824556350708,
+      "dimenet10conf": 0.4689319431781769
+    },
+    "y_pred": 0.4689319431781769,
+    "y_pred_noaug": 1.265824556350708,
+    "y_pred_dimenet10conf": 0.4689319431781769,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "55",
+    "real_id": "55",
+    "smiles": "CC(C)(C)C1=CC=C(OC2=C(P3C(C=CC=C4)=C4OC5=C3C=CC=C5)C=C(C(C)(C)C)C=C2)C(P6C(C=CC=C7)=C7OC8=C6C=CC=C8)=C1",
+    "y_true": 0.671,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.999769926071167,
+      "dimenet10conf": 1.3493071794509888
+    },
+    "y_pred": 1.3493071794509888,
+    "y_pred_noaug": 0.999769926071167,
+    "y_pred_dimenet10conf": 1.3493071794509888,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "56",
+    "real_id": "56",
+    "smiles": "CC(C1=CC(C(C)(C)C)=C(OP2OC3=C(C(C)(C)C)C=C(C(C)(C)C)C=C3C(C=C(C(C)(C)C)C=C4C(C)(C)C)=C4O2)C(C5=C(OP(OC6=CC=CC=C6)OC7=CC=CC=C7)C(C(C)(C)C)=CC(C(C)(C)C)=C5)=C1)(C)C",
+    "y_true": 2.04,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.40003839135169983,
+      "dimenet10conf": 1.725022315979004
+    },
+    "y_pred": 1.725022315979004,
+    "y_pred_noaug": 0.40003839135169983,
+    "y_pred_dimenet10conf": 1.725022315979004,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "57",
+    "real_id": "57",
+    "smiles": "COC(C=C1)=CC=C1OP(OC2=CC=C(OC)C=C2)OC(C(C(C)(C)C)=CC(C(C)(C)C)=C3)=C3C4=CC(C(C)(C)C)=CC(C(C)(C)C)=C4OP5OC6=C(C(C)(C)C)C=C(C(C)(C)C)C=C6C(C=C(C(C)(C)C)C=C7C(C)(C)C)=C7O5",
+    "y_true": 2.23,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.8447453379631042,
+      "dimenet10conf": 1.8916090726852417
+    },
+    "y_pred": 1.8916090726852417,
+    "y_pred_noaug": 0.8447453379631042,
+    "y_pred_dimenet10conf": 1.8916090726852417,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "58",
+    "real_id": "58",
+    "smiles": "CC(C1=CC(C(C)(C)C)=C(OP2OC3=C(C(C)(C)C)C=C(C(C)(C)C)C=C3C(C=C(C(C)(C)C)C=C4C(C)(C)C)=C4O2)C(C5=C(OP(OC6=CC=C(C7=CC=CC=C7)C=C6)OC8=CC=C(C9=CC=CC=C9)C=C8)C(C(C)(C)C)=CC(C(C)(C)C)=C5)=C1)(C)C",
+    "y_true": 2.066,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.741073489189148,
+      "dimenet10conf": 1.735276222229004
+    },
+    "y_pred": 1.735276222229004,
+    "y_pred_noaug": 0.741073489189148,
+    "y_pred_dimenet10conf": 1.735276222229004,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "59",
+    "real_id": "59",
+    "smiles": "COC1=CC(C(C)(C)C)=C(OP2OC3=C(C(C)(C)C)C=C(OC)C=C3C(C=C(OC)C=C4C(C)(C)C)=C4O2)C(C5=C(OP(OC6=CC=CC=C6)OC7=CC=CC=C7)C(C(C)(C)C)=CC(OC)=C5)=C1",
+    "y_true": 2.723,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.9808685183525085,
+      "dimenet10conf": 2.0622003078460693
+    },
+    "y_pred": 2.0622003078460693,
+    "y_pred_noaug": 0.9808685183525085,
+    "y_pred_dimenet10conf": 2.0622003078460693,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "60",
+    "real_id": "60",
+    "smiles": "CC(C1=CC(C(C)(C)C)=C2C(C3=C(OP(OCCOP4OC(C(C(C)(C)C)=CC(C(C)(C)C)=C5)=C5C6=CC(C(C)(C)C)=CC(C(C)(C)C)=C6O4)O2)C(C(C)(C)C)=CC(C(C)(C)C)=C3)=C1)(C)C",
+    "y_true": 0.33,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.353563129901886,
+      "dimenet10conf": 0.13370461761951447
+    },
+    "y_pred": 0.13370461761951447,
+    "y_pred_noaug": 0.353563129901886,
+    "y_pred_dimenet10conf": 0.13370461761951447,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "61",
+    "real_id": "61",
+    "smiles": "CC(C1=CC(C(C)(C)C)=C2C(C3=C(OP(OCCCOP4OC(C(C(C)(C)C)=CC(C(C)(C)C)=C5)=C5C6=CC(C(C)(C)C)=CC(C(C)(C)C)=C6O4)O2)C(C(C)(C)C)=CC(C(C)(C)C)=C3)=C1)(C)C",
+    "y_true": 0.553,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.332119345664978,
+      "dimenet10conf": -0.05445672571659088
+    },
+    "y_pred": -0.05445672571659088,
+    "y_pred_noaug": 0.332119345664978,
+    "y_pred_dimenet10conf": -0.05445672571659088,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "62",
+    "real_id": "62",
+    "smiles": "C1(P(C2=CC=CC=C2)C3=CC=CC=C3)=C4C(N(CC5=CC=CC=C5)C6=C(O4)C(P(C7=CC=CC=C7)C8=CC=CC=C8)=CC=C6)=CC=C1",
+    "y_true": 2.754,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.462929129600525,
+      "dimenet10conf": 1.8128340244293213
+    },
+    "y_pred": 1.8128340244293213,
+    "y_pred_noaug": 1.462929129600525,
+    "y_pred_dimenet10conf": 1.8128340244293213,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "63",
+    "real_id": "63",
+    "smiles": "C1(P(C2=CC=CC=C2)C3=CC=CC=C3)=C4C(NC5=C(O4)C(P(C6=CC=CC=C6)C7=CC=CC=C7)=CC=C5)=CC=C1",
+    "y_true": 2.975,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.9655767679214478,
+      "dimenet10conf": 2.5344936847686768
+    },
+    "y_pred": 2.5344936847686768,
+    "y_pred_noaug": 1.9655767679214478,
+    "y_pred_dimenet10conf": 2.5344936847686768,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "64",
+    "real_id": "64",
+    "smiles": "FC(F)(F)C1=CC(P(C2=CC(C(F)(F)F)=CC(C(F)(F)F)=C2)CC(C=CC=C3)=C3C4=CC=CC=C4CP(C5=CC(C(F)(F)F)=CC(C(F)(F)F)=C5)C6=CC(C(F)(F)F)=CC(C(F)(F)F)=C6)=CC(C(F)(F)F)=C1",
+    "y_true": 2.956,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.2096948623657227,
+      "dimenet10conf": 2.4705071449279785
+    },
+    "y_pred": 2.4705071449279785,
+    "y_pred_noaug": 1.2096948623657227,
+    "y_pred_dimenet10conf": 2.4705071449279785,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "65",
+    "real_id": "65",
+    "smiles": "[H][C@]1(CP(C2=CC=CC=C2)C3=CC=CC=C3)[C@@](CP(C4=CC=CC=C4)C5=CC=CC=C5)([H])C1",
+    "y_true": 1.532,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.6576526165008545,
+      "dimenet10conf": 1.8619319200515747
+    },
+    "y_pred": 1.8619319200515747,
+    "y_pred_noaug": 0.6576526165008545,
+    "y_pred_dimenet10conf": 1.8619319200515747,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "66",
+    "real_id": "66",
+    "smiles": "P(C1=CC=CC=C1)(C2=CC=CC=C2)CCP(C3=CC=CC=C3)C4=CC=CC=C4",
+    "y_true": 0.587,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.17217350006103516,
+      "dimenet10conf": 0.7307177782058716
+    },
+    "y_pred": 0.7307177782058716,
+    "y_pred_noaug": 0.17217350006103516,
+    "y_pred_dimenet10conf": 0.7307177782058716,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "67",
+    "real_id": "67",
+    "smiles": "FC(F)(F)C1=CC(=CC(=C1)C(F)(F)F)P(C=2C=C(C=C(C2)C(F)(F)F)C(F)(F)F)CCP(C=3C=C(C=C(C3)C(F)(F)F)C(F)(F)F)C=4C=C(C=C(C4)C(F)(F)F)C(F)(F)F",
+    "y_true": 0.161,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.2645131051540375,
+      "dimenet10conf": 0.3495430052280426
+    },
+    "y_pred": 0.3495430052280426,
+    "y_pred_noaug": 0.2645131051540375,
+    "y_pred_dimenet10conf": 0.3495430052280426,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "68",
+    "real_id": "68",
+    "smiles": "CC(C=CC=C1)=C1P(C2=C(C)C=CC=C2)CCP(C3=CC=CC=C3C)C4=CC=CC=C4C",
+    "y_true": 0.675,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.3551121950149536,
+      "dimenet10conf": 0.6424938440322876
+    },
+    "y_pred": 0.6424938440322876,
+    "y_pred_noaug": 0.3551121950149536,
+    "y_pred_dimenet10conf": 0.6424938440322876,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "69",
+    "real_id": "69",
+    "smiles": "FC(F)(F)C1=CC(P(C2=CC(C(F)(F)F)=CC(C(F)(F)F)=C2)CCP(C3=C(C)C=CC=C3)C4=C(C)C=CC=C4)=CC(C(F)(F)F)=C1",
+    "y_true": 0.736,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.16695398092269897,
+      "dimenet10conf": 0.8617429733276367
+    },
+    "y_pred": 0.8617429733276367,
+    "y_pred_noaug": 0.16695398092269897,
+    "y_pred_dimenet10conf": 0.8617429733276367,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "70",
+    "real_id": "70",
+    "smiles": "CC1=CC=CC=C1P(C2=CC=CC=C2C)CCP(C3=C(C(F)(F)F)C=CC=C3)C4=C(C(F)(F)F)C=CC=C4",
+    "y_true": 0.825,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.27488866448402405,
+      "dimenet10conf": 0.5720807909965515
+    },
+    "y_pred": 0.5720807909965515,
+    "y_pred_noaug": 0.27488866448402405,
+    "y_pred_dimenet10conf": 0.5720807909965515,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "71",
+    "real_id": "71",
+    "smiles": "CC1(C)O[C@H](CP(C2=CC=CC=C2)C3=CC=CC=C3)[C@@H](CP(C4=CC=CC=C4)C5=CC=CC=C5)O1",
+    "y_true": 1.306,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.9997778534889221,
+      "dimenet10conf": 1.5017722845077515
+    },
+    "y_pred": 1.5017722845077515,
+    "y_pred_noaug": 0.9997778534889221,
+    "y_pred_dimenet10conf": 1.5017722845077515,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "72",
+    "real_id": "72",
+    "smiles": "[H][C@]1(CP(C2=CC=CC=C2)C3=CC=CC=C3)[C@H](C4)C[C@](CP(C5=CC=CC=C5)C6=CC=CC=C6)([H])[C@H]4C1",
+    "y_true": 0.65,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.6017908453941345,
+      "dimenet10conf": 1.0051847696304321
+    },
+    "y_pred": 1.0051847696304321,
+    "y_pred_noaug": 0.6017908453941345,
+    "y_pred_dimenet10conf": 1.0051847696304321,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "73",
+    "real_id": "73",
+    "smiles": "CC1(C)C2C(C(P(OC3=C(C(C)(C)C)C=CC=C3)OC4=C(C(C)(C)C)C=CC=C4)=CC=C2)OC5=C(P(OC6=CC=CC=C6C(C)(C)C)OC7=CC=CC=C7C(C)(C)C)C=CC=C51",
+    "y_true": 1.534,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.9821100234985352,
+      "dimenet10conf": 0.7003083229064941
+    },
+    "y_pred": 0.7003083229064941,
+    "y_pred_noaug": 0.9821100234985352,
+    "y_pred_dimenet10conf": 0.7003083229064941,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "74",
+    "real_id": "74",
+    "smiles": "CC1(C)C2C(C(P(OC3=CC(C(C)(C)C)=CC(C(C)(C)C)=C3)OC4=CC(C(C)(C)C)=CC(C(C)(C)C)=C4)=CC=C2)OC5=C(P(OC6=CC(C(C)(C)C)=CC(C(C)(C)C)=C6)OC7=CC(C(C)(C)C)=CC(C(C)(C)C)=C7)C=CC=C51",
+    "y_true": 1.335,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.3149968385696411,
+      "dimenet10conf": 1.0252121686935425
+    },
+    "y_pred": 1.0252121686935425,
+    "y_pred_noaug": 0.3149968385696411,
+    "y_pred_dimenet10conf": 1.0252121686935425,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "75",
+    "real_id": "75",
+    "smiles": "CC1=CC(P(OC2=CC(C(C)(C)C)=CC(C(C)(C)C)=C2)OC3=CC(C(C)(C)C)=CC(C(C)(C)C)=C3)=C(OC(C(P(OC4=CC(C(C)(C)C)=CC(C(C)(C)C)=C4)OC5=CC(C(C)(C)C)=CC(C(C)(C)C)=C5)=CC(C)=C6)C6S7)C7=C1",
+    "y_true": 1.432,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.9955118298530579,
+      "dimenet10conf": 1.444632887840271
+    },
+    "y_pred": 1.444632887840271,
+    "y_pred_noaug": 0.9955118298530579,
+    "y_pred_dimenet10conf": 1.444632887840271,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "76",
+    "real_id": "76",
+    "smiles": "CC1(C2C(OC3=C(C=CC=C31)P(OC4=C5C=C(C=C4C(C)(C)C)C(C)(C)C)OC6=C5C=C(C=C6C(C)(C)C)C(C)(C)C)C(P(OC7=C(C=C(C=C7C8=CC(C(C)(C)C)=C9)C(C)(C)C)C(C)(C)C)OC8=C9C(C)(C)C)=CC=C2)C",
+    "y_true": 1.405,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.6681710481643677,
+      "dimenet10conf": 0.8296270370483398
+    },
+    "y_pred": 0.8296270370483398,
+    "y_pred_noaug": 0.6681710481643677,
+    "y_pred_dimenet10conf": 0.8296270370483398,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "77",
+    "real_id": "77",
+    "smiles": "CC1(C2C(OC3=C(C=CC=C31)P(OC4=C5C=C(C=C4C(C)(C)C)OC)OC6=C5C=C(C=C6C(C)(C)C)OC)C(P(OC7=C(C=C(C=C7C8=CC(OC)=C9)OC)C(C)(C)C)OC8=C9C(C)(C)C)=CC=C2)C",
+    "y_true": 1.101,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.9613333344459534,
+      "dimenet10conf": 0.6468706130981445
+    },
+    "y_pred": 0.6468706130981445,
+    "y_pred_noaug": 0.9613333344459534,
+    "y_pred_dimenet10conf": 0.6468706130981445,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "78",
+    "real_id": "78",
+    "smiles": "CC(C)(C)C(C=C(C=C1C2=CC(OC)=C3)OC)=C1OP(OC2=C3C(C)(C)C)C4=CC(C)=CC5SC6=CC(C)=CC(P(OC7=C8C=C(C=C7C(C)(C)C)OC)OC9=C8C=C(C=C9C(C)(C)C)OC)=C6OC54",
+    "y_true": 1.143,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.0588716268539429,
+      "dimenet10conf": 0.36794576048851013
+    },
+    "y_pred": 0.36794576048851013,
+    "y_pred_noaug": 1.0588716268539429,
+    "y_pred_dimenet10conf": 0.36794576048851013,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "79",
+    "real_id": "79",
+    "smiles": "CC(C=CC=C1)=C1P(C2=C(C)C=CC=C2)C3=C(OC4=C(P(C5=CC=CC=C5C)C6=CC=CC=C6C)C=CC=C4)C=CC=C3",
+    "y_true": 0.236,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.0101486444473267,
+      "dimenet10conf": 0.6064974069595337
+    },
+    "y_pred": 0.6064974069595337,
+    "y_pred_noaug": 1.0101486444473267,
+    "y_pred_dimenet10conf": 0.6064974069595337,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "80",
+    "real_id": "80",
+    "smiles": "C=1C=CC(=CC1)P(NC2=CC=C3C=CC=CC3=C2C4=C(C=CC=5C=CC=CC54)NP(C=6C=CC=CC6)C=7C=CC=CC7)C=8C=CC=CC8",
+    "y_true": 0.45,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.7696232795715332,
+      "dimenet10conf": 0.7951363325119019
+    },
+    "y_pred": 0.7951363325119019,
+    "y_pred_noaug": 0.7696232795715332,
+    "y_pred_dimenet10conf": 0.7951363325119019,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "81",
+    "real_id": "81",
+    "smiles": "COC1=CC(P(C2=CC=CC=C2)C3=CC=CC=C3)=C(C4=C(OC)C=C(OC)C=C4P(C5=CC=CC=C5)C6=CC=CC=C6)C(OC)=C1",
+    "y_true": 0.236,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.4167974889278412,
+      "dimenet10conf": 0.8082151412963867
+    },
+    "y_pred": 0.8082151412963867,
+    "y_pred_noaug": 0.4167974889278412,
+    "y_pred_dimenet10conf": 0.8082151412963867,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "82",
+    "real_id": "82",
+    "smiles": "C12=CC(P(C3=CC=CC=C3)C4=CC=CC=C4)=C(CCC5=CC(P(C6=CC=CC=C6)C7=CC=CC=C7)=C(CC2)C=C5)C=C1",
+    "y_true": 0.553,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.6885018944740295,
+      "dimenet10conf": 0.7334874868392944
+    },
+    "y_pred": 0.7334874868392944,
+    "y_pred_noaug": 0.6885018944740295,
+    "y_pred_dimenet10conf": 0.7334874868392944,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "83",
+    "real_id": "83",
+    "smiles": "COC1=CC(OC)=CC(P(C2=CC(C(F)(F)F)=CC(C(F)(F)F)=C2)C3=CC(C(F)(F)F)=CC(C(F)(F)F)=C3)=[C@@]1[C@@]4=C(OC)C=C(OC)C=C4P(C5=CC(C(F)(F)F)=CC(C(F)(F)F)=C5)C6=CC(C(F)(F)F)=CC(C(F)(F)F)=C6",
+    "y_true": 0.723,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.47141045331954956,
+      "dimenet10conf": 0.7723720073699951
+    },
+    "y_pred": 0.7723720073699951,
+    "y_pred_noaug": 0.47141045331954956,
+    "y_pred_dimenet10conf": 0.7723720073699951,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "84",
+    "real_id": "84",
+    "smiles": "CC(C1=CC(P(C2=CC(C(C)(C)C)=C(OC)C(C(C)(C)C)=C2)C3=[C@@]([C@@]4=C(OCO5)C5=CC=C4P(C6=CC(C(C)(C)C)=C(OC)C(C(C)(C)C)=C6)C7=CC(C(C)(C)C)=C(OC)C(C(C)(C)C)=C7)C(OCO8)=C8C=C3)=CC(C(C)(C)C)=C1OC)(C)C",
+    "y_true": -0.157,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.11747591197490692,
+      "dimenet10conf": 0.3276083469390869
+    },
+    "y_pred": 0.3276083469390869,
+    "y_pred_noaug": 0.11747591197490692,
+    "y_pred_dimenet10conf": 0.3276083469390869,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "85",
+    "real_id": "85",
+    "smiles": "CC(C=C1)=CC2=C1OC3=C(C=C(C)C=C3)P2C4=CC=CC5=C4OC(C(P6C7=C(C=CC(C)=C7)OC8=C6C=C(C)C=C8)=CC=C9)=C9CC5",
+    "y_true": 1.196,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.224157452583313,
+      "dimenet10conf": 0.9855842590332031
+    },
+    "y_pred": 0.9855842590332031,
+    "y_pred_noaug": 1.224157452583313,
+    "y_pred_dimenet10conf": 0.9855842590332031,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "86",
+    "real_id": "86",
+    "smiles": "CC(C=C1)=CC2=C1OC3=C(C=C(C)C=C3)P2C4=CC(C(C)(C)C)=CC5=C4OC(C(P6C7=C(C=CC(C)=C7)OC8=C6C=C(C)C=C8)=CC(C(C)(C)C)=C9)=C9[Si]5(C)C",
+    "y_true": 1.852,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.5644428730010986,
+      "dimenet10conf": 1.6323299407958984
+    },
+    "y_pred": 1.6323299407958984,
+    "y_pred_noaug": 1.5644428730010986,
+    "y_pred_dimenet10conf": 1.6323299407958984,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "87",
+    "real_id": "87",
+    "smiles": "CC(C=C1)=CC2=C1OC3=C(C=C(C)C=C3)P2C4=CC=CC5=C4OC(C(P6C7=C(C=CC(C)=C7)OC8=C6C=C(C)C=C8)=CC=C9)=C9/C5=C(C)/C",
+    "y_true": 2.2,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.781915307044983,
+      "dimenet10conf": 1.9673855304718018
+    },
+    "y_pred": 1.9673855304718018,
+    "y_pred_noaug": 1.781915307044983,
+    "y_pred_dimenet10conf": 1.9673855304718018,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "88",
+    "real_id": "88",
+    "smiles": "CC(C=C1)=CC2=C1OC3=C(C=C(C)C=C3)P2C4=CC=CC5=C4OC6=C7C5=CC=CC7=CC=C6P8C9=C(C=CC(C)=C9)OC%10=C8C=C(C)C=C%10",
+    "y_true": 2.387,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.0399935245513916,
+      "dimenet10conf": 2.218935012817383
+    },
+    "y_pred": 2.218935012817383,
+    "y_pred_noaug": 2.0399935245513916,
+    "y_pred_dimenet10conf": 2.218935012817383,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "89",
+    "real_id": "89",
+    "smiles": "CC(C=C1)=CC2=C1OC3=C(C=C(C)C=C3)P2C4=CC=CC5=C4OC(C(P6C7=C(C=CC(C)=C7)OC8=C6C=C(C)C=C8)=CC=C9)=C9P5C%10=CC=CC=C%10",
+    "y_true": 2.028,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.709072470664978,
+      "dimenet10conf": 1.4747837781906128
+    },
+    "y_pred": 1.4747837781906128,
+    "y_pred_noaug": 1.709072470664978,
+    "y_pred_dimenet10conf": 1.4747837781906128,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "90",
+    "real_id": "90",
+    "smiles": "C1(C=CC=C2P3C4=C(C5=C3C=CC=C5)C=CC=C4)=C2OC(C(P6C7=C(C8=C6C=CC=C8)C=CC=C7)=CC=C9)=C9N1",
+    "y_true": 3.231,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.534148693084717,
+      "dimenet10conf": 2.9301257133483887
+    },
+    "y_pred": 2.9301257133483887,
+    "y_pred_noaug": 2.534148693084717,
+    "y_pred_dimenet10conf": 2.9301257133483887,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "91",
+    "real_id": "91",
+    "smiles": "O(C1=CC=CC(OP(N2C=CC=C2)N3C=CC=C3)=C1C=4C(OP(N5C=CC=C5)N6C=CC=C6)=CC=CC4OP(N7C=CC=C7)N8C=CC=C8)P(N9C=CC=C9)N%10C=CC=C%10",
+    "y_true": 4.052,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.922478199005127,
+      "dimenet10conf": 3.2970774173736572
+    },
+    "y_pred": 3.2970774173736572,
+    "y_pred_noaug": 2.922478199005127,
+    "y_pred_dimenet10conf": 3.2970774173736572,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "92",
+    "real_id": "92",
+    "smiles": "C1(OP(N2C=CC=C2)N3C=CC=C3)=C(C4=CC=CC=C4OP(N5C=CC=C5)N6C=CC=C6)C=CC=C1",
+    "y_true": 3.021,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.694830060005188,
+      "dimenet10conf": 2.443715810775757
+    },
+    "y_pred": 2.443715810775757,
+    "y_pred_noaug": 1.694830060005188,
+    "y_pred_dimenet10conf": 2.443715810775757,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "93",
+    "real_id": "93",
+    "smiles": "FC(C1=CC=CC(P(C2=CC=CC(C(F)(F)F)=C2)CC(C=CC=C3CP(C4=CC=CC(C(F)(F)F)=C4)C5=CC(C(F)(F)F)=CC=C5)=C3C6=C(CP(C7=CC=CC(C(F)(F)F)=C7)C8=CC(C(F)(F)F)=CC=C8)C=CC=C6CP(C9=CC(C(F)(F)F)=CC=C9)C%10=CC=CC(C(F)(F)F)=C%10)=C1)(F)F",
+    "y_true": 2.856,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.7486481666564941,
+      "dimenet10conf": 2.3922271728515625
+    },
+    "y_pred": 2.3922271728515625,
+    "y_pred_noaug": 1.7486481666564941,
+    "y_pred_dimenet10conf": 2.3922271728515625,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "94",
+    "real_id": "94",
+    "smiles": "FC(C1=CC(P(C2=CC(C(F)(F)F)=CC(C(F)(F)F)=C2)CC(C=CC=C3CP(C4=CC(C(F)(F)F)=CC(C(F)(F)F)=C4)C5=CC(C(F)(F)F)=CC(C(F)(F)F)=C5)=C3C6=C(CP(C7=CC(C(F)(F)F)=CC(C(F)(F)F)=C7)C8=CC(C(F)(F)F)=CC(C(F)(F)F)=C8)C=CC=C6CP(C9=CC(C(F)(F)F)=CC(C(F)(F)F)=C9)C%10=CC(C(F)(F)F)=CC(C(F)(F)F)=C%10)=CC(C(F)(F)F)=C1)(F)F",
+    "y_true": 2.759,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.1891071796417236,
+      "dimenet10conf": 2.563777446746826
+    },
+    "y_pred": 2.563777446746826,
+    "y_pred_noaug": 2.1891071796417236,
+    "y_pred_dimenet10conf": 2.563777446746826,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "95",
+    "real_id": "95",
+    "smiles": "C=1C=CC(=CC1)P(C=2C=CC=CC2)CC(C)(CP(C=3C=CC=CC3)C=4C=CC=CC4)CP(C=5C=CC=CC5)C=6C=CC=CC6",
+    "y_true": -0.175,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.2328859269618988,
+      "dimenet10conf": 0.2845519781112671
+    },
+    "y_pred": 0.2845519781112671,
+    "y_pred_noaug": 0.2328859269618988,
+    "y_pred_dimenet10conf": 0.2845519781112671,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "96",
+    "real_id": "96",
+    "smiles": "COC(C=C1)=CC=C1P(C2=CC=C(OC)C=C2)CN(CP(C3=CC=C(OC)C=C3)C4=CC=C(OC)C=C4)CP(C5=CC=C(OC)C=C5)C6=CC=C(OC)C=C6",
+    "y_true": -0.078,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.5783020257949829,
+      "dimenet10conf": 0.8108222484588623
+    },
+    "y_pred": 0.8108222484588623,
+    "y_pred_noaug": 0.5783020257949829,
+    "y_pred_dimenet10conf": 0.8108222484588623,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "97",
+    "real_id": "97",
+    "smiles": "CN(C(C=C1)=CC=C1P(C2=CC=C(N(C)C)C=C2)CN(CP(C3=CC=C(N(C)C)C=C3)C4=CC=C(N(C)C)C=C4)CP(C5=CC=C(N(C)C)C=C5)C6=CC=C(N(C)C)C=C6)C",
+    "y_true": -0.112,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.07921324670314789,
+      "dimenet10conf": 0.2874605357646942
+    },
+    "y_pred": 0.2874605357646942,
+    "y_pred_noaug": 0.07921324670314789,
+    "y_pred_dimenet10conf": 0.2874605357646942,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "98",
+    "real_id": "98",
+    "smiles": "CC(C=CC=C1)=C1P(C2=C(C)C=CC=C2)CN(CP(C3=C(C)C=CC=C3)C4=C(C)C=CC=C4)CP(C5=C(C)C=CC=C5)C6=C(C)C=CC=C6",
+    "y_true": 0.627,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.26795637607574463,
+      "dimenet10conf": 0.5277501344680786
+    },
+    "y_pred": 0.5277501344680786,
+    "y_pred_noaug": 0.26795637607574463,
+    "y_pred_dimenet10conf": 0.5277501344680786,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "99",
+    "real_id": "99",
+    "smiles": "CCCCN(CP(C1=CC=CC=C1)C2=CC=CC=C2)CP(C3=CC=CC=C3)C4=CC=CC=C4",
+    "y_true": -0.07,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.20161858201026917,
+      "dimenet10conf": 0.42266470193862915
+    },
+    "y_pred": 0.42266470193862915,
+    "y_pred_noaug": 0.20161858201026917,
+    "y_pred_dimenet10conf": 0.42266470193862915,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "100",
+    "real_id": "100",
+    "smiles": "CC1(C)C2=C(C(P(N3C=CC=C3)N4C=CC=C4)=CC(C(C)(C)C)=C2)OC5=C(P(N6C=CC=C6)N7C=CC=C7)C=C(C(C)(C)C)C=C51",
+    "y_true": 3.142,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.040942430496216,
+      "dimenet10conf": 2.492009401321411
+    },
+    "y_pred": 2.492009401321411,
+    "y_pred_noaug": 2.040942430496216,
+    "y_pred_dimenet10conf": 2.492009401321411,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "101",
+    "real_id": "101",
+    "smiles": "CC1=CC(C(C)(C)C2)=C(OC2(C3)OC4=C(P(N5C=CC=C5)N6C=CC=C6)C=C(C)C=C4C3(C)C)C(P(N7C=CC=C7)N8C=CC=C8)=C1",
+    "y_true": 1.303,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.7798885107040405,
+      "dimenet10conf": 1.1872459650039673
+    },
+    "y_pred": 1.1872459650039673,
+    "y_pred_noaug": 1.7798885107040405,
+    "y_pred_dimenet10conf": 1.1872459650039673,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "102",
+    "real_id": "102",
+    "smiles": "O1C=2C=CC=3C=CC=CC3C2C4=C(OP1OC=5C=CC=6C=CC=CC6C5C7=C8C=CC=CC8=CC=C7P(C=9C=CC=C(OC)C9)C=%10C=CC=C(OC)C%10)C=CC=%11C=CC=CC%114",
+    "y_true": 0.517,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.735914945602417,
+      "dimenet10conf": 1.0614845752716064
+    },
+    "y_pred": 1.0614845752716064,
+    "y_pred_noaug": 0.735914945602417,
+    "y_pred_dimenet10conf": 1.0614845752716064,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "103",
+    "real_id": "103",
+    "smiles": "O=C(N(C(N1CC)=O)CC)N(P1OC2=CC=CC=C2C3=C(OP4N(C(N(C(N4CC)=O)CC)=O)CC)C=CC=C3)CC",
+    "y_true": 1.345,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.9431691765785217,
+      "dimenet10conf": 1.3250138759613037
+    },
+    "y_pred": 1.3250138759613037,
+    "y_pred_noaug": 0.9431691765785217,
+    "y_pred_dimenet10conf": 1.3250138759613037,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "104",
+    "real_id": "104",
+    "smiles": "O=C1N(C(=O)N(P(C=2C=C(C=C3C2OC4=C(C=C(C=C4C3(C)C)C(C)(C)C)P5N(C(=O)N(C(=O)N5CC)CC)CC)C(C)(C)C)N1CC)CC)CC",
+    "y_true": 1.643,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.8519796133041382,
+      "dimenet10conf": 0.4263246953487396
+    },
+    "y_pred": 0.4263246953487396,
+    "y_pred_noaug": 0.8519796133041382,
+    "y_pred_dimenet10conf": 0.4263246953487396,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "105",
+    "real_id": "105",
+    "smiles": "O=C1N(C(=O)N(P(OCC(C)(C)COP2N(C(=O)N(C(=O)N2CC)CC)CC)N1CC)CC)CC",
+    "y_true": 0.553,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.3358912765979767,
+      "dimenet10conf": 0.28961730003356934
+    },
+    "y_pred": 0.28961730003356934,
+    "y_pred_noaug": 0.3358912765979767,
+    "y_pred_dimenet10conf": 0.28961730003356934,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "106",
+    "real_id": "106",
+    "smiles": "O=C1N(C=2C=CC=CC2)C(=O)N(C=3C=CC=CC3)P(OC=4C=CC=CC4C=5C=CC=CC5OP6N(C=7C=CC=CC7)C(=O)N(C=8C=CC=CC8)C(=O)N6C=9C=CC=CC9)N1C=%10C=CC=CC%10",
+    "y_true": 0.955,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.7542285323143005,
+      "dimenet10conf": 1.09634530544281
+    },
+    "y_pred": 1.09634530544281,
+    "y_pred_noaug": 0.7542285323143005,
+    "y_pred_dimenet10conf": 1.09634530544281,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "107",
+    "real_id": "107",
+    "smiles": "[H]C1=CC([H])=C(OP2OC3=C(C=CC=C3)C4=C(C=CC=C4)O2)C(C5=C(OP6OC7=C(C=CC=C7)C8=C(C=CC=C8)O6)C([H])=CC([H])=C5OP9OC(C=CC=C%10)=C%10C(C=CC=C%11)=C%11O9)=C1OP%12OC(C=CC=C%13)=C%13C(C=CC=C%14)=C%14O%12",
+    "y_true": 2.066,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.2213122844696045,
+      "dimenet10conf": 2.211066722869873
+    },
+    "y_pred": 2.211066722869873,
+    "y_pred_noaug": 2.2213122844696045,
+    "y_pred_dimenet10conf": 2.211066722869873,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "108",
+    "real_id": "108",
+    "smiles": "N(CP(C1=CC=CC=C1)C2=CC=CC=C2)(C3=CC=CC=C3)CP(C4=CC=CC=C4)C5=CC=CC=C5",
+    "y_true": 0.323,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.1303393840789795,
+      "dimenet10conf": 0.3971055746078491
+    },
+    "y_pred": 0.3971055746078491,
+    "y_pred_noaug": 0.1303393840789795,
+    "y_pred_dimenet10conf": 0.3971055746078491,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "109",
+    "real_id": "109",
+    "smiles": "CC1(C)C2=CC(C)=CC(P3C4=CC(C)=CC=C4OC5=C3C=C(C)C=C5)=C2OC6=C1C=C(C)C=C6P(C7=CC(C)=CC=C7O8)C9=C8C=CC(C)=C9",
+    "y_true": 2.439,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.8278626203536987,
+      "dimenet10conf": 1.8068830966949463
+    },
+    "y_pred": 1.8068830966949463,
+    "y_pred_noaug": 1.8278626203536987,
+    "y_pred_dimenet10conf": 1.8068830966949463,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "110",
+    "real_id": "110",
+    "smiles": "CC1(C)C2=CC(C(C)(C)C)=CC(P(C3=CC(C)=CC=C3O4)C5=C4C=CC(C)=C5)=C2OC6=C1C=C(C(C)(C)C)C=C6P(C7=CC(C)=CC=C7O8)C9=C8C=CC(C)=C9",
+    "y_true": 2.439,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.874596357345581,
+      "dimenet10conf": 1.9300079345703125
+    },
+    "y_pred": 1.9300079345703125,
+    "y_pred_noaug": 1.874596357345581,
+    "y_pred_dimenet10conf": 1.9300079345703125,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "111",
+    "real_id": "111",
+    "smiles": "O1C=2C=CC=CC2P(C=3C=CC=CC13)C4=CC(=CC5=C4OC=6C(=CC(=CC6C5(C)C)CCC(C)(C)C)P7C=8C=CC=CC8OC=9C=CC=CC97)CCC(C)(C)C",
+    "y_true": 3.225,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.2771165370941162,
+      "dimenet10conf": 2.2922067642211914
+    },
+    "y_pred": 2.2922067642211914,
+    "y_pred_noaug": 1.2771165370941162,
+    "y_pred_dimenet10conf": 2.2922067642211914,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "112",
+    "real_id": "112",
+    "smiles": "COC(C(P(C1=CC=CC=C1)C2=CC=CC=C2)=C3)=CC=C3C(C4=CC=CC=C4)(C)C5=CC(P(C6=CC=CC=C6)C7=CC=CC=C7)=C(OC)C=C5",
+    "y_true": 0.697,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.5777307152748108,
+      "dimenet10conf": 0.5854703783988953
+    },
+    "y_pred": 0.5854703783988953,
+    "y_pred_noaug": 0.5777307152748108,
+    "y_pred_dimenet10conf": 0.5854703783988953,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "113",
+    "real_id": "113",
+    "smiles": "CC1(C)C2=CC(C)=CC(OP(OC3=C(C(C)(C)C)C=C(OC)C=C34)OC5=C4C=C(OC)C=C5C(C)(C)C)=C2OC6=C1C=C(C)C=C6OP7OC8=C(C(C)(C)C)C=C(OC)C=C8C(C=C(OC)C=C9C(C)(C)C)=C9O7",
+    "y_true": 1.129,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.0674076080322266,
+      "dimenet10conf": 0.7014411687850952
+    },
+    "y_pred": 0.7014411687850952,
+    "y_pred_noaug": 1.0674076080322266,
+    "y_pred_dimenet10conf": 0.7014411687850952,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "114",
+    "real_id": "114",
+    "smiles": "CC(C)(C)C1=CC(C2C3=CC=CC(C4C5=CC(C(C)(C)C)=CC=C5OP(OC6=CC=C(C(C)(C)C)C=C64)OC7=CC=CC8=C7C=CC=C8)=C3)=C(OP(OC9=C(C=CC=C%10)C%10=CC=C9)OC%11=CC=C(C(C)(C)C)C=C2%11)C=C1",
+    "y_true": 1.761,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.7177107334136963,
+      "dimenet10conf": 1.8095077276229858
+    },
+    "y_pred": 1.8095077276229858,
+    "y_pred_noaug": 0.7177107334136963,
+    "y_pred_dimenet10conf": 1.8095077276229858,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "115",
+    "real_id": "115",
+    "smiles": "CC1=CC=C2C(P(C3=C(O2)C=CC(C)=C3)C4=C(P(C5=CC=CC=C5)C6=CC=CC=C6)C=CC=C4)=C1",
+    "y_true": -0.358,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.24191716313362122,
+      "dimenet10conf": 0.5692707896232605
+    },
+    "y_pred": 0.5692707896232605,
+    "y_pred_noaug": 0.24191716313362122,
+    "y_pred_dimenet10conf": 0.5692707896232605,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "116",
+    "real_id": "116",
+    "smiles": "O1C=2C=CC=CC2C=3C=CC=CC3OP1OCCOP4OC=5C=CC=CC5C=6C=CC=CC6O4",
+    "y_true": 0.33,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.4025762975215912,
+      "dimenet10conf": 0.5510044097900391
+    },
+    "y_pred": 0.5510044097900391,
+    "y_pred_noaug": 0.4025762975215912,
+    "y_pred_dimenet10conf": 0.5510044097900391,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "117",
+    "real_id": "117",
+    "smiles": "COC1=CC(C(C)(C)C)=C(OP2OC3=CC=CC=C3C(C=CC=C4)=C4O2)C(C5=C(OP6OC7=CC=CC=C7C(C=CC=C8)=C8O6)C(C(C)(C)C)=CC(OC)=C5)=C1",
+    "y_true": 3.231,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.2773288488388062,
+      "dimenet10conf": 2.039046287536621
+    },
+    "y_pred": 2.039046287536621,
+    "y_pred_noaug": 1.2773288488388062,
+    "y_pred_dimenet10conf": 2.039046287536621,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "118",
+    "real_id": "118",
+    "smiles": "CC(C1=CC(C(C)(C)C)=CC(C2=CC(C(C)(C)C)=CC(C(C)(C)C)=C2OP3OC4=CC=CC=C4C(C=CC=C5)=C5O3)=C1OP6OC7=CC=CC=C7C(C=CC=C8)=C8O6)(C)C",
+    "y_true": 2.759,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.189510464668274,
+      "dimenet10conf": 1.8388140201568604
+    },
+    "y_pred": 1.8388140201568604,
+    "y_pred_noaug": 1.189510464668274,
+    "y_pred_dimenet10conf": 1.8388140201568604,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "119",
+    "real_id": "119",
+    "smiles": "ClC(C=C1)=CC=C1OP(OC2=CC=C(Cl)C=C2)OC(C(C(C)(C)C)=CC(C(C)(C)C)=C3)=C3C4=CC(C(C)(C)C)=CC(C(C)(C)C)=C4OP5OC6=C(C(C)(C)C)C=C(C(C)(C)C)C=C6C(C=C(C(C)(C)C)C=C7C(C)(C)C)=C7O5",
+    "y_true": 2.066,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.041264295578003,
+      "dimenet10conf": 1.78762686252594
+    },
+    "y_pred": 1.78762686252594,
+    "y_pred_noaug": 1.041264295578003,
+    "y_pred_dimenet10conf": 1.78762686252594,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "120",
+    "real_id": "120",
+    "smiles": "P1(OC2=C3C(C[C@@H](CC4)C5([C@H]4CC6=C(C(OP7OC8=CC=CC=C8C(C=CC=C9)=C9O7)=CC=C6)O5)O3)=CC=C2)OC%10=CC=CC=C%10C(C=CC=C%11)=C%11O1",
+    "y_true": 2.586,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.0650291442871094,
+      "dimenet10conf": 2.390605926513672
+    },
+    "y_pred": 2.390605926513672,
+    "y_pred_noaug": 2.0650291442871094,
+    "y_pred_dimenet10conf": 2.390605926513672,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "121",
+    "real_id": "121",
+    "smiles": "O1C=2C(=CC(=CC2C(C=3C=C(C=C(C13)P4C=5C=CC=CC5CC=6C=CC=CC64)C(C)(C)C)(C)C)C(C)(C)C)P7C=8C=CC=CC8CC=9C=CC=CC97",
+    "y_true": 2.032,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.4775214195251465,
+      "dimenet10conf": 1.9097408056259155
+    },
+    "y_pred": 1.9097408056259155,
+    "y_pred_noaug": 1.4775214195251465,
+    "y_pred_dimenet10conf": 1.9097408056259155,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "122",
+    "real_id": "122",
+    "smiles": "C1(P(C2=CC=CC=C2)C3=CC=CC=C3)=C(OC4=C5C=CC=C4P(C6=CC=CC=C6)C7=CC=CC=C7)C(CC5)=CC=C1",
+    "y_true": 1.502,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.3733569383621216,
+      "dimenet10conf": 1.5249521732330322
+    },
+    "y_pred": 1.5249521732330322,
+    "y_pred_noaug": 1.3733569383621216,
+    "y_pred_dimenet10conf": 1.5249521732330322,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "123",
+    "real_id": "123",
+    "smiles": "C1(P(C2=CC=CC=C2)C3=CC=CC=C3)=C4C(P(C5=CC=CC=C5)C6=C(O4)C(P(C7=CC=CC=C7)C8=CC=CC=C8)=CC=C6)=CC=C1",
+    "y_true": 1.881,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.8322691321372986,
+      "dimenet10conf": 1.4209529161453247
+    },
+    "y_pred": 1.4209529161453247,
+    "y_pred_noaug": 0.8322691321372986,
+    "y_pred_dimenet10conf": 1.4209529161453247,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "124",
+    "real_id": "124",
+    "smiles": "CC(C)=C1C2=CC=CC(P(C3=CC=CC=C3)C4=CC=CC=C4)=C2OC5=C1C=CC=C5P(C6=CC=CC=C6)C7=CC=CC=C7",
+    "y_true": 2.743,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.5405665636062622,
+      "dimenet10conf": 2.227001667022705
+    },
+    "y_pred": 2.227001667022705,
+    "y_pred_noaug": 1.5405665636062622,
+    "y_pred_dimenet10conf": 2.227001667022705,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "125",
+    "real_id": "125",
+    "smiles": "C1(P(C2=CC=CC=C2)C3=CC=CC=C3)=C4C(C5=CC=CC6=CC=C(P(C7=CC=CC=C7)C8=CC=CC=C8)C(O4)=C56)=CC=C1",
+    "y_true": 2.748,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.9934735298156738,
+      "dimenet10conf": 2.3298912048339844
+    },
+    "y_pred": 2.3298912048339844,
+    "y_pred_noaug": 1.9934735298156738,
+    "y_pred_dimenet10conf": 2.3298912048339844,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "126",
+    "real_id": "126",
+    "smiles": "[H][C@]1(CP(C2=CC(C(F)(F)F)=CC(C(F)(F)F)=C2)C3=CC(C(F)(F)F)=CC(C(F)(F)F)=C3)[C@@](CP(C4=CC(C(F)(F)F)=CC(C(F)(F)F)=C4)C5=CC(C(F)(F)F)=CC(C(F)(F)F)=C5)([H])C1",
+    "y_true": 1.765,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.6994498372077942,
+      "dimenet10conf": 1.9290024042129517
+    },
+    "y_pred": 1.9290024042129517,
+    "y_pred_noaug": 0.6994498372077942,
+    "y_pred_dimenet10conf": 1.9290024042129517,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "127",
+    "real_id": "127",
+    "smiles": "FC(F)(F)C1=CC(P(C2=CC(C(F)(F)F)=CC(C(F)(F)F)=C2)CCP(C3=CC=CC=C3)C4=CC=CC=C4)=CC(C(F)(F)F)=C1",
+    "y_true": 0.882,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.1564527153968811,
+      "dimenet10conf": 0.9679204225540161
+    },
+    "y_pred": 0.9679204225540161,
+    "y_pred_noaug": 0.1564527153968811,
+    "y_pred_dimenet10conf": 0.9679204225540161,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "128",
+    "real_id": "128",
+    "smiles": "C=1C=CC(=CC1)P(C=2C=CC=CC2)CCCCP(C=3C=CC=CC3)C=4C=CC=CC4",
+    "y_true": 0.673,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.35815805196762085,
+      "dimenet10conf": 0.8381650447845459
+    },
+    "y_pred": 0.8381650447845459,
+    "y_pred_noaug": 0.35815805196762085,
+    "y_pred_dimenet10conf": 0.8381650447845459,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "129",
+    "real_id": "129",
+    "smiles": "CC(C=C1)=CC2=C1OC3=C(C=C(C)C=C3)P2C4=CC(C)=CC5=C4OC(C(P6C7=C(C=CC(C)=C7)OC8=C6C=C(C)C=C8)=CC(C)=C9)=C9S5",
+    "y_true": 2.169,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.761332631111145,
+      "dimenet10conf": 1.9446983337402344
+    },
+    "y_pred": 1.9446983337402344,
+    "y_pred_noaug": 1.761332631111145,
+    "y_pred_dimenet10conf": 1.9446983337402344,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "130",
+    "real_id": "130",
+    "smiles": "CC(C=C1)=CC2=C1OC3=C(C=C(C)C=C3)P2C4=CC=CC5=C4OC(C(P6C7=C(C=CC(C)=C7)OC8=C6C=C(C)C=C8)=CC=C9)=C9N5",
+    "y_true": 2.454,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.414262533187866,
+      "dimenet10conf": 2.5468149185180664
+    },
+    "y_pred": 2.5468149185180664,
+    "y_pred_noaug": 2.414262533187866,
+    "y_pred_dimenet10conf": 2.5468149185180664,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "131",
+    "real_id": "131",
+    "smiles": "FC1=CC(P(C2=CC(F)=CC(F)=C2)CC(C=CC=C3CP(C4=CC(F)=CC(F)=C4)C5=CC(F)=CC(F)=C5)=C3C6=C(CP(C7=CC(F)=CC(F)=C7)C8=CC(F)=CC(F)=C8)C=CC=C6CP(C9=CC(F)=CC(F)=C9)C%10=CC(F)=CC(F)=C%10)=CC(F)=C1",
+    "y_true": 3.675,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.2989954948425293,
+      "dimenet10conf": 3.0133371353149414
+    },
+    "y_pred": 3.0133371353149414,
+    "y_pred_noaug": 2.2989954948425293,
+    "y_pred_dimenet10conf": 3.0133371353149414,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "132",
+    "real_id": "132",
+    "smiles": "FC(C(C=C1)=CC=C1P(C2=CC=C(C(F)(F)F)C=C2)CC(C=CC=C3CP(C4=CC=C(C(F)(F)F)C=C4)C5=CC=C(C(F)(F)F)C=C5)=C3C6=C(CP(C7=CC=C(C(F)(F)F)C=C7)C8=CC=C(C(F)(F)F)C=C8)C=CC=C6CP(C9=CC=C(C(F)(F)F)C=C9)C%10=CC=C(C(F)(F)F)C=C%10)(F)F",
+    "y_true": 3.416,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 2.0485942363739014,
+      "dimenet10conf": 2.6686534881591797
+    },
+    "y_pred": 2.6686534881591797,
+    "y_pred_noaug": 2.0485942363739014,
+    "y_pred_dimenet10conf": 2.6686534881591797,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "133",
+    "real_id": "133",
+    "smiles": "CC1=CC(C(C)(C)C2)=C(OC2(C3)OC4=C(P(C5=CC=CC=C5)C6=CC=CC=C6)C=C(C)C=C4C3(C)C)C(P(C7=CC=CC=C7)C8=CC=CC=C8)=C1",
+    "y_true": 0.614,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.7600717544555664,
+      "dimenet10conf": 0.6146738529205322
+    },
+    "y_pred": 0.6146738529205322,
+    "y_pred_noaug": 0.7600717544555664,
+    "y_pred_dimenet10conf": 0.6146738529205322,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "134",
+    "real_id": "134",
+    "smiles": "C1(COP(N2C=CC=C2)N3C=CC=C3)=CC=CC=C1C4=CC=CC=C4COP(N5C=CC=C5)N6C=CC=C6",
+    "y_true": 0.723,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.7946606278419495,
+      "dimenet10conf": 0.893011212348938
+    },
+    "y_pred": 0.893011212348938,
+    "y_pred_noaug": 0.7946606278419495,
+    "y_pred_dimenet10conf": 0.893011212348938,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "135",
+    "real_id": "135",
+    "smiles": "C1(OP(C2=CC=CC=C2)C3=CC=CC=C3)=CC=CC=C1C4=CC=CC=C4OP(C5=CC=CC=C5)C6=CC=CC=C6",
+    "y_true": 1.405,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.9319285154342651,
+      "dimenet10conf": 1.2747271060943604
+    },
+    "y_pred": 1.2747271060943604,
+    "y_pred_noaug": 0.9319285154342651,
+    "y_pred_dimenet10conf": 1.2747271060943604,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "136",
+    "real_id": "136",
+    "smiles": "O1C=2C(=CC(=C(C2C=3C(OP1OCP4C(C=5C=CC=CC5)CCC4C=6C=CC=CC6)=C(C=C(C3C)C)C(C)(C)C)C)C)C(C)(C)C",
+    "y_true": -0.631,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.30901917815208435,
+      "dimenet10conf": 0.10618280619382858
+    },
+    "y_pred": 0.10618280619382858,
+    "y_pred_noaug": 0.30901917815208435,
+    "y_pred_dimenet10conf": 0.10618280619382858,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "137",
+    "real_id": "137",
+    "smiles": "O1C=2C=CC=3C=CC=CC3C2C4=C(OP1OC=5C=CC=6C=CC=CC6C5C7=C8C=CC=CC8=CC=C7P(C=9C=CC=CC9)C=%10C=CC=CC%10)C=CC=%11C=CC=CC%114",
+    "y_true": 0.685,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.9650364518165588,
+      "dimenet10conf": 0.9166300296783447
+    },
+    "y_pred": 0.9166300296783447,
+    "y_pred_noaug": 0.9650364518165588,
+    "y_pred_dimenet10conf": 0.9166300296783447,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "138",
+    "real_id": "138",
+    "smiles": "O=C1N(C=2C=CC=CC2)C(=O)N(C=3C=CC=CC3)P(OCC(C)(C)COP4N(C=5C=CC=CC5)C(=O)N(C=6C=CC=CC6)C(=O)N4C=7C=CC=CC7)N1C=8C=CC=CC8",
+    "y_true": 0.794,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.8163154721260071,
+      "dimenet10conf": 0.5889424085617065
+    },
+    "y_pred": 0.5889424085617065,
+    "y_pred_noaug": 0.8163154721260071,
+    "y_pred_dimenet10conf": 0.5889424085617065,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "139",
+    "real_id": "139",
+    "smiles": "C1(CP(C2=CC=CC=C2)C3=CC=CC=C3)=CC=CC(CP(C4=CC=CC=C4)C5=CC=CC=C5)=C1C6=C(CP(C7=CC=CC=C7)C8=CC=CC=C8)C=CC=C6CP(C9=CC=CC=C9)C%10=CC=CC=C%10",
+    "y_true": 2.954,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.6620851755142212,
+      "dimenet10conf": 2.5729575157165527
+    },
+    "y_pred": 2.5729575157165527,
+    "y_pred_noaug": 1.6620851755142212,
+    "y_pred_dimenet10conf": 2.5729575157165527,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "140",
+    "real_id": "140",
+    "smiles": "CC1(C)C2=CC=CC(P(C3=CC=C(C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)F)C=C3)C4=CC=C(C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)F)C=C4)=C2OC5=C1C=CC=C5P(C6=CC=C(C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)F)C=C6)C7=CC=C(C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)F)C=C7",
+    "y_true": 2.197,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.7152416706085205,
+      "dimenet10conf": 1.1637921333312988
+    },
+    "y_pred": 1.1637921333312988,
+    "y_pred_noaug": 0.7152416706085205,
+    "y_pred_dimenet10conf": 1.1637921333312988,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "141",
+    "real_id": "141",
+    "smiles": "O1C2=CC=C(C=C2P(C3=CC(=CC=C13)CCCCCC)C4=CC(=CC5=C4OC=6C(=CC(=CC6C5(C)C)CCCCCC)P7C8=CC(=CC=C8OC9=CC=C(C=C97)CCCCCC)CCCCCC)CCCCCC)CCCCCC",
+    "y_true": 2.23,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": -1.2187843322753906,
+      "dimenet10conf": 0.7508044242858887
+    },
+    "y_pred": 0.7508044242858887,
+    "y_pred_noaug": -1.2187843322753906,
+    "y_pred_dimenet10conf": 0.7508044242858887,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "142",
+    "real_id": "142",
+    "smiles": "CC(C)(C)C1=CC(C2C3=CC=CC(C4C5=CC(C(C)(C)C)=CC=C5OP(OC6=CC=C(C(C)(C)C)C=C64)OC7=CC=C(C(C)(C)C)C=C7C(C)(C)C)=C3)=C(OP(OC8=C(C(C)(C)C)C=C(C(C)(C)C)C=C8)OC9=CC=C(C(C)(C)C)C=C29)C=C1",
+    "y_true": 1.405,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.8824672698974609,
+      "dimenet10conf": 2.070598602294922
+    },
+    "y_pred": 2.070598602294922,
+    "y_pred_noaug": 0.8824672698974609,
+    "y_pred_dimenet10conf": 2.070598602294922,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "143",
+    "real_id": "143",
+    "smiles": "C=1C=CC(=CC1)P(C=2C=CC=CC2)C=3C=CC=CC3P(C=4C=CC=CC4)C=5C=CC=CC5",
+    "y_true": -0.074,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.2510119378566742,
+      "dimenet10conf": 0.4964196979999542
+    },
+    "y_pred": 0.4964196979999542,
+    "y_pred_noaug": 0.2510119378566742,
+    "y_pred_dimenet10conf": 0.4964196979999542,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "144",
+    "real_id": "144",
+    "smiles": "P1(OC2=C3C(C[C@@H](CC4)[C@@]5([C@@H]4CC6=C(C(OP7OC8=CC=CC=C8C(C=CC=C9)=C9O7)=CC=C6)O5)O3)=CC=C2)OC%10=CC=CC=C%10C(C=CC=C%11)=C%11O1",
+    "y_true": 3.023,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.282031536102295,
+      "dimenet10conf": 0.9767922163009644
+    },
+    "y_pred": 0.9767922163009644,
+    "y_pred_noaug": 1.282031536102295,
+    "y_pred_dimenet10conf": 0.9767922163009644,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "145",
+    "real_id": "145",
+    "smiles": "FC(F)(F)C1=CC=CC=C1P(C2=CC=CC=C2C(F)(F)F)CCP(C3=CC=CC=C3)C4=CC=CC=C4",
+    "y_true": 0.654,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.809324860572815,
+      "dimenet10conf": 1.6219463348388672
+    },
+    "y_pred": 1.6219463348388672,
+    "y_pred_noaug": 1.809324860572815,
+    "y_pred_dimenet10conf": 1.6219463348388672,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "146",
+    "real_id": "146",
+    "smiles": "CC(C=C1)=CC=C1P(C2=CC=C(C)C=C2)CC(C=CC=C3CP(C4=CC=C(C)C=C4)C5=CC=C(C)C=C5)=C3C6=C(CP(C7=CC=C(C)C=C7)C8=CC=C(C)C=C8)C=CC=C6CP(C9=CC=C(C)C=C9)C%10=CC=C(C)C=C%10",
+    "y_true": 3.055,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.24711176753044128,
+      "dimenet10conf": 0.685814380645752
+    },
+    "y_pred": 0.685814380645752,
+    "y_pred_noaug": 0.24711176753044128,
+    "y_pred_dimenet10conf": 0.685814380645752,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "147",
+    "real_id": "147",
+    "smiles": "C=1C=CC(=CC1)P(C=2C=CC=CC2)CN(CP(C=3C=CC=CC3)C=4C=CC=CC4)CP(C=5C=CC=CC5)C=6C=CC=CC6",
+    "y_true": -0.07,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.340914011001587,
+      "dimenet10conf": 1.9577007293701172
+    },
+    "y_pred": 1.9577007293701172,
+    "y_pred_noaug": 1.340914011001587,
+    "y_pred_dimenet10conf": 1.9577007293701172,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "148",
+    "real_id": "148",
+    "smiles": "FC1=CC(F)=CC(P(C2=CC(F)=CC(F)=C2)CN(CP(C3=CC(F)=CC(F)=C3)C4=CC(F)=CC(F)=C4)CP(C5=CC(F)=CC(F)=C5)C6=CC(F)=CC(F)=C6)=C1",
+    "y_true": 0.064,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.3009271621704102,
+      "dimenet10conf": 0.8859467506408691
+    },
+    "y_pred": 0.8859467506408691,
+    "y_pred_noaug": 1.3009271621704102,
+    "y_pred_dimenet10conf": 0.8859467506408691,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "149",
+    "real_id": "149",
+    "smiles": "CC1(C)C2=CC(CCCCCCCCCC)=CC(P3C4=CC(C)=CC=C4OC5=C3C=C(C)C=C5)=C2OC6=C1C=C(CCCCCCCCCC)C=C6P(C7=CC(C)=CC=C7O8)C9=C8C=CC(C)=C9",
+    "y_true": 2.066,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.01785517856478691,
+      "dimenet10conf": 1.8725837469100952
+    },
+    "y_pred": 1.8725837469100952,
+    "y_pred_noaug": 0.01785517856478691,
+    "y_pred_dimenet10conf": 1.8725837469100952,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "150",
+    "real_id": "150",
+    "smiles": "CC1=CC(SC2=CC(C)=CC(P(C3=CC=C(Cl)C=C3)C4=CC=C(Cl)C=C4)=C2O5)=C5C(P(C6=CC=C(Cl)C=C6)C7=CC=C(Cl)C=C7)=C1",
+    "y_true": 2.956,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 0.8889320492744446,
+      "dimenet10conf": 0.9740504026412964
+    },
+    "y_pred": 0.9740504026412964,
+    "y_pred_noaug": 0.8889320492744446,
+    "y_pred_dimenet10conf": 0.9740504026412964,
+    "split": "test"
+  },
+  {
+    "dataset": "dimenet",
+    "id": "151",
+    "real_id": "151",
+    "smiles": "O1C=2C(=CC(=CC2C(C=3C=C(C=C(C13)P4C=5C=CC=CC5SC=6C=CC=CC64)C(C)(C)C)(C)C)C(C)(C)C)P7C=8C=CC=CC8SC=9C=CC=CC97",
+    "y_true": 1.789,
+    "y_pred_by_epoch": {
+      "dimenet_noaug": 1.6681106090545654,
+      "dimenet10conf": 0.4534459412097931
+    },
+    "y_pred": 0.4534459412097931,
+    "y_pred_noaug": 1.6681106090545654,
+    "y_pred_dimenet10conf": 0.4534459412097931,
+    "split": "test"
   }
 ]

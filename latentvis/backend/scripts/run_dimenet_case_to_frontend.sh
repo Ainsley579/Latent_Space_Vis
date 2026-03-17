@@ -83,6 +83,8 @@ python3 "${SCRIPT_DIR}/build_dimenet_real_id_to_smiles.py" \
   --output "$SMILES_JSON_PATH" \
   --csv-output "$SMILES_CSV_PATH"
 
+python3 "${SCRIPT_DIR}/build_dimenet_id_smiles_y_true_y_pred.py"
+
 echo "Running isolated DimeNet backend pipeline..."
 python3 run_pipeline_from_embeddings.py "${PIPELINE_ARGS[@]}"
 
