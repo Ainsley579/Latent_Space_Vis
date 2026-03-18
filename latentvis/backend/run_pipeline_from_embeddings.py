@@ -57,6 +57,18 @@ def _epoch_sort_key(value):
     return (0, int(s), s) if s.isdigit() else (1, s)
 
 
+def _model_sort_key(value):
+    s = str(value).strip()
+    lower = s.lower()
+    if "noaug" in lower:
+        return (0, s)
+    if "10conf" in lower:
+        return (1, s)
+    if "100conf" in lower:
+        return (2, s)
+    return _epoch_sort_key(s)
+
+
 def _flatten_embeddings(emb):
     if emb.ndim > 2:
         return emb.reshape(emb.shape[0], -1)
@@ -269,6 +281,9 @@ def run_pipeline(
     input_path2=None,
     model_name2=None,
     layer_file_map2=None,
+    input_path3=None,
+    model_name3=None,
+    layer_file_map3=None,
     k_min: int = 2,
     k_max: int = 15,
     default_reduction: str = "mds",
@@ -293,10 +308,11 @@ def run_pipeline(
     topk_combine_train_test: bool = False,
 ) -> bool:
     """
-    Load embedding input (optionally two directories for two epochs), run full analysis, write all frontend JSONs.
+    Load embedding input (optionally multiple directories for multiple epochs/models),
+    run full analysis, write all frontend JSONs.
 
     default_reduction: method used for the default scatter file (no suffix); one of pca, mds, umap, tsne.
-    If input_path2/model_name2/layer_file_map2 are set, both are loaded and merged (two epochs).
+    If input_path2/input_path3 are set, their cells are merged into the same analysis run.
     interactive_output_suffix: when set (e.g. "_current"), write topk, sankey, substructures,
     clustering_metrics to topk_current, sankey_current, etc., so original artifacts are not overwritten.
     """
@@ -340,26 +356,34 @@ def run_pipeline(
             print("Warning: failed to load combined train+test for topk fallback: {}".format(exc))
             full_data_for_topk = None
 
-    if input_path2 and model_name2:
-        data2 = load_embedding_input(
-            input_path2,
-            model_name=model_name2,
-            layer_file_map=layer_file_map2,
+    extra_inputs = [
+        (input_path2, model_name2, layer_file_map2, "second"),
+        (input_path3, model_name3, layer_file_map3, "third"),
+    ]
+    for extra_input_path, extra_model_name, extra_layer_map, ordinal in extra_inputs:
+        if not extra_input_path or not extra_model_name:
+            continue
+        data_extra = load_embedding_input(
+            extra_input_path,
+            model_name=extra_model_name,
+            layer_file_map=extra_layer_map,
             data_split=data_split,
         )
-        if data2["n_samples"] != n_samples:
-            print(f"Error: second input n_samples={data2['n_samples']} != first n_samples={n_samples}")
+        if data_extra["n_samples"] != n_samples:
+            print(
+                f"Error: {ordinal} input n_samples={data_extra['n_samples']} != first n_samples={n_samples}"
+            )
             return False
-        cells.update(data2["cells"])
-        epoch_keys.extend(data2["epoch_keys"])
-        for lk in data2["layer_keys"]:
+        cells.update(data_extra["cells"])
+        epoch_keys.extend(data_extra["epoch_keys"])
+        for lk in data_extra["layer_keys"]:
             if lk not in layer_keys:
                 layer_keys.append(lk)
-        print(f"Merged second epoch: {model_name2}")
+        print(f"Merged {ordinal} epoch: {extra_model_name}")
     if real_ids is None:
         real_ids = list(range(n_samples))
 
-    epoch_keys_sorted = sorted(dict.fromkeys(epoch_keys), key=_epoch_sort_key)
+    epoch_keys_sorted = sorted(dict.fromkeys(epoch_keys), key=_model_sort_key)
     epoch_keys = epoch_keys_sorted
 
     if max_epochs is not None and max_epochs > 0:
@@ -933,6 +957,9 @@ def main():
     ap.add_argument("--input2", default=None, help="Second embedding dir (for second epoch, e.g. dimenet10conf)")
     ap.add_argument("--model-name2", default=None, help="Model name for second input")
     ap.add_argument("--layer-file-map2", default=None, help="JSON path for second input layer map")
+    ap.add_argument("--input3", default=None, help="Third embedding dir (for a third epoch/model)")
+    ap.add_argument("--model-name3", default=None, help="Model name for third input")
+    ap.add_argument("--layer-file-map3", default=None, help="JSON path for third input layer map")
     ap.add_argument("--clustering-method", default="pgmeans", choices=["pgmeans", "hdbscan", "agglomerative", "knn", "all"],
                     help="Clustering method: pgmeans (default), hdbscan, agglomerative, knn, or all")
     ap.add_argument(
@@ -993,6 +1020,11 @@ def main():
         action="store_true",
         help="Disable per-cell checkpoint resume support.",
     )
+    ap.add_argument(
+        "--reuse-scatter-coords",
+        action="store_true",
+        help="Reuse existing scatterplot JSON coordinates from the output dir when available.",
+    )
     args = ap.parse_args()
 
     output_dir = args.output_dir
@@ -1009,6 +1041,10 @@ def main():
     if args.layer_file_map2:
         with open(args.layer_file_map2) as f:
             layer_file_map2 = json.load(f)
+    layer_file_map3 = None
+    if args.layer_file_map3:
+        with open(args.layer_file_map3) as f:
+            layer_file_map3 = json.load(f)
 
     success = run_pipeline(
         input_path=args.input,
@@ -1025,6 +1061,9 @@ def main():
         input_path2=args.input2,
         model_name2=args.model_name2,
         layer_file_map2=layer_file_map2,
+        input_path3=args.input3,
+        model_name3=args.model_name3,
+        layer_file_map3=layer_file_map3,
         clustering_method=args.clustering_method,
         n_clusters_override=args.agg_k,
         linkage_override=args.agg_linkage,
@@ -1037,6 +1076,7 @@ def main():
         write_fmi_cspa=not args.no_fmi_cspa,
         verbose_dr=not getattr(args, "quiet_dr", False),
         resume=not args.no_resume,
+        reuse_scatter_coords=bool(args.reuse_scatter_coords),
     )
     sys.exit(0 if success else 1)
 

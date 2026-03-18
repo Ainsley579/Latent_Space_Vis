@@ -69,6 +69,8 @@ def model_alias(model: str) -> str:
         return "noaug"
     if "10conf" in lower:
         return "10conf"
+    if "100conf" in lower:
+        return "100conf"
     alias = re.sub(r"[^a-zA-Z0-9]+", "_", model).strip("_")
     return alias or "model"
 
@@ -83,14 +85,16 @@ def ordered_models(models: Iterable[str]) -> List[str]:
 
     def rank(name: str) -> Tuple[int, object]:
         n = name.lower()
-        # Numeric epochs (e.g. 0..99) should keep numeric order.
-        if re.fullmatch(r"\d+", n):
-            return (0, int(n))
+        if "noaug" in n:
+            return (0, n)
         if "10conf" in n:
             return (1, n)
-        if "noaug" in n:
+        if "100conf" in n:
             return (2, n)
-        return (3, n)
+        # Numeric epochs (e.g. 0..99) should keep numeric order.
+        if re.fullmatch(r"\d+", n):
+            return (3, int(n))
+        return (4, n)
 
     return sorted(unique, key=rank)
 

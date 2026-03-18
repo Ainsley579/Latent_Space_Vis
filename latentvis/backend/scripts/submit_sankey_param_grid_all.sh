@@ -2,7 +2,7 @@
 # Submit all sweep jobs:
 #   datasets: chemprop, chemeleon
 #   splits:   test, train
-#   methods:  pgmeans (45), agglomerative (9), knn (9)
+#   methods:  pgmeans (45), agglomerative (9), knn (default 3: k=2..4)
 #
 set -euo pipefail
 

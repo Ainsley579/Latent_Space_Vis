@@ -22,6 +22,8 @@ type SyncControlPanelProps = {
   onToggleLargePreview: () => void;
   largePreviewSize: number;
   onLargePreviewSizeChange: (size: number) => void;
+  showFfn2?: boolean;
+  onShowFfn2Change?: (show: boolean) => void;
   onGenerateRange?: (minValue: number, maxValue: number) => void;
   onGenerateAgglomerative?: (config: {
     k: number | null;
@@ -56,6 +58,8 @@ export default function SyncControlPanel({
   onToggleLargePreview,
   largePreviewSize,
   onLargePreviewSizeChange,
+  showFfn2 = false,
+  onShowFfn2Change,
   onGenerateRange,
   onGenerateAgglomerative,
   knnK: knnKProp,
@@ -70,7 +74,7 @@ export default function SyncControlPanel({
   const [maxValue, setMaxValue] = useState(10);
   const [agglomerativeKMode, setAgglomerativeKMode] = useState<"auto" | "manual">("auto");
   const [agglomerativeK, setAgglomerativeK] = useState(6);
-  const [knnKLocal, setKnnKLocal] = useState(10);
+  const [knnKLocal, setKnnKLocal] = useState(2);
   const [agglomerativeLinkage, setAgglomerativeLinkage] =
     useState<"ward" | "complete" | "average">("ward");
   const clusteringKey = String(clustering ?? "").trim().toLowerCase();
@@ -91,11 +95,11 @@ export default function SyncControlPanel({
   }, [minValue]);
 
   return (
-    <div className="w-full h-full bg-white flex flex-col overflow-hidden">
+    <div className="w-full bg-white flex flex-col overflow-visible">
       <div className="shrink-0 px-2 py-1 text-sm font-semibold text-zinc-700 border-b border-zinc-200">
         Control Panel
       </div>
-      <div className="flex-1 min-h-0 px-2 py-2 flex flex-col gap-2 overflow-y-auto">
+      <div className="px-2 py-2 flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
         <label className="text-[10px] text-zinc-700 shrink-0">DATASET</label>
         <select
@@ -115,12 +119,18 @@ export default function SyncControlPanel({
           <label className="text-[10px] text-zinc-700 shrink-0">DATA SPLIT</label>
           <select
             className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
-            value={dataSplit ?? "all"}
+            value={dataset === "dimenet" ? "test" : (dataSplit ?? "all")}
             onChange={(e) => onDataSplitChange(e.target.value as "all" | "test" | "train")}
           >
-            <option value="all">train + test (default)</option>
-            <option value="test">test</option>
-            <option value="train">train</option>
+            {dataset === "dimenet" ? (
+              <option value="test">test</option>
+            ) : (
+              <>
+                <option value="all">train + test (default)</option>
+                <option value="test">test</option>
+                <option value="train">train</option>
+              </>
+            )}
           </select>
         </div>
       )}
@@ -158,22 +168,6 @@ export default function SyncControlPanel({
               ))}
             </select>
           </div>
-          {isKnn ? (
-            <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
-              <label className="text-[10px] text-zinc-700 shrink-0">KNN K</label>
-              <select
-                className="h-6 w-20 px-1 text-xs border border-zinc-300 rounded bg-white"
-                value={knnK}
-                onChange={(e) => setKnnK(Number(e.target.value))}
-              >
-                {Array.from({ length: 9 }, (_, i) => i + 2).map((v) => (
-                  <option key={`knn-k-inline-${v}`} value={v}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
         </>
       )}
       {onCellBgMetricChange && cellBgMetricOptions.length > 0 && (
@@ -249,6 +243,29 @@ export default function SyncControlPanel({
           className="w-full h-1.5 accent-emerald-500 disabled:cursor-not-allowed"
         />
       </div>
+
+      {onShowFfn2Change && (
+        <div className="flex items-center justify-start gap-2 min-w-0 mb-2">
+          <span className="text-[10px] text-zinc-700">SHOW FFN2</span>
+          <button
+            type="button"
+            onClick={() => onShowFfn2Change(!showFfn2)}
+            className={
+              "relative inline-flex h-5 w-10 items-center rounded-full transition-colors " +
+              (showFfn2 ? "bg-emerald-500" : "bg-zinc-300")
+            }
+            aria-pressed={showFfn2}
+            title={showFfn2 ? "FFN2 visible" : "FFN2 hidden"}
+          >
+            <span
+              className={
+                "inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform " +
+                (showFfn2 ? "translate-x-6" : "translate-x-1")
+              }
+            />
+          </button>
+        </div>
+      )}
 
       {isPgmeans ? (
         <>
@@ -327,7 +344,7 @@ export default function SyncControlPanel({
                 value={agglomerativeK}
                 onChange={(e) => setAgglomerativeK(Number(e.target.value))}
               >
-                {Array.from({ length: 14 }, (_, i) => i + 2).map((v) => (
+                {Array.from({ length: 9 }, (_, i) => i + 2).map((v) => (
                   <option key={`agg-k-${v}`} value={v}>
                     {v}
                   </option>
@@ -335,6 +352,24 @@ export default function SyncControlPanel({
               </select>
             </div>
           ) : null}
+        </>
+      ) : isKnn ? (
+        <>
+          <div className="text-[10px] text-zinc-500 text-center mb-0.5">KNN parameter</div>
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <label className="text-xs text-zinc-600 shrink-0">k</label>
+            <select
+              className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
+              value={knnK}
+              onChange={(e) => setKnnK(Number(e.target.value))}
+            >
+              {Array.from({ length: 9 }, (_, i) => i + 2).map((v) => (
+                <option key={`knn-k-${v}`} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
         </>
       ) : null}
       {!isPgmeans && !isAgglomerative && !isKnn ? (

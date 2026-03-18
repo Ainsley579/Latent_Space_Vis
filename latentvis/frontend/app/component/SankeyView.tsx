@@ -6,6 +6,7 @@ import { CLUSTER_COLORS, SANKEY_2D_COLUMN_LINK_COLOR, SANKEY_2D_ROW_LINK_COLOR }
 import { fetchJsonCached } from "../utils/fetchCache";
 
 const SHOW_FMI_CSPA = false;
+const HIDDEN_LAYER = "ffn_layer_2";
 
 type SankeyEdge = {
   source_node_id?: number;
@@ -47,6 +48,52 @@ function parseClusterFromLabel(label: string): number {
 function parseGroupFromLabel(label: string): string {
   const i = label.lastIndexOf("_C");
   return i === -1 ? label : label.slice(0, i);
+}
+
+function canonicalLayerForVisibility(name: string): string {
+  if (name === "fp") return "fingerprint";
+  if (/^fnn_layer_/.test(name)) return name.replace(/^fnn_layer_/, "ffn_layer_");
+  return name;
+}
+
+function isHiddenLayerName(name: string): boolean {
+  return canonicalLayerForVisibility(String(name ?? "").trim()) === HIDDEN_LAYER;
+}
+
+function filterHiddenLayer(dataIn: any, hideLayer: boolean): any {
+  if (!hideLayer) return normalizeSankeyData(dataIn);
+  const data = JSON.parse(JSON.stringify(dataIn ?? {}));
+  const nextEpoch: Record<string, any> = {};
+  const nextLayer: Record<string, any> = {};
+
+  Object.entries(data.epoch || {}).forEach(([rowKey, rowObjRaw]: [string, any]) => {
+    const rowObj = rowObjRaw || {};
+    const nodesObj = rowObj.nodes && typeof rowObj.nodes === "object" ? rowObj.nodes : {};
+    const nodesFiltered: Record<string, any> = {};
+    Object.entries(nodesObj).forEach(([colKey, nodes]) => {
+      if (isHiddenLayerName(String(colKey))) return;
+      nodesFiltered[colKey] = nodes;
+    });
+    const edgesFiltered = Array.isArray(rowObj.edges)
+      ? rowObj.edges.filter((e: any) => {
+          const src = parseGroupFromLabel(String(e?.source_label ?? ""));
+          const tgt = parseGroupFromLabel(String(e?.target_label ?? ""));
+          return !isHiddenLayerName(src) && !isHiddenLayerName(tgt);
+        })
+      : [];
+    nextEpoch[rowKey] = { ...rowObj, nodes: nodesFiltered, edges: edgesFiltered };
+  });
+
+  Object.entries(data.layer || {}).forEach(([layerKey, layerObjRaw]: [string, any]) => {
+    if (isHiddenLayerName(String(layerKey))) return;
+    const layerObj = layerObjRaw || {};
+    nextLayer[layerKey] = {
+      ...layerObj,
+      edges: Array.isArray(layerObj.edges) ? layerObj.edges : [],
+    };
+  });
+
+  return { ...data, epoch: nextEpoch, layer: nextLayer };
 }
 
 function buildNodesByGroup(edges: SankeyEdge[]): Record<string, SankeyNodeLike[]> {
@@ -254,6 +301,7 @@ function sortLayerKeys(keys: string[]): string[] {
 type SankeyViewProps = {
   dataPath?: string;
   secondaryDataPath?: string;
+  showFfn2?: boolean;
   metricsPath?: string;
   transitionStatsPath?: string;
   onModelSelect?: (modelKey: string) => void;
@@ -275,6 +323,7 @@ type SankeyViewProps = {
 export default function SankeyView({
   dataPath = "/data/dimenet/sankey/all_sankey.json",
   secondaryDataPath,
+  showFfn2 = false,
   metricsPath = "/data/dimenet/bic_aic/avg_fmi_cspa_by_layer.json",
   transitionStatsPath = "/data/dimenet/clustering_metrics/layer_transition_by_epoch.json",
   onModelSelect,
@@ -422,6 +471,9 @@ export default function SankeyView({
       return transitionStatsPath;
     })();
 
+    const isDimenetCase = /\/dimenet\//.test(String(dataPath || "")) || /dataset=dimenet/.test(String(dataPath || ""));
+    const shouldHideFfn2Layer = !showFfn2 && !isDimenetCase;
+
     Promise.all([
       fetchJsonCached(dataPath),
       secondaryDataPath
@@ -443,7 +495,15 @@ export default function SankeyView({
           secondaryRawData && typeof secondaryRawData === "object"
             ? mergeSankeyDataForCombinedSplit(rawData, secondaryRawData)
             : null;
-        const data = mergedForCombined ? mergedForCombined.mergedData : normalizeSankeyData(rawData);
+        let data = filterHiddenLayer(
+          mergedForCombined ? mergedForCombined.mergedData : rawData,
+          shouldHideFfn2Layer
+        );
+        const epochCount = Object.keys(data?.epoch || {}).length;
+        const layerCount = Object.keys(data?.layer || {}).length;
+        if (shouldHideFfn2Layer && (epochCount === 0 || layerCount === 0)) {
+          data = normalizeSankeyData(mergedForCombined ? mergedForCombined.mergedData : rawData);
+        }
         const secondaryNodeValueByCellCluster =
           mergedForCombined?.secondaryNodeValueByCellCluster ?? new Map<string, number>();
         const transitionEntriesByEpoch: Array<{
@@ -451,15 +511,19 @@ export default function SankeyView({
           from_layer: string;
           to_layer: string;
           pct_changed: number;
-        }> = Array.isArray((transitionJson as any)?.by_epoch) ? (transitionJson as any).by_epoch : [];
+        }> = (
+          Array.isArray((transitionJson as any)?.by_epoch) ? (transitionJson as any).by_epoch : []
+        ).filter((d: any) => !shouldHideFfn2Layer || (!isHiddenLayerName(String(d?.from_layer ?? "")) && !isHiddenLayerName(String(d?.to_layer ?? ""))));
         const transitionEntriesByLayer: Array<{
           layer: string;
           from_epoch: string;
           to_epoch: string;
           pct_changed: number;
         }> =
-          (Array.isArray((transitionJson as any)?.by_layer) ? (transitionJson as any).by_layer : null) ||
-          (Array.isArray((transitionLayerJson as any)?.by_layer) ? (transitionLayerJson as any).by_layer : []);
+          (
+            (Array.isArray((transitionJson as any)?.by_layer) ? (transitionJson as any).by_layer : null) ||
+            (Array.isArray((transitionLayerJson as any)?.by_layer) ? (transitionLayerJson as any).by_layer : [])
+          ).filter((d: any) => !shouldHideFfn2Layer || !isHiddenLayerName(String(d?.layer ?? "")));
 
         const allEpochKeys: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
         const lastEpoch = allEpochKeys.length ? allEpochKeys[allEpochKeys.length - 1] : null;
@@ -1868,6 +1932,7 @@ export default function SankeyView({
     onVisibleEpochsChange,
     selectedCellMetric,
     cellMetricByCell,
+    showFfn2,
   ]);
 
   useEffect(() => {
@@ -1960,6 +2025,9 @@ export default function SankeyView({
       .classed("link-dimmed", true)
       .classed("link-highlight", false);
     d3.select(container)
+      .selectAll("rect.gap-rect")
+      .classed("gap-dimmed", true);
+    d3.select(container)
       .selectAll("g.row-links path.link-path")
       .each(function () {
         const el = d3.select(this);
@@ -1970,6 +2038,14 @@ export default function SankeyView({
       .each(function () {
         const el = d3.select(this);
         if (el.attr("data-column") === colKey) el.classed("link-dimmed", false).classed("link-highlight", true);
+      });
+    d3.select(container)
+      .selectAll("rect.gap-rect")
+      .each(function () {
+        const el = d3.select(this);
+        if (el.attr("data-row") === rowKey || el.attr("data-column") === colKey) {
+          el.classed("gap-dimmed", false);
+        }
       });
   }, [selectedNode, activeCell]);
 
