@@ -2,6 +2,9 @@
 
 This README is the lean entry point for the current backend.
 
+Run `uv sync`; `export LATENTVIS_DATA_ROOT="$PWD/data/"`; `uv run python3 flask_backend.py`.
+
+
 If you need implementation details, use:
 
 - `README_ALGORITHMS.md` for code-accurate algorithm behavior.

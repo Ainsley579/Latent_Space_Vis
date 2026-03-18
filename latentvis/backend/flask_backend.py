@@ -85,8 +85,16 @@ def _default_embedding_path(case: str) -> Path:
 
 
 EMBEDDING_PATHS = {
-    "chemprop": Path(os.environ.get("LATENTVIS_CHEMPROP_PT", str(_default_embedding_path("chemprop")))),
-    "chemeleon": Path(os.environ.get("LATENTVIS_CHEMELEON_PT", str(_default_embedding_path("chemeleon")))),
+    "chemprop": Path(
+        os.environ.get(
+            "LATENTVIS_CHEMPROP_PT", str(_default_embedding_path("chemprop"))
+        )
+    ),
+    "chemeleon": Path(
+        os.environ.get(
+            "LATENTVIS_CHEMELEON_PT", str(_default_embedding_path("chemeleon"))
+        )
+    ),
 }
 
 
@@ -141,7 +149,9 @@ def _expand_split_selector(value: Optional[str]) -> List[str]:
     return [sp] if sp else []
 
 
-def _resolve_train_test_splits(value: Optional[str], default: str = "test") -> List[str]:
+def _resolve_train_test_splits(
+    value: Optional[str], default: str = "test"
+) -> List[str]:
     """
     Resolve split selector for APIs backed by train/test artifacts.
     Accepts all/train/test/train+test/test+train.
@@ -163,7 +173,9 @@ def _normalize_clustering(clustering: Optional[str]) -> str:
     return str(clustering or DEFAULT_CLUSTERING).strip().lower()
 
 
-def _case_dir(case: str, clustering: Optional[str] = None, data_split: Optional[str] = None) -> Path:
+def _case_dir(
+    case: str, clustering: Optional[str] = None, data_split: Optional[str] = None
+) -> Path:
     """
     Resolve case directory for a given dataset, clustering method, and data split.
 
@@ -283,7 +295,9 @@ def _safe_relpath(raw: str) -> Optional[Path]:
     return p
 
 
-def _preferred_cluster_sorted_members_path(dataset: str, clustering: Optional[str] = None) -> Optional[Path]:
+def _preferred_cluster_sorted_members_path(
+    dataset: str, clustering: Optional[str] = None
+) -> Optional[Path]:
     """
     User-pinned topk sorted-members source.
     For now we pin chemprop+agglomerative to:
@@ -295,11 +309,20 @@ def _preferred_cluster_sorted_members_path(dataset: str, clustering: Optional[st
     method = _normalize_clustering(clustering)
     if method != "agglomerative":
         return None
-    p = DATA_ROOT / "chemprop" / "train" / "agglomerative" / "topk" / "cluster_sorted_members.json"
+    p = (
+        DATA_ROOT
+        / "chemprop"
+        / "train"
+        / "agglomerative"
+        / "topk"
+        / "cluster_sorted_members.json"
+    )
     return p if p.is_file() else None
 
 
-def _build_cluster_representatives_from_sorted(sorted_rows: object, default_k: int = 32) -> List[Dict[str, object]]:
+def _build_cluster_representatives_from_sorted(
+    sorted_rows: object, default_k: int = 32
+) -> List[Dict[str, object]]:
     out: List[Dict[str, object]] = []
     if not isinstance(sorted_rows, list):
         return out
@@ -310,7 +333,13 @@ def _build_cluster_representatives_from_sorted(sorted_rows: object, default_k: i
         if not isinstance(ids, list):
             ids = []
         ids_norm = [str(x) for x in ids]
-        k = max(1, min(int(row.get("k", default_k) or default_k), len(ids_norm) if ids_norm else default_k))
+        k = max(
+            1,
+            min(
+                int(row.get("k", default_k) or default_k),
+                len(ids_norm) if ids_norm else default_k,
+            ),
+        )
         closest = ids_norm[:k]
         farthest = list(reversed(ids_norm[-k:])) if ids_norm else []
         out.append(
@@ -407,7 +436,9 @@ def _scatter_parse_request_filename(file_name: str) -> Optional[Tuple[str, str, 
     return None
 
 
-def _scatter_split_combined_file(combined_path: Path, kind: str) -> Optional[List[Dict[str, object]]]:
+def _scatter_split_combined_file(
+    combined_path: Path, kind: str
+) -> Optional[List[Dict[str, object]]]:
     """
     Split combined scatter rows (<...>_<projection>.json) into:
       - xy rows: [{real_id, x, y}]
@@ -454,7 +485,10 @@ def _scatter_split_combined_file(combined_path: Path, kind: str) -> Optional[Lis
 
     parsed = {"xy": xy_out, "cluster": cluster_out}
     with SCATTER_COMBINED_FILE_CACHE_LOCK:
-        if len(SCATTER_COMBINED_FILE_CACHE) >= MAX_SCATTER_COMBINED_FILE_CACHE and SCATTER_COMBINED_FILE_CACHE:
+        if (
+            len(SCATTER_COMBINED_FILE_CACHE) >= MAX_SCATTER_COMBINED_FILE_CACHE
+            and SCATTER_COMBINED_FILE_CACHE
+        ):
             SCATTER_COMBINED_FILE_CACHE.pop(next(iter(SCATTER_COMBINED_FILE_CACHE)))
         SCATTER_COMBINED_FILE_CACHE[cache_key] = parsed
     rows = parsed.get(kind)
@@ -496,11 +530,18 @@ def _scatter_compute_cluster_rows(
     layer: str,
     split_norm: str,
 ) -> List[Dict[str, object]]:
-    rows, err = _load_cluster_rows_for_cell(dataset, clustering, epoch, layer, [split_norm])
+    rows, err = _load_cluster_rows_for_cell(
+        dataset, clustering, epoch, layer, [split_norm]
+    )
     if err == "cluster_assignments_not_found":
         # Fallback from sankey samples if assignment CSV is absent.
         key = f"{epoch}__{layer}"
-        samples = _read_json(_case_dir(dataset, clustering, split_norm) / "sankey" / "sankey_samples.json", [])
+        samples = _read_json(
+            _case_dir(dataset, clustering, split_norm)
+            / "sankey"
+            / "sankey_samples.json",
+            [],
+        )
         derived = _build_scatter_cluster_by_cell_from_samples(samples).get(key, [])
         return derived if isinstance(derived, list) else []
     return [
@@ -527,7 +568,9 @@ def _scatter_get_cell_cached(
     if isinstance(cached, dict):
         return {
             "xy": cached.get("xy") if isinstance(cached.get("xy"), list) else [],
-            "cluster": cached.get("cluster") if isinstance(cached.get("cluster"), list) else [],
+            "cluster": cached.get("cluster")
+            if isinstance(cached.get("cluster"), list)
+            else [],
         }
 
     xy_rows = _scatter_compute_xy_rows(dataset, model, layer, projection, split_norm)
@@ -585,7 +628,10 @@ def _load_scatter_bundle_cached(path: Path) -> Optional[Dict[str, object]]:
     if not isinstance(payload, dict):
         return None
     with SCATTER_BUNDLE_CACHE_LOCK:
-        if len(SCATTER_BUNDLE_CACHE) >= MAX_SCATTER_BUNDLE_CACHE and SCATTER_BUNDLE_CACHE:
+        if (
+            len(SCATTER_BUNDLE_CACHE) >= MAX_SCATTER_BUNDLE_CACHE
+            and SCATTER_BUNDLE_CACHE
+        ):
             SCATTER_BUNDLE_CACHE.pop(next(iter(SCATTER_BUNDLE_CACHE)))
         SCATTER_BUNDLE_CACHE[cache_key] = payload
     return payload
@@ -644,7 +690,10 @@ def _load_xy_all_payload(dataset: str) -> Optional[Dict[str, object]]:
         merged["cell_meta"] = merged_cell_meta
 
     with SCATTER_BUNDLE_CACHE_LOCK:
-        if len(SCATTER_BUNDLE_CACHE) >= MAX_SCATTER_BUNDLE_CACHE and SCATTER_BUNDLE_CACHE:
+        if (
+            len(SCATTER_BUNDLE_CACHE) >= MAX_SCATTER_BUNDLE_CACHE
+            and SCATTER_BUNDLE_CACHE
+        ):
             SCATTER_BUNDLE_CACHE.pop(next(iter(SCATTER_BUNDLE_CACHE)))
         SCATTER_BUNDLE_CACHE[cache_key] = merged
     return merged
@@ -679,7 +728,10 @@ def _scatter_bundle_lookup_rows(
                                 for r in rows_xy:
                                     if not isinstance(r, dict):
                                         continue
-                                    if str(r.get("split", "")).strip().lower() != split_norm:
+                                    if (
+                                        str(r.get("split", "")).strip().lower()
+                                        != split_norm
+                                    ):
                                         continue
                                     out_xy.append(r)
                                 return out_xy
@@ -754,7 +806,9 @@ def _scatter_cluster_rows_from_sankey_samples(
     model: str,
     layer: str,
 ) -> List[Dict[str, object]]:
-    samples_path = _case_dir(dataset, clustering, split_norm) / "sankey" / "sankey_samples.json"
+    samples_path = (
+        _case_dir(dataset, clustering, split_norm) / "sankey" / "sankey_samples.json"
+    )
     samples = _read_json(samples_path, [])
     if not isinstance(samples, list):
         return []
@@ -765,7 +819,9 @@ def _scatter_cluster_rows_from_sankey_samples(
     return rows
 
 
-def _scatter_legacy_rows(base: Path, model: str, layer: str, projection: str) -> Optional[List[Dict[str, object]]]:
+def _scatter_legacy_rows(
+    base: Path, model: str, layer: str, projection: str
+) -> Optional[List[Dict[str, object]]]:
     """
     Legacy scatter file fallback:
       <model>_<layer>_<projection>.json with rows containing x/y/cluster_id/real_id.
@@ -836,7 +892,9 @@ def _materialize_compat_sankey_files(
     if write_files:
         _write_json(sankey_dir / "vertical_model_samples.json", all_vertical)
         for l in layers:
-            _write_json(sankey_dir / f"vertical_model_samples_{l}.json", by_layer.get(l, []))
+            _write_json(
+                sankey_dir / f"vertical_model_samples_{l}.json", by_layer.get(l, [])
+            )
 
     return {
         "models": len(models),
@@ -876,7 +934,10 @@ def _build_compat_payload_from_sankey(
     assignments: Dict[Tuple[str, str], Dict[str, int]] = {}
     for row in samples:
         rid = str(row.get("real_id", "")).strip()
-        model = str(row.get("from_model", "")).strip() or str(row.get("to_model", "")).strip()
+        model = (
+            str(row.get("from_model", "")).strip()
+            or str(row.get("to_model", "")).strip()
+        )
         fl = str(row.get("from_layer", "")).strip()
         tl = str(row.get("to_layer", "")).strip()
         fc = row.get("from_cluster")
@@ -958,7 +1019,9 @@ def _build_scatter_cluster_by_cell_from_samples(
 
     out: Dict[str, List[Dict[str, object]]] = {}
     for cell_key, rid_map in by_cell.items():
-        rows = [{"real_id": rid, "cluster_id": int(cid)} for rid, cid in rid_map.items()]
+        rows = [
+            {"real_id": rid, "cluster_id": int(cid)} for rid, cid in rid_map.items()
+        ]
         out[cell_key] = rows
     return out
 
@@ -1054,7 +1117,9 @@ def _resolve_precomputed_sweep_base(
     if clustering == "pgmeans":
         sweep_key = f"kmin_{int(k_min)}_kmax_{int(k_max)}"
     elif clustering == "agglomerative":
-        k_val = int(n_clusters_override) if n_clusters_override is not None else int(k_max)
+        k_val = (
+            int(n_clusters_override) if n_clusters_override is not None else int(k_max)
+        )
         link = (linkage_override or "ward").strip().lower() or "ward"
         sweep_key = f"k_{k_val}_linkage_{link}"
     elif clustering == "knn":
@@ -1075,13 +1140,17 @@ def _resolve_precomputed_sweep_base(
     return base
 
 
-def _search_smiles_substructure_in_case(case: str, smiles_query: str, data_split: Optional[str] = None):
+def _search_smiles_substructure_in_case(
+    case: str, smiles_query: str, data_split: Optional[str] = None
+):
     """
     Substructure search: return list of real_ids whose molecule contains the query
     (query is a substructure; all IDs that contain it are returned).
     Uses RDKit HasSubstructMatch. Returns (matches, error_message).
     """
-    split_selector = (str(data_split).strip().lower() if data_split is not None else "all") or "all"
+    split_selector = (
+        str(data_split).strip().lower() if data_split is not None else "all"
+    ) or "all"
     if split_selector not in ("all", "train", "test", "val"):
         split_selector = "all"
 
@@ -1106,15 +1175,21 @@ def _search_smiles_substructure_in_case(case: str, smiles_query: str, data_split
             if isinstance(raw, list):
                 rows = [r for r in raw if isinstance(r, dict)]
             elif isinstance(raw, dict):
-                rows = [{"real_id": k, "smiles": v, "split": legacy_split} for k, v in raw.items()]
+                rows = [
+                    {"real_id": k, "smiles": v, "split": legacy_split}
+                    for k, v in raw.items()
+                ]
         except Exception as e:
-            print("[flask-backend] failed to load %s: %s" % (legacy_path, e), flush=True)
+            print(
+                "[flask-backend] failed to load %s: %s" % (legacy_path, e), flush=True
+            )
             return [], None
     q = _normalize_smiles(smiles_query)
     if not q:
         return [], "empty_smiles"
     try:
         from rdkit import Chem
+
         query_mol = Chem.MolFromSmiles(q)
         if query_mol is None:
             return [], "invalid_query_smiles"
@@ -1171,7 +1246,9 @@ def search_smiles():
     results = {}
     total = 0
     for case in cases:
-        ids, err = _search_smiles_substructure_in_case(case, smiles, data_split=data_split)
+        ids, err = _search_smiles_substructure_in_case(
+            case, smiles, data_split=data_split
+        )
         if err:
             return jsonify({"ok": False, "error": err}), 400
         if ids:
@@ -1184,103 +1261,9 @@ def search_smiles():
         )
 
     print("[flask-backend] search-smiles total_ids=%s" % total, flush=True)
-    return jsonify({"ok": True, "smiles": smiles, "matches": results, "total_ids": total})
-
-
-def _cluster_id_from_label(label: str) -> int:
-    """Parse cluster ID from label like 'ffn_layer_1_C0' or 'fingerprint_C2'. Returns -1 if no _C suffix."""
-    if not label or "_C" not in label:
-        return -1
-    try:
-        return int(label.split("_C")[-1])
-    except (ValueError, TypeError):
-        return -1
-
-
-def _filter_sankey_for_range(case: str, min_value: int, max_value: int, clustering: Optional[str] = None) -> Tuple[int, int]:
-    """Filter all_sankey.json and all *_sankey_samples.json / vertical_model_samples_*.json
-    in-place for a given [min,max] **cluster ID** range (clustering range, not epoch).
-
-    - all_sankey: keep edges where both source_label and target_label have cluster ID in [min, max].
-    - Sample files: keep rows where from_cluster and to_cluster are in [min, max].
-
-    Returns (kept_edges, kept_sample_rows) for logging.
-    """
-    case_dir = _case_dir(case, clustering)
-    sankey_dir = case_dir / "sankey"
-    all_sankey_path = sankey_dir / "all_sankey.json"
-    samples_path = sankey_dir / "sankey_samples.json"
-
-    def cluster_in_range(cid: int) -> bool:
-        return min_value <= cid <= max_value
-
-    kept_edges = 0
-    kept_rows = 0
-
-    if all_sankey_path.is_file():
-        try:
-            data = json.loads(all_sankey_path.read_text(encoding="utf-8"))
-        except Exception as e:  # pragma: no cover - defensive
-            print(f"[flask-backend] failed to load {all_sankey_path}: {e}", flush=True)
-        else:
-            epoch_dict = data.get("epoch") or {}
-            for ek, payload in epoch_dict.items():
-                edges = payload.get("edges") or []
-                filtered_edges = [
-                    e
-                    for e in edges
-                    if cluster_in_range(_cluster_id_from_label(e.get("source_label", "")))
-                    and cluster_in_range(_cluster_id_from_label(e.get("target_label", "")))
-                ]
-                kept_edges += len(filtered_edges)
-                payload["edges"] = filtered_edges
-            data["epoch"] = epoch_dict
-            all_sankey_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
-
-    def filter_sample_rows(rows: list) -> list:
-        out = []
-        for row in rows:
-            if not isinstance(row, dict):
-                continue
-            try:
-                fc = int(row.get("from_cluster"))
-                tc = int(row.get("to_cluster"))
-            except (ValueError, TypeError):
-                continue
-            if cluster_in_range(fc) and cluster_in_range(tc):
-                out.append(row)
-        return out
-
-    if samples_path.is_file():
-        try:
-            rows = json.loads(samples_path.read_text(encoding="utf-8"))
-        except Exception as e:  # pragma: no cover - defensive
-            print(f"[flask-backend] failed to load {samples_path}: {e}", flush=True)
-        else:
-            filtered = filter_sample_rows(rows)
-            kept_rows = len(filtered)
-            samples_path.write_text(json.dumps(filtered, indent=2), encoding="utf-8")
-
-    for f in sankey_dir.iterdir():
-        if not f.is_file() or f.suffix != ".json":
-            continue
-        name = f.name
-        if not (
-            name.endswith("_sankey_samples.json")
-            or name.startswith("vertical_model_samples")
-        ):
-            continue
-        try:
-            rows = json.loads(f.read_text(encoding="utf-8"))
-        except Exception as e:
-            print(f"[flask-backend] skip filter {f.name}: {e}", flush=True)
-            continue
-        if not isinstance(rows, list):
-            continue
-        filtered = filter_sample_rows(rows)
-        f.write_text(json.dumps(filtered, indent=2), encoding="utf-8")
-
-    return kept_edges, kept_rows
+    return jsonify(
+        {"ok": True, "smiles": smiles, "matches": results, "total_ids": total}
+    )
 
 
 def _set_generate_range_job(job_id: str, **updates: object) -> None:
@@ -1310,7 +1293,9 @@ def _trim_generate_range_jobs() -> None:
             GENERATE_RANGE_JOBS.pop(jid, None)
 
 
-def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = None) -> Tuple[Dict[str, object], int]:
+def _generate_range_impl(
+    payload: Dict[str, object], job_id: Optional[str] = None
+) -> Tuple[Dict[str, object], int]:
     """Re-run clustering for ALL cells with user-supplied params."""
     include_payload = bool(payload.get("include_payload", False))
     # Always run generate-range in memory-only mode for frontend runtime payloads.
@@ -1325,7 +1310,6 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
     dataset = payload.get("dataset")
     clustering = (payload.get("clustering") or DEFAULT_CLUSTERING).lower().strip()
     data_split = payload.get("data_split") or payload.get("preferred_split")
-
 
     # Optional substructure member cap for MCS (first M nearest / farthest per cluster)
     sub_m = payload.get("substructure_max_members") or payload.get("sub_m")
@@ -1419,7 +1403,9 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
             "summary": {
                 dataset: {
                     "status": "done",
-                    "updated": _collect_updated_results_summary(precomputed_base, output_suffix=""),
+                    "updated": _collect_updated_results_summary(
+                        precomputed_base, output_suffix=""
+                    ),
                 }
             },
             "persist": False,
@@ -1437,19 +1423,26 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
 
     input_path = EMBEDDING_PATHS.get(dataset)
     if not input_path or not input_path.is_file():
-        return {"ok": False, "error": "embedding_not_found", "detail": str(input_path)}, 404
+        return {
+            "ok": False,
+            "error": "embedding_not_found",
+            "detail": str(input_path),
+        }, 404
 
     temp_root: Optional[Path] = None
     if persist:
         case_dir = DATA_ROOT / dataset / split_norm
         case_dir.mkdir(parents=True, exist_ok=True)
     else:
-        temp_root = Path(tempfile.mkdtemp(prefix=f"latentvis_generate_{dataset}_{clustering}_"))
+        temp_root = Path(
+            tempfile.mkdtemp(prefix=f"latentvis_generate_{dataset}_{clustering}_")
+        )
         case_dir = temp_root / dataset / split_norm
         case_dir.mkdir(parents=True, exist_ok=True)
 
     try:
         from run_pipeline_from_embeddings import run_pipeline
+
         if job_id:
             _set_generate_range_job(job_id, message="running_pipeline")
 
@@ -1487,7 +1480,9 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
 
     # Recompute transition stats for updated cluster assignments after generate-range.
     if persist:
-        transition_script = _BACKEND_DIR / "scripts" / "compute_layer_transition_stats.py"
+        transition_script = (
+            _BACKEND_DIR / "scripts" / "compute_layer_transition_stats.py"
+        )
         if transition_script.is_file():
             try:
                 subprocess.run(
@@ -1498,18 +1493,36 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
                     timeout=300,
                 )
             except subprocess.SubprocessError as e:
-                print(f"[flask-backend] compute_layer_transition_stats failed (non-fatal): {e}", flush=True)
+                print(
+                    f"[flask-backend] compute_layer_transition_stats failed (non-fatal): {e}",
+                    flush=True,
+                )
                 stderr = getattr(e, "stderr", None)
                 if stderr:
                     try:
-                        print("[flask-backend] compute_layer_transition_stats stderr:\n%s" % stderr.decode("utf-8", errors="ignore"), flush=True)
+                        print(
+                            "[flask-backend] compute_layer_transition_stats stderr:\n%s"
+                            % stderr.decode("utf-8", errors="ignore"),
+                            flush=True,
+                        )
                     except Exception:
-                        print("[flask-backend] compute_layer_transition_stats stderr(raw): %r" % (stderr,), flush=True)
+                        print(
+                            "[flask-backend] compute_layer_transition_stats stderr(raw): %r"
+                            % (stderr,),
+                            flush=True,
+                        )
 
     updated = _collect_updated_results_summary(case_dir, output_suffix="")
     summary = {dataset: {"status": "done", "updated": updated}}
 
-    out = {"ok": True, "min": k_min, "max": k_max, "dataset": dataset, "clustering": clustering, "summary": summary}
+    out = {
+        "ok": True,
+        "min": k_min,
+        "max": k_max,
+        "dataset": dataset,
+        "clustering": clustering,
+        "summary": summary,
+    }
     if include_payload:
         out["payload"] = {dataset: _load_generated_case_payload(case_dir)}
         out["run_id"] = str(int(time.time() * 1000))
@@ -1518,7 +1531,9 @@ def _generate_range_impl(payload: Dict[str, object], job_id: Optional[str] = Non
         out["linkage"] = linkage_override
     out["persist"] = persist
     if not persist:
-        out["note"] = "Generated in temporary backend workspace; no files were written to public/data."
+        out["note"] = (
+            "Generated in temporary backend workspace; no files were written to public/data."
+        )
     if temp_root is not None:
         shutil.rmtree(temp_root, ignore_errors=True)
     return out, 200
@@ -1536,7 +1551,9 @@ def _generate_range_worker(job_id: str, payload: Dict[str, object]) -> None:
                 error={"status_code": status_code, "detail": result},
             )
             return
-        _set_generate_range_job(job_id, status="succeeded", message="done", result=result)
+        _set_generate_range_job(
+            job_id, status="succeeded", message="done", result=result
+        )
     except Exception as e:
         print(f"[flask-backend] generate-range async worker failed: {e}", flush=True)
         _set_generate_range_job(
@@ -1573,7 +1590,9 @@ def generate_range():
             "result": None,
             "error": None,
         }
-    worker = threading.Thread(target=_generate_range_worker, args=(job_id, payload), daemon=True)
+    worker = threading.Thread(
+        target=_generate_range_worker, args=(job_id, payload), daemon=True
+    )
     worker.start()
     return jsonify({"ok": True, "job_id": job_id, "status": "queued"}), 202
 
@@ -1603,9 +1622,19 @@ def generate_range_job_status(job_id: str):
     return jsonify(out)
 
 
-def _collect_updated_results_summary(base: Path, output_suffix: str = "") -> Dict[str, object]:
+def _collect_updated_results_summary(
+    base: Path, output_suffix: str = ""
+) -> Dict[str, object]:
     """Scan pipeline output dir and return counts for scatter, topk, substructures, sankey, cluster_assignments."""
-    summary = {"cells": 0, "scatter_files": 0, "topk_representatives": 0, "topk_sorted_members": 0, "substructure_entries": 0, "sankey_ok": False, "cluster_assignments_ok": False}
+    summary = {
+        "cells": 0,
+        "scatter_files": 0,
+        "topk_representatives": 0,
+        "topk_sorted_members": 0,
+        "substructure_entries": 0,
+        "sankey_ok": False,
+        "cluster_assignments_ok": False,
+    }
     if not base.is_dir():
         return summary
     scatter_dir = base / ("scatterplot" + output_suffix)
@@ -1616,25 +1645,37 @@ def _collect_updated_results_summary(base: Path, output_suffix: str = "") -> Dic
     topk_dir = base / ("topk" + output_suffix)
     if (topk_dir / "cluster_representatives.json").is_file():
         try:
-            data = json.loads((topk_dir / "cluster_representatives.json").read_text(encoding="utf-8"))
+            data = json.loads(
+                (topk_dir / "cluster_representatives.json").read_text(encoding="utf-8")
+            )
             summary["topk_representatives"] = len(data) if isinstance(data, list) else 0
         except Exception:
             pass
     if (topk_dir / "cluster_sorted_members.json").is_file():
         try:
-            data = json.loads((topk_dir / "cluster_sorted_members.json").read_text(encoding="utf-8"))
+            data = json.loads(
+                (topk_dir / "cluster_sorted_members.json").read_text(encoding="utf-8")
+            )
             summary["topk_sorted_members"] = len(data) if isinstance(data, list) else 0
         except Exception:
             pass
     sub_dir = base / ("substructures" + output_suffix)
     if (sub_dir / "cluster_substructures.json").is_file():
         try:
-            data = json.loads((sub_dir / "cluster_substructures.json").read_text(encoding="utf-8"))
+            data = json.loads(
+                (sub_dir / "cluster_substructures.json").read_text(encoding="utf-8")
+            )
             summary["substructure_entries"] = len(data) if isinstance(data, list) else 0
         except Exception:
             pass
-    summary["sankey_ok"] = (base / ("sankey" + output_suffix) / "all_sankey.json").is_file()
-    summary["cluster_assignments_ok"] = (base / ("clustering_metrics" + output_suffix) / "cluster_assignments_with_real_id.csv").is_file()
+    summary["sankey_ok"] = (
+        base / ("sankey" + output_suffix) / "all_sankey.json"
+    ).is_file()
+    summary["cluster_assignments_ok"] = (
+        base
+        / ("clustering_metrics" + output_suffix)
+        / "cluster_assignments_with_real_id.csv"
+    ).is_file()
     return summary
 
 
@@ -1706,7 +1747,11 @@ def materialize_scatter_bundle():
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
     if not isinstance(projections, list) or not projections:
         projections = ["pca", "mds", "umap", "tsne"]
-    projections = [str(p).strip().lower() for p in projections if str(p).strip().lower() in ("pca", "mds", "umap", "tsne")]
+    projections = [
+        str(p).strip().lower()
+        for p in projections
+        if str(p).strip().lower() in ("pca", "mds", "umap", "tsne")
+    ]
     if not projections:
         return jsonify({"ok": False, "error": "invalid_projections"}), 400
 
@@ -1732,18 +1777,29 @@ def materialize_scatter_bundle():
             cell_key = f"{m}__{l}"
             cells[cell_key] = {}
             for proj in projections:
-                train_cell = _scatter_read_cell_from_files(dataset, clustering, "train", m, l, proj)
+                train_cell = _scatter_read_cell_from_files(
+                    dataset, clustering, "train", m, l, proj
+                )
                 if train_cell is None:
-                    train_cell = _scatter_get_cell_cached(dataset, clustering, "train", m, l, proj)
-                test_cell = _scatter_read_cell_from_files(dataset, clustering, "test", m, l, proj)
+                    train_cell = _scatter_get_cell_cached(
+                        dataset, clustering, "train", m, l, proj
+                    )
+                test_cell = _scatter_read_cell_from_files(
+                    dataset, clustering, "test", m, l, proj
+                )
                 if test_cell is None:
-                    test_cell = _scatter_get_cell_cached(dataset, clustering, "test", m, l, proj)
+                    test_cell = _scatter_get_cell_cached(
+                        dataset, clustering, "test", m, l, proj
+                    )
                 xy_rows: List[Dict[str, object]] = []
                 cluster_rows: List[Dict[str, object]] = []
                 seen_xy = set()
                 seen_cluster = set()
 
-                for split_tag, rows in (("train", train_cell.get("xy") or []), ("test", test_cell.get("xy") or [])):
+                for split_tag, rows in (
+                    ("train", train_cell.get("xy") or []),
+                    ("test", test_cell.get("xy") or []),
+                ):
                     for r in rows:
                         if not isinstance(r, dict):
                             continue
@@ -1762,9 +1818,14 @@ def materialize_scatter_bundle():
                             y = float(r.get("y", 0) or 0)
                         except Exception:
                             y = 0.0
-                        xy_rows.append({"real_id": rid, "x": x, "y": y, "split": split_tag})
+                        xy_rows.append(
+                            {"real_id": rid, "x": x, "y": y, "split": split_tag}
+                        )
 
-                for split_tag, rows in (("train", train_cell.get("cluster") or []), ("test", test_cell.get("cluster") or [])):
+                for split_tag, rows in (
+                    ("train", train_cell.get("cluster") or []),
+                    ("test", test_cell.get("cluster") or []),
+                ):
                     for r in rows:
                         if not isinstance(r, dict):
                             continue
@@ -1779,7 +1840,9 @@ def materialize_scatter_bundle():
                             cid = int(r.get("cluster_id", 0))
                         except Exception:
                             cid = 0
-                        cluster_rows.append({"real_id": rid, "cluster_id": cid, "split": split_tag})
+                        cluster_rows.append(
+                            {"real_id": rid, "cluster_id": cid, "split": split_tag}
+                        )
 
                 cells[cell_key][proj] = {"xy": xy_rows, "cluster": cluster_rows}
 
@@ -1829,7 +1892,11 @@ def sankey_model():
     model = request.args.get("model", "")
     if dataset not in DEFAULT_CASES or not model:
         return jsonify({"ok": False, "error": "invalid_args"}), 400
-    path = _case_dir(dataset, clustering, data_split) / "sankey" / f"{model}_sankey_samples.json"
+    path = (
+        _case_dir(dataset, clustering, data_split)
+        / "sankey"
+        / f"{model}_sankey_samples.json"
+    )
     payload = _read_json(path, None)
     if payload is None:
         return jsonify({"ok": False, "error": "not_found"}), 404
@@ -1844,7 +1911,11 @@ def sankey_vertical():
     layer = request.args.get("layer", "")
     if dataset not in DEFAULT_CASES or not layer:
         return jsonify({"ok": False, "error": "invalid_args"}), 400
-    path = _case_dir(dataset, clustering, data_split) / "sankey" / f"vertical_model_samples_{layer}.json"
+    path = (
+        _case_dir(dataset, clustering, data_split)
+        / "sankey"
+        / f"vertical_model_samples_{layer}.json"
+    )
     payload = _read_json(path, None)
     if payload is None:
         return jsonify({"ok": False, "error": "not_found"}), 404
@@ -1883,7 +1954,11 @@ def data_file():
     knn_k_raw = request.args.get("k")
     section_raw = request.args.get("section")
     section_rel = _safe_relpath(section_raw) if section_raw else None
-    dataset_root = str(request.args.get("dataset_root", "")).strip().lower() in ("1", "true", "yes")
+    dataset_root = str(request.args.get("dataset_root", "")).strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
 
     if dataset_root:
         base = DATA_ROOT / dataset
@@ -1892,7 +1967,11 @@ def data_file():
         if clustering_norm == "knn":
             split_norm = _normalize_split(split_for_base) or "test"
             base_knn = _case_dir(dataset, "knn", data_split=split_for_base)
-            candidate_knn = (base_knn / section_rel / file_rel) if section_rel is not None else (base_knn / file_rel)
+            candidate_knn = (
+                (base_knn / section_rel / file_rel)
+                if section_rel is not None
+                else (base_knn / file_rel)
+            )
             if candidate_knn.exists():
                 base_override = base_knn
             else:
@@ -1908,8 +1987,14 @@ def data_file():
                             "tried_path": str(candidate_knn),
                         }
                     ), 400
-                sweep_base = DATA_ROOT / dataset / split_norm / "sweeps" / "knn" / f"k_{knn_k}"
-                candidate_sweep = (sweep_base / section_rel / file_rel) if section_rel is not None else (sweep_base / file_rel)
+                sweep_base = (
+                    DATA_ROOT / dataset / split_norm / "sweeps" / "knn" / f"k_{knn_k}"
+                )
+                candidate_sweep = (
+                    (sweep_base / section_rel / file_rel)
+                    if section_rel is not None
+                    else (sweep_base / file_rel)
+                )
                 if not sweep_base.is_dir():
                     return jsonify(
                         {
@@ -1921,7 +2006,11 @@ def data_file():
                     ), 404
                 base_override = sweep_base
 
-        base = base_override if base_override is not None else _case_dir(dataset, clustering, data_split=split_for_base)
+        base = (
+            base_override
+            if base_override is not None
+            else _case_dir(dataset, clustering, data_split=split_for_base)
+        )
         if section_rel is not None:
             base = base / section_rel
 
@@ -1936,12 +2025,16 @@ def data_file():
         req = _scatter_parse_request_filename(target.name)
         if req is not None:
             cell_core, projection, kind = req
-            parsed = _scatter_parse_cell_from_filename(dataset, clustering, "train", target.name)
+            parsed = _scatter_parse_cell_from_filename(
+                dataset, clustering, "train", target.name
+            )
             if parsed is None:
                 # Fallback for datasets without train split artifacts (e.g., dimenet):
                 # resolve model/layer directly from xy_all cell keys.
                 xy_payload = _load_xy_all_payload(dataset)
-                cells_xy = xy_payload.get("cells") if isinstance(xy_payload, dict) else None
+                cells_xy = (
+                    xy_payload.get("cells") if isinstance(xy_payload, dict) else None
+                )
                 if isinstance(cells_xy, dict):
                     for cell_key in cells_xy.keys():
                         if not isinstance(cell_key, str) or "__" not in cell_key:
@@ -1985,18 +2078,35 @@ def data_file():
 
     # Scatter "all" mode: always return merged train+test rows from one response.
     # This avoids double frontend fetch and keeps one XY source of truth per cell.
-    if (section_rel == Path("scatterplot") if section_rel else False) and split_raw == "all":
+    if (
+        section_rel == Path("scatterplot") if section_rel else False
+    ) and split_raw == "all":
         name = target.name
-        parsed_all = _scatter_parse_cell_from_filename(dataset, clustering, "train", name)
+        parsed_all = _scatter_parse_cell_from_filename(
+            dataset, clustering, "train", name
+        )
         if parsed_all is not None:
             model, layer, projection, kind = parsed_all
             method = str(clustering or DEFAULT_CLUSTERING).strip().lower()
             if kind == "xy":
-                train_cell = _scatter_read_cell_from_files(dataset, method, "train", model, layer, projection) or {}
-                test_cell = _scatter_read_cell_from_files(dataset, method, "test", model, layer, projection) or {}
+                train_cell = (
+                    _scatter_read_cell_from_files(
+                        dataset, method, "train", model, layer, projection
+                    )
+                    or {}
+                )
+                test_cell = (
+                    _scatter_read_cell_from_files(
+                        dataset, method, "test", model, layer, projection
+                    )
+                    or {}
+                )
                 out_rows: List[Dict[str, object]] = []
                 seen = set()
-                for split_tag, rows in (("train", train_cell.get("xy") or []), ("test", test_cell.get("xy") or [])):
+                for split_tag, rows in (
+                    ("train", train_cell.get("xy") or []),
+                    ("test", test_cell.get("xy") or []),
+                ):
                     for r in rows:
                         rid = str((r or {}).get("real_id", ""))
                         if not rid:
@@ -2017,9 +2127,16 @@ def data_file():
             # cluster rows
             out_rows = []
             seen = set()
-            train_cluster_rows = _scatter_cluster_rows_from_sankey_samples(dataset, method, "train", model, layer)
-            test_cluster_rows = _scatter_cluster_rows_from_sankey_samples(dataset, method, "test", model, layer)
-            for split_tag, rows in (("train", train_cluster_rows), ("test", test_cluster_rows)):
+            train_cluster_rows = _scatter_cluster_rows_from_sankey_samples(
+                dataset, method, "train", model, layer
+            )
+            test_cluster_rows = _scatter_cluster_rows_from_sankey_samples(
+                dataset, method, "test", model, layer
+            )
+            for split_tag, rows in (
+                ("train", train_cluster_rows),
+                ("test", test_cluster_rows),
+            ):
                 for r in rows:
                     rid = str((r or {}).get("real_id", ""))
                     if not rid:
@@ -2032,10 +2149,14 @@ def data_file():
                         cid = int((r or {}).get("cluster_id", 0))
                     except Exception:
                         cid = 0
-                    out_rows.append({"real_id": rid, "cluster_id": cid, "split": split_tag})
+                    out_rows.append(
+                        {"real_id": rid, "cluster_id": cid, "split": split_tag}
+                    )
             return jsonify(out_rows)
 
-    if not target.exists() and (section_rel == Path("sankey") if section_rel else False):
+    if not target.exists() and (
+        section_rel == Path("sankey") if section_rel else False
+    ):
         # Compute compatibility samples from all_sankey + sankey_samples on demand.
         name = target.name
         compat = _materialize_compat_sankey_files(
@@ -2056,7 +2177,9 @@ def data_file():
             rows = compat.get("vertical_samples") or []
             return jsonify(rows if isinstance(rows, list) else [])
 
-    if not target.exists() and (section_rel == Path("scatterplot") if section_rel else False):
+    if not target.exists() and (
+        section_rel == Path("scatterplot") if section_rel else False
+    ):
         try:
             name = target.name
             req = _scatter_parse_request_filename(name)
@@ -2066,11 +2189,22 @@ def data_file():
                 method_dir = "pgmeans" if method == "pgmeans" else method
                 scatter_base_candidates: List[Path] = []
                 # Preferred new layout
-                scatter_base_candidates.append(DATA_ROOT / dataset / split_for_base / "clustering" / method_dir / "scatterplot")
+                scatter_base_candidates.append(
+                    DATA_ROOT
+                    / dataset
+                    / split_for_base
+                    / "clustering"
+                    / method_dir
+                    / "scatterplot"
+                )
                 # User's current layout: /<dataset>/<split>/<method>/scatterplot
-                scatter_base_candidates.append(DATA_ROOT / dataset / split_for_base / method_dir / "scatterplot")
+                scatter_base_candidates.append(
+                    DATA_ROOT / dataset / split_for_base / method_dir / "scatterplot"
+                )
                 # Legacy pgmeans layout
-                scatter_base_candidates.append(DATA_ROOT / dataset / split_for_base / "scatterplot")
+                scatter_base_candidates.append(
+                    DATA_ROOT / dataset / split_for_base / "scatterplot"
+                )
                 # Current resolved base (already includes /scatterplot for most callers)
                 scatter_base_candidates.append(base)
                 seen_bases = set()
@@ -2090,7 +2224,9 @@ def data_file():
                     if rows is not None:
                         return jsonify(rows)
 
-            parsed = _scatter_parse_cell_from_filename(dataset, clustering, split_for_base, name)
+            parsed = _scatter_parse_cell_from_filename(
+                dataset, clustering, split_for_base, name
+            )
             if parsed is not None:
                 model, layer, projection, kind = parsed
                 method = str(clustering or DEFAULT_CLUSTERING).strip().lower()
@@ -2121,13 +2257,22 @@ def data_file():
                         if kind == "xy":
                             return jsonify(
                                 [
-                                    {"real_id": r["real_id"], "x": r.get("x", 0), "y": r.get("y", 0)}
+                                    {
+                                        "real_id": r["real_id"],
+                                        "x": r.get("x", 0),
+                                        "y": r.get("y", 0),
+                                    }
                                     for r in legacy_rows
                                 ]
                             )
                         return jsonify(
                             [
-                                {"real_id": r["real_id"], "cluster_id": int(float(r.get("cluster_id", 0) or 0))}
+                                {
+                                    "real_id": r["real_id"],
+                                    "cluster_id": int(
+                                        float(r.get("cluster_id", 0) or 0)
+                                    ),
+                                }
                                 for r in legacy_rows
                             ]
                         )
@@ -2164,7 +2309,9 @@ def data_file():
     if target.suffix.lower() == ".json":
         payload = _read_json(target, None)
         if payload is None:
-            return jsonify({"ok": False, "error": "invalid_json", "path": str(target)}), 500
+            return jsonify(
+                {"ok": False, "error": "invalid_json", "path": str(target)}
+            ), 500
         return jsonify(payload)
 
     return send_file(str(target))
@@ -2239,6 +2386,7 @@ def cluster_containment():
         return jsonify({"ok": False, "error": "invalid_clustering"}), 400
 
     import csv as csv_module
+
     splits = _resolve_train_test_splits(data_split, default="test")
     our_rid_to_cluster: Dict[str, int] = {}
     layer_col = "{}_cluster".format(str(layer).strip())
@@ -2246,7 +2394,9 @@ def cluster_containment():
     checked_paths: List[str] = []
     for split in splits:
         case_dir = _case_dir(dataset, clustering, split)
-        csv_path = case_dir / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
+        csv_path = (
+            case_dir / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
+        )
         checked_paths.append(str(csv_path))
         if not csv_path.is_file():
             continue
@@ -2269,7 +2419,13 @@ def cluster_containment():
                 our_rid_to_cluster[key] = cid
                 our_rid_to_cluster.setdefault(rid_s, cid)
     if not saw_csv:
-        return jsonify({"ok": False, "error": "cluster_assignments_not_found", "checked_paths": checked_paths}), 404
+        return jsonify(
+            {
+                "ok": False,
+                "error": "cluster_assignments_not_found",
+                "checked_paths": checked_paths,
+            }
+        ), 404
 
     user_rid_to_cluster: Dict[str, int] = {}
     for item in user_clustering:
@@ -2320,26 +2476,30 @@ def cluster_containment():
             c = counts.get((u_cid, o_cid), 0)
             pct = round(100.0 * c / size_u, 4)
             row.append(pct)
-            entries.append({
-                "user_cluster_id": u_cid,
-                "our_cluster_id": o_cid,
-                "count": c,
-                "percentage_of_user_cluster": pct,
-            })
+            entries.append(
+                {
+                    "user_cluster_id": u_cid,
+                    "our_cluster_id": o_cid,
+                    "count": c,
+                    "percentage_of_user_cluster": pct,
+                }
+            )
         matrix.append(row)
 
-    return jsonify({
-        "ok": True,
-        "dataset": dataset,
-        "epoch": str(epoch),
-        "layer": layer,
-        "clustering": clustering,
-        "resolved_splits": splits,
-        "user_cluster_ids": user_cids,
-        "our_cluster_ids": our_cids,
-        "matrix": matrix,
-        "entries": entries,
-    })
+    return jsonify(
+        {
+            "ok": True,
+            "dataset": dataset,
+            "epoch": str(epoch),
+            "layer": layer,
+            "clustering": clustering,
+            "resolved_splits": splits,
+            "user_cluster_ids": user_cids,
+            "our_cluster_ids": our_cids,
+            "matrix": matrix,
+            "entries": entries,
+        }
+    )
 
 
 @app.route("/cell-cluster-metrics", methods=["POST", "OPTIONS"])
@@ -2394,7 +2554,9 @@ def cell_cluster_metrics():
             normalized_mutual_info_score,
         )
     except Exception as e:
-        return jsonify({"ok": False, "error": "sklearn_unavailable", "detail": str(e)}), 500
+        return jsonify(
+            {"ok": False, "error": "sklearn_unavailable", "detail": str(e)}
+        ), 500
 
     import csv as csv_module
 
@@ -2417,7 +2579,9 @@ def cell_cluster_metrics():
     checked_paths: List[str] = []
     for split in splits:
         case_dir = _case_dir(dataset, clustering, split)
-        csv_path = case_dir / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
+        csv_path = (
+            case_dir / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
+        )
         checked_paths.append(str(csv_path))
         if not csv_path.is_file():
             continue
@@ -2458,7 +2622,13 @@ def cell_cluster_metrics():
                     cell_truth[cell_key].append(u)
                     cell_pred[cell_key].append(pred)
     if not saw_csv:
-        return jsonify({"ok": False, "error": "cluster_assignments_not_found", "checked_paths": checked_paths}), 404
+        return jsonify(
+            {
+                "ok": False,
+                "error": "cluster_assignments_not_found",
+                "checked_paths": checked_paths,
+            }
+        ), 404
 
     metrics_by_cell: Dict[str, Dict[str, Optional[float]]] = {}
     for cell_key, y_true in cell_truth.items():
@@ -2481,26 +2651,32 @@ def cell_cluster_metrics():
         try:
             result["ari"] = float(adjusted_rand_score(labels_true, labels_pred))
             result["ami"] = float(adjusted_mutual_info_score(labels_true, labels_pred))
-            result["nmi"] = float(normalized_mutual_info_score(labels_true, labels_pred))
+            result["nmi"] = float(
+                normalized_mutual_info_score(labels_true, labels_pred)
+            )
             h, c, v = homogeneity_completeness_v_measure(labels_true, labels_pred)
             result["homogeneity"] = float(h)
             result["completeness"] = float(c)
             result["v_measure"] = float(v)
-            result["fowlkes_mallows"] = float(fowlkes_mallows_score(labels_true, labels_pred))
+            result["fowlkes_mallows"] = float(
+                fowlkes_mallows_score(labels_true, labels_pred)
+            )
         except Exception:
             # Keep nulls for unstable/degenerate cells.
             pass
         metrics_by_cell[cell_key] = result
 
-    return jsonify({
-        "ok": True,
-        "dataset": dataset,
-        "clustering": clustering,
-        "resolved_splits": splits,
-        "metric_names": metric_names,
-        "layer_columns": layer_cols,
-        "metrics_by_cell": metrics_by_cell,
-    })
+    return jsonify(
+        {
+            "ok": True,
+            "dataset": dataset,
+            "clustering": clustering,
+            "resolved_splits": splits,
+            "metric_names": metric_names,
+            "layer_columns": layer_cols,
+            "metrics_by_cell": metrics_by_cell,
+        }
+    )
 
 
 @app.route("/cluster-tanimoto", methods=["POST", "OPTIONS"])
@@ -2545,7 +2721,9 @@ def cluster_tanimoto():
     try:
         from rdkit import Chem  # noqa: F401
     except Exception as e:
-        return jsonify({"ok": False, "error": "rdkit_unavailable", "detail": str(e)}), 500
+        return jsonify(
+            {"ok": False, "error": "rdkit_unavailable", "detail": str(e)}
+        ), 500
 
     cluster_rows, err = _load_cluster_rows_for_cell(
         dataset=dataset,
@@ -2594,7 +2772,9 @@ def cluster_tanimoto():
                     if prefix in ("train", "test", "val"):
                         split_tag = prefix
                         rid = rest
-                candidate_splits = [split_tag] if split_tag else (rid_to_splits.get(rid) or splits)
+                candidate_splits = (
+                    [split_tag] if split_tag else (rid_to_splits.get(rid) or splits)
+                )
                 smi = ""
                 for sp in candidate_splits:
                     if not sp:
@@ -2620,43 +2800,54 @@ def cluster_tanimoto():
     clusters = []
     for cid in sorted(cluster_to_smiles.keys()):
         smi_list = cluster_to_smiles[cid]
-        avg_sim, n_valid, n_pairs = _average_tanimoto(smi_list, radius=radius, n_bits=n_bits)
-        clusters.append({
-            "cluster_id": int(cid),
-            "tanimoto": round(float(avg_sim), 6),
-            "n_molecules": len(smi_list),
-            "n_valid_molecules": int(n_valid),
-            "n_pairs": int(n_pairs),
-        })
+        avg_sim, n_valid, n_pairs = _average_tanimoto(
+            smi_list, radius=radius, n_bits=n_bits
+        )
+        clusters.append(
+            {
+                "cluster_id": int(cid),
+                "tanimoto": round(float(avg_sim), 6),
+                "n_molecules": len(smi_list),
+                "n_valid_molecules": int(n_valid),
+                "n_pairs": int(n_pairs),
+            }
+        )
 
-    return jsonify({
-        "ok": True,
-        "dataset": dataset,
-        "epoch": str(epoch),
-        "layer": str(layer),
-        "clustering": clustering,
-        "data_split": str(split_selector) if split_selector is not None else "test",
-        "resolved_splits": splits,
-        "radius": radius,
-        "n_bits": n_bits,
-        "n_rows": len(cluster_rows),
-        "n_missing_smiles": int(missing_smiles),
-        "clusters": clusters,
-    })
+    return jsonify(
+        {
+            "ok": True,
+            "dataset": dataset,
+            "epoch": str(epoch),
+            "layer": str(layer),
+            "clustering": clustering,
+            "data_split": str(split_selector) if split_selector is not None else "test",
+            "resolved_splits": splits,
+            "radius": radius,
+            "n_bits": n_bits,
+            "n_rows": len(cluster_rows),
+            "n_missing_smiles": int(missing_smiles),
+            "clusters": clusters,
+        }
+    )
 
 
 def _load_embedding_cell(dataset, epoch, layer, data_split: Optional[str] = None):
     """Load embedding matrix and real_ids for (dataset, epoch, layer). Returns (X, real_ids)."""
     pt_path = EMBEDDING_PATHS.get(dataset)
     if not pt_path or not pt_path.is_file():
-        raise FileNotFoundError("Embedding .pt not found for dataset=%s: %s" % (dataset, pt_path))
+        raise FileNotFoundError(
+            "Embedding .pt not found for dataset=%s: %s" % (dataset, pt_path)
+        )
     from embedding_loader import load_embedding_input
+
     data = load_embedding_input(pt_path, data_split=data_split)
     cells = data.get("cells") or {}
     key = (str(epoch), str(layer))
     X = cells.get(key)
     if X is None:
-        raise KeyError("No embedding for (epoch=%s, layer=%s) in %s" % (epoch, layer, dataset))
+        raise KeyError(
+            "No embedding for (epoch=%s, layer=%s) in %s" % (epoch, layer, dataset)
+        )
     real_ids = data.get("real_ids")
     if real_ids is None:
         real_ids = list(range(len(X)))
@@ -2667,6 +2858,7 @@ def _cluster_representatives(X, labels, k=5):
     """Per-cluster: top-k closest/farthest indices (global). Returns dict cluster_id -> {top_k_closest, top_k_farthest, k, sorted_indices}."""
     import numpy as np
     from scipy.spatial.distance import cdist
+
     X = np.asarray(X)
     if X.ndim > 2:
         X = X.reshape(X.shape[0], -1)
@@ -2693,11 +2885,18 @@ def _cluster_representatives(X, labels, k=5):
             farthest.append(idx)
             if len(farthest) >= n:
                 break
-        reps[int(c)] = {"top_k_closest": closest, "top_k_farthest": farthest, "k": n, "sorted_indices": sorted_indices}
+        reps[int(c)] = {
+            "top_k_closest": closest,
+            "top_k_farthest": farthest,
+            "k": n,
+            "sorted_indices": sorted_indices,
+        }
     return reps
 
 
-def _substructures_for_cell(X, real_ids, labels, epoch, layer, id_to_smiles, k_rep=5, max_members=None):
+def _substructures_for_cell(
+    X, real_ids, labels, epoch, layer, id_to_smiles, k_rep=5, max_members=None
+):
     """Compute MCS substructure entries for one (epoch, layer) cell. Returns list of dicts matching cluster_substructures.json shape.
 
     k_rep controls how many nearest/farthest points per cluster are considered in total.
@@ -2755,8 +2954,13 @@ def _substructures_for_cell(X, real_ids, labels, epoch, layer, id_to_smiles, k_r
             smiles_list = [Chem.MolToSmiles(m, canonical=True) for m in mols]
             if common_substructure_smarts_smiles:
                 mcs_smarts, mcs_smiles = common_substructure_smarts_smiles(
-                    smiles_list, timeout_s=30, ring_matches_ring_only=True, complete_rings_only=True,
-                    match_valences=True, atom_compare="elements", bond_compare="order",
+                    smiles_list,
+                    timeout_s=30,
+                    ring_matches_ring_only=True,
+                    complete_rings_only=True,
+                    match_valences=True,
+                    atom_compare="elements",
+                    bond_compare="order",
                 )
             else:
                 mcs_smarts, mcs_smiles = None, None
@@ -2765,36 +2969,34 @@ def _substructures_for_cell(X, real_ids, labels, epoch, layer, id_to_smiles, k_r
                 mcs_note = "No common substructure found"
             elif missing:
                 mcs_note = "Missing SMILES for {} real_id(s)".format(len(missing))
-            substruct_list.append({
-                "layer_name": str(layer),
-                "model_type": str(epoch),
-                "cluster_id": int(cluster_id),
-                "group": group,
-                "k": rep["k"],
-                "real_ids": rids,
-                "valid_molecules": len(mols),
-                "missing_real_ids": missing,
-                "invalid_smiles_real_ids": invalid,
-                "mcs_smarts": mcs_smarts,
-                "mcs_smiles": mcs_smiles,
-                "mcs_note": mcs_note,
-            })
+            substruct_list.append(
+                {
+                    "layer_name": str(layer),
+                    "model_type": str(epoch),
+                    "cluster_id": int(cluster_id),
+                    "group": group,
+                    "k": rep["k"],
+                    "real_ids": rids,
+                    "valid_molecules": len(mols),
+                    "missing_real_ids": missing,
+                    "invalid_smiles_real_ids": invalid,
+                    "mcs_smarts": mcs_smarts,
+                    "mcs_smiles": mcs_smiles,
+                    "mcs_note": mcs_note,
+                }
+            )
     return substruct_list
 
 
-def _parse_bool(v, default=False) -> bool:
-    if isinstance(v, bool):
-        return v
-    if v is None:
-        return default
-    return str(v).strip().lower() in ("1", "true", "yes", "on")
-
-
-def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[str, str]:
+def _load_id_to_smiles(
+    dataset: str, data_split: Optional[str] = None
+) -> Dict[str, str]:
     splits = _resolve_train_test_splits(data_split, default="test")
     out: Dict[str, str] = {}
 
-    def merge_from_meta_list(raw_rows: object, expect_dataset: Optional[str] = None) -> None:
+    def merge_from_meta_list(
+        raw_rows: object, expect_dataset: Optional[str] = None
+    ) -> None:
         if not isinstance(raw_rows, list):
             return
         allow = set(splits)
@@ -2825,7 +3027,10 @@ def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[s
     meta_path = DATA_ROOT / dataset / "id_smiles_y_true_y_pred.json"
     if meta_path.is_file():
         try:
-            merge_from_meta_list(json.loads(meta_path.read_text(encoding="utf-8")), expect_dataset=dataset)
+            merge_from_meta_list(
+                json.loads(meta_path.read_text(encoding="utf-8")),
+                expect_dataset=dataset,
+            )
         except Exception:
             pass
         if out:
@@ -2918,7 +3123,9 @@ def _load_cluster_rows_for_cell(
     saw_csv = False
     for split in splits:
         case_dir = _case_dir(dataset, clustering, split)
-        csv_path = case_dir / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
+        csv_path = (
+            case_dir / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
+        )
         if not csv_path.is_file():
             continue
         saw_csv = True
@@ -2936,7 +3143,9 @@ def _load_cluster_rows_for_cell(
                     continue
                 if cid < 0:
                     continue
-                out.append({"real_id": str(rid), "cluster_id": int(cid), "split": split})
+                out.append(
+                    {"real_id": str(rid), "cluster_id": int(cid), "split": split}
+                )
     if not saw_csv:
         return [], "cluster_assignments_not_found"
     return out, None
@@ -2954,7 +3163,9 @@ def _split_tagged_id_candidates(rid: str, split: Optional[str] = None) -> List[s
     return out
 
 
-def _average_tanimoto(smiles_list: List[str], radius: int = 2, n_bits: int = 2048) -> Tuple[float, int, int]:
+def _average_tanimoto(
+    smiles_list: List[str], radius: int = 2, n_bits: int = 2048
+) -> Tuple[float, int, int]:
     """
     Mean pairwise Tanimoto for one cluster.
     Returns: (mean_similarity, n_valid_molecules, n_pairs).
@@ -2987,7 +3198,9 @@ def _average_tanimoto(smiles_list: List[str], radius: int = 2, n_bits: int = 204
     return (total / pairs) if pairs > 0 else 0.0, n, pairs
 
 
-def _mcs_for_real_ids(real_ids: List[object], id_to_smiles: Dict[str, str]) -> Dict[str, object]:
+def _mcs_for_real_ids(
+    real_ids: List[object], id_to_smiles: Dict[str, str]
+) -> Dict[str, object]:
     try:
         from rdkit import Chem
     except Exception:
@@ -3096,7 +3309,9 @@ def substructures_cluster_topm():
         return jsonify({"ok": False, "error": "invalid_group"}), 400
     cluster_all = False
     cluster_id = None
-    if cluster_id_raw is None or (isinstance(cluster_id_raw, str) and cluster_id_raw.strip().lower() == "all"):
+    if cluster_id_raw is None or (
+        isinstance(cluster_id_raw, str) and cluster_id_raw.strip().lower() == "all"
+    ):
         cluster_all = True
     else:
         try:
@@ -3116,7 +3331,9 @@ def substructures_cluster_topm():
     splits = _resolve_train_test_splits(data_split, default="test")
     targets = []
     checked_paths: List[str] = []
-    preferred_sorted = _preferred_cluster_sorted_members_path(dataset, clustering=clustering)
+    preferred_sorted = _preferred_cluster_sorted_members_path(
+        dataset, clustering=clustering
+    )
     if preferred_sorted is not None:
         checked_paths.append(str(preferred_sorted))
         rows = _read_json(preferred_sorted, [])
@@ -3164,10 +3381,15 @@ def substructures_cluster_topm():
 
     if not targets:
         if cluster_all:
-            return jsonify({"ok": False, "error": "cell_not_found", "checked_paths": checked_paths}), 404
-        return jsonify({"ok": False, "error": "cluster_not_found", "checked_paths": checked_paths}), 404
+            return jsonify(
+                {"ok": False, "error": "cell_not_found", "checked_paths": checked_paths}
+            ), 404
+        return jsonify(
+            {"ok": False, "error": "cluster_not_found", "checked_paths": checked_paths}
+        ), 404
 
     id_to_smiles = _load_id_to_smiles(dataset, data_split=data_split)
+
     def lookup_smiles_for_id(rid: str) -> Optional[str]:
         s = str(rid)
         v = id_to_smiles.get(s)
@@ -3179,6 +3401,7 @@ def substructures_cluster_topm():
             if isinstance(v2, str) and v2:
                 return v2
         return None
+
     out_rows = []
     cluster_summary = []
     by_cluster: Dict[int, List[str]] = {}
@@ -3190,7 +3413,10 @@ def substructures_cluster_topm():
         sorted_real_ids = target.get("sorted_real_ids") or []
         if not isinstance(sorted_real_ids, list):
             continue
-        tagged = [f"{split_name}::{str(x)}" if multi_split else str(x) for x in sorted_real_ids]
+        tagged = [
+            f"{split_name}::{str(x)}" if multi_split else str(x)
+            for x in sorted_real_ids
+        ]
         by_cluster.setdefault(row_cluster, [])
         by_cluster_split.setdefault(row_cluster, [])
         by_cluster[row_cluster].extend(tagged)
@@ -3215,11 +3441,13 @@ def substructures_cluster_topm():
         knn_splits = dedup_split[:m_use]
         kfn_ids = list(reversed(dedup_ids[-m_use:]))
         kfn_splits = list(reversed(dedup_split[-m_use:]))
-        cluster_summary.append({
-            "cluster_id": row_cluster,
-            "total_members": len(dedup_ids),
-            "m": int(m_use),
-        })
+        cluster_summary.append(
+            {
+                "cluster_id": row_cluster,
+                "total_members": len(dedup_ids),
+                "m": int(m_use),
+            }
+        )
         for grp in ("knn", "kfn"):
             if group != "both" and group != grp:
                 continue
@@ -3227,41 +3455,47 @@ def substructures_cluster_topm():
             id_splits = knn_splits if grp == "knn" else kfn_splits
             mcs = _mcs_for_real_ids(ids, id_to_smiles)
             member_smiles = [lookup_smiles_for_id(x) for x in ids]
-            out_rows.append({
-                "layer_name": str(layer),
-                "model_type": str(epoch),
-                "cluster_id": row_cluster,
-                "group": grp,
-                "k": int(m_use),
-                "real_ids": ids,
-                "real_id_smiles": member_smiles,
-                "real_id_splits": id_splits,
-                "valid_molecules": mcs["valid_molecules"],
-                "missing_real_ids": mcs["missing_real_ids"],
-                "invalid_smiles_real_ids": mcs["invalid_smiles_real_ids"],
-                "mcs_smarts": mcs["mcs_smarts"],
-                "mcs_smiles": mcs["mcs_smiles"],
-                "mcs_note": mcs["mcs_note"],
-            })
+            out_rows.append(
+                {
+                    "layer_name": str(layer),
+                    "model_type": str(epoch),
+                    "cluster_id": row_cluster,
+                    "group": grp,
+                    "k": int(m_use),
+                    "real_ids": ids,
+                    "real_id_smiles": member_smiles,
+                    "real_id_splits": id_splits,
+                    "valid_molecules": mcs["valid_molecules"],
+                    "missing_real_ids": mcs["missing_real_ids"],
+                    "invalid_smiles_real_ids": mcs["invalid_smiles_real_ids"],
+                    "mcs_smarts": mcs["mcs_smarts"],
+                    "mcs_smiles": mcs["mcs_smiles"],
+                    "mcs_note": mcs["mcs_note"],
+                }
+            )
 
     cluster_summary = sorted(cluster_summary, key=lambda x: x["cluster_id"])
-    out_rows = sorted(out_rows, key=lambda x: (int(x["cluster_id"]), 0 if x["group"] == "knn" else 1))
+    out_rows = sorted(
+        out_rows, key=lambda x: (int(x["cluster_id"]), 0 if x["group"] == "knn" else 1)
+    )
 
-    return jsonify({
-        "ok": True,
-        "dataset": dataset,
-        "clustering": clustering,
-        "data_split": str(data_split) if data_split is not None else "test",
-        "resolved_splits": splits,
-        "use_current": False,
-        "epoch": str(epoch),
-        "layer": str(layer),
-        "cluster_id": "all" if cluster_all else int(cluster_id),
-        "cluster_count": len(cluster_summary),
-        "m_requested": "all" if m_all else int(m),
-        "clusters": cluster_summary,
-        "rows": out_rows,
-    })
+    return jsonify(
+        {
+            "ok": True,
+            "dataset": dataset,
+            "clustering": clustering,
+            "data_split": str(data_split) if data_split is not None else "test",
+            "resolved_splits": splits,
+            "use_current": False,
+            "epoch": str(epoch),
+            "layer": str(layer),
+            "cluster_id": "all" if cluster_all else int(cluster_id),
+            "cluster_count": len(cluster_summary),
+            "m_requested": "all" if m_all else int(m),
+            "clusters": cluster_summary,
+            "rows": out_rows,
+        }
+    )
 
 
 @app.route("/recluster-agglomerative", methods=["POST", "OPTIONS"])
@@ -3280,7 +3514,11 @@ def recluster_agglomerative():
     linkage = payload.get("linkage", "ward")
     data_split = payload.get("data_split") or payload.get("preferred_split")
 
-    print("[flask-backend] recluster-agglomerative dataset=%s epoch=%s layer=%s k=%s linkage=%s" % (dataset, epoch, layer, k, linkage), flush=True)
+    print(
+        "[flask-backend] recluster-agglomerative dataset=%s epoch=%s layer=%s k=%s linkage=%s"
+        % (dataset, epoch, layer, k, linkage),
+        flush=True,
+    )
 
     if not dataset or dataset not in DEFAULT_CASES:
         return jsonify({"ok": False, "error": "invalid_dataset"}), 400
@@ -3294,23 +3532,34 @@ def recluster_agglomerative():
     try:
         X, real_ids = _load_embedding_cell(dataset, epoch, layer, data_split=data_split)
     except FileNotFoundError as e:
-        return jsonify({"ok": False, "error": "embedding_not_found", "detail": str(e)}), 404
+        return jsonify(
+            {"ok": False, "error": "embedding_not_found", "detail": str(e)}
+        ), 404
     except KeyError as e:
         return jsonify({"ok": False, "error": "cell_not_found", "detail": str(e)}), 404
 
     try:
         from clustering import fit_agglomerative
-        out = fit_agglomerative(X, n_clusters=k, k_min=2, k_max=15, random_state=42, linkage=link)
+
+        out = fit_agglomerative(
+            X, n_clusters=k, k_min=2, k_max=15, random_state=42, linkage=link
+        )
     except Exception as e:
         print("[flask-backend] recluster-agglomerative failed: %s" % e, flush=True)
-        return jsonify({"ok": False, "error": "clustering_failed", "detail": str(e)}), 500
+        return jsonify(
+            {"ok": False, "error": "clustering_failed", "detail": str(e)}
+        ), 500
 
     labels = out["labels"]
     k_out = int(out["k"])
-    assignments = [{"real_id": str(rid), "cluster_id": int(labels[i])} for i, rid in enumerate(real_ids)]
+    assignments = [
+        {"real_id": str(rid), "cluster_id": int(labels[i])}
+        for i, rid in enumerate(real_ids)
+    ]
 
     # Flatten X for representatives/substructures (may be 3D from .pt)
     import numpy as np
+
     X_flat = np.asarray(X)
     if X_flat.ndim > 2:
         X_flat = X_flat.reshape(X_flat.shape[0], -1)
@@ -3332,23 +3581,34 @@ def recluster_agglomerative():
         max_members=sub_m,
     )
     if substructures:
-        print("[flask-backend] recluster-agglomerative substructures for cell: %s entries" % len(substructures), flush=True)
+        print(
+            "[flask-backend] recluster-agglomerative substructures for cell: %s entries"
+            % len(substructures),
+            flush=True,
+        )
 
-    return jsonify({
-        "ok": True,
-        "dataset": dataset,
-        "epoch": str(epoch),
-        "layer": str(layer),
-        "k": k_out,
-        "linkage": link,
-        "real_ids": [str(r) for r in real_ids],
-        "labels": [int(x) for x in labels],
-        "assignments": assignments,
-        "substructures": substructures,
-    })
+    return jsonify(
+        {
+            "ok": True,
+            "dataset": dataset,
+            "epoch": str(epoch),
+            "layer": str(layer),
+            "k": k_out,
+            "linkage": link,
+            "real_ids": [str(r) for r in real_ids],
+            "labels": [int(x) for x in labels],
+            "assignments": assignments,
+            "substructures": substructures,
+        }
+    )
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5001"))
-    debug = os.environ.get("FLASK_DEBUG", "").strip().lower() in ("1", "true", "yes", "on")
+    debug = os.environ.get("FLASK_DEBUG", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
     app.run(host="0.0.0.0", port=port, debug=debug)
