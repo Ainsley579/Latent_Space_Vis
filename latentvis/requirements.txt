@@ -1,0 +1,16 @@
+# Core backend requirements
+flask>=2.3
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+scikit-learn>=1.3
+
+# Embedding IO / pipeline
+torch>=2.0
+
+# Optional clustering / reduction methods used by this project
+umap-learn>=0.5
+hdbscan>=0.8
+
+# Chemistry features (Tanimoto + substructures)
+rdkit>=2023.3

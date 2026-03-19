@@ -2819,74 +2819,55 @@ def _load_id_to_smiles(dataset: str, data_split: Optional[str] = None) -> Dict[s
             if sp in ("train", "test"):
                 out[f"{sp}::{rid_s}"] = smi_s
 
-    # DimeNet special-case: prefer frontend/public/dimnet/real_id_to_smiles.json directly.
-    # This avoids accidentally loading shared chemprop/chemeleon metadata first.
+    # Preferred source: backend dataset metadata file.
+    # e.g. backend/data/chemprop/id_smiles_y_true_y_pred.json
+    #      backend/data/dimenet/id_smiles_y_true_y_pred.json
+    meta_path = DATA_ROOT / dataset / "id_smiles_y_true_y_pred.json"
+    if meta_path.is_file():
+        try:
+            merge_from_meta_list(json.loads(meta_path.read_text(encoding="utf-8")), expect_dataset=dataset)
+        except Exception:
+            pass
+        if out:
+            return out
+
+    # Fallback to frontend/public dataset-scoped files for backward compatibility.
+    # Keep this as a fallback only, so backend/data remains source of truth.
+    frontend_dir_candidates = [
+        PROJECT_ROOT / "latentvis" / "frontend" / "public",
+        _BACKEND_DIR.parent / "frontend" / "public",
+    ]
+    ds_aliases = [dataset]
     if dataset == "dimenet":
-        frontend_dir_candidates = [
-            PROJECT_ROOT / "latentvis" / "frontend" / "public",
-            _BACKEND_DIR.parent / "frontend" / "public",
-        ]
-        for base_dir in frontend_dir_candidates:
-            for ds_name in ("dimnet", "dimenet"):
-                p = base_dir / ds_name / "real_id_to_smiles.json"
+        ds_aliases = ["dimenet", "dimnet"]
+    for base_dir in frontend_dir_candidates:
+        for ds_name in ds_aliases:
+            for p in (
+                base_dir / ds_name / "id_smiles_y_true_y_pred.json",
+                base_dir / ds_name / "real_id_to_smiles.json",
+            ):
                 if not p.is_file():
                     continue
                 try:
                     raw = json.loads(p.read_text(encoding="utf-8"))
                 except Exception:
                     continue
+                if isinstance(raw, list):
+                    merge_from_meta_list(raw, expect_dataset=dataset)
+                    if out:
+                        return out
                 if isinstance(raw, dict):
                     for k, v in raw.items():
                         rid_s = str(k)
                         smi_s = str(v)
-                        out[rid_s] = smi_s
-                        for split in splits:
-                            out[f"{split}::{rid_s}"] = smi_s
-                    if out:
-                        return out
-                if isinstance(raw, list):
-                    for row in raw:
-                        if not isinstance(row, dict):
-                            continue
-                        rid = row.get("real_id")
-                        smi = row.get("smiles")
-                        if rid is None or smi is None:
-                            continue
-                        rid_s = str(rid)
-                        smi_s = str(smi)
-                        out[rid_s] = smi_s
+                        if rid_s not in out:
+                            out[rid_s] = smi_s
                         for split in splits:
                             out[f"{split}::{rid_s}"] = smi_s
                     if out:
                         return out
 
-    # Preferred source: shared metadata file under frontend/public.
-    # User requirement: always use this file for SMILES when available.
-    shared_meta_candidates = [
-        PROJECT_ROOT / "latentvis" / "frontend" / "public" / "id_smiles_y_true_y_pred.json",
-        _BACKEND_DIR.parent / "frontend" / "public" / "id_smiles_y_true_y_pred.json",
-    ]
-    for shared_meta in shared_meta_candidates:
-        if not shared_meta.is_file():
-            continue
-        try:
-            merge_from_meta_list(json.loads(shared_meta.read_text(encoding="utf-8")), expect_dataset=dataset)
-        except Exception:
-            continue
-        if out:
-            return out
-
-    # Fallback: consolidated metadata file under dataset root.
-    meta_path = DATA_ROOT / dataset / "id_smiles_y_true_y_pred.json"
-    if meta_path.is_file():
-        try:
-            merge_from_meta_list(json.loads(meta_path.read_text(encoding="utf-8")))
-        except Exception:
-            pass
-        if out:
-            return out
-
-    # Fallback to per-split real_id_to_smiles.json
+    # Last fallback to per-split real_id_to_smiles.json
     for split in splits:
         mapping_path = DATA_ROOT / dataset / split / "real_id_to_smiles.json"
         if not mapping_path.is_file():
