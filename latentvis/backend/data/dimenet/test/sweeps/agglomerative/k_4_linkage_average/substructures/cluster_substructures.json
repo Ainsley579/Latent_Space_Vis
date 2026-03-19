@@ -1,0 +1,2630 @@
+[
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      1,
+      0,
+      2,
+      3,
+      107
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6](-&!@[#8&!R]-&!@[#15]2:&@[#8]:&@[#6]3:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@3:&@[#6]3:&@[#6](:&@[#8]:&@2):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@3):&@[#6](:&@[#6](:&@[#6]:&@1)-&!@[#8&!R]-&!@[#15]1:&@[#8]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6]2:&@[#6](:&@[#8]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2)-&!@[#6]1:&@[#6](-&!@[#8&!R]-&!@[#15]2:&@[#8]:&@[#6]3:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@3:&@[#6]3:&@[#6](:&@[#8]:&@2):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@3):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1-&!@[#8&!R]-&!@[#15]1:&@[#8]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6]2:&@[#6](:&@[#8]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2",
+    "mcs_smiles": "C1:C:C(OP2:O:C3:C:C:C:C:C:3:C3:C:C:C:C:C:3:O:2):C(C2:C(OP3:O:C4:C:C:C:C:C:4:C4:C:C:C:C:C:4:O:3):C:C:C:C:2OP2:O:C3:C:C:C:C:C:3:C3:C:C:C:C:C:3:O:2):C(OP2:O:C3:C:C:C:C:C:3:C3:C:C:C:C:C:3:O:2):C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      132,
+      93,
+      54,
+      131,
+      139
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      94
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      22,
+      81,
+      55,
+      33,
+      109
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      116,
+      141,
+      45,
+      149,
+      105
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]",
+    "mcs_smiles": "CC",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      27,
+      46,
+      25,
+      10,
+      26
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6](-&!@[#6&!R]-&!@[#6&!R]):&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CCC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      84,
+      17,
+      16,
+      18,
+      97
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      112,
+      21,
+      22,
+      23,
+      20
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#8&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1-&!@[#15&!R](-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "COC1:C:C:C:C:C:1P(C1:C:C:C:C:C:1)C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      84,
+      113,
+      78,
+      105,
+      138
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R](-&!@[#6&!R])-&!@[#6&!R]",
+    "mcs_smiles": "CC(C)C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      29,
+      121,
+      151,
+      102,
+      8
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      149,
+      120,
+      99,
+      6,
+      101
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      50,
+      1,
+      2,
+      0,
+      47
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6](:&@[#6]:&@1)-&!@[#8&!R]-&!@[#15]1:&@[#8]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6]2:&@[#6](:&@[#8]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2",
+    "mcs_smiles": "C1:C:C:C(OP2:O:C3:C:C:C:C:C:3:C3:C:C:C:C:C:3:O:2):C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      91,
+      51,
+      28,
+      131,
+      94
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      141
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      9,
+      8,
+      40,
+      50,
+      121
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      90,
+      130,
+      35,
+      145,
+      12
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      123,
+      55,
+      137,
+      133,
+      112
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      131,
+      149,
+      107,
+      132,
+      100
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 2,
+    "real_ids": [
+      91,
+      28
+    ],
+    "valid_molecules": 2,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6](:&@[#6](:&@[#6]:&@1)-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#6]1:&@[#6](-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2)-&!@[#7]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C(C2:C(OP(N3:C:C:C:C:3)N3:C:C:C:C:3):C:C:C:C:2OP(N2:C:C:C:C:2)N2:C:C:C:C:2):C(OP(N2:C:C:C:C:2)N2:C:C:C:C:2):C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 2,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      46,
+      27,
+      76,
+      26,
+      58
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R](-&!@[#6&!R])(-&!@[#6&!R])-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CC(C)(C)C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      74,
+      119,
+      106,
+      56,
+      24
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "OC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      148,
+      111,
+      147,
+      109,
+      18
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      94,
+      51,
+      68,
+      136,
+      132
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      69,
+      67,
+      5,
+      146,
+      115
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1-&!@[#15&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C(PC2:C:C:C:C:C:2):C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      97,
+      34,
+      6,
+      127,
+      95
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 2,
+    "real_ids": [
+      91,
+      28
+    ],
+    "valid_molecules": 2,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6](:&@[#6](:&@[#6]:&@1)-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#6]1:&@[#6](-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2)-&!@[#7]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C(C2:C(OP(N3:C:C:C:C:3)N3:C:C:C:C:3):C:C:C:C:2OP(N2:C:C:C:C:2)N2:C:C:C:C:2):C(OP(N2:C:C:C:C:2)N2:C:C:C:C:2):C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 2,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 2,
+    "real_ids": [
+      3,
+      2
+    ],
+    "valid_molecules": 2,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6](:&@[#6]:&@[#6]:&@1)-&!@[#6]1:&@[#6]:&@[#6](-&!@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2):&@[#6](:&@[#6](:&@[#6]:&@1-&!@[#8&!R]-&!@[#15]1:&@[#8]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6]2:&@[#6](:&@[#8]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2)-&!@[#6]1:&@[#6](-&!@[#8&!R]-&!@[#15]2:&@[#8]:&@[#6]3:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@3:&@[#6]3:&@[#6](:&@[#8]:&@2):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@3):&@[#6](-&!@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2):&@[#6]:&@[#6](:&@[#6]:&@1-&!@[#8&!R]-&!@[#15]1:&@[#8]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6]2:&@[#6](:&@[#8]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2)-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#8&!R]-&!@[#15]1:&@[#8]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6]2:&@[#6](:&@[#8]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2",
+    "mcs_smiles": "C1:C:C:C(C2:C:C(C3:C:C:C:C:C:3):C(OP3:O:C4:C:C:C:C:C:4:C4:C:C:C:C:C:4:O:3):C(C3:C(OP4:O:C5:C:C:C:C:C:5:C5:C:C:C:C:C:5:O:4):C(C4:C:C:C:C:C:4):C:C(C4:C:C:C:C:C:4):C:3OP3:O:C4:C:C:C:C:C:4:C4:C:C:C:C:C:4:O:3):C:2OP2:O:C3:C:C:C:C:C:3:C3:C:C:C:C:C:3:O:2):C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 2,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      22,
+      31,
+      42,
+      144,
+      20
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      106,
+      17,
+      54,
+      117,
+      73
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      48,
+      50,
+      52,
+      47,
+      36
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "OC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      94,
+      28,
+      132,
+      51,
+      96
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      56,
+      24,
+      25,
+      46,
+      26
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R](-&!@[#6&!R])(-&!@[#6&!R])-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CC(C)(C)C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      141,
+      113,
+      74,
+      59,
+      10
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6](:&@[#6]:&@1)-&!@[#6&!R]-&!@[#6&!R]",
+    "mcs_smiles": "CCC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      1,
+      0,
+      3,
+      107,
+      2
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6](-&!@[#8&!R]-&!@[#15]2:&@[#8]:&@[#6]3:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@3:&@[#6]3:&@[#6](:&@[#8]:&@2):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@3):&@[#6](:&@[#6](:&@[#6]:&@1)-&!@[#8&!R]-&!@[#15]1:&@[#8]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6]2:&@[#6](:&@[#8]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2)-&!@[#6]1:&@[#6](-&!@[#8&!R]-&!@[#15]2:&@[#8]:&@[#6]3:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@3:&@[#6]3:&@[#6](:&@[#8]:&@2):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@3):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1-&!@[#8&!R]-&!@[#15]1:&@[#8]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6]2:&@[#6](:&@[#8]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2",
+    "mcs_smiles": "C1:C:C(OP2:O:C3:C:C:C:C:C:3:C3:C:C:C:C:C:3:O:2):C(C2:C(OP3:O:C4:C:C:C:C:C:4:C4:C:C:C:C:C:4:O:3):C:C:C:C:2OP2:O:C3:C:C:C:C:C:3:C3:C:C:C:C:C:3:O:2):C(OP2:O:C3:C:C:C:C:C:3:C3:C:C:C:C:C:3:O:2):C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      119,
+      113,
+      77,
+      27,
+      25
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6](-&!@[#6&!R](-&!@[#6&!R])(-&!@[#6&!R])-&!@[#6&!R]):&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CC(C)(C)C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      0,
+      107,
+      1,
+      4,
+      16
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      31,
+      42,
+      79,
+      144,
+      32
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      106,
+      28,
+      73,
+      105,
+      138
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#8&!R]",
+    "mcs_smiles": "O",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      93,
+      132,
+      131,
+      94,
+      139
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6](:&@[#6]:&@[#6]:&@1)-&!@[#15&!R](-&!@[#6&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6](:&@[#6]:&@1-&!@[#6]1:&@[#6](-&!@[#6&!R]-&!@[#15&!R](-&!@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2)-&!@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1-&!@[#6&!R]-&!@[#15&!R](-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#6&!R]-&!@[#15&!R](-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C(P(CC2:C:C:C:C(CP(C3:C:C:C:C:C:3)C3:C:C:C:C:C:3):C:2C2:C(CP(C3:C:C:C:C:C:3)C3:C:C:C:C:C:3):C:C:C:C:2CP(C2:C:C:C:C:C:2)C2:C:C:C:C:C:2)C2:C:C:C:C:C:2):C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      141
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      32,
+      55,
+      79,
+      123,
+      133
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      6,
+      39,
+      149,
+      53,
+      97
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 3,
+    "real_ids": [
+      105,
+      138,
+      84
+    ],
+    "valid_molecules": 3,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R](-&!@[#6&!R])-&!@[#6&!R]",
+    "mcs_smiles": "CC(C)C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 3,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      107,
+      131,
+      120,
+      1,
+      49
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      91,
+      28,
+      16,
+      3,
+      92
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      141
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      111,
+      18,
+      15,
+      117,
+      147
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      91,
+      28,
+      48,
+      84,
+      47
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6](:&@[#6]:&@1)-&!@[#8&!R]",
+    "mcs_smiles": "OC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 2,
+    "real_ids": [
+      6,
+      66
+    ],
+    "valid_molecules": 2,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6](:&@[#6]:&@[#6]:&@1)-&!@[#15&!R](-&!@[#6&!R])-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CP(C1:C:C:C:C:C:1)C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 2,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      149
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      141
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 2,
+    "real_ids": [
+      84,
+      105
+    ],
+    "valid_molecules": 2,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R](-&!@[#6&!R])-&!@[#6&!R]",
+    "mcs_smiles": "CC(C)C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 2,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      141
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      18,
+      111,
+      147,
+      15,
+      148
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      91,
+      28,
+      48,
+      47,
+      61
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      138
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet_noaug",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      114,
+      78,
+      18,
+      15,
+      59
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CCC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      93,
+      104,
+      3,
+      2,
+      0
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      46,
+      56,
+      119,
+      24,
+      57
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1-&!@[#8&!R]-&!@[#15]1:&@[#8]:&@[#6]2:&@[#6](-&!@[#6&!R](-&!@[#6&!R])(-&!@[#6&!R])-&!@[#6&!R]):&@[#6]:&@[#6](:&@[#6]:&@[#6]:&@2:&@[#6]2:&@[#6](:&@[#8]:&@1):&@[#6](:&@[#6]:&@[#6](:&@[#6]:&@2)-&!@[#6&!R](-&!@[#6&!R])(-&!@[#6&!R])-&!@[#6&!R])-&!@[#6&!R](-&!@[#6&!R])(-&!@[#6&!R])-&!@[#6&!R])-&!@[#6&!R](-&!@[#6&!R])(-&!@[#6&!R])-&!@[#6&!R]",
+    "mcs_smiles": "CC(C)(C)C1:C:C(C(C)(C)C):C2:O:P(OC3:C:C:C:C:C:3):O:C3:C(C(C)(C)C):C:C(C(C)(C)C):C:C:3:C:2:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      54,
+      84,
+      19,
+      17,
+      16
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6](-&!@[#6&!R]-&!@[#6&!R]):&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CCC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      33,
+      9,
+      81,
+      32,
+      85
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      148,
+      116,
+      45,
+      141,
+      118
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      94
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "emb",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      1,
+      2,
+      51,
+      49,
+      106
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#15&R]-&!@[#8&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "POC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      94,
+      93,
+      132,
+      28,
+      50
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      37,
+      147,
+      79,
+      62,
+      126
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6](:&@[#6]:&@[#6]:&@1)-&!@[#15&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C(PC2:C:C:C:C:C:2):C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      92,
+      138,
+      120,
+      131,
+      15
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      26,
+      56,
+      113,
+      10,
+      119
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6](-&!@[#6&!R]-&!@[#6&!R]):&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CCC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      84,
+      4,
+      104,
+      61,
+      73
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      91
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "output_block_0",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      26,
+      78,
+      58,
+      141,
+      113
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6](-&!@[#6&!R]-&!@[#6&!R]):&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CCC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      61,
+      60,
+      75,
+      105,
+      19
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R](-&!@[#6&!R])-&!@[#6&!R]",
+    "mcs_smiles": "CC(C)C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      32,
+      85,
+      102,
+      133,
+      23
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      136,
+      146,
+      116,
+      68,
+      37
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      107,
+      2,
+      52,
+      101,
+      92
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      131,
+      63,
+      47,
+      51,
+      134
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 2,
+    "real_ids": [
+      28,
+      91
+    ],
+    "valid_molecules": 2,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6](:&@[#6](:&@[#6]:&@1)-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#6]1:&@[#6](-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2)-&!@[#7]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C(C2:C(OP(N3:C:C:C:C:3)N3:C:C:C:C:3):C:C:C:C:2OP(N2:C:C:C:C:2)N2:C:C:C:C:2):C(OP(N2:C:C:C:C:2)N2:C:C:C:C:2):C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 2,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      131,
+      139,
+      49,
+      100,
+      1
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      11,
+      92,
+      94,
+      47,
+      48
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      32,
+      64,
+      8,
+      126,
+      71
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#15&!R](-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C(PC2:C:C:C:C:C:2):C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      148,
+      15,
+      18,
+      118,
+      116
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      27,
+      26,
+      10,
+      119,
+      46
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6](-&!@[#6&!R]-&!@[#6&!R]):&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CCC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      84,
+      114,
+      54,
+      73,
+      16
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CCC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 2,
+    "real_ids": [
+      28,
+      91
+    ],
+    "valid_molecules": 2,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6](:&@[#6](:&@[#6]:&@1)-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#6]1:&@[#6](-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2)-&!@[#7]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C(C2:C(OP(N3:C:C:C:C:3)N3:C:C:C:C:3):C:C:C:C:2OP(N2:C:C:C:C:2)N2:C:C:C:C:2):C(OP(N2:C:C:C:C:2)N2:C:C:C:C:2):C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 2,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      47,
+      139,
+      28,
+      93,
+      50
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      131,
+      44,
+      132,
+      64,
+      90
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      98,
+      20,
+      81,
+      68,
+      96
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1-&!@[#15&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C(PC2:C:C:C:C:C:2):C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      147,
+      121,
+      8,
+      42,
+      105
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]",
+    "mcs_smiles": "C",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      29,
+      111,
+      149,
+      124,
+      88
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1-,:;@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2-&@[#8]-&@[#6]2:&@[#6]-&@1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2",
+    "mcs_smiles": "C1C2:C:C:C:C:C:2OC2:C:C:C:C:C:21",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      14,
+      37,
+      107,
+      40,
+      125
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      33,
+      137,
+      102,
+      18,
+      86
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_3",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      136,
+      34,
+      89
+    ],
+    "valid_molecules": 3,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      50,
+      49,
+      37,
+      64,
+      51
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      14,
+      90,
+      53,
+      38,
+      92
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      59,
+      2,
+      56,
+      139,
+      3
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6](-&!@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2):&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C(C2:C:C:C:C:C:2):C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      16,
+      25,
+      17,
+      76,
+      131
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      33,
+      140,
+      137,
+      20,
+      144
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      120,
+      88,
+      117,
+      9,
+      62
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      91
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "output_block_4",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      132,
+      139,
+      1,
+      49,
+      94
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      48,
+      47,
+      90,
+      51,
+      131
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      27,
+      25,
+      46,
+      74,
+      17
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CCC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      16,
+      61,
+      60,
+      59,
+      10
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CCC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      55,
+      122,
+      123,
+      31,
+      71
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      14,
+      53,
+      130,
+      100,
+      63
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 2,
+    "real_ids": [
+      28,
+      91
+    ],
+    "valid_molecules": 2,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6](:&@[#6](:&@[#6]:&@1)-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#6]1:&@[#6](-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2)-&!@[#7]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1-&!@[#8&!R]-&!@[#15&!R](-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)-&!@[#7]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C(C2:C(OP(N3:C:C:C:C:3)N3:C:C:C:C:3):C:C:C:C:2OP(N2:C:C:C:C:2)N2:C:C:C:C:2):C(OP(N2:C:C:C:C:2)N2:C:C:C:C:2):C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_input",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 2,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      8,
+      41,
+      62,
+      109,
+      86
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      28,
+      91,
+      48,
+      47,
+      90
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      146
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      116
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      136
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "u_mlp_l1",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      31,
+      122,
+      86,
+      4,
+      41
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 0,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      14,
+      132,
+      53,
+      139,
+      130
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CC1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "knn",
+    "k": 5,
+    "real_ids": [
+      131,
+      47,
+      51,
+      48,
+      50
+    ],
+    "valid_molecules": 5,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 1,
+    "group": "kfn",
+    "k": 5,
+    "real_ids": [
+      91,
+      28,
+      90,
+      49
+    ],
+    "valid_molecules": 4,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "C1:C:C:C:C:C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "knn",
+    "k": 4,
+    "real_ids": [
+      60,
+      61,
+      84,
+      136
+    ],
+    "valid_molecules": 4,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": "[#6&!R]-&!@[#6]1:&@[#6]:&@[#6](-&!@[#6&!R](-&!@[#6&!R])(-&!@[#6&!R])-&!@[#6&!R]):&@[#6]:&@[#6]:&@[#6]:&@1",
+    "mcs_smiles": "CC1:C:C:C:C(C(C)(C)C):C:1",
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 2,
+    "group": "kfn",
+    "k": 4,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "knn",
+    "k": 1,
+    "real_ids": [
+      6
+    ],
+    "valid_molecules": 1,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": "No common substructure found"
+  },
+  {
+    "layer_name": "u_mlp_l2",
+    "model_type": "dimenet10conf",
+    "cluster_id": 3,
+    "group": "kfn",
+    "k": 1,
+    "real_ids": [],
+    "valid_molecules": 0,
+    "missing_real_ids": [],
+    "invalid_smiles_real_ids": [],
+    "mcs_smarts": null,
+    "mcs_smiles": null,
+    "mcs_note": null
+  }
+]

@@ -1,0 +1,816 @@
+{
+  "epoch": {
+    "dimenet_noaug": {
+      "type": "spatial_epoch",
+      "epoch": "dimenet_noaug",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C1",
+          "value": 45,
+          "pct_of_source": 39.4737
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C1",
+          "value": 17,
+          "pct_of_source": 44.7368
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C0",
+          "value": 21,
+          "pct_of_source": 55.2632
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C0",
+          "value": 69,
+          "pct_of_source": 60.5263
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C1",
+          "target_label": "output_block_1_C0",
+          "value": 27,
+          "pct_of_source": 43.5484
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C0",
+          "target_label": "output_block_1_C0",
+          "value": 71,
+          "pct_of_source": 78.8889
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "output_block_0_C0",
+          "target_label": "output_block_1_C1",
+          "value": 19,
+          "pct_of_source": 21.1111
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "output_block_0_C1",
+          "target_label": "output_block_1_C1",
+          "value": 35,
+          "pct_of_source": 56.4516
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "output_block_1_C0",
+          "target_label": "output_block_2_C0",
+          "value": 41,
+          "pct_of_source": 41.8367
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "output_block_1_C0",
+          "target_label": "output_block_2_C1",
+          "value": 57,
+          "pct_of_source": 58.1633
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "output_block_1_C1",
+          "target_label": "output_block_2_C0",
+          "value": 48,
+          "pct_of_source": 88.8889
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "output_block_1_C1",
+          "target_label": "output_block_2_C1",
+          "value": 6,
+          "pct_of_source": 11.1111
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "output_block_2_C0",
+          "target_label": "output_block_3_C1",
+          "value": 61,
+          "pct_of_source": 68.5393
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "output_block_2_C0",
+          "target_label": "output_block_3_C0",
+          "value": 28,
+          "pct_of_source": 31.4607
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "output_block_2_C1",
+          "target_label": "output_block_3_C1",
+          "value": 53,
+          "pct_of_source": 84.127
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "output_block_2_C1",
+          "target_label": "output_block_3_C0",
+          "value": 10,
+          "pct_of_source": 15.873
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "output_block_3_C1",
+          "target_label": "output_block_4_C1",
+          "value": 111,
+          "pct_of_source": 97.3684
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "output_block_3_C1",
+          "target_label": "output_block_4_C0",
+          "value": 3,
+          "pct_of_source": 2.6316
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "output_block_3_C0",
+          "target_label": "output_block_4_C0",
+          "value": 35,
+          "pct_of_source": 92.1053
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "output_block_3_C0",
+          "target_label": "output_block_4_C1",
+          "value": 3,
+          "pct_of_source": 7.8947
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "output_block_4_C1",
+          "target_label": "u_mlp_input_C1",
+          "value": 59,
+          "pct_of_source": 51.7544
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "output_block_4_C0",
+          "target_label": "u_mlp_input_C1",
+          "value": 11,
+          "pct_of_source": 28.9474
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "output_block_4_C1",
+          "target_label": "u_mlp_input_C0",
+          "value": 55,
+          "pct_of_source": 48.2456
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "output_block_4_C0",
+          "target_label": "u_mlp_input_C0",
+          "value": 27,
+          "pct_of_source": 71.0526
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C0",
+          "value": 70,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "u_mlp_input_C0",
+          "target_label": "u_mlp_l1_C0",
+          "value": 77,
+          "pct_of_source": 93.9024
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "u_mlp_input_C0",
+          "target_label": "u_mlp_l1_C1",
+          "value": 5,
+          "pct_of_source": 6.0976
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C1",
+          "value": 80,
+          "pct_of_source": 54.4218
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C0",
+          "value": 67,
+          "pct_of_source": 45.5782
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "u_mlp_l1_C1",
+          "target_label": "u_mlp_l2_C0",
+          "value": 5,
+          "pct_of_source": 100.0
+        }
+      ]
+    },
+    "dimenet10conf": {
+      "type": "spatial_epoch",
+      "epoch": "dimenet10conf",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C1",
+          "value": 112,
+          "pct_of_source": 98.2456
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C1",
+          "value": 8,
+          "pct_of_source": 21.0526
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "emb_C0",
+          "target_label": "output_block_0_C0",
+          "value": 30,
+          "pct_of_source": 78.9474
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "emb_C1",
+          "target_label": "output_block_0_C0",
+          "value": 2,
+          "pct_of_source": 1.7544
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C1",
+          "target_label": "output_block_1_C0",
+          "value": 33,
+          "pct_of_source": 27.5
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "output_block_0_C0",
+          "target_label": "output_block_1_C0",
+          "value": 29,
+          "pct_of_source": 90.625
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "output_block_0_C1",
+          "target_label": "output_block_1_C1",
+          "value": 87,
+          "pct_of_source": 72.5
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "output_block_0_C0",
+          "target_label": "output_block_1_C1",
+          "value": 3,
+          "pct_of_source": 9.375
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "output_block_1_C0",
+          "target_label": "output_block_2_C1",
+          "value": 34,
+          "pct_of_source": 54.8387
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "output_block_1_C0",
+          "target_label": "output_block_2_C0",
+          "value": 28,
+          "pct_of_source": 45.1613
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "output_block_1_C1",
+          "target_label": "output_block_2_C1",
+          "value": 85,
+          "pct_of_source": 94.4444
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "output_block_1_C1",
+          "target_label": "output_block_2_C0",
+          "value": 5,
+          "pct_of_source": 5.5556
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "output_block_2_C1",
+          "target_label": "output_block_3_C1",
+          "value": 47,
+          "pct_of_source": 39.4958
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "output_block_2_C1",
+          "target_label": "output_block_3_C0",
+          "value": 72,
+          "pct_of_source": 60.5042
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "output_block_2_C0",
+          "target_label": "output_block_3_C0",
+          "value": 23,
+          "pct_of_source": 69.697
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "output_block_2_C0",
+          "target_label": "output_block_3_C1",
+          "value": 10,
+          "pct_of_source": 30.303
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "output_block_3_C1",
+          "target_label": "output_block_4_C0",
+          "value": 50,
+          "pct_of_source": 87.7193
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "output_block_3_C0",
+          "target_label": "output_block_4_C0",
+          "value": 12,
+          "pct_of_source": 12.6316
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "output_block_3_C0",
+          "target_label": "output_block_4_C1",
+          "value": 83,
+          "pct_of_source": 87.3684
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "output_block_3_C1",
+          "target_label": "output_block_4_C1",
+          "value": 7,
+          "pct_of_source": 12.2807
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "output_block_4_C0",
+          "target_label": "u_mlp_input_C0",
+          "value": 59,
+          "pct_of_source": 95.1613
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "output_block_4_C1",
+          "target_label": "u_mlp_input_C0",
+          "value": 14,
+          "pct_of_source": 15.5556
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "output_block_4_C1",
+          "target_label": "u_mlp_input_C1",
+          "value": 76,
+          "pct_of_source": 84.4444
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "output_block_4_C0",
+          "target_label": "u_mlp_input_C1",
+          "value": 3,
+          "pct_of_source": 4.8387
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "u_mlp_input_C0",
+          "target_label": "u_mlp_l1_C0",
+          "value": 73,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C0",
+          "value": 75,
+          "pct_of_source": 94.9367
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "u_mlp_input_C1",
+          "target_label": "u_mlp_l1_C1",
+          "value": 4,
+          "pct_of_source": 5.0633
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C0",
+          "value": 80,
+          "pct_of_source": 54.0541
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "u_mlp_l1_C0",
+          "target_label": "u_mlp_l2_C1",
+          "value": 68,
+          "pct_of_source": 45.9459
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "u_mlp_l1_C1",
+          "target_label": "u_mlp_l2_C1",
+          "value": 4,
+          "pct_of_source": 100.0
+        }
+      ]
+    }
+  },
+  "layer": {
+    "emb": {
+      "type": "spatial_layer",
+      "layer": "emb",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C1",
+          "value": 114,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 38,
+          "pct_of_source": 100.0
+        }
+      ]
+    },
+    "output_block_0": {
+      "type": "spatial_layer",
+      "layer": "output_block_0",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C1",
+          "value": 51,
+          "pct_of_source": 82.2581
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 21,
+          "pct_of_source": 23.3333
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C1",
+          "value": 69,
+          "pct_of_source": 76.6667
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C0",
+          "value": 11,
+          "pct_of_source": 17.7419
+        }
+      ]
+    },
+    "output_block_1": {
+      "type": "spatial_layer",
+      "layer": "output_block_1",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 35,
+          "pct_of_source": 35.7143
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C1",
+          "value": 63,
+          "pct_of_source": 64.2857
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C1",
+          "value": 27,
+          "pct_of_source": 50.0
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C0",
+          "value": 27,
+          "pct_of_source": 50.0
+        }
+      ]
+    },
+    "output_block_2": {
+      "type": "spatial_layer",
+      "layer": "output_block_2",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C1",
+          "value": 62,
+          "pct_of_source": 69.6629
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 27,
+          "pct_of_source": 30.3371
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C1",
+          "value": 57,
+          "pct_of_source": 90.4762
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C0",
+          "value": 6,
+          "pct_of_source": 9.5238
+        }
+      ]
+    },
+    "output_block_3": {
+      "type": "spatial_layer",
+      "layer": "output_block_3",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C1",
+          "value": 49,
+          "pct_of_source": 42.9825
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 30,
+          "pct_of_source": 78.9474
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C0",
+          "value": 65,
+          "pct_of_source": 57.0175
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C1",
+          "value": 8,
+          "pct_of_source": 21.0526
+        }
+      ]
+    },
+    "output_block_4": {
+      "type": "spatial_layer",
+      "layer": "output_block_4",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C0",
+          "value": 47,
+          "pct_of_source": 41.2281
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 15,
+          "pct_of_source": 39.4737
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C1",
+          "value": 67,
+          "pct_of_source": 58.7719
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C1",
+          "value": 23,
+          "pct_of_source": 60.5263
+        }
+      ]
+    },
+    "u_mlp_input": {
+      "type": "spatial_layer",
+      "layer": "u_mlp_input",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C0",
+          "value": 54,
+          "pct_of_source": 77.1429
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 19,
+          "pct_of_source": 23.1707
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C1",
+          "value": 63,
+          "pct_of_source": 76.8293
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C1",
+          "value": 16,
+          "pct_of_source": 22.8571
+        }
+      ]
+    },
+    "u_mlp_l1": {
+      "type": "spatial_layer",
+      "layer": "u_mlp_l1",
+      "edges": [
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 143,
+          "pct_of_source": 97.2789
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C0",
+          "value": 5,
+          "pct_of_source": 100.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C1",
+          "value": 4,
+          "pct_of_source": 2.7211
+        }
+      ]
+    },
+    "u_mlp_l2": {
+      "type": "spatial_layer",
+      "layer": "u_mlp_l2",
+      "edges": [
+        {
+          "source_node_id": 1,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C0",
+          "value": 64,
+          "pct_of_source": 80.0
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 2,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C0",
+          "value": 16,
+          "pct_of_source": 22.2222
+        },
+        {
+          "source_node_id": 0,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C0",
+          "target_label": "dimenet10conf_C1",
+          "value": 56,
+          "pct_of_source": 77.7778
+        },
+        {
+          "source_node_id": 1,
+          "target_node_id": 3,
+          "source_label": "dimenet_noaug_C1",
+          "target_label": "dimenet10conf_C1",
+          "value": 16,
+          "pct_of_source": 20.0
+        }
+      ]
+    }
+  }
+}
