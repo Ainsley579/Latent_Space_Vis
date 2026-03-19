@@ -592,10 +592,10 @@ export default function Sankey({
 
             // Layer/model labels for each row (right side; screen-space, not rotated with data group).
             const labelYOffset = -8;
-            const offsetX = isSynced ? 0 : UNSYNC_SHIFT_X;
             const minGap = mode === "model" ? MIN_EPOCH_GAP : MIN_LAYER_GAP;
             const unsyncedStep = Math.max(minGap, (width - UNSYNC_LEFT_PAD - UNSYNC_RIGHT_PAD) / (renderOrder.length - 1));
 
+            const offsetX = isSynced ? 0 : UNSYNC_SHIFT_X;
             const spacing = isSynced ? CELL_W : unsyncedStep;
 
             if (layout === "vertical") {
@@ -666,7 +666,6 @@ export default function Sankey({
                 const idx = displayActiveNode.lastIndexOf("_");
                 activeModel = idx === -1 ? displayActiveNode : displayActiveNode.slice(0, idx);
             }
-            const shouldRenderPaths = true;
             const focusGroup = activeModel ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
             const primarySplit = inferSplitFromPath(dataPath);
             const secondarySplit: SplitTag = secondaryDataPath
@@ -707,9 +706,6 @@ export default function Sankey({
                 return { src, tgt, value };
             });
 
-            console.log(layout);
-            console.log(links);
-
             const outOffset = new Map<string, number>();
             const inOffset = new Map<string, number>();
             const outTotal = new Map<string, number>();
@@ -723,40 +719,38 @@ export default function Sankey({
             const sampleGroup = d3.select(groupsRef.sampleTrajectories!);
             const nodeGroup = d3.select(groupsRef.nodes!);
 
-            if (shouldRenderPaths) {
-                linkGroup
-                    .selectAll("path")
-                    .data(links)
-                    .enter()
-                    .append("path")
-                    .attr("d", (d) => {
-                        const s = nodeByKey.get(d.src);
-                        const t = nodeByKey.get(d.tgt);
-                        if (!s || !t) return "";
-                        const sTot = outTotal.get(d.src) || 1;
-                        const tTot = inTotal.get(d.tgt) || 1;
-                        const sOff = outOffset.get(d.src) || 0;
-                        const tOff = inOffset.get(d.tgt) || 0;
-                        const y1 = s.y + ((sOff + d.value / 2) / sTot) * s.h;
-                        const y2 = t.y + ((tOff + d.value / 2) / tTot) * t.h;
-                        outOffset.set(d.src, sOff + d.value);
-                        inOffset.set(d.tgt, tOff + d.value);
-                        const x1 = s.x <= t.x ? s.x + NODE_W : t.x + NODE_W;
-                        const x2 = s.x <= t.x ? t.x : s.x;
-                        const dx = Math.abs(x2 - x1) * 0.5;
-                        return `M ${x1},${y1} C ${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
-                    })
-                    .attr("fill", "none")
-                    .attr("stroke", SANKEY_LINK_COLOR)
-                    .attr("stroke-opacity", 0.35)
-                    .attr("vector-effect", "non-scaling-stroke")
-                    .attr("stroke-width", (d) => {
-                        const s = nodeByKey.get(d.src);
-                        if (!s) return 1;
-                        const sTot = outTotal.get(d.src) || 1;
-                        return Math.max(0.5, (d.value / sTot) * s.h);
-                    });
-            }
+            linkGroup
+                .selectAll("path")
+                .data(links)
+                .enter()
+                .append("path")
+                .attr("d", (d) => {
+                    const s = nodeByKey.get(d.src);
+                    const t = nodeByKey.get(d.tgt);
+                    if (!s || !t) return "";
+                    const sTot = outTotal.get(d.src) || 1;
+                    const tTot = inTotal.get(d.tgt) || 1;
+                    const sOff = outOffset.get(d.src) || 0;
+                    const tOff = inOffset.get(d.tgt) || 0;
+                    const y1 = s.y + ((sOff + d.value / 2) / sTot) * s.h;
+                    const y2 = t.y + ((tOff + d.value / 2) / tTot) * t.h;
+                    outOffset.set(d.src, sOff + d.value);
+                    inOffset.set(d.tgt, tOff + d.value);
+                    const x1 = s.x <= t.x ? s.x + NODE_W : t.x + NODE_W;
+                    const x2 = s.x <= t.x ? t.x : s.x;
+                    const dx = Math.abs(x2 - x1) * 0.5;
+                    return `M ${x1},${y1} C ${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
+                })
+                .attr("fill", "none")
+                .attr("stroke", SANKEY_LINK_COLOR)
+                .attr("stroke-opacity", 0.35)
+                .attr("vector-effect", "non-scaling-stroke")
+                .attr("stroke-width", (d) => {
+                    const s = nodeByKey.get(d.src);
+                    if (!s) return 1;
+                    const sTot = outTotal.get(d.src) || 1;
+                    return Math.max(0.5, (d.value / sTot) * s.h);
+                });
 
             const nodeSamples = new Map<string, Set<string>>();
             const focusClusterBySample = new Map<string, number>();
@@ -806,8 +800,8 @@ export default function Sankey({
                 focusCluster: number;
             }> = [];
             combinedRowsWithSplit.forEach((r: any) => {
-                const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
-                const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+                const fromKey = fromKeyFn(r);
+                const toKey = toKeyFn(r);
                 const src = `${fromKey}_${r.from_cluster}`;
                 const tgt = `${toKey}_${r.to_cluster}`;
                 const s = nodeByKey.get(src);
@@ -855,147 +849,178 @@ export default function Sankey({
             };
 
 
-            let sampleSel: d3.Selection<
-                SVGLineElement,
-                {
-                    id: string;
-                    x1: number;
-                    y1: number;
-                    x2: number;
-                    y2: number;
-                    split: SplitTag;
-                    baseStroke: string;
-                    fromKey: string;
-                    toKey: string;
-                    fromCluster: number;
-                    toCluster: number;
-                    focusCluster: number;
-                },
-                SVGGElement,
-                unknown
-            > | null = null;
-            if (shouldRenderPaths) {
-                sampleSel = sampleGroup
-                    .selectAll("line")
-                    .data(sampleLines)
-                    .enter()
-                    .append("line")
-                    .attr("x1", (d) => d.x1)
-                    .attr("y1", (d) => d.y1)
-                    .attr("x2", (d) => d.x2)
-                    .attr("y2", (d) => d.y2)
-                    .attr("stroke", (d) => d.baseStroke)
-                    .attr("vector-effect", "non-scaling-stroke")
-                    .attr("stroke-width", 1.1)
-                    .attr("opacity", 0)
-                    .attr("class", "sample-line")
-                    .attr("data-id", (d) => d.id)
-                    .attr("data-split", (d) => d.split)
-                    .attr("data-base-stroke", (d) => d.baseStroke)
-                    .attr("data-from-key", (d) => d.fromKey)
-                    .attr("data-to-key", (d) => d.toKey)
-                    .attr("data-from-cluster", (d) => String(d.fromCluster))
-                    .attr("data-to-cluster", (d) => String(d.toCluster))
-                    .attr("data-focus-cluster", (d) => (Number.isFinite(d.focusCluster) ? String(d.focusCluster) : ""))
-                    .attr("opacity", (d) => {
-                        const highlightList = (highlightIds ?? []).map((x) => String(x));
-                        const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
-                        const isSearchHit = highlightList.some((hid) => sameSampleId(hid, d.id));
-                        return (isHovered || isSearchHit) ? 0.4 : baseOpacity(d);
-                    })
-                    .attr("stroke", (d) => {
-                        const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
-                        return isHovered ? HIGHLIGHT_RED : d.baseStroke;
-                    })
-                    .attr("stroke-width", (d) => {
-                        const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
-                        return isHovered ? 2 : 1.1;
-                    });
-            }
-
+            sampleGroup
+                .selectAll("line")
+                .data(sampleLines, (d) => d.id)
+                .join((enter) =>
+                    enter.append("line")
+                        .attr("x1", (d) => d.x1)
+                        .attr("y1", (d) => d.y1)
+                        .attr("x2", (d) => d.x2)
+                        .attr("y2", (d) => d.y2)
+                        .attr("stroke", (d) => d.baseStroke)
+                        .attr("vector-effect", "non-scaling-stroke")
+                        .attr("stroke-width", 1.1)
+                        .attr("opacity", 0)
+                        .attr("class", "sample-line")
+                        .attr("data-id", (d) => d.id)
+                        .attr("data-split", (d) => d.split)
+                        .attr("data-base-stroke", (d) => d.baseStroke)
+                        .attr("data-from-key", (d) => d.fromKey)
+                        .attr("data-to-key", (d) => d.toKey)
+                        .attr("data-from-cluster", (d) => String(d.fromCluster))
+                        .attr("data-to-cluster", (d) => String(d.toCluster))
+                        .attr("data-focus-cluster", (d) => (Number.isFinite(d.focusCluster) ? String(d.focusCluster) : ""))
+                        .attr("opacity", (d) => {
+                            const highlightList = (highlightIds ?? []).map((x) => String(x));
+                            const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
+                            const isSearchHit = highlightList.some((hid) => sameSampleId(hid, d.id));
+                            return (isHovered || isSearchHit) ? 0.4 : baseOpacity(d);
+                        })
+                        .attr("stroke", (d) => {
+                            const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
+                            return isHovered ? HIGHLIGHT_RED : d.baseStroke;
+                        })
+                        .attr("stroke-width", (d) => {
+                            const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
+                            return isHovered ? 2 : 1.1;
+                        }),
+                    (update) =>
+                        update
+                            .attr("x1", (d) => d.x1)
+                            .attr("y1", (d) => d.y1)
+                            .attr("x2", (d) => d.x2)
+                            .attr("y2", (d) => d.y2)
+                            .attr("opacity", (d) => {
+                                const highlightList = (highlightIds ?? []).map((x) => String(x));
+                                const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
+                                const isSearchHit = highlightList.some((hid) => sameSampleId(hid, d.id));
+                                return (isHovered || isSearchHit) ? 0.4 : baseOpacity(d);
+                            })
+                            .attr("stroke", (d) => {
+                                const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
+                                return isHovered ? HIGHLIGHT_RED : d.baseStroke;
+                            })
+                            .attr("stroke-width", (d) => {
+                                const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
+                                return isHovered ? 2 : 1.1;
+                            }),
+                    (exit) => exit.remove()
+                )
             const darker = (hex: string) => {
                 const c = d3.color(hex);
                 return c ? c.darker(0.6).formatHex() : hex;
             };
 
-
             const nodeSel = nodeGroup
                 .selectAll("rect.node-main")
-                .data(nodes)
-                .enter()
-                .append("rect")
-                .attr("class", "node-main")
-                .attr("x", (d) => d.x)
-                .attr("y", (d) => d.y)
-                .attr("width", NODE_W)
-                .attr("height", (d) => Math.max(1, d.h))
-                .attr("fill", (d) => {
-                    if (focusGroup && d.model === focusGroup) {
-                        const idx = d.key.lastIndexOf("_");
-                        const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
-                        if (Number.isFinite(cluster)) return color(Math.max(0, cluster));
-                    }
-                    return SANKEY_NODE_COLOR;
-                })
-                .attr("stroke", (d) => (displayActiveNode && d.key === displayActiveNode ? HIGHLIGHT_RED : "none"))
-                .attr("stroke-width", (d) => (displayActiveNode && d.key === displayActiveNode ? 2 : 0))
-                .attr("data-key", (d) => d.key)
-                .style("cursor", "pointer")
-                .on("click", (event, d) => {
-                    event.stopPropagation();
-                    const currentDisplay = displayActiveNodeRef.current;
-                    const next = currentDisplay === d.key ? null : d.key;
-                    if (!isControlledRef.current) {
-                        setActiveNode(next);
-                    }
-                    const idx = d.key.lastIndexOf("_");
-                    const keyName = idx === -1 ? d.key : d.key.slice(0, idx);
-                    const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
-                    const ids = Array.from(nodeSamples.get(d.key) || []);
-                    if (mode === "model") {
-                        onNodeSelectRef.current?.({ model: keyName, layer: layerKey, cluster, ids });
-                    } else {
-                        onNodeSelectRef.current?.({ model: modelKey, layer: keyName, cluster, ids });
-                    }
-                });
+                .data(nodes, (d: any) => d.key);
+
+            nodeSel.join(
+                (enter) =>
+                    enter.append("rect")
+                        .attr("class", "node-main")
+                        .attr("x", (d) => d.x)
+                        .attr("y", (d) => d.y)
+                        .attr("width", NODE_W)
+                        .attr("height", (d) => Math.max(1, d.h))
+                        .style("cursor", "pointer")
+                        .attr("data-key", (d) => d.key)
+                        .on("click", (event, d) => {
+                            event.stopPropagation();
+                            const currentDisplay = displayActiveNodeRef.current;
+                            const next = currentDisplay === d.key ? null : d.key;
+                            if (!isControlledRef.current) {
+                                setActiveNode(next);
+                            }
+                            const idx = d.key.lastIndexOf("_");
+                            const keyName = idx === -1 ? d.key : d.key.slice(0, idx);
+                            const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
+                            const ids = Array.from(nodeSamples.get(d.key) || []);
+                            if (mode === "model") {
+                                onNodeSelectRef.current?.({ model: keyName, layer: layerKey, cluster, ids });
+                            } else {
+                                onNodeSelectRef.current?.({ model: modelKey, layer: keyName, cluster, ids });
+                            }
+                        })
+                        .attr("fill", (d) => {
+                            if (focusGroup && d.model === focusGroup) {
+                                const idx = d.key.lastIndexOf("_");
+                                const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
+                                if (Number.isFinite(cluster)) return color(Math.max(0, cluster));
+                            }
+                            return SANKEY_NODE_COLOR;
+                        })
+                        .attr("stroke", (d) => (displayActiveNode && d.key === displayActiveNode ? HIGHLIGHT_RED : "none"))
+                        .attr("stroke-width", (d) => (displayActiveNode && d.key === displayActiveNode ? 2 : 0)),
+                (update) => update
+                    .attr("x", (d: any) => d.x)
+                    .attr("y", (d) => d.y)
+                    .attr("height", (d) => Math.max(1, d.h)),
+                (exit) => exit.remove());
 
             nodeGroup
                 .selectAll("rect.node-test")
-                .data(nodes)
-                .enter()
-                .append("rect")
-                .attr("class", "node-test")
-                .attr("x", (d) => d.x)
-                .attr("y", (d) => {
-                    const total = Math.max(0, Number(d.value ?? 0));
-                    const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
-                    const ratio = total > 0 ? Math.min(1, test / total) : 0;
-                    const h = Math.max(1, d.h);
-                    const testH = h * ratio;
-                    return d.y + Math.max(0, h - testH);
-                })
-                .attr("width", NODE_W)
-                .attr("height", (d) => {
-                    const total = Math.max(0, Number(d.value ?? 0));
-                    const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
-                    const ratio = total > 0 ? Math.min(1, test / total) : 0;
-                    return Math.max(0, Math.max(1, d.h) * ratio);
-                })
-                .attr("fill", (d) => {
-                    if (focusGroup && d.model === focusGroup) {
-                        const idx = d.key.lastIndexOf("_");
-                        const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
-                        if (Number.isFinite(cluster)) return darker(color(Math.max(0, cluster)));
-                    }
-                    return darker(SANKEY_NODE_COLOR);
-                })
-                .attr("data-key", (d) => d.key)
-                .style("pointer-events", "none");
-
+                .data(nodes).join(
+                    (enter) =>
+                        enter
+                            .append("rect")
+                            .attr("class", "node-test")
+                            .attr("x", (d) => d.x)
+                            .attr("y", (d) => {
+                                const total = Math.max(0, Number(d.value ?? 0));
+                                const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
+                                const ratio = total > 0 ? Math.min(1, test / total) : 0;
+                                const h = Math.max(1, d.h);
+                                const testH = h * ratio;
+                                return d.y + Math.max(0, h - testH);
+                            })
+                            .attr("width", NODE_W)
+                            .attr("height", (d) => {
+                                const total = Math.max(0, Number(d.value ?? 0));
+                                const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
+                                const ratio = total > 0 ? Math.min(1, test / total) : 0;
+                                return Math.max(0, Math.max(1, d.h) * ratio);
+                            })
+                            .attr("fill", (d) => {
+                                if (focusGroup && d.model === focusGroup) {
+                                    const idx = d.key.lastIndexOf("_");
+                                    const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
+                                    if (Number.isFinite(cluster)) return darker(color(Math.max(0, cluster)));
+                                }
+                                return darker(SANKEY_NODE_COLOR);
+                            })
+                            .attr("data-key", (d) => d.key)
+                            .style("pointer-events", "none"),
+                    (update) =>
+                        update
+                            .attr("x", (d) => d.x)
+                            .attr("y", (d) => {
+                                const total = Math.max(0, Number(d.value ?? 0));
+                                const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
+                                const ratio = total > 0 ? Math.min(1, test / total) : 0;
+                                const h = Math.max(1, d.h);
+                                const testH = h * ratio;
+                                return d.y + Math.max(0, h - testH);
+                            }).attr("height", (d) => {
+                                const total = Math.max(0, Number(d.value ?? 0));
+                                const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
+                                const ratio = total > 0 ? Math.min(1, test / total) : 0;
+                                return Math.max(0, Math.max(1, d.h) * ratio);
+                            })
+                            .attr("fill", (d) => {
+                                if (focusGroup && d.model === focusGroup) {
+                                    const idx = d.key.lastIndexOf("_");
+                                    const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
+                                    if (Number.isFinite(cluster)) return darker(color(Math.max(0, cluster)));
+                                }
+                                return darker(SANKEY_NODE_COLOR);
+                            })
+                    ,
+                    (exit) => exit.remove()
+                )
             nodeSel.append("title").text((d) => d.key);
             nodeGroup.raise();
-
-
 
             // Keep labels above links/nodes.
             svg.selectAll("g.axis-labels").raise();
