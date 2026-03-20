@@ -28,7 +28,7 @@ METHOD="${3:-}"
 TIME_HINT="${4:-}"
 
 if [[ -z "$DATASET" || -z "$SPLIT" || -z "$METHOD" ]]; then
-  echo "Usage: sbatch $0 <dataset:chemprop|chemeleon> <split:test|train> <method:pgmeans|agglomerative|knn|hdbscan> [time_hint]"
+  echo "Usage: sbatch $0 <dataset:chemprop|chemeleon> <split:test|train|val> <method:pgmeans|agglomerative|knn|hdbscan> [time_hint]"
   exit 2
 fi
 
@@ -37,7 +37,7 @@ case "$DATASET" in
   *) echo "Invalid dataset: $DATASET"; exit 2 ;;
 esac
 case "$SPLIT" in
-  test|train) ;;
+  test|train|val) ;;
   *) echo "Invalid split: $SPLIT"; exit 2 ;;
 esac
 case "$METHOD" in

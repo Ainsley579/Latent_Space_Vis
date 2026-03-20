@@ -125,5 +125,56 @@ class TestCollectUpdatedSummary(unittest.TestCase):
         self.assertFalse(empty["sankey_ok"])
 
 
+class TestSplitSupport(unittest.TestCase):
+    def test_load_real_id_smiles_rows_includes_val(self):
+        try:
+            import torch
+        except ImportError:
+            raise unittest.SkipTest("PyTorch required for ESOL split test")
+
+        from embedding_loader import load_real_id_smiles_rows
+
+        with tempfile.TemporaryDirectory(prefix="latentvis_split_rows_") as tmp:
+            pt_path = Path(tmp) / "esol_like.pt"
+            payload = {
+                "0": {
+                    "train": {
+                        "id": ["train_a"],
+                        "smiles": ["CC"],
+                        "embeddings": {"fingerprint": np.zeros((1, 2), dtype=np.float32)},
+                    },
+                    "val": {
+                        "id": ["val_a"],
+                        "smiles": ["CO"],
+                        "embeddings": {"fingerprint": np.zeros((1, 2), dtype=np.float32)},
+                    },
+                    "test": {
+                        "id": ["test_a"],
+                        "smiles": ["CN"],
+                        "embeddings": {"fingerprint": np.zeros((1, 2), dtype=np.float32)},
+                    },
+                }
+            }
+            torch.save(payload, pt_path)
+
+            rows = load_real_id_smiles_rows(pt_path)
+            self.assertEqual([row["split"] for row in rows], ["test", "val", "train"])
+            self.assertEqual({row["real_id"] for row in rows}, {"train_a", "val_a", "test_a"})
+
+    def test_compact_dataset_config_includes_val_sources(self):
+        source = (
+            _BACKEND / "scripts" / "build_compact_overview_data.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("DEFAULT_COORD_DECIMALS = 2", source)
+        self.assertIn('api_version": "compact_overview_v2"', source)
+        self.assertIn('split="train"', source)
+        self.assertIn('split="val"', source)
+        self.assertIn('split="test"', source)
+        self.assertIn('chemprop_root / "val" / "knn" / "scatterplot"', source)
+        self.assertIn('chemeleon_root / "val" / "knn" / "scatterplot"', source)
+        self.assertIn('"cluster_representatives"', source)
+        self.assertIn('"split_connectivity"', source)
+
+
 if __name__ == "__main__":
     unittest.main()

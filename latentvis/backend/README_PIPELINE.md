@@ -150,6 +150,24 @@ Copy-only mode:
 ./scripts/submit_chemprop_full.sh --skip-validate
 ```
 
+### Materialize one ESOL split into backend data + compact overview
+
+```bash
+sbatch ./scripts/submit_materialize_esol_split.slurm chemprop val
+sbatch ./scripts/submit_materialize_esol_split.slurm chemeleon val
+```
+
+This job writes:
+
+- `backend/data/<dataset>/<split>/pgmeans`
+- `backend/data/<dataset>/<split>/hdbscan`
+- `backend/data/<dataset>/<split>/agglomerative`
+- `backend/data/<dataset>/<split>/knn`
+- refreshed `backend/data/<dataset>/id_smiles_y_true_y_pred.json`
+- refreshed `backend/data_compact/*/overview.json` with the current compact schema
+  - DR coordinates rounded to 2 decimal places
+  - sparse per-node DR payloads and sparse Sankey connectivity
+
 ### Generic run+copy job
 
 ```bash

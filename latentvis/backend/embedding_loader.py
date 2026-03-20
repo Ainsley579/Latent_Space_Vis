@@ -320,10 +320,14 @@ def load_from_directory(
     }
 
 
-def load_real_id_smiles_both_splits(pt_path: Union[str, Path]) -> List[Dict[str, str]]:
+def load_real_id_smiles_rows(
+    pt_path: Union[str, Path],
+    include_splits: Optional[List[str]] = None,
+) -> List[Dict[str, str]]:
     """
-    Load real_id and SMILES for both test and train splits from an ESOL-format .pt file.
-    Returns a list of {"real_id": str, "smiles": str, "split": "test"|"train"} for frontend use.
+    Load real_id and SMILES rows from an ESOL-format .pt file.
+
+    Returns a list of {"real_id": str, "smiles": str, "split": split_name}.
     """
     if not _TORCH_AVAILABLE:
         raise ImportError("PyTorch is required to load .pt files")
@@ -335,7 +339,8 @@ def load_real_id_smiles_both_splits(pt_path: Union[str, Path]) -> List[Dict[str,
     if not isinstance(raw, dict):
         return []
     rows = []
-    for split_name in ("test", "train"):
+    split_names = include_splits or ["test", "val", "train"]
+    for split_name in split_names:
         real_ids = None
         smiles_list = None
         for epoch_key, epoch_data in raw.items():
@@ -358,6 +363,15 @@ def load_real_id_smiles_both_splits(pt_path: Union[str, Path]) -> List[Dict[str,
                 "split": split_name,
             })
     return rows
+
+
+def load_real_id_smiles_both_splits(pt_path: Union[str, Path]) -> List[Dict[str, str]]:
+    """
+    Backward-compatible alias for loading ESOL split rows.
+
+    Historically this returned train/test only; it now includes val as well.
+    """
+    return load_real_id_smiles_rows(pt_path)
 
 
 def load_embedding_input(
