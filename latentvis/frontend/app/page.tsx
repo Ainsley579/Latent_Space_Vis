@@ -97,7 +97,7 @@ function parseSplitTaggedId(value: string | number): { split: "train" | "test" |
 
 export default function Home() {
     // this shouldn't be hardcoded. won't change it now but there's a route in the backend to get the datasets available now
-    const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("dimenet");
+    const [selectedDataSet, setSelectedDataSet] = useState<DatasetKey>("dimenet");
     const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("agglomerative");
     const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("all");
     // UI-selected K (does not trigger fetch until Generate is clicked)
@@ -107,14 +107,14 @@ export default function Home() {
     const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
     const [selectedLayer, setSelectedLayer] = useState("fingerprint");
     const [showFfn2, setShowFfn2] = useState(false);
-    const effectiveShowFfn2 = selectedDataset === "dimenet" ? true : showFfn2;
+    const effectiveShowFfn2 = selectedDataSet === "dimenet" ? true : showFfn2;
     const [selectedModel, setSelectedModel] = useState("0");
     const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
     const [isBlockingInitLoading, setIsBlockingInitLoading] = useState(true);
     const [overviewData, setOverviewData] = useState(null);
 
     useEffect(() => {
-        fetch(`${apiBase}/get_dataset/${selectedDataset}`, { method: "GET" })
+        fetch(`${apiBase}/get_dataset/${selectedDataSet}`, { method: "GET" })
             .then((response) => {
                 setIsBlockingInitLoading(false);
                 if (!response.ok) {
@@ -125,10 +125,10 @@ export default function Home() {
                 setOverviewData(data);
             })
             .catch((err) => {
-                alert(`Failed to load dataset ${selectedDataset}: ${err}`);
+                alert(`Failed to load dataset ${selectedDataSet}: ${err}`);
             });
 
-    }, [selectedDataset]);
+    }, [selectedDataSet]);
 
     //const scatterOverrideUrlRef = useRef<string | null>(null);
     const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
@@ -161,9 +161,7 @@ export default function Home() {
     const [swapAxes, setSwapAxes] = useState(false);
     const [reverseEpochOrder, setReverseEpochOrder] = useState(true);
     const [visibleEpochs, setVisibleEpochs] = useState<string[] | null>(null);
-    const handleVisibleEpochsChange = useCallback((epochs: string[]) => {
-        setVisibleEpochs(epochs);
-    }, []);
+
     const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
     const [activeSankeyRows, setActiveSankeyRows] = useState<SankeySampleRow[]>([]);
     const [isGeneratingRange, setIsGeneratingRange] = useState(false);
@@ -404,7 +402,7 @@ export default function Home() {
         const a = document.createElement("a");
         const dateTag = new Date().toISOString().slice(0, 10);
         a.href = url;
-        a.download = `${selectedDataset}_${selectedDataSplit}_${selectedClustering}_bookmarked_ids_${dateTag}.csv`;
+        a.download = `${selectedDataSet}_${selectedDataSplit}_${selectedClustering}_bookmarked_ids_${dateTag}.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -413,7 +411,7 @@ export default function Home() {
 
     useEffect(() => {
         const smilesSourcePath =
-            selectedDataset === "dimenet"
+            selectedDataSet === "dimenet"
                 ? "/dimnet/id_smiles_y_true_y_pred.json"
                 : "/id_smiles_y_true_y_pred.json";
 
@@ -485,14 +483,14 @@ export default function Home() {
                 setYTrueByRealId({});
                 setYPredByRealId({});
             });
-    }, [selectedDataset]);
+    }, [selectedDataSet]);
 
     useEffect(() => {
         setSearchResultIds([]);
         setSearchSmiles("");
         setShowSearchResultsInMembers(false);
         setLastSearchCount(null);
-    }, [selectedDataset, selectedClustering, selectedDataSplit]);
+    }, [selectedDataSet, selectedClustering, selectedDataSplit]);
 
 
     useEffect(() => {
@@ -612,7 +610,7 @@ export default function Home() {
 
     async function generateFromRange(minValue: number, maxValue: number) {
         if (isGeneratingRange) return;
-        const dataset = selectedDataset;
+        const dataset = selectedDataSet;
         const clustering = selectedClustering;
         const dataSplit = selectedDataSplit;
         setIsGeneratingRange(true);
@@ -649,7 +647,7 @@ export default function Home() {
         linkage: "ward" | "complete" | "average";
     }) {
         if (isGeneratingRange) return;
-        const dataset = selectedDataset;
+        const dataset = selectedDataSet;
         const dataSplit = selectedDataSplit;
         setIsGeneratingRange(true);
         setGenerateStatusText(
@@ -1404,42 +1402,18 @@ export default function Home() {
                             id="sankey2d"
                             className="w-full h-full min-h-0 min-w-0 overflow-hidden border border-zinc-400"
                         >
-                            {/*<SankeyView
-                                key={`sankeyview-${selectedDataset}-${selectedClustering}-${selectedDataSplit}`}
-                                dataPath={buildAllSankeyPath(selectedDataset, selectedClustering, selectedDataSplit)}
-                                secondaryDataPath={
-                                    selectedDataSplit === "all"
-                                        ? buildAllSankeyPath(selectedDataset, selectedClustering, "test")
-                                        : undefined
-                                }
+                            {<SankeyView
+                                data={overviewData}
                                 showFfn2={effectiveShowFfn2}
-                                metricsPath={withVersion(
-                                    buildDataFileUrl({
-                                        dataset: selectedDataset,
-                                        clustering: selectedClustering,
-                                        dataSplit: selectedDataSplit,
-                                        section: "bic_aic",
-                                        file: "avg_fmi_cspa_by_layer.json",
-                                    }),
-                                )}
-                                transitionStatsPath={withVersion(
-                                    buildDataFileUrl({
-                                        dataset: selectedDataset,
-                                        clustering: selectedClustering,
-                                        dataSplit: selectedDataSplit,
-                                        section: "clustering_metrics",
-                                        file: "layer_transition_by_epoch.json",
-                                    }),
-                                )}
+                                metricsPath={null}
+                                transitionStatsPath={null}
                                 onModelSelect={(model) => {
-                                    setSankeyPath(buildSankeyModelPath(model));
                                     setSelectedModel(model);
                                     setSelectedNode(null);
                                     setSelectedIds(null);
                                 }}
                                 onLayerSelect={(layer) => {
                                     setSelectedLayer(layer);
-                                    setSankeyPathVertical(buildVerticalPath(layer));
                                     setSelectedNode(null);
                                     setSelectedIds(null);
                                 }}
@@ -1447,7 +1421,6 @@ export default function Home() {
                                     toggleNode(sel);
                                     setSelectedModel(sel.model);
                                     setSelectedLayer(sel.layer);
-                                    syncSankeyPaths(sel.model, sel.layer);
                                     setCellSelected(true);
                                 }}
                                 selectedNode={selectedNode}
@@ -1465,12 +1438,12 @@ export default function Home() {
                                 onSwapAxes={(swap) => setSwapAxes(swap)}
                                 reverseEpochOrder={reverseEpochOrder}
                                 onToggleEpochOrder={() => setReverseEpochOrder((v) => !v)}
-                                onVisibleEpochsChange={handleVisibleEpochsChange}
-                                cellMetricByCell={cellMetricByCell}
+                                onVisibleEpochsChange={null}
+                                cellMetricByCell={null}
                                 selectedCellMetric={selectedCellBgMetric}
                                 externalTransform={sankeyViewExternalTransform}
                                 onTransform={(t) => handleSankeyTransformSync(t, "view")}
-                            />*/}
+                            />}
                         </div>
                     </div>
                     <div className="p-1 box-border min-h-0 min-w-0" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
@@ -1525,6 +1498,7 @@ export default function Home() {
                             </div>
                             <Sankey
                                 data={overviewData}
+                                selectedDataSet={selectedDataSet}
                                 mode={swapAxes ? "model" : "layer"}
                                 showFfn2={effectiveShowFfn2}
                                 modelKey={selectedModel}
@@ -1563,7 +1537,7 @@ export default function Home() {
                             className="w-full h-full border border-zinc-400 relative"
                         >
                             <StructureEditorPanel
-                                dataset={selectedDataset}
+                                dataset={selectedDataSet}
                                 dataSplit={selectedDataSplit}
                                 onSearchResultIds={(ids, smiles) => {
                                     const uniq = Array.from(new Set(ids.map((x) => String(x))));
@@ -1964,14 +1938,14 @@ export default function Home() {
                         >
                             <div className={"w-56 transition-opacity duration-200 " + (isControlPanelOpen ? "opacity-100" : "opacity-0")}>
                                 <SyncControlPanel
-                                    dataset={selectedDataset}
+                                    dataset={selectedDataSet}
                                     onDatasetChange={(d) => {
                                         const next = d as DatasetKey;
                                         const defaults = DATASET_DEFAULTS[next];
                                         const nextClustering = selectedClustering;
                                         const nextSplit: DataSplitKey =
                                             next === "dimenet" ? "test" : selectedDataSplit;
-                                        setSelectedDataset(next);
+                                        setSelectedDataSet(next);
                                         setSelectedDataSplit(nextSplit);
                                         setSelectedModel(defaults.model);
                                         setSelectedLayer(defaults.layer);
@@ -1994,7 +1968,7 @@ export default function Home() {
                                     datasetOptions={DATASET_OPTIONS_UI}
                                     dataSplit={selectedDataSplit}
                                     onDataSplitChange={(split) => {
-                                        const defaults = DATASET_DEFAULTS[selectedDataset];
+                                        const defaults = DATASET_DEFAULTS[selectedDataSet];
                                         const nextSplit = split as DataSplitKey;
                                         setSelectedDataSplit(nextSplit);
                                         setSelectedModel(defaults.model);
@@ -2049,7 +2023,7 @@ export default function Home() {
                                     largePreviewSize={largeHoverPreviewSize}
                                     onLargePreviewSizeChange={setLargeHoverPreviewSize}
                                     showFfn2={effectiveShowFfn2}
-                                    onShowFfn2Change={selectedDataset === "dimenet" ? undefined : setShowFfn2}
+                                    onShowFfn2Change={selectedDataSet === "dimenet" ? undefined : setShowFfn2}
                                     onGenerateRange={generateFromRange}
                                     onGenerateAgglomerative={generateAgglomerative}
                                     knnK={selectedKnnK}

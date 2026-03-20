@@ -101,8 +101,9 @@ function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): 
     return out;
 }
 
-type SankeyVerticalProps = {
-    dataPath?: string;
+type SankeyProps = {
+    data: any;
+    selectedDataSet: string;
     secondaryDataPath?: string;
     showFfn2?: boolean;
     syncTransform?: { x: number; y: number; scale: number };
@@ -340,10 +341,12 @@ const NODE_PAD = 4;
 const BOTTOM = 28;
 const TOP = 10;
 const INNER_W = 100;
+const labelYOffset = -8;
 
 const UNSYNC_SHIFT_X = 0;
 const UNSYNC_LEFT_PAD = 20;
 const UNSYNC_RIGHT_PAD = 20;
+const centerOffset = CELL_MARGIN_LEFT + INNER_W / 2;
 
 
 function toShortLayerName(name: string): string {
@@ -358,8 +361,8 @@ function toShortLayerName(name: string): string {
 }
 
 export default function Sankey({
-    dataPath = "/data/dimenet/sankey/sankey_samples.json",
-    secondaryDataPath,
+    data,
+    selectedDataSet,
     showFfn2 = false,
     syncTransform,
     onSyncTransform,
@@ -373,7 +376,7 @@ export default function Sankey({
     highlightIds,
     onNodeSelect,
     layout = "vertical",
-}: SankeyVerticalProps) {
+}: SankeyProps) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const nodeSamplesRef = useRef<Map<string, Set<string>>>(new Map());
     const onNodeSelectRef = useRef(onNodeSelect);
@@ -426,7 +429,7 @@ export default function Sankey({
 
     useEffect(() => {
         const container = containerRef.current;
-        if (!container) return;
+        if (!container || !data) return;
         const host = container;
 
         const groupsRef = {
@@ -478,7 +481,7 @@ export default function Sankey({
 
         function draw() {
             if (!container) return;
-            if (!lastRows) return;
+            //if (!lastRows) return;
 
             const width = Math.max(1, container.clientWidth);
             const height = Math.max(1, container.clientHeight);
@@ -491,6 +494,59 @@ export default function Sankey({
                 drawH = width;
                 d3.select(rotationAxis).attr("transform", `translate(${width},0) rotate(90)`);
             }
+
+            const axisLabels = d3.select(groupsRef.axisLabels!);
+            const renderOrder = mode === "model" ? data.epochs : data.layers;
+
+            const minGap = mode === "model" ? MIN_EPOCH_GAP : MIN_LAYER_GAP;
+            const MODEL_GAP = CELL_H;
+            const baseLeft = 10;
+            const offsetY = CELL_H * SYNC_VERTICAL_SHIFT_RATIO;
+
+            if (layout === "vertical") {
+                axisLabels
+                    .selectAll("text")
+                    .data(renderOrder)
+                    .enter()
+                    .append("text")
+                    .attr("x", width - 6)
+                    .attr("y", (_d, i) => baseLeft + i * MODEL_GAP + offsetY + labelYOffset)
+                    .attr("text-anchor", "end")
+                    .attr("dominant-baseline", "middle")
+                    .attr("font-size", 12)
+                    .attr("font-weight", 600)
+                    .attr("fill", "#374151")
+                    .attr("stroke", "#ffffff")
+                    .attr("stroke-width", 2)
+                    .attr("paint-order", "stroke")
+                    .style("pointer-events", "none")
+                    .text((d) => toShortLayerName(String(d)));
+            } else {
+
+                //TODO: fix axis labels
+                axisLabels
+                    .selectAll("text")
+                    .data(renderOrder)
+                    .enter()
+                    .append("text")
+                    .attr("x", (_d, i) => {
+                        return i * 50;
+                    })
+                    .attr("y", height - 16)
+                    .attr("text-anchor", "end")
+                    .attr("dominant-baseline", "middle")
+                    .attr("font-size", 12)
+                    .attr("font-weight", 600)
+                    .attr("fill", "#374151")
+                    .attr("stroke", "#ffffff")
+                    .attr("stroke-width", 2)
+                    .attr("paint-order", "stroke")
+                    .style("pointer-events", "none")
+                    .text((d) => toShortLayerName(String(d)));
+
+            }
+
+
             // model transition within a single layer
             const visibleEpochOrder =
                 mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
@@ -560,10 +616,6 @@ export default function Sankey({
 
             const isSynced = !!syncTransform;
             const inferredOrderCombined = inferSequenceFromRows(combinedRows as SampleRow[], mode, order);
-            const renderOrder =
-                mode === "model" && visibleEpochOrder
-                    ? visibleEpochOrder
-                    : inferredOrderCombined.filter((m) => (nodesByModel.get(m)?.length ?? 0) > 0);
 
             // In rotated rendering, x-axis maps to screen Y (vertical direction).
             const unsyncedLeftPad = UNSYNC_TOP_PAD;
@@ -580,67 +632,14 @@ export default function Sankey({
                     })();
 
             // Synced mode keeps alignment with 2D; unsynced mode fills available width.
-            const MODEL_GAP = isSynced ? CELL_H : unsyncedGap;
-            const baseLeft = isSynced ? MARGIN_LEFT : unsyncedLeftPad;
-            const offsetY = isSynced ? CELL_H * SYNC_VERTICAL_SHIFT_RATIO : UNSYNC_SHIFT_Y;
             const totalHeight = Math.max(
                 height,
                 baseLeft + (Math.max(1, renderOrder.length) - 0.5) * MODEL_GAP + offsetY + NODE_W / 2 + 10
             );
             svg.attr("height", totalHeight);
-            const axisLabels = d3.select(groupsRef.axisLabels!);
 
             // Layer/model labels for each row (right side; screen-space, not rotated with data group).
-            const labelYOffset = -8;
-            const minGap = mode === "model" ? MIN_EPOCH_GAP : MIN_LAYER_GAP;
-            const unsyncedStep = Math.max(minGap, (width - UNSYNC_LEFT_PAD - UNSYNC_RIGHT_PAD) / (renderOrder.length - 1));
 
-            const offsetX = isSynced ? 0 : UNSYNC_SHIFT_X;
-            const spacing = isSynced ? CELL_W : unsyncedStep;
-
-            if (layout === "vertical") {
-                axisLabels
-                    .selectAll("text")
-                    .data(renderOrder)
-                    .enter()
-                    .append("text")
-                    .attr("x", width - 6)
-                    .attr("y", (_d, i) => baseLeft + i * MODEL_GAP + offsetY + labelYOffset)
-                    .attr("text-anchor", "end")
-                    .attr("dominant-baseline", "middle")
-                    .attr("font-size", 12)
-                    .attr("font-weight", 600)
-                    .attr("fill", "#374151")
-                    .attr("stroke", "#ffffff")
-                    .attr("stroke-width", 2)
-                    .attr("paint-order", "stroke")
-                    .style("pointer-events", "none")
-                    .text((d) => toShortLayerName(String(d)));
-            } else {
-                const centerOffset = CELL_MARGIN_LEFT + INNER_W / 2;
-
-                //TODO: fix axis labels
-                axisLabels
-                    .selectAll("text")
-                    .data(renderOrder)
-                    .enter()
-                    .append("text")
-                    .attr("x", (_d, i) => {
-                        return i * 50;
-                    })
-                    .attr("y", height - 16)
-                    .attr("text-anchor", "end")
-                    .attr("dominant-baseline", "middle")
-                    .attr("font-size", 12)
-                    .attr("font-weight", 600)
-                    .attr("fill", "#374151")
-                    .attr("stroke", "#ffffff")
-                    .attr("stroke-width", 2)
-                    .attr("paint-order", "stroke")
-                    .style("pointer-events", "none")
-                    .text((d) => toShortLayerName(String(d)));
-
-            }
 
             const nodes: Array<{ key: string; model: string; value: number; x: number; y: number; h: number }> = [];
             renderOrder.forEach((model, i) => {
@@ -1089,9 +1088,9 @@ export default function Sankey({
             ro.disconnect();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dataPath, secondaryDataPath, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, showFfn2, !!syncTransform]);
+    }, [data, selectedDataSet, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, showFfn2, !!syncTransform]);
 
-    useEffect(() => {
+    /*useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
         const svg = container.querySelector("svg");
@@ -1170,7 +1169,7 @@ export default function Sankey({
             line.setAttribute("stroke", isHovered ? HIGHLIGHT_RED : baseStroke);
             line.setAttribute("stroke-width", isHovered ? "2" : "1.1");
         });
-    }, [displayActiveNode, highlightId, highlightIds, mode, modelKey, layerKey]);
+    }, [displayActiveNode, highlightId, highlightIds, mode, modelKey, layerKey]);*/
 
     useEffect(() => {
         const container = containerRef.current;
