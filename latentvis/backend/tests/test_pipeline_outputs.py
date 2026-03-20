@@ -166,7 +166,7 @@ class TestSplitSupport(unittest.TestCase):
             _BACKEND / "scripts" / "build_compact_overview_data.py"
         ).read_text(encoding="utf-8")
         self.assertIn("DEFAULT_COORD_DECIMALS = 2", source)
-        self.assertIn('api_version": "compact_overview_v2"', source)
+        self.assertIn('API_VERSION = "compact_overview_v6"', source)
         self.assertIn('split="train"', source)
         self.assertIn('split="val"', source)
         self.assertIn('split="test"', source)
@@ -174,6 +174,9 @@ class TestSplitSupport(unittest.TestCase):
         self.assertIn('chemeleon_root / "val" / "knn" / "scatterplot"', source)
         self.assertIn('"cluster_representatives"', source)
         self.assertIn('"split_connectivity"', source)
+        self.assertIn('"representative_molecule_id"', source)
+        self.assertIn('"split_names"', source)
+        self.assertIn('"node_lookup"', source)
 
 
 if __name__ == "__main__":

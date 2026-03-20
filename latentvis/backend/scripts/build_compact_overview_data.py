@@ -3,8 +3,9 @@
 Build compact overview datasets from existing generated case outputs.
 
 The compact format is intentionally sparse:
-- DR coordinates are rounded and stored once per node across all molecule IDs.
-- Cluster labels are stored once per node across all splits.
+- DR coordinates are rounded and stored once per cell across all molecule IDs.
+- Cluster labels are stored once per cell across all splits.
+- Cluster nodes are stored separately from epoch/layer cells.
 - Connectivity is stored as sparse adjacency lists rather than dense matrices.
 """
 
@@ -22,6 +23,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_ROOT = ROOT / "data_compact"
 DEFAULT_COORD_DECIMALS = 2
+API_VERSION = "compact_overview_v6"
 PROJECTION_METHODS = ("default", "pca", "mds", "umap", "tsne")
 SUPPORTED_SPLITS = ("train", "val", "test")
 
@@ -158,10 +160,39 @@ def canonical_metadata(
     return molecule_labels, split_ids, molecule_label_to_id
 
 
+def split_ids_array(
+    split_names: Sequence[str],
+    split_ids: Dict[str, List[int]],
+) -> List[List[int]]:
+    return [list(split_ids.get(split, [])) for split in split_names]
+
+
 def maybe_molecule_labels_payload(molecule_labels: Sequence[str]) -> Optional[List[str]]:
     if all(label == str(idx) for idx, label in enumerate(molecule_labels)):
         return None
     return list(molecule_labels)
+
+
+def ordered_split_names(
+    metadata_rows: Sequence[Dict[str, Any]],
+    split_sources: Sequence[SplitSource],
+) -> List[str]:
+    ordered: List[str] = []
+    seen = set()
+
+    for source in split_sources:
+        split = str(source.split).strip().lower()
+        if split in SUPPORTED_SPLITS and split not in seen:
+            ordered.append(split)
+            seen.add(split)
+
+    for row in metadata_rows:
+        split = str(row.get("split") or "").strip().lower()
+        if split in SUPPORTED_SPLITS and split not in seen:
+            ordered.append(split)
+            seen.add(split)
+
+    return ordered
 
 
 def load_csv_rows(path: Path) -> Tuple[List[str], List[Dict[str, str]]]:
@@ -332,80 +363,132 @@ def build_representative_payloads(
     return representatives
 
 
-def build_sparse_connectivity(
+def build_cluster_nodes_and_connectivity(
+    split_names: Sequence[str],
     epochs: Sequence[str],
     layers: Sequence[str],
-    memberships_by_split: Dict[str, Dict[str, Dict[str, Set[int]]]],
-) -> Tuple[Dict[str, List[List[int]]], Dict[str, Dict[str, List[List[int]]]], Dict[str, Dict[str, int]]]:
-    total_layers_per_epoch = len(layers)
-    node_lookup: Dict[str, Dict[str, int]] = {}
-    for epoch_idx, epoch in enumerate(epochs):
-        node_lookup[epoch] = {}
-        for layer_idx, layer in enumerate(layers):
-            node_lookup[epoch][layer] = layer_idx + (epoch_idx * total_layers_per_epoch)
+    labels_by_split: Dict[str, Dict[str, Dict[str, Dict[int, int]]]],
+    representatives_by_split: Dict[str, Dict[str, Dict[str, Dict[str, int]]]],
+) -> Tuple[
+    List[Dict[str, Any]],
+    List[List[List[int]]],
+    List[List[List[List[int]]]],
+    List[List[List[List[List[int]]]]],
+]:
+    split_index_by_name = {name: idx for idx, name in enumerate(split_names)}
+    nodes: List[Dict[str, Any]] = []
+    node_lookup_map: List[Dict[str, Dict[str, Dict[str, int]]]] = [
+        {epoch: {layer: {} for layer in layers} for epoch in epochs}
+        for _split in split_names
+    ]
 
-    split_edges: Dict[str, Dict[str, List[List[int]]]] = {split: {} for split in SUPPORTED_SPLITS}
-
-    for split, memberships in memberships_by_split.items():
-        adjacency: Dict[str, List[List[int]]] = {}
+    next_node_id = 0
+    for split in split_names:
+        split_idx = split_index_by_name[split]
         for epoch_idx, epoch in enumerate(epochs):
+            for layer_idx, layer in enumerate(layers):
+                cluster_members: Dict[int, Set[int]] = {}
+                for molecule_id, cluster_id in labels_by_split[split][epoch][layer].items():
+                    cluster_members.setdefault(cluster_id, set()).add(molecule_id)
+
+                for cluster_id in sorted(cluster_members):
+                    node_id = next_node_id
+                    next_node_id += 1
+                    member_ids = cluster_members[cluster_id]
+                    representative_id = representatives_by_split[split][epoch][layer].get(str(cluster_id))
+                    cell_index = layer_idx + (epoch_idx * len(layers))
+                    nodes.append(
+                        {
+                            "node_id": node_id,
+                            "split": split_idx,
+                            "epoch": epoch,
+                            "layer": layer,
+                            "epoch_idx": epoch_idx,
+                            "layer_idx": layer_idx,
+                            "cell_index": cell_index,
+                            "cluster_id": cluster_id,
+                            "member_count": len(member_ids),
+                            "representative_molecule_id": representative_id,
+                        }
+                    )
+                    node_lookup_map[split_idx][epoch][layer][str(cluster_id)] = node_id
+
+    split_connectivity_maps: List[Dict[int, List[List[int]]]] = [{} for _split in split_names]
+    combined_counts: Dict[str, Dict[int, int]] = {}
+
+    for split in split_names:
+        split_idx = split_index_by_name[split]
+        pair_counts: Dict[Tuple[int, int], int] = {}
+
+        for epoch in epochs:
             for layer_idx in range(len(layers) - 1):
                 source_layer = layers[layer_idx]
                 target_layer = layers[layer_idx + 1]
-                count = len(memberships[epoch][source_layer] & memberships[epoch][target_layer])
-                if count <= 0:
-                    continue
-                source_index = node_lookup[epoch][source_layer]
-                target_index = node_lookup[epoch][target_layer]
-                adjacency.setdefault(str(source_index), []).append([target_index, count])
+                source_labels = labels_by_split[split][epoch][source_layer]
+                target_labels = labels_by_split[split][epoch][target_layer]
+                for molecule_id, source_cluster in source_labels.items():
+                    target_cluster = target_labels.get(molecule_id)
+                    if target_cluster is None:
+                        continue
+                    source_id = node_lookup_map[split_idx][epoch][source_layer][str(source_cluster)]
+                    target_id = node_lookup_map[split_idx][epoch][target_layer][str(target_cluster)]
+                    pair_counts[(source_id, target_id)] = pair_counts.get((source_id, target_id), 0) + 1
 
         for epoch_idx in range(len(epochs) - 1):
             source_epoch = epochs[epoch_idx]
             target_epoch = epochs[epoch_idx + 1]
             for layer in layers:
-                count = len(memberships[source_epoch][layer] & memberships[target_epoch][layer])
-                if count <= 0:
-                    continue
-                source_index = node_lookup[source_epoch][layer]
-                target_index = node_lookup[target_epoch][layer]
-                adjacency.setdefault(str(source_index), []).append([target_index, count])
+                source_labels = labels_by_split[split][source_epoch][layer]
+                target_labels = labels_by_split[split][target_epoch][layer]
+                for molecule_id, source_cluster in source_labels.items():
+                    target_cluster = target_labels.get(molecule_id)
+                    if target_cluster is None:
+                        continue
+                    source_id = node_lookup_map[split_idx][source_epoch][layer][str(source_cluster)]
+                    target_id = node_lookup_map[split_idx][target_epoch][layer][str(target_cluster)]
+                    pair_counts[(source_id, target_id)] = pair_counts.get((source_id, target_id), 0) + 1
 
-        for source_index, edges in adjacency.items():
+        adjacency: Dict[int, List[List[int]]] = {}
+        for (source_id, target_id), count in sorted(pair_counts.items()):
+            adjacency.setdefault(source_id, []).append([target_id, count])
+
+        for source_id, edges in adjacency.items():
             edges.sort(key=lambda item: item[0])
-        split_edges[split] = adjacency
+            split_connectivity_maps[split_idx][source_id] = edges
+            for target_id, count in edges:
+                bucket = combined_counts.setdefault(str(source_id), {})
+                bucket[target_id] = bucket.get(target_id, 0) + count
 
-    combined: Dict[str, Dict[int, int]] = {}
-    for split in SUPPORTED_SPLITS:
-        for source_index, edges in split_edges[split].items():
-            bucket = combined.setdefault(source_index, {})
-            for target_index, count in edges:
-                bucket[target_index] = bucket.get(target_index, 0) + count
+    connectivity: List[List[List[int]]] = [[] for _ in range(len(nodes))]
+    for source_key, target_counts in sorted(combined_counts.items(), key=lambda item: int(item[0])):
+        source_id = int(source_key)
+        connectivity[source_id] = [[target_id, count] for target_id, count in sorted(target_counts.items())]
 
-    connectivity = {
-        source_index: [[target_index, count] for target_index, count in sorted(target_counts.items())]
-        for source_index, target_counts in sorted(combined.items(), key=lambda item: int(item[0]))
-    }
+    split_connectivity: List[List[List[List[int]]]] = []
+    for split_idx in range(len(split_names)):
+        rows: List[List[List[int]]] = [[] for _ in range(len(nodes))]
+        for source_id, edges in split_connectivity_maps[split_idx].items():
+            rows[source_id] = edges
+        split_connectivity.append(rows)
 
-    return connectivity, split_edges, node_lookup
+    node_lookup: List[List[List[List[List[int]]]]] = []
+    for split_idx in range(len(split_names)):
+        split_rows: List[List[List[List[int]]]] = []
+        for epoch in epochs:
+            epoch_rows: List[List[List[int]]] = []
+            for layer in layers:
+                mapping = node_lookup_map[split_idx][epoch][layer]
+                epoch_rows.append([[int(cluster_id), node_id] for cluster_id, node_id in sorted(mapping.items(), key=lambda item: int(item[0]))])
+            split_rows.append(epoch_rows)
+        node_lookup.append(split_rows)
+
+    return nodes, connectivity, split_connectivity, node_lookup
 
 
-def source_paths_payload(split_sources: Sequence[SplitSource]) -> Dict[str, Dict[str, Optional[str]]]:
-    payload: Dict[str, Dict[str, Optional[str]]] = {}
-    for source in split_sources:
-        payload[source.split] = {
-            "scatter_dir": str(source.scatter_dir) if source.scatter_dir else None,
-            "cluster_csv": str(source.cluster_csv) if source.cluster_csv else None,
-            "representatives_json": str(source.representatives_json) if source.representatives_json else None,
-            "sankey_json": str(source.sankey_json) if source.sankey_json else None,
-        }
-    return payload
-
-
-def validate_sparse_edges(edges: Dict[str, List[List[int]]], n_nodes: int) -> None:
-    for source_key, targets in edges.items():
-        source_index = int(source_key)
-        if source_index < 0 or source_index >= n_nodes:
-            raise ValueError("Connectivity source index out of range.")
+def validate_sparse_edges(edges: List[List[List[int]]], n_nodes: int) -> None:
+    if len(edges) != n_nodes:
+        raise ValueError("Connectivity array length does not match node count.")
+    for source_index, targets in enumerate(edges):
         if not isinstance(targets, list):
             raise ValueError("Connectivity payload must contain adjacency lists.")
         for item in targets:
@@ -418,6 +501,62 @@ def validate_sparse_edges(edges: Dict[str, List[List[int]]], n_nodes: int) -> No
                 raise ValueError("Connectivity counts must be positive integers.")
 
 
+def validate_cluster_nodes(
+    nodes: List[Dict[str, Any]],
+    node_lookup: List[List[List[List[List[int]]]]],
+    split_names: Sequence[str],
+    epochs: Sequence[str],
+    layers: Sequence[str],
+    n_cells: int,
+    n_molecules: int,
+) -> None:
+    expected_keys = list(range(len(nodes)))
+    actual_keys = [node["node_id"] for node in nodes]
+    if actual_keys != expected_keys:
+        raise ValueError("Cluster node IDs are not sequential integers.")
+
+    for node_id, node in enumerate(nodes):
+        if node["node_id"] != node_id:
+            raise ValueError("Cluster node payload has mismatched node_id.")
+        split_idx = node["split"]
+        if not isinstance(split_idx, int) or split_idx < 0 or split_idx >= len(split_names):
+            raise ValueError("Cluster node split index is invalid.")
+        if node["epoch"] not in epochs or node["layer"] not in layers:
+            raise ValueError("Cluster node epoch/layer is invalid.")
+        if not isinstance(node["cluster_id"], int):
+            raise ValueError("Cluster node cluster_id must be an integer.")
+        if not isinstance(node["member_count"], int) or node["member_count"] <= 0:
+            raise ValueError("Cluster node member_count must be positive.")
+        cell_index = node["cell_index"]
+        if not isinstance(cell_index, int) or cell_index < 0 or cell_index >= n_cells:
+            raise ValueError("Cluster node cell_index is out of range.")
+        representative_id = node.get("representative_molecule_id")
+        if representative_id is not None and (
+            not isinstance(representative_id, int) or representative_id < 0 or representative_id >= n_molecules
+        ):
+            raise ValueError("Cluster node representative_molecule_id is invalid.")
+
+    if len(node_lookup) != len(split_names):
+        raise ValueError("node_lookup length does not match split_names.")
+    for split_idx in range(len(split_names)):
+        if len(node_lookup[split_idx]) != len(epochs):
+            raise ValueError("node_lookup epoch dimension mismatch.")
+        for epoch_idx in range(len(epochs)):
+            if len(node_lookup[split_idx][epoch_idx]) != len(layers):
+                raise ValueError("node_lookup layer dimension mismatch.")
+            for layer_idx in range(len(layers)):
+                entries = node_lookup[split_idx][epoch_idx][layer_idx]
+                if not isinstance(entries, list):
+                    raise ValueError("node_lookup entries must be lists.")
+                for item in entries:
+                    if not isinstance(item, list) or len(item) != 2:
+                        raise ValueError("node_lookup entry must be [cluster_id, node_id].")
+                    cluster_id, node_id = item
+                    if not isinstance(cluster_id, int):
+                        raise ValueError("node_lookup cluster_id must be an int.")
+                    if not isinstance(node_id, int) or node_id < 0 or node_id >= len(nodes):
+                        raise ValueError("node_lookup references an invalid node ID.")
+
 def validate_overview(overview: Dict[str, Any]) -> None:
     molecule_ids = overview["molecule_ids"]
     n_molecules = len(molecule_ids)
@@ -428,12 +567,16 @@ def validate_overview(overview: Dict[str, Any]) -> None:
     if molecule_labels is not None and len(molecule_labels) != n_molecules:
         raise ValueError("Molecule labels length mismatch.")
 
-    for split in SUPPORTED_SPLITS:
-        ids = overview["splits"][split]
+    split_names = overview["split_names"]
+
+    splits = overview["splits"]
+    if len(splits) != len(split_names):
+        raise ValueError("splits length does not match split_names.")
+    for split_idx, ids in enumerate(splits):
         if any(not isinstance(value, int) for value in ids):
-            raise ValueError(f"Split {split} contains a non-integer ID.")
+            raise ValueError(f"Split index {split_idx} contains a non-integer ID.")
         if any(value < 0 or value >= n_molecules for value in ids):
-            raise ValueError(f"Split {split} contains an out-of-range ID.")
+            raise ValueError(f"Split index {split_idx} contains an out-of-range ID.")
 
     epochs = overview["epochs"]
     layers = overview["layers"]
@@ -476,15 +619,26 @@ def validate_overview(overview: Dict[str, Any]) -> None:
                 if not all(isinstance(value, (int, float)) for value in pair):
                     raise ValueError("DR coordinates must be numeric.")
 
-    sankey = overview["sankey"]
-    validate_sparse_edges(sankey["connectivity"], expected_node_count)
-    for split in SUPPORTED_SPLITS:
-        validate_sparse_edges(sankey["split_connectivity"][split], expected_node_count)
+    validate_cluster_nodes(
+        nodes=overview["nodes"],
+        node_lookup=overview["node_lookup"],
+        split_names=split_names,
+        epochs=epochs,
+        layers=layers,
+        n_cells=expected_node_count,
+        n_molecules=n_molecules,
+    )
+    validate_sparse_edges(overview["connectivity"], len(overview["nodes"]))
+    if len(overview["split_connectivity"]) != len(split_names):
+        raise ValueError("split_connectivity length does not match split_names.")
+    for edges in overview["split_connectivity"]:
+        validate_sparse_edges(edges, len(overview["nodes"]))
 
 
 def build_overview(config: DatasetConfig, coord_decimals: int) -> Dict[str, Any]:
     metadata_rows = load_metadata_rows(config.metadata_json)
     molecule_labels, split_ids, molecule_label_to_id = canonical_metadata(metadata_rows)
+    split_names = ordered_split_names(metadata_rows, config.split_sources)
     epochs, layers = load_ordering(config.split_sources)
     layers = infer_layers_from_values(layers)
     if not epochs or not layers:
@@ -493,10 +647,8 @@ def build_overview(config: DatasetConfig, coord_decimals: int) -> Dict[str, Any]
     labels_by_split: Dict[str, Dict[str, Dict[str, Dict[int, int]]]] = {}
     dr_by_split: Dict[str, Dict[str, Dict[str, Dict[str, Dict[str, List[float]]]]]] = {}
     representatives_by_split: Dict[str, Dict[str, Dict[str, Dict[str, int]]]] = {}
-    memberships_by_split: Dict[str, Dict[str, Dict[str, Set[int]]]] = {}
-
     for source in config.split_sources:
-        labels_by_cell, memberships_by_cell, dr_by_cell = build_split_payloads(
+        labels_by_cell, _memberships_by_cell, dr_by_cell = build_split_payloads(
             source=source,
             epochs=epochs,
             layers=layers,
@@ -512,7 +664,6 @@ def build_overview(config: DatasetConfig, coord_decimals: int) -> Dict[str, Any]
         labels_by_split[source.split] = labels_by_cell
         dr_by_split[source.split] = dr_by_cell
         representatives_by_split[source.split] = representatives
-        memberships_by_split[source.split] = memberships_by_cell
 
     for split in SUPPORTED_SPLITS:
         if split in labels_by_split:
@@ -520,13 +671,6 @@ def build_overview(config: DatasetConfig, coord_decimals: int) -> Dict[str, Any]
         labels_by_split[split] = {epoch: {layer: {} for layer in layers} for epoch in epochs}
         dr_by_split[split] = {epoch: {layer: {} for layer in layers} for epoch in epochs}
         representatives_by_split[split] = {epoch: {layer: {} for layer in layers} for epoch in epochs}
-        memberships_by_split[split] = {epoch: {layer: set() for layer in layers} for epoch in epochs}
-
-    connectivity, split_connectivity, node_lookup = build_sparse_connectivity(
-        epochs=epochs,
-        layers=layers,
-        memberships_by_split=memberships_by_split,
-    )
 
     cell_payloads: List[Dict[str, Any]] = []
     for epoch_idx, epoch in enumerate(epochs):
@@ -559,22 +703,28 @@ def build_overview(config: DatasetConfig, coord_decimals: int) -> Dict[str, Any]
                 }
             )
 
+    nodes, connectivity, split_connectivity, node_lookup = build_cluster_nodes_and_connectivity(
+        split_names=split_names,
+        epochs=epochs,
+        layers=layers,
+        labels_by_split=labels_by_split,
+        representatives_by_split=representatives_by_split,
+    )
+
     overview: Dict[str, Any] = {
-        "api_version": "compact_overview_v2",
+        "api_version": API_VERSION,
         "dataset": config.name,
         "source_variant": config.source_variant,
-        "dr_coord_decimals": coord_decimals,
-        "source_paths": source_paths_payload(config.split_sources),
         "molecule_ids": list(range(len(molecule_labels))),
-        "splits": split_ids,
+        "split_names": split_names,
+        "splits": split_ids_array(split_names, split_ids),
         "epochs": list(epochs),
         "layers": list(layers),
         "cells": cell_payloads,
-        "sankey": {
-            "connectivity": connectivity,
-            "split_connectivity": split_connectivity,
-            "node_lookup": node_lookup,
-        },
+        "nodes": nodes,
+        "connectivity": connectivity,
+        "split_connectivity": split_connectivity,
+        "node_lookup": node_lookup,
     }
 
     molecule_labels_payload = maybe_molecule_labels_payload(molecule_labels)
