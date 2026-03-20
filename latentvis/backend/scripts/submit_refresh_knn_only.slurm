@@ -3,7 +3,7 @@
 # frontend/public/data/<case>/<split>/clustering/knn.
 #
 # Usage:
-#   sbatch scripts/submit_refresh_knn_only.slurm <dataset:chemprop|chemeleon> <split:test|train> <knn_k> [time_hint]
+#   sbatch scripts/submit_refresh_knn_only.slurm <dataset:chemprop|chemeleon> <split:test|train|val> <knn_k> [time_hint]
 
 #SBATCH --job-name=latentvis_knn_refresh
 #SBATCH --nodes=1
@@ -26,7 +26,7 @@ KNN_K="${3:-}"
 TIME_HINT="${4:-}"
 
 if [[ -z "$DATASET" || -z "$SPLIT" || -z "$KNN_K" ]]; then
-  echo "Usage: sbatch $0 <dataset:chemprop|chemeleon> <split:test|train> <knn_k> [time_hint]"
+  echo "Usage: sbatch $0 <dataset:chemprop|chemeleon> <split:test|train|val> <knn_k> [time_hint]"
   exit 2
 fi
 
@@ -35,7 +35,7 @@ case "$DATASET" in
   *) echo "Invalid dataset: $DATASET"; exit 2 ;;
 esac
 case "$SPLIT" in
-  test|train) ;;
+  test|train|val) ;;
   *) echo "Invalid split: $SPLIT"; exit 2 ;;
 esac
 if ! [[ "$KNN_K" =~ ^[0-9]+$ ]] || [[ "$KNN_K" -lt 1 ]]; then
