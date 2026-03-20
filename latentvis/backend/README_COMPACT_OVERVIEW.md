@@ -21,9 +21,14 @@ python3 latentvis/backend/scripts/build_compact_overview_data.py --coord-decimal
 - One compact file per dataset
 - Sequential dense molecule IDs: `0..N-1`
 - Split membership stored once at the top level
-- Node payloads store one sparse DR payload across all molecules, not one payload per split
+- A top-level `split_names` array defines split index semantics
+- `splits` is an array aligned with `split_names`
+- Cell payloads store one sparse DR payload across all molecules, not one payload per split
 - Sparse cluster labels and sparse representative maps
-- Sparse Sankey connectivity, stored as adjacency lists instead of dense matrices
+- A global cluster-node array, separate from epoch/layer cells
+- Sparse cluster-to-cluster connectivity, stored as adjacency lists instead of dense matrices
+- `node_lookup` provides direct reverse indexing from `(split_idx, epoch_idx, layer_idx, cluster_id)` to `node_id`
+- Connectivity and lookup structures use array indexing instead of JSON object keys for integer-indexed dimensions
 - Rounded DR coordinates to reduce file size
 - Redundant node-name strings removed from node payloads
 - Optional molecule labels only when they add information beyond the dense IDs
@@ -33,51 +38,33 @@ python3 latentvis/backend/scripts/build_compact_overview_data.py --coord-decimal
 - `api_version`
 - `dataset`
 - `source_variant`
-- `dr_coord_decimals`
-- `source_paths`
 - `molecule_ids`
 - `molecule_labels` (optional; omitted when labels are just `"0"`, `"1"`, ...)
+- `split_names`
 - `splits`
 - `epochs`
 - `layers`
 - `cells`
-- `sankey`
+- `nodes`
+- `connectivity`
+- `split_connectivity`
+- `node_lookup`
 
 ## JSON shape
 
 ```json
 {
-  "api_version": "compact_overview_v2",
+  "api_version": "compact_overview_v6",
   "dataset": "chemprop",
   "source_variant": "knn",
-  "dr_coord_decimals": 2,
-  "source_paths": {
-    "train": {
-      "scatter_dir": "string-or-null",
-      "cluster_csv": "string-or-null",
-      "representatives_json": "string-or-null",
-      "sankey_json": "string-or-null"
-    },
-    "val": {
-      "scatter_dir": "string-or-null",
-      "cluster_csv": "string-or-null",
-      "representatives_json": "string-or-null",
-      "sankey_json": "string-or-null"
-    },
-    "test": {
-      "scatter_dir": "string-or-null",
-      "cluster_csv": "string-or-null",
-      "representatives_json": "string-or-null",
-      "sankey_json": "string-or-null"
-    }
-  },
   "molecule_ids": [0, 1, 2],
   "molecule_labels": ["row_10", "row_11", "row_12"],
-  "splits": {
-    "train": [0, 2],
-    "val": [],
-    "test": [1]
-  },
+  "split_names": ["train", "test", "val"],
+  "splits": [
+    [0, 2],
+    [1],
+    []
+  ],
   "epochs": ["0", "1"],
   "layers": ["fingerprint", "gnn_layer_1"],
   "cells": [
@@ -107,39 +94,94 @@ python3 latentvis/backend/scripts/build_compact_overview_data.py --coord-decimal
           "0": [0.1, 0.2],
           "1": [0.5, 0.6],
           "2": [0.3, 0.4]
-        },
-        "pca": {
-          "0": [0.11, 0.21],
-          "1": [0.51, 0.61]
         }
       }
     }
   ],
-  "sankey": {
-    "connectivity": {
-      "0": [[1, 3], [2, 3]],
-      "1": [[3, 3]]
+  "nodes": [
+    {
+      "node_id": 0,
+      "split": 0,
+      "epoch": "0",
+      "layer": "fingerprint",
+      "epoch_idx": 0,
+      "layer_idx": 0,
+      "cell_index": 0,
+      "cluster_id": 0,
+      "member_count": 2,
+      "representative_molecule_id": 0
     },
-    "split_connectivity": {
-      "train": {
-        "0": [[1, 2], [2, 2]]
-      },
-      "val": {},
-      "test": {
-        "0": [[1, 1], [2, 1]]
-      }
-    },
-    "node_lookup": {
-      "0": {
-        "fingerprint": 0,
-        "gnn_layer_1": 1
-      },
-      "1": {
-        "fingerprint": 2,
-        "gnn_layer_1": 3
-      }
+    {
+      "node_id": 1,
+      "split": 1,
+      "epoch": "0",
+      "layer": "fingerprint",
+      "epoch_idx": 0,
+      "layer_idx": 0,
+      "cell_index": 0,
+      "cluster_id": 1,
+      "member_count": 1,
+      "representative_molecule_id": 1
     }
-  }
+  ],
+  "connectivity": [
+    [[2, 2]],
+    [[3, 1]],
+    [],
+    []
+  ],
+  "split_connectivity": [
+    [
+      [[2, 2]],
+      [],
+      [],
+      []
+    ],
+    [
+      [],
+      [[3, 1]],
+      [],
+      []
+    ],
+    [
+      [],
+      [],
+      [],
+      []
+    ]
+  ],
+  "node_lookup": [
+    [
+      [
+        [[0, 0]],
+        [[0, 2]]
+      ],
+      [
+        [],
+        []
+      ]
+    ],
+    [
+      [
+        [[1, 1]],
+        [[1, 3]]
+      ],
+      [
+        [],
+        []
+      ]
+    ],
+    [
+      [
+        [],
+        []
+      ],
+      [
+        [],
+        []
+      ]
+    ]
+  ]
 }
 ```
 
@@ -150,22 +192,17 @@ Top-level object:
 - `api_version`: `string`
 - `dataset`: `string`
 - `source_variant`: `string`
-- `dr_coord_decimals`: `int`
-- `source_paths`: `{ train: SourcePaths, val: SourcePaths, test: SourcePaths }`
 - `molecule_ids`: `int[]`
 - `molecule_labels`: `string[]` when present
-- `splits`: `{ train: int[], val: int[], test: int[] }`
+- `split_names`: `string[]`
+- `splits`: `int[][]`
 - `epochs`: `string[]`
 - `layers`: `string[]`
 - `cells`: `Cell[]`
-- `sankey`: `SankeyPayload`
-
-`SourcePaths`:
-
-- `scatter_dir`: `string | null`
-- `cluster_csv`: `string | null`
-- `representatives_json`: `string | null`
-- `sankey_json`: `string | null`
+- `nodes`: `ClusterNode[]`
+- `connectivity`: `EdgeListByNode`
+- `split_connectivity`: `EdgeListByNode[]`
+- `node_lookup`: `ClusterLookupBySplit`
 
 `Cell`:
 
@@ -179,6 +216,19 @@ Top-level object:
 - `cluster_representatives`: `{ train: SparseRepresentativeMap, val: SparseRepresentativeMap, test: SparseRepresentativeMap }`
 - `dr`: `{ [projection_name: string]: SparseDrMap }`
 
+`ClusterNode`:
+
+- `node_id`: `int`
+- `split`: `int`
+- `epoch`: `string`
+- `layer`: `string`
+- `epoch_idx`: `int`
+- `layer_idx`: `int`
+- `cell_index`: `int`
+- `cluster_id`: `int`
+- `member_count`: `int`
+- `representative_molecule_id`: `int | null`
+
 `SparseRepresentativeMap`:
 
 - `{ [cluster_id: string]: molecule_id }`
@@ -186,23 +236,26 @@ Top-level object:
 `SparseDrMap`:
 
 - `{ [molecule_id: string]: [x, y] }`
-- Values are rounded to `dr_coord_decimals` decimal places at write time.
+- Coordinate values are rounded during generation.
 
-`SankeyPayload`:
+`EdgeListByNode`:
 
-- `connectivity`: `SparseConnectivity`
-- `split_connectivity`: `{ train: SparseConnectivity, val: SparseConnectivity, test: SparseConnectivity }`
-- `node_lookup`: `{ [epoch: string]: { [layer: string]: int } }`
+- `[[[target_node_id, count], ...], ...]`
+- The outer array is indexed by `source_node_id`.
 
-`SparseConnectivity`:
+`ClusterLookupBySplit`:
 
-- `{ [source_node_key: string]: [[target_node_key, count], ...] }`
+- `node_lookup[split_idx][epoch_idx][layer_idx] = [[cluster_id, node_id], ...]`
 
 ## Notes
 
-- `splits` is the only place that stores train/val/test membership.
+- `split_names` defines the mapping from split index to split name.
+- `splits[i]`, `split_connectivity[i]`, and `node_lookup[i]` all correspond to `split_names[i]`.
+- `epochs` and `layers` define the index order used by `node_lookup`.
 - `cells[].dr` stores coordinates for all available molecules at that node, regardless of split.
-- `cells[].cluster_labels` also stores one sparse mapping across all splits. The split for each molecule ID is recovered from `splits`.
+- `cells[].cluster_labels` also stores one sparse mapping across all splits.
 - `cluster_representatives` stays split-aware because cluster ID spaces are split-local.
-- `molecule_labels` is omitted when it would only repeat the dense integer IDs as strings.
-- `sankey.connectivity` and `sankey.split_connectivity` are sparse adjacency lists; absent keys imply zero flow.
+- `nodes` are split-aware for the same reason. A cluster node is uniquely identified by `(split_idx, epoch, layer, cluster_id)`.
+- `nodes[*].cell_index` points back to the corresponding entry in `cells`.
+- `node_lookup` is only a reverse index for convenience. It does not add new information beyond `nodes`.
+- `connectivity[source_node_id]` gives all outgoing edges for that node.
