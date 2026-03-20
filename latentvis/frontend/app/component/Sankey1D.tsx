@@ -1043,7 +1043,7 @@ export default function Sankey({
             }
         }
 
-        Promise.all([
+        /*Promise.all([
             fetchJsonCached(dataPath),
             secondaryDataPath
                 ? fetchJsonCached(secondaryDataPath)
@@ -1061,7 +1061,7 @@ export default function Sankey({
             .catch((err) => {
                 console.error(err);
                 if (container) container.innerHTML = "<div style='color:red'>Failed to load sankey data.</div>";
-            });
+            });*/
 
         function onWheel(e: WheelEvent) {
             const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;

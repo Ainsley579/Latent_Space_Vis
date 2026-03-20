@@ -84,13 +84,9 @@ const DATASET_DEFAULTS: Record<DatasetKey, { model: string; layer: string }> = {
     chemprop: { model: "0", layer: "fingerprint" },
     chemeleon: { model: "0", layer: "fingerprint" },
 };
-const SHOW_CONTAINMENT_VIEW = false;
 const DEFAULT_WORKSPACE_WIDTH_PCT = 50; // right column default 50%
 const HALF_RIGHT_WORKSPACE_WIDTH_PCT = 83;
-
-function sanitizePathKey(value: string) {
-    return value.replace(/[^a-zA-Z0-9_-]/g, "_");
-}
+const apiBase = (process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001").replace(/\/+$/, "");
 
 function parseSplitTaggedId(value: string | number): { split: "train" | "test" | null; realId: string } {
     const raw = String(value ?? "").trim();
@@ -100,285 +96,41 @@ function parseSplitTaggedId(value: string | number): { split: "train" | "test" |
 }
 
 export default function Home() {
-    const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("chemprop");
+    // this shouldn't be hardcoded. won't change it now but there's a route in the backend to get the datasets available now
+    const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("dimenet");
     const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("agglomerative");
     const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("all");
     // UI-selected K (does not trigger fetch until Generate is clicked)
     const [selectedKnnK, setSelectedKnnK] = useState<number>(2);
     // Applied K used in backend data-file requests
     const [appliedKnnK, setAppliedKnnK] = useState<number>(2);
-    const [generatedSankeyPayloads, setGeneratedSankeyPayloads] = useState<Record<string, GeneratedSankeyPayload>>({});
-    const [generatedRuntimePayloads, setGeneratedRuntimePayloads] = useState<Record<string, GeneratedRuntimePayload>>({});
-    const generatedSankeyPayloadsRef = useRef<Record<string, GeneratedSankeyPayload>>({});
-    const preloadInFlightRef = useRef<Set<string>>(new Set());
-    const generatedSankeyBlobUrlsRef = useRef<Map<string, string>>(new Map());
-    const effectiveDataSplitForFiles = (
-        dataSplit: DataSplitKey,
-        dataset: DatasetKey = selectedDataset
-    ): "test" | "train" => {
-        if (dataset === "dimenet") return "test";
-        return dataSplit === "all" ? "train" : dataSplit;
-    };
-    const datasetRootFor = (
-        dataset: DatasetKey,
-        dataSplit: DataSplitKey = selectedDataSplit
-    ) => `/data/${dataset}/${effectiveDataSplitForFiles(dataSplit, dataset)}`;
-    const datasetBaseFor = (
-        dataset: DatasetKey,
-        clustering: ClusteringKey = selectedClustering,
-        dataSplit: DataSplitKey = selectedDataSplit
-    ) => {
-        const root = datasetRootFor(dataset, dataSplit);
-        if (clustering === "pgmeans") return root;
-        return `${root}/clustering/${clustering}`;
-    };
-    const datasetBase = datasetBaseFor(selectedDataset, selectedClustering, selectedDataSplit);
-
-    const revokeGeneratedSankeyBlobUrls = () => {
-        generatedSankeyBlobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
-        generatedSankeyBlobUrlsRef.current.clear();
-    };
-    const buildGeneratedSankeyBlobUrl = (cacheKey: string, payload: unknown): string => {
-        const cached = generatedSankeyBlobUrlsRef.current.get(cacheKey);
-        if (cached) return cached;
-        const url = URL.createObjectURL(
-            new Blob([JSON.stringify(payload ?? [])], { type: "application/json" })
-        );
-        generatedSankeyBlobUrlsRef.current.set(cacheKey, url);
-        return url;
-    };
-    const runtimeKeyFor = (dataset: DatasetKey, clustering: ClusteringKey, dataSplit: DataSplitKey) =>
-        `${dataset}::${clustering}::${dataSplit}`;
-    const currentRuntimeKey = runtimeKeyFor(selectedDataset, selectedClustering, selectedDataSplit);
-    const generatedSankeyPayload = generatedSankeyPayloads[currentRuntimeKey] ?? null;
-    const generatedRuntimePayload = generatedRuntimePayloads[currentRuntimeKey] ?? null;
-    const generatedRuntimeMatchesCurrent = !!generatedRuntimePayload;
-    const PRELOAD_SANKEY_COMPAT_ON_BOOT = true;
-    useEffect(() => {
-        generatedSankeyPayloadsRef.current = generatedSankeyPayloads;
-    }, [generatedSankeyPayloads]);
-    const apiBase = (process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001").replace(/\/+$/, "");
-
-    const buildDataFileUrl = useCallback(
-        ({
-            dataset = selectedDataset,
-            clustering = selectedClustering,
-            dataSplit = selectedDataSplit,
-            knnK = appliedKnnK,
-            section,
-            file,
-            datasetRoot = false,
-            preserveAllSplit = false,
-        }: {
-            dataset?: DatasetKey;
-            clustering?: ClusteringKey;
-            dataSplit?: DataSplitKey;
-            knnK?: number;
-            section?: string;
-            file: string;
-            datasetRoot?: boolean;
-            preserveAllSplit?: boolean;
-        }) => {
-            const p = new URLSearchParams();
-            p.set("dataset", dataset);
-            p.set("clustering", clustering);
-            p.set(
-                "split",
-                preserveAllSplit && dataSplit === "all"
-                    ? "all"
-                    : effectiveDataSplitForFiles(dataSplit, dataset)
-            );
-            if (section) p.set("section", section);
-            p.set("file", file);
-            if (String(clustering).trim().toLowerCase() === "knn") p.set("k", String(knnK));
-            if (datasetRoot) p.set("dataset_root", "1");
-            return `${apiBase}/data-file?${p.toString()}`;
-        },
-        [apiBase, selectedDataset, selectedClustering, selectedDataSplit, appliedKnnK]
-    );
-    const withVersion = (url: string) => {
-        const sep = url.includes("?") ? "&" : "?";
-        return `${url}${sep}v=0`;
-    };
-    const buildAllSankeyPath = (
-        dataset: DatasetKey = selectedDataset,
-        clustering: ClusteringKey = selectedClustering,
-        dataSplit: DataSplitKey = selectedDataSplit,
-    ) => {
-        const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
-        if (
-            payload &&
-            payload.dataset === dataset &&
-            payload.clustering === clustering &&
-            payload.dataSplit === dataSplit
-        ) {
-            return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:all_sankey`, payload.allSankey);
-        }
-        return withVersion(
-            buildDataFileUrl({
-                dataset,
-                clustering,
-                dataSplit,
-                section: "sankey",
-                file: "all_sankey.json",
-            })
-        );
-    };
-    const buildSankeyModelPath = (
-        model: string,
-        dataset: DatasetKey = selectedDataset,
-        clustering: ClusteringKey = selectedClustering,
-        dataSplit: DataSplitKey = selectedDataSplit,
-    ) => {
-        const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
-        if (
-            payload &&
-            payload.dataset === dataset &&
-            payload.clustering === clustering &&
-            payload.dataSplit === dataSplit
-        ) {
-            const rows = payload.modelSamples?.[model] ?? [];
-            return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:model:${model}`, rows);
-        }
-        return withVersion(
-            buildDataFileUrl({
-                dataset,
-                clustering,
-                dataSplit,
-                section: "sankey",
-                file: `${sanitizePathKey(model)}_sankey_samples.json`,
-            })
-        );
-    };
-    const buildVerticalPath = (
-        layer: string,
-        dataset: DatasetKey = selectedDataset,
-        clustering: ClusteringKey = selectedClustering,
-        dataSplit: DataSplitKey = selectedDataSplit,
-    ) => {
-        const payload = generatedSankeyPayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
-        if (
-            payload &&
-            payload.dataset === dataset &&
-            payload.clustering === clustering &&
-            payload.dataSplit === dataSplit
-        ) {
-            const rows = payload.verticalSamplesByLayer?.[layer] ?? [];
-            return buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:vertical:${layer}`, rows);
-        }
-        return withVersion(
-            buildDataFileUrl({
-                dataset,
-                clustering,
-                dataSplit,
-                section: "sankey",
-                file: `vertical_model_samples_${sanitizePathKey(layer)}.json`,
-            }),
-        );
-    };
-    const buildScatterPaths = (
-        model: string,
-        layer: string,
-        projection: "pca" | "mds" | "umap" | "tsne",
-        dataset: DatasetKey = selectedDataset,
-        clustering: ClusteringKey = selectedClustering,
-        dataSplit: DataSplitKey = selectedDataSplit,
-    ) => {
-        const base = `${model}_${layer}`;
-        const xyFile = `${base}_${projection}_xy.json`;
-        const clusterFile = `${base}_${projection}_cluster.json`;
-        const xyUrl = buildDataFileUrl({
-            dataset,
-            clustering,
-            dataSplit,
-            section: "scatterplot",
-            file: xyFile,
-            preserveAllSplit: true,
-        });
-        const runtimePayload = generatedRuntimePayloads[runtimeKeyFor(dataset, clustering, dataSplit)] ?? null;
-        const cellKey = `${model}__${layer}`;
-        const overrideRows =
-            runtimePayload?.scatterClusterByCell?.[cellKey] &&
-                Array.isArray(runtimePayload.scatterClusterByCell[cellKey])
-                ? runtimePayload.scatterClusterByCell[cellKey]
-                : null;
-        const clusterUrl = overrideRows
-            ? buildGeneratedSankeyBlobUrl(`${dataset}:${clustering}:${dataSplit}:scatter_cluster:${cellKey}`, overrideRows)
-            : buildDataFileUrl({
-                dataset,
-                clustering,
-                dataSplit,
-                section: "scatterplot",
-                file: clusterFile,
-                preserveAllSplit: true,
-            });
-        const sepXY = xyUrl.includes("?") ? "&" : "?";
-        const sepCluster = clusterUrl.startsWith("blob:") ? "" : (clusterUrl.includes("?") ? "&" : "?");
-        return {
-            xy: `${xyUrl}${sepXY}v=0`,
-            cluster: clusterUrl.startsWith("blob:") ? clusterUrl : `${clusterUrl}${sepCluster}v=0`,
-        };
-    };
-    const syncSankeyPaths = (
-        model: string,
-        layer: string,
-        dataset: DatasetKey = selectedDataset,
-        clustering: ClusteringKey = selectedClustering,
-        dataSplit: DataSplitKey = selectedDataSplit,
-    ) => {
-        setSankeyPath(buildSankeyModelPath(model, dataset, clustering, dataSplit));
-        setSankeyPathVertical(buildVerticalPath(layer, dataset, clustering, dataSplit));
-    };
-
-    const [sankeyPath, setSankeyPath] = useState(
-        withVersion(
-            buildDataFileUrl({
-                dataset: "chemprop",
-                clustering: "agglomerative",
-                dataSplit: "all",
-                section: "sankey",
-                file: "0_sankey_samples.json",
-            })
-        )
-    );
-    const [sankeyPathVertical, setSankeyPathVertical] = useState(
-        withVersion(
-            buildDataFileUrl({
-                dataset: "chemprop",
-                clustering: "agglomerative",
-                dataSplit: "all",
-                section: "sankey",
-                file: "vertical_model_samples_fingerprint.json",
-            })
-        )
-    );
     const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
     const [selectedLayer, setSelectedLayer] = useState("fingerprint");
     const [showFfn2, setShowFfn2] = useState(false);
     const effectiveShowFfn2 = selectedDataset === "dimenet" ? true : showFfn2;
     const [selectedModel, setSelectedModel] = useState("0");
     const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
-    const [scatterPaths, setScatterPaths] = useState({
-        xy: withVersion(
-            buildDataFileUrl({
-                dataset: "chemprop",
-                clustering: "agglomerative",
-                dataSplit: "all",
-                section: "scatterplot",
-                file: "0_fingerprint_pca_xy.json",
+    const [isBlockingInitLoading, setIsBlockingInitLoading] = useState(true);
+    const [overviewData, setOverviewData] = useState(null);
+
+    useEffect(() => {
+        fetch(`${apiBase}/get_dataset/${selectedDataset}`, { method: "GET" })
+            .then((response) => {
+                setIsBlockingInitLoading(false);
+                if (!response.ok) {
+                    throw new Error(`Network error: ${response.status}`);
+                }
+                return response.json();
+            }).then((data) => {
+                setOverviewData(data);
             })
-        ),
-        cluster: withVersion(
-            buildDataFileUrl({
-                dataset: "chemprop",
-                clustering: "agglomerative",
-                dataSplit: "all",
-                section: "scatterplot",
-                file: "0_fingerprint_pca_cluster.json",
-            })
-        ),
-    });
-    const scatterOverrideUrlRef = useRef<string | null>(null);
+            .catch((err) => {
+                alert(`Failed to load dataset ${selectedDataset}: ${err}`);
+            });
+
+    }, [selectedDataset]);
+
+    //const scatterOverrideUrlRef = useRef<string | null>(null);
     const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
     const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
     const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -416,7 +168,6 @@ export default function Home() {
     const [activeSankeyRows, setActiveSankeyRows] = useState<SankeySampleRow[]>([]);
     const [isGeneratingRange, setIsGeneratingRange] = useState(false);
     const [generateStatusText, setGenerateStatusText] = useState("");
-    const [isBlockingInitLoading, setIsBlockingInitLoading] = useState(true);
     const [topkData, setTopkData] = useState<
         {
             layer_name: string;
@@ -451,10 +202,6 @@ export default function Home() {
     const [showSearchResultsInMembers, setShowSearchResultsInMembers] = useState(false);
     const [lastSearchCount, setLastSearchCount] = useState<number | null>(null);
     const [uploadedUserClustering, setUploadedUserClustering] = useState<UploadedUserClustering | null>(null);
-    const [clusterContainment, setClusterContainment] = useState<ClusterContainmentPayload | null>(null);
-    const [clusterContainmentLoading, setClusterContainmentLoading] = useState(false);
-    const [clusterContainmentError, setClusterContainmentError] = useState<string | null>(null);
-    const [cellMetricByCell, setCellMetricByCell] = useState<Record<string, Record<string, number | null>> | null>(null);
     const [cellMetricNames, setCellMetricNames] = useState<string[]>([]);
     const [selectedCellBgMetric, setSelectedCellBgMetric] = useState<string>("cluster_count");
     const memberListRef = useRef<HTMLDivElement | null>(null);
@@ -496,15 +243,6 @@ export default function Home() {
     const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
     const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
     const syncSourceRef = useRef<{ source: "view" | "vertical" | "horizontal"; ts: number } | null>(null);
-    useEffect(() => {
-        return () => {
-            revokeGeneratedSankeyBlobUrls();
-            if (scatterOverrideUrlRef.current) {
-                URL.revokeObjectURL(scatterOverrideUrlRef.current);
-                scatterOverrideUrlRef.current = null;
-            }
-        };
-    }, []);
     function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }) {
         setHoverLock(false);
         if (
@@ -756,66 +494,6 @@ export default function Home() {
         setLastSearchCount(null);
     }, [selectedDataset, selectedClustering, selectedDataSplit]);
 
-    useEffect(() => {
-        if (!uploadedUserClustering || uploadedUserClustering.rows.length === 0) {
-            setClusterContainment(null);
-            setClusterContainmentError(null);
-            setClusterContainmentLoading(false);
-            setCellMetricByCell(null);
-            setCellMetricNames([]);
-            return;
-        }
-        const controller = new AbortController();
-        setClusterContainmentLoading(true);
-        setClusterContainmentError(null);
-        fetch(`${apiBase}/cluster-containment`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: controller.signal,
-            body: JSON.stringify({
-                dataset: selectedDataset,
-                epoch: selectedModel,
-                layer: selectedLayer,
-                clustering: selectedClustering,
-                data_split: selectedDataSplit,
-                use_current: generatedRuntimeMatchesCurrent,
-                user_clustering: uploadedUserClustering.rows,
-            }),
-        })
-            .then(async (res) => {
-                const json = await res.json().catch(() => ({}));
-                if (!res.ok || !json?.ok) {
-                    throw new Error(json?.error ? String(json.error) : `cluster-containment failed: ${res.status}`);
-                }
-                return json as ClusterContainmentPayload;
-            })
-            .then((json) => {
-                setClusterContainment({
-                    user_cluster_ids: Array.isArray(json.user_cluster_ids) ? json.user_cluster_ids : [],
-                    our_cluster_ids: Array.isArray(json.our_cluster_ids) ? json.our_cluster_ids : [],
-                    matrix: Array.isArray(json.matrix) ? json.matrix : [],
-                    entries: Array.isArray(json.entries) ? json.entries : [],
-                });
-            })
-            .catch((err) => {
-                if ((err as Error)?.name === "AbortError") return;
-                setClusterContainment(null);
-                setClusterContainmentError(err instanceof Error ? err.message : String(err));
-            })
-            .finally(() => {
-                if (!controller.signal.aborted) setClusterContainmentLoading(false);
-            });
-        return () => controller.abort();
-    }, [
-        apiBase,
-        uploadedUserClustering,
-        selectedDataset,
-        selectedClustering,
-        selectedDataSplit,
-        selectedModel,
-        selectedLayer,
-        generatedRuntimeMatchesCurrent,
-    ]);
 
     useEffect(() => {
         const valid = new Set(cellBgMetricOptions.map((o) => o.value));
@@ -824,9 +502,9 @@ export default function Home() {
         }
     }, [cellBgMetricOptions, selectedCellBgMetric]);
 
-    useEffect(() => {
+    /*useEffect(() => {
         if (!uploadedUserClustering || uploadedUserClustering.rows.length === 0) {
-            setCellMetricByCell(null);
+            //setCellMetricByCell(null);
             setCellMetricNames([]);
             return;
         }
@@ -839,7 +517,7 @@ export default function Home() {
                 dataset: selectedDataset,
                 clustering: selectedClustering,
                 data_split: selectedDataSplit,
-                use_current: generatedRuntimeMatchesCurrent,
+                use_current: true,
                 user_clustering: uploadedUserClustering.rows,
             }),
         })
@@ -871,8 +549,7 @@ export default function Home() {
         selectedDataset,
         selectedClustering,
         selectedDataSplit,
-        generatedRuntimeMatchesCurrent,
-    ]);
+    ]);*/
 
     function sleep(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms));
@@ -931,146 +608,7 @@ export default function Home() {
         }
     }
 
-    function applyGeneratedPayload(
-        json: any,
-        dataset: DatasetKey,
-        clustering: ClusteringKey,
-        dataSplit: DataSplitKey
-    ) {
-        const root = json?.result && typeof json.result === "object" ? json.result : json;
-        const casePayload = root?.payload?.[dataset];
-        if (!casePayload) {
-            const payloadKeys =
-                root?.payload && typeof root.payload === "object"
-                    ? Object.keys(root.payload)
-                    : [];
-            throw new Error(
-                `Generate API missing payload for selected dataset (${dataset}); payload keys: ${payloadKeys.join(",")}`
-            );
-        }
 
-        revokeGeneratedSankeyBlobUrls();
-        const key = runtimeKeyFor(dataset, clustering, dataSplit);
-        setGeneratedSankeyPayloads((prev) => ({
-            ...prev,
-            [key]: {
-                dataset,
-                clustering,
-                dataSplit,
-                allSankey: casePayload.all_sankey ?? { epoch: {}, layer: {} },
-                modelSamples: (casePayload.model_samples ?? {}) as Record<string, SankeySampleRow[]>,
-                verticalSamplesByLayer: (casePayload.vertical_samples_by_layer ?? {}) as Record<
-                    string,
-                    SankeySampleRow[]
-                >,
-            },
-        }));
-        const runId = String(root?.run_id ?? `${Date.now()}`);
-        setGeneratedRuntimePayloads((prev) => ({
-            ...prev,
-            [key]: {
-                dataset,
-                clustering,
-                dataSplit,
-                runId,
-                topkRepresentatives: Array.isArray(casePayload.topk_representatives)
-                    ? casePayload.topk_representatives
-                    : [],
-                clusterSortedMembers: Array.isArray(casePayload.cluster_sorted_members)
-                    ? casePayload.cluster_sorted_members
-                    : [],
-                substructures: Array.isArray(casePayload.substructures) ? casePayload.substructures : [],
-                scatterClusterByCell:
-                    casePayload?.scatter_cluster_by_cell &&
-                        typeof casePayload.scatter_cluster_by_cell === "object"
-                        ? casePayload.scatter_cluster_by_cell
-                        : {},
-            },
-        }));
-        setTopkData(Array.isArray(casePayload.topk_representatives) ? casePayload.topk_representatives : []);
-        setClusterSortedMembers(
-            Array.isArray(casePayload.cluster_sorted_members) ? casePayload.cluster_sorted_members : []
-        );
-        setSubstructures(Array.isArray(casePayload.substructures) ? casePayload.substructures : []);
-    }
-
-    function applySankeyCompatPayload(
-        payloadByDataset: any,
-        dataset: DatasetKey,
-        clustering: ClusteringKey,
-        dataSplit: DataSplitKey
-    ) {
-        const casePayload = payloadByDataset?.[dataset];
-        if (!casePayload || typeof casePayload !== "object") return;
-        const key = runtimeKeyFor(dataset, clustering, dataSplit);
-        setGeneratedSankeyPayloads((prev) => ({
-            ...prev,
-            [key]: {
-                dataset,
-                clustering,
-                dataSplit,
-                allSankey: (casePayload as any).all_sankey ?? { epoch: {}, layer: {} },
-                modelSamples: ((casePayload as any).model_samples ?? {}) as Record<string, SankeySampleRow[]>,
-                verticalSamplesByLayer: ((casePayload as any).vertical_samples_by_layer ?? {}) as Record<
-                    string,
-                    SankeySampleRow[]
-                >,
-            },
-        }));
-    }
-
-    useEffect(() => {
-        if (!PRELOAD_SANKEY_COMPAT_ON_BOOT) return;
-        const controller = new AbortController();
-        const preload = async (cacheSplit: DataSplitKey, requestSplit: "train" | "test") => {
-            const key = runtimeKeyFor(selectedDataset, selectedClustering, cacheSplit);
-            if (generatedSankeyPayloadsRef.current[key]) return;
-            const inflightKey = `${key}::${requestSplit}`;
-            if (preloadInFlightRef.current.has(inflightKey)) return;
-            preloadInFlightRef.current.add(inflightKey);
-            try {
-                const res = await fetch(`${apiBase}/materialize-sankey-files`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        dataset: selectedDataset,
-                        clustering: selectedClustering,
-                        data_split: requestSplit,
-                        include_payload: true,
-                        write_files: false,
-                    }),
-                    signal: controller.signal,
-                });
-                if (!res.ok) throw new Error(`preload sankey failed: ${res.status}`);
-                const json = await res.json();
-                applySankeyCompatPayload(json?.payload, selectedDataset, selectedClustering, cacheSplit);
-            } finally {
-                preloadInFlightRef.current.delete(inflightKey);
-            }
-        };
-
-        (async () => {
-            try {
-                if (selectedDataSplit === "all") {
-                    // Preload both train(primary) and test(secondary) payloads up front,
-                    // so horizontal/vertical sankey can switch without extra backend compute.
-                    await Promise.all([
-                        preload("all", "train"),
-                        preload("test", "test"),
-                    ]);
-                } else if (selectedDataSplit === "train") {
-                    await preload("train", "train");
-                } else {
-                    await preload("test", "test");
-                }
-            } catch (err) {
-                if ((err as Error)?.name === "AbortError") return;
-                console.error("Failed to preload sankey compat payload:", err);
-            }
-        })();
-
-        return () => controller.abort();
-    }, [apiBase, selectedDataset, selectedClustering, selectedDataSplit, PRELOAD_SANKEY_COMPAT_ON_BOOT]);
 
     async function generateFromRange(minValue: number, maxValue: number) {
         if (isGeneratingRange) return;
@@ -1096,7 +634,7 @@ export default function Home() {
                 // Apply K only after user explicitly clicks Generate and backend job succeeds.
                 setAppliedKnnK(minValue);
             }
-            applyGeneratedPayload(json, dataset, clustering, dataSplit);
+            //applyGeneratedPayload(json, dataset, clustering, dataSplit);
             setGenerateStatusText("Generate finished.");
         } catch (err) {
             console.error("Failed to generate payload:", err);
@@ -1133,11 +671,8 @@ export default function Home() {
                 },
                 `Re-running agglomerative (k=${config.k == null ? "auto" : config.k}, linkage=${config.linkage})`
             );
-            applyGeneratedPayload(json, dataset, "agglomerative", dataSplit);
-            if (scatterOverrideUrlRef.current) {
-                URL.revokeObjectURL(scatterOverrideUrlRef.current);
-                scatterOverrideUrlRef.current = null;
-            }
+            //applyGeneratedPayload(json, dataset, "agglomerative", dataSplit);
+
             setGenerateStatusText(
                 `Agglomerative regenerate finished (in-memory): k=${config.k == null ? "auto(2-10)" : config.k}, linkage=${config.linkage}.`
             );
@@ -1149,71 +684,22 @@ export default function Home() {
         }
     }
 
-    useEffect(() => {
-        if (scatterOverrideUrlRef.current) {
-            URL.revokeObjectURL(scatterOverrideUrlRef.current);
-            scatterOverrideUrlRef.current = null;
-        }
-        setScatterPaths(buildScatterPaths(selectedModel, selectedLayer, scatterProjection));
-    }, [datasetBase, selectedModel, selectedLayer, scatterProjection, generatedRuntimePayloads]);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         setSwapAxes(params.get("swap") === "1");
     }, []);
 
-    useEffect(() => {
+    /*useEffect(() => {
         let cancelled = false;
         setIsBlockingInitLoading(true);
         (async () => {
-            try {
-                const res = await fetch(buildAllSankeyPath(selectedDataset, selectedClustering, selectedDataSplit));
-                if (!res.ok) throw new Error("Failed to load all_sankey.json");
-                const data = await res.json();
-                if (cancelled) return;
-                const models = Object.keys(data?.epoch || {});
-                const layers = Object.keys(data?.layer || {});
-                if (!models.length || !layers.length) return;
 
-                const preferredModel =
-                    selectedDataset === "dimenet"
-                        ? (models.find((m) => m === "dimenet_noaug") ?? models[0])
-                        : (models.find((m) => m === "0") ?? models[0]);
-                const preferredLayer =
-                    selectedDataset === "dimenet"
-                        ? (layers.find((l) => l === "emb") ?? layers[0])
-                        : (layers.find((l) => l === "fingerprint") ?? layers[0]);
-
-                setSelectedModel(preferredModel);
-                setSelectedLayer(preferredLayer);
-                setSankeyPath(buildSankeyModelPath(preferredModel, selectedDataset, selectedClustering, selectedDataSplit));
-                setSankeyPathVertical(buildVerticalPath(preferredLayer, selectedDataset, selectedClustering, selectedDataSplit));
-                setSelectedNode(null);
-                setSelectedIds(null);
-                setActiveSankeyRows([]);
-
-                const warmUrls = [
-                    buildSankeyModelPath(preferredModel, selectedDataset, selectedClustering, selectedDataSplit),
-                    buildVerticalPath(preferredLayer, selectedDataset, selectedClustering, selectedDataSplit),
-                ];
-                if (selectedDataSplit === "all") {
-                    warmUrls.push(
-                        buildSankeyModelPath(preferredModel, selectedDataset, selectedClustering, "test"),
-                        buildVerticalPath(preferredLayer, selectedDataset, selectedClustering, "test")
-                    );
-                }
-                await Promise.all(Array.from(new Set(warmUrls)).map((u) => fetchJsonCached(u).catch(() => null)));
-            } catch (err) {
-                console.error(err);
-            } finally {
-                if (!cancelled) setIsBlockingInitLoading(false);
-            }
-        })();
-        return () => {
-            cancelled = true;
-        };
-    }, [datasetBase, selectedDataset, selectedClustering, selectedDataSplit, appliedKnnK, generatedSankeyPayload]);
-
+            return () => {
+                cancelled = true;
+            };
+        }, [selectedDataset, selectedClustering, selectedDataSplit, appliedKnnK]);
+    }*/
     useEffect(() => {
         if (!selectedNode) {
             setCellSelected(false);
@@ -1233,86 +719,8 @@ export default function Home() {
         }
     }, [cellSelected, selectedNode]);
 
-    useEffect(() => {
-        // Keep linked Sankey paths in sync with the current selection state,
-        // so both side Sankey views render immediately on initial load.
-        syncSankeyPaths(
-            selectedModel,
-            selectedLayer,
-            selectedDataset,
-            selectedClustering,
-            selectedDataSplit,
-        );
-    }, [
-        selectedModel,
-        selectedLayer,
-        selectedDataset,
-        selectedClustering,
-        selectedDataSplit,
-        appliedKnnK,
-        generatedSankeyPayloads,
-    ]);
 
-    const activeSankeyPath = useMemo(() => {
-        return swapAxes ? sankeyPathVertical : sankeyPath;
-    }, [swapAxes, sankeyPath, sankeyPathVertical]);
-    const activeSankeySecondaryPath = useMemo(() => {
-        if (selectedDataSplit !== "all") return null;
-        return swapAxes
-            ? buildVerticalPath(selectedLayer, selectedDataset, selectedClustering, "test")
-            : buildSankeyModelPath(selectedModel, selectedDataset, selectedClustering, "test");
-    }, [selectedDataSplit, swapAxes, selectedLayer, selectedModel, selectedDataset, selectedClustering, appliedKnnK, generatedSankeyPayloads]);
 
-    useEffect(() => {
-        const isBlobPath = typeof activeSankeyPath === "string" && activeSankeyPath.startsWith("blob:");
-        const fetchRows = async (path: string): Promise<SankeySampleRow[]> => {
-            const json = await fetchJsonCached(path);
-            return Array.isArray(json) ? (json as SankeySampleRow[]) : [];
-        };
-        const mergeRows = (a: SankeySampleRow[], b: SankeySampleRow[]) => {
-            const out: SankeySampleRow[] = [];
-            const seen = new Set<string>();
-            const add = (r: SankeySampleRow) => {
-                const key = [
-                    String(r.real_id ?? ""),
-                    String(r.from_model ?? ""),
-                    String(r.to_model ?? ""),
-                    String(r.from_layer ?? ""),
-                    String(r.to_layer ?? ""),
-                    String(r.from_cluster ?? ""),
-                    String(r.to_cluster ?? ""),
-                ].join("|");
-                if (seen.has(key)) return;
-                seen.add(key);
-                out.push(r);
-            };
-            a.forEach(add);
-            b.forEach(add);
-            return out;
-        };
-
-        fetchRows(activeSankeyPath)
-            .then(async (primaryRows) => {
-                if (!activeSankeySecondaryPath) return primaryRows;
-                try {
-                    const secondaryRows = await fetchRows(activeSankeySecondaryPath);
-                    return mergeRows(primaryRows, secondaryRows);
-                } catch (err) {
-                    console.error("Failed to load secondary active sankey rows:", err);
-                    return primaryRows;
-                }
-            })
-            .then((rows) => {
-                setActiveSankeyRows(rows);
-            })
-            .catch((err) => {
-                // In-memory payload mode may briefly reference stale blob URLs while state swaps.
-                // Ignore these transient blob fetch failures and wait for the next valid path.
-                if (isBlobPath) return;
-                console.error(err);
-                setActiveSankeyRows([]);
-            });
-    }, [activeSankeyPath, activeSankeySecondaryPath]);
 
     const tabCycleData = useMemo(() => {
         if (!selectedNode) return null;
@@ -1390,11 +798,8 @@ export default function Home() {
         };
     }, [selectedNode, tabCycleData]);
 
+    /*
     useEffect(() => {
-        if (generatedRuntimeMatchesCurrent) {
-            setClusterSortedMembers(generatedRuntimePayload?.clusterSortedMembers ?? []);
-            return;
-        }
         const fetchSorted = async (url: string) => {
             const res = await fetch(url);
             if (res.status === 404) return [];
@@ -1433,19 +838,8 @@ export default function Home() {
             }
             return Array.from(map.values());
         };
-
-        const baseTrain = buildDataFileUrl({
-            section: "topk",
-            file: "cluster_sorted_members.json",
-        });
-        const baseTest = buildDataFileUrl({
-            dataset: selectedDataset,
-            clustering: selectedClustering,
-            dataSplit: "test",
-            section: "topk",
-            file: "cluster_sorted_members.json",
-        });
-        fetchSorted(baseTrain)
+ 
+           fetchSorted(baseTrain)
             .then(async (trainRows) => {
                 if (selectedDataSplit !== "all") return trainRows;
                 try {
@@ -1463,9 +857,9 @@ export default function Home() {
                 console.error(err);
                 setClusterSortedMembers([]);
             });
-    }, [datasetBase, generatedRuntimeMatchesCurrent, generatedRuntimePayload, selectedDataset, selectedClustering, selectedDataSplit, buildDataFileUrl]);
+    }, [selectedDataset, selectedClustering, selectedDataSplit]);*/
 
-    useEffect(() => {
+    /*useEffect(() => {
         // Derive top-k representatives directly from sorted members so we don't depend on cluster_representatives.json.
         const rows = (clusterSortedMembers ?? []).map((row: any) => {
             const ids = Array.isArray(row?.sorted_real_ids) ? row.sorted_real_ids.map((x: any) => String(x)) : [];
@@ -1482,9 +876,9 @@ export default function Home() {
             };
         });
         setTopkData(rows);
-    }, [clusterSortedMembers]);
+    }, [clusterSortedMembers]);*/
 
-    useEffect(() => {
+    /*useEffect(() => {
         const controller = new AbortController();
         const fetchCellTopm = async () => {
             setIsKnnTopmLoading(true);
@@ -1509,7 +903,7 @@ export default function Home() {
                         body: JSON.stringify(body),
                         signal: controller.signal,
                     });
-
+ 
                 let res = await doRequest("/substructures/cluster-topm");
                 if (res.status === 404) {
                     res = await doRequest("/substructures/cell-topm");
@@ -1540,7 +934,7 @@ export default function Home() {
                         mcs_smiles: (r.mcs_smiles ?? r.mcs_smile ?? r.smiles ?? null) as string | null,
                     };
                 });
-
+ 
                 console.log("[topm] refreshed rows", {
                     dataset: selectedDataset,
                     split: selectedDataSplit,
@@ -1553,7 +947,7 @@ export default function Home() {
                     nonNullSmarts: normalizedRows.filter((r) => r.group === "knn" && r.mcs_smarts != null).length,
                     sample: normalizedRows.slice(0, 2),
                 });
-
+ 
                 setSubstructures((prev) => {
                     const next = prev.filter(
                         (d) =>
@@ -1583,9 +977,9 @@ export default function Home() {
         selectedLayer,
         knnTopm,
         generatedRuntimeMatchesCurrent,
-    ]);
+    ]);*/
 
-    useEffect(() => {
+    /*useEffect(() => {
         const controller = new AbortController();
         const fetchClusterTanimoto = async () => {
             setIsClusterTanimotoLoading(true);
@@ -1608,7 +1002,7 @@ export default function Home() {
                         const ids = mLimit == null ? base : base.slice(0, mLimit);
                         clusterRealIdsByCluster[String(cid)] = ids.map((x) => String(x));
                     });
-
+ 
                 const res = await fetch(`${apiBase}/cluster-tanimoto`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -1657,9 +1051,9 @@ export default function Home() {
         knnTopm,
         topkData,
         clusterSortedMembers,
-    ]);
+    ]);*/
 
-    const topkNearestRows = useMemo(() => {
+    /*const topkNearestRows = useMemo(() => {
         const mLimit = knnTopm === "all" ? null : Number(knnTopm);
         const norm = (v: unknown) => String(v ?? "").trim();
         return clusterSortedMembers
@@ -1678,14 +1072,14 @@ export default function Home() {
                 };
             });
     }, [clusterSortedMembers, selectedModel, selectedLayer, knnTopm]);
-
-
+ 
+ 
     const substructureByCluster = useMemo(() => {
         const rows = substructures.filter(
             (d) => d.model_type === selectedModel && d.layer_name === selectedLayer,
         );
         const map: Record<number, { knn: boolean; kfn: boolean; knnSmiles: string | null; knnSmarts: string | null }> = {};
-
+ 
         rows.forEach((d) => {
             if (!map[d.cluster_id]) map[d.cluster_id] = { knn: false, kfn: false, knnSmiles: null, knnSmarts: null };
             const hasData = d.mcs_smiles != null || d.mcs_smarts != null;
@@ -1696,10 +1090,10 @@ export default function Home() {
             }
             if (d.group === "kfn") map[d.cluster_id].kfn = hasData;
         });
-
+ 
         return map;
     }, [substructures, selectedModel, selectedLayer]);
-
+ 
     const substructureSmilesByRealId = useMemo(() => {
         const out: Record<string, string> = {};
         substructures.forEach((d) => {
@@ -1720,7 +1114,7 @@ export default function Home() {
         });
         return out;
     }, [substructures, selectedModel, selectedLayer]);
-
+ 
     const sortedMembersByClusterKey = useMemo(() => {
         const map = new Map<string, string[]>();
         clusterSortedMembers.forEach((d) => {
@@ -1734,10 +1128,10 @@ export default function Home() {
         });
         return map;
     }, [clusterSortedMembers]);
-
+ 
     const clusterInstanceIds = useMemo(() => {
         if (!selectedNode) return [];
-
+ 
         const key = `${selectedNode.model}__${selectedNode.layer}__${selectedNode.cluster}`;
         const sorted = sortedMembersByClusterKey.get(key);
         if (sorted && sorted.length > 0) {
@@ -1759,22 +1153,22 @@ export default function Home() {
         });
         return Array.from(ids);
     }, [activeSankeyRows, selectedNode, sortedMembersByClusterKey]);
-
+ 
     const displayedMemberIds = useMemo(() => {
         if (showSearchResultsInMembers) return searchResultIds;
         return clusterInstanceIds;
     }, [showSearchResultsInMembers, searchResultIds, clusterInstanceIds]);
-
+ 
     const clusterTotalPages = useMemo(() => {
         if (displayedMemberIds.length === 0) return 1;
         return Math.max(1, Math.ceil(displayedMemberIds.length / Math.max(1, clusterPageSize)));
     }, [displayedMemberIds.length, clusterPageSize]);
-
+ 
     const clusterPagedIds = useMemo(() => {
         const size = Math.max(1, clusterPageSize);
         const start = clusterPage * size;
         return displayedMemberIds.slice(start, start + size);
-    }, [displayedMemberIds, clusterPage, clusterPageSize]);
+    }, [displayedMemberIds, clusterPage, clusterPageSize]);*/
 
     useEffect(() => {
         setClusterPage(0);
@@ -1784,88 +1178,88 @@ export default function Home() {
         setClusterPage(0);
     }, [showSearchResultsInMembers, searchResultIds]);
 
-    useEffect(() => {
+    /*useEffect(() => {
         setClusterPage((prev) => Math.min(prev, Math.max(0, clusterTotalPages - 1)));
-    }, [clusterTotalPages]);
+    }, [clusterTotalPages]);*/
 
     useEffect(() => {
         setHoverPreview(null);
     }, [clusterPage, clusterPageSize, selectedNode?.model, selectedNode?.layer, selectedNode?.cluster, showSearchResultsInMembers]);
 
-    function resolveImageSrc(realId: string | number, imageType: string) {
-        const parsed = parseSplitTaggedId(realId);
-        const splitForImage = parsed.split ?? effectiveDataSplitForFiles(selectedDataSplit);
-        const key = sanitizePathKey(parsed.realId.trim());
-        return buildDataFileUrl({
-            dataset: selectedDataset,
-            dataSplit: splitForImage,
-            file: `${splitForImage}/molecule_images/${key}_${imageType}.png`,
-            datasetRoot: true,
-        });
-    }
-
-    function getSmilesById(realId: string | number): string | null {
-        const parsed = parseSplitTaggedId(realId);
-        const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
-        const base = parsed.realId.trim().toLowerCase();
-        const fromPrimary = (tagged ? smilesByRealId[tagged] : undefined) ?? smilesByRealId[base];
-        if (fromPrimary && String(fromPrimary).trim().length > 0) return fromPrimary;
-        return (
-            (tagged ? substructureSmilesByRealId[tagged] : undefined) ??
-            substructureSmilesByRealId[base] ??
-            null
-        );
-    }
-
-    function getYTrueById(realId: string | number): number | null {
-        const parsed = parseSplitTaggedId(realId);
-        const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
-        const base = parsed.realId.trim().toLowerCase();
-        const v = (tagged ? yTrueByRealId[tagged] : undefined) ?? yTrueByRealId[base];
-        return Number.isFinite(Number(v)) ? Number(v) : null;
-    }
-
-    function getYPredById(realId: string | number): number | null {
-        const parsed = parseSplitTaggedId(realId);
-        const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
-        const base = parsed.realId.trim().toLowerCase();
-        const v = (tagged ? yPredByRealId[tagged] : undefined) ?? yPredByRealId[base];
-        return Number.isFinite(Number(v)) ? Number(v) : null;
-    }
-
-    function clusterBadgeColor(cluster: number) {
-        const len = CLUSTER_COLORS.length || 1;
-        const idx = ((cluster % len) + len) % len;
-        return CLUSTER_COLORS[idx];
-    }
-
-    function getPreviewAnchorPosition(anchor?: DOMRect) {
-        const W = largeHoverPreviewSize;
-        const H = largeHoverPreviewSize;
-        const PAD = 8;
-        if (!anchor) {
-            return { left: window.innerWidth - W - 16, top: window.innerHeight - H - 16 };
-        }
-        let left = anchor.left + (anchor.width - W) / 2;
-        let top = anchor.top + (anchor.height - H) / 2;
-        left = Math.max(PAD, Math.min(left, window.innerWidth - W - PAD));
-        top = Math.max(PAD, Math.min(top, window.innerHeight - H - PAD));
-        return { left, top };
-    }
-
-    function showSmilesPreviewAt(
-        smiles: string | null,
-        anchor?: DOMRect,
-        source: "topk" | "members" | "other" = "other"
-    ) {
-        if (!showLargeHoverPreview) return;
-        if (!smiles || !smiles.trim()) {
-            setHoverPreview(null);
-            return;
-        }
-        const { left, top } = getPreviewAnchorPosition(anchor);
-        setHoverPreview({ kind: "smiles", smiles, left, top, source });
-    }
+    /* function resolveImageSrc(realId: string | number, imageType: string) {
+         const parsed = parseSplitTaggedId(realId);
+         const splitForImage = parsed.split ?? effectiveDataSplitForFiles(selectedDataSplit);
+         const key = sanitizePathKey(parsed.realId.trim());
+         return buildDataFileUrl({
+             dataset: selectedDataset,
+             dataSplit: splitForImage,
+             file: `${splitForImage}/molecule_images/${key}_${imageType}.png`,
+             datasetRoot: true,
+         });
+     }
+ 
+     function getSmilesById(realId: string | number): string | null {
+         const parsed = parseSplitTaggedId(realId);
+         const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
+         const base = parsed.realId.trim().toLowerCase();
+         const fromPrimary = (tagged ? smilesByRealId[tagged] : undefined) ?? smilesByRealId[base];
+         if (fromPrimary && String(fromPrimary).trim().length > 0) return fromPrimary;
+         return (
+             (tagged ? substructureSmilesByRealId[tagged] : undefined) ??
+             substructureSmilesByRealId[base] ??
+             null
+         );
+     }
+ 
+     function getYTrueById(realId: string | number): number | null {
+         const parsed = parseSplitTaggedId(realId);
+         const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
+         const base = parsed.realId.trim().toLowerCase();
+         const v = (tagged ? yTrueByRealId[tagged] : undefined) ?? yTrueByRealId[base];
+         return Number.isFinite(Number(v)) ? Number(v) : null;
+     }
+ 
+     function getYPredById(realId: string | number): number | null {
+         const parsed = parseSplitTaggedId(realId);
+         const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
+         const base = parsed.realId.trim().toLowerCase();
+         const v = (tagged ? yPredByRealId[tagged] : undefined) ?? yPredByRealId[base];
+         return Number.isFinite(Number(v)) ? Number(v) : null;
+     }
+ 
+     function clusterBadgeColor(cluster: number) {
+         const len = CLUSTER_COLORS.length || 1;
+         const idx = ((cluster % len) + len) % len;
+         return CLUSTER_COLORS[idx];
+     }
+ 
+     function getPreviewAnchorPosition(anchor?: DOMRect) {
+         const W = largeHoverPreviewSize;
+         const H = largeHoverPreviewSize;
+         const PAD = 8;
+         if (!anchor) {
+             return { left: window.innerWidth - W - 16, top: window.innerHeight - H - 16 };
+         }
+         let left = anchor.left + (anchor.width - W) / 2;
+         let top = anchor.top + (anchor.height - H) / 2;
+         left = Math.max(PAD, Math.min(left, window.innerWidth - W - PAD));
+         top = Math.max(PAD, Math.min(top, window.innerHeight - H - PAD));
+         return { left, top };
+     }
+ 
+     function showSmilesPreviewAt(
+         smiles: string | null,
+         anchor?: DOMRect,
+         source: "topk" | "members" | "other" = "other"
+     ) {
+         if (!showLargeHoverPreview) return;
+         if (!smiles || !smiles.trim()) {
+             setHoverPreview(null);
+             return;
+         }
+         const { left, top } = getPreviewAnchorPosition(anchor);
+         setHoverPreview({ kind: "smiles", smiles, left, top, source });
+     }*/
 
     useEffect(() => {
         if (!showLargeHoverPreview) {
@@ -2010,7 +1404,7 @@ export default function Home() {
                             id="sankey2d"
                             className="w-full h-full min-h-0 min-w-0 overflow-hidden border border-zinc-400"
                         >
-                            <SankeyView
+                            {/*<SankeyView
                                 key={`sankeyview-${selectedDataset}-${selectedClustering}-${selectedDataSplit}`}
                                 dataPath={buildAllSankeyPath(selectedDataset, selectedClustering, selectedDataSplit)}
                                 secondaryDataPath={
@@ -2076,7 +1470,7 @@ export default function Home() {
                                 selectedCellMetric={selectedCellBgMetric}
                                 externalTransform={sankeyViewExternalTransform}
                                 onTransform={(t) => handleSankeyTransformSync(t, "view")}
-                            />
+                            />*/}
                         </div>
                     </div>
                     <div className="p-1 box-border min-h-0 min-w-0" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
@@ -2088,14 +1482,7 @@ export default function Home() {
                                 {swapAxes ? selectedModel : selectedLayer}
                             </div>
                             <Sankey
-                                dataPath={swapAxes ? sankeyPath : sankeyPathVertical}
-                                secondaryDataPath={
-                                    selectedDataSplit === "all"
-                                        ? swapAxes
-                                            ? buildSankeyModelPath(selectedModel, selectedDataset, selectedClustering, "test")
-                                            : buildVerticalPath(selectedLayer, selectedDataset, selectedClustering, "test")
-                                        : undefined
-                                }
+                                data={overviewData}
                                 mode={swapAxes ? "layer" : "model"}
                                 showFfn2={effectiveShowFfn2}
                                 layerKey={selectedLayer}
@@ -2121,7 +1508,7 @@ export default function Home() {
                                     toggleNode({ model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster, ids: sel.ids });
                                     setSelectedModel(sel.model);
                                     setSelectedLayer(sel.layer ?? selectedLayer);
-                                    syncSankeyPaths(sel.model, sel.layer ?? selectedLayer);
+                                    //syncSankeyPaths(sel.model, sel.layer ?? selectedLayer);
                                     setCellSelected(true);
                                 }}
                                 layout="vertical"
@@ -2137,14 +1524,7 @@ export default function Home() {
                                 {swapAxes ? selectedLayer : selectedModel}
                             </div>
                             <Sankey
-                                dataPath={swapAxes ? sankeyPathVertical : sankeyPath}
-                                secondaryDataPath={
-                                    selectedDataSplit === "all"
-                                        ? swapAxes
-                                            ? buildVerticalPath(selectedLayer, selectedDataset, selectedClustering, "test")
-                                            : buildSankeyModelPath(selectedModel, selectedDataset, selectedClustering, "test")
-                                        : undefined
-                                }
+                                data={overviewData}
                                 mode={swapAxes ? "model" : "layer"}
                                 showFfn2={effectiveShowFfn2}
                                 modelKey={selectedModel}
@@ -2225,14 +1605,10 @@ export default function Home() {
                                                 id="scatterplot"
                                                 className="flex-1 min-h-0 w-full bg-white"
                                             >
-                                                <ScatterPlot
-                                                    dataPathXY={scatterPaths.xy}
-                                                    dataPathCluster={scatterPaths.cluster}
-                                                    splitMapPath={withVersion(
-                                                        selectedDataset === "dimenet"
-                                                            ? "/dimnet/id_smiles_y_true_y_pred.json"
-                                                            : "/id_smiles_y_true_y_pred.json"
-                                                    )}
+                                                {/*<ScatterPlot
+                                                    data={overviewData}
+                                                    clusterLabels={overviewData}
+                                                    splitMapPath={null}
                                                     splitMapDataset={selectedDataset}
                                                     dataSplit={selectedDataSplit}
                                                     secondaryDataPathXY={undefined}
@@ -2263,7 +1639,6 @@ export default function Home() {
                                                         setSuppressScatterCluster(true);
                                                         setSelectedModel(sel.model);
                                                         setSelectedLayer(sel.layer);
-                                                        syncSankeyPaths(sel.model, sel.layer);
                                                     }}
                                                     onClusterSelect={(sel) => {
                                                         if (!sel.model || !sel.layer) return;
@@ -2274,7 +1649,6 @@ export default function Home() {
                                                         setSuppressScatterCluster(false);
                                                         setSelectedModel(sel.model);
                                                         setSelectedLayer(sel.layer);
-                                                        syncSankeyPaths(sel.model, sel.layer);
                                                     }}
                                                     onClearSelection={() => {
                                                         setSelectedNode(null);
@@ -2285,7 +1659,7 @@ export default function Home() {
                                                     }}
                                                     resolveImageSrc={resolveImageSrc}
                                                     getSmilesById={getSmilesById}
-                                                />
+                                                />*/}
                                             </div>
                                             <button
                                                 type="button"
@@ -2304,19 +1678,6 @@ export default function Home() {
                                         </div>
                                         {showMembersPanelByWidth && (
                                             <div className="h-full min-w-0 flex-1 flex gap-0">
-                                                {SHOW_CONTAINMENT_VIEW && (
-                                                    <div className="h-full min-w-[240px] w-[28%] border border-zinc-400 bg-white">
-                                                        <ClusterContainmentHeatmap
-                                                            loading={clusterContainmentLoading}
-                                                            error={clusterContainmentError}
-                                                            userClusterIds={clusterContainment?.user_cluster_ids ?? []}
-                                                            ourClusterIds={clusterContainment?.our_cluster_ids ?? []}
-                                                            matrix={clusterContainment?.matrix ?? []}
-                                                            entries={clusterContainment?.entries ?? []}
-                                                            userClusterLabelNames={uploadedUserClustering?.labelNames ?? []}
-                                                        />
-                                                    </div>
-                                                )}
                                                 <div
                                                     id="bottomPanel1"
                                                     className="w-full h-full border border-zinc-400 bg-white min-w-0 flex-1"
@@ -2614,8 +1975,8 @@ export default function Home() {
                                         setSelectedDataSplit(nextSplit);
                                         setSelectedModel(defaults.model);
                                         setSelectedLayer(defaults.layer);
-                                        syncSankeyPaths(defaults.model, defaults.layer, next, nextClustering, nextSplit);
-                                        setScatterPaths(
+                                        //syncSankeyPaths(defaults.model, defaults.layer, next, nextClustering, nextSplit);
+                                        /*setScatterPaths(
                                             buildScatterPaths(
                                                 defaults.model,
                                                 defaults.layer,
@@ -2624,7 +1985,7 @@ export default function Home() {
                                                 nextClustering,
                                                 nextSplit
                                             )
-                                        );
+                                        );*/
                                         setSelectedNode(null);
                                         setSelectedIds(null);
                                         setCellSelected(false);
@@ -2638,7 +1999,7 @@ export default function Home() {
                                         setSelectedDataSplit(nextSplit);
                                         setSelectedModel(defaults.model);
                                         setSelectedLayer(defaults.layer);
-                                        syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, selectedClustering, nextSplit);
+                                        /*syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, selectedClustering, nextSplit);
                                         setScatterPaths(
                                             buildScatterPaths(
                                                 defaults.model,
@@ -2648,7 +2009,7 @@ export default function Home() {
                                                 selectedClustering,
                                                 nextSplit
                                             )
-                                        );
+                                        );*/
                                         setSelectedNode(null);
                                         setSelectedIds(null);
                                         setCellSelected(false);
@@ -2662,7 +2023,7 @@ export default function Home() {
                                         setSelectedClustering(next);
                                         // Keep current cell selection when switching clustering so Top-k view
                                         // reflects the same model/layer instead of forcing dataset defaults.
-                                        syncSankeyPaths(selectedModel, selectedLayer, selectedDataset, next, nextSplit);
+                                        /*syncSankeyPaths(selectedModel, selectedLayer, selectedDataset, next, nextSplit);
                                         setScatterPaths(
                                             buildScatterPaths(
                                                 selectedModel,
@@ -2672,7 +2033,7 @@ export default function Home() {
                                                 next,
                                                 nextSplit
                                             )
-                                        );
+                                        );*/
                                         setSelectedNode(null);
                                         setSelectedIds(null);
                                         setCellSelected(false);

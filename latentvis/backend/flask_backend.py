@@ -67,6 +67,8 @@ def _resolve_data_root(project_root: Path) -> Path:
 
 
 PROJECT_ROOT = _resolve_project_root()
+BACKEND_ROOT = os.path.dirname(os.path.realpath(__file__))
+DATA_PATH = os.path.join(BACKEND_ROOT, "data_compact")
 DATA_ROOT = _resolve_data_root(PROJECT_ROOT)
 DEFAULT_CASES = ("chemprop", "chemeleon", "dimenet")
 DEFAULT_CLUSTERING = "pgmeans"
@@ -109,6 +111,22 @@ def add_cors_headers(resp):
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"ok": True})
+
+
+@app.route("/get_datasets", methods=["GET"])
+def get_datasets():
+    fp = os.path.join(DATA_PATH, "manifest.json")
+    with open(fp, "r") as f:
+        mf = json.load(f)
+    return jsonify(list(mf.keys()))
+
+
+@app.route("/get_dataset/<string:dataset>", methods=["GET"])
+def get_dataset(dataset):
+    fp = os.path.join(DATA_PATH, dataset, "overview.json")
+    with open(fp, "r") as f:
+        mf = json.load(f)
+    return jsonify(mf)
 
 
 def _normalize_smiles(s: str) -> str:
