@@ -602,6 +602,16 @@ def run_pipeline(
                     random_state=random_state,
                     linkage=linkage_override or "ward",
                 )
+            elif cl_method == "agglomerative" and "pgmeans" in results[(ek, lk)]:
+                from clustering import fit_agglomerative
+                cl_out = fit_agglomerative(
+                    emb,
+                    n_clusters=results[(ek, lk)]["pgmeans"]["k"],
+                    k_min=k_min,
+                    k_max=k_max,
+                    random_state=random_state,
+                    linkage=linkage_override or "ward",
+                )
             elif cl_method == "knn":
                 knn_k = knn_k_override if knn_k_override is not None else max(2, int(k_max))
                 cl_out = fit_clustering(

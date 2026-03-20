@@ -3,7 +3,7 @@
 # at frontend/public/data/<case>/<split>/clustering/knn in place.
 #
 # Usage:
-#   bash scripts/refresh_knn_only.sh --dataset chemprop --split train --knn-k 4
+#   bash scripts/refresh_knn_only.sh --dataset chemprop --split val --knn-k 4
 
 set -euo pipefail
 
@@ -42,8 +42,8 @@ case "$DATASET" in
   *) echo "Invalid or missing --dataset (chemprop|chemeleon)"; exit 2 ;;
 esac
 case "$SPLIT" in
-  test|train) ;;
-  *) echo "Invalid or missing --split (test|train)"; exit 2 ;;
+  test|train|val) ;;
+  *) echo "Invalid or missing --split (test|train|val)"; exit 2 ;;
 esac
 if ! [[ "$KNN_K" =~ ^[0-9]+$ ]] || [[ "$KNN_K" -lt 1 ]]; then
   echo "Invalid or missing --knn-k (positive integer)"

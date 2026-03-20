@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Write real_id_to_smiles.json with a "split" column (train/test) for frontend use.
-Includes all train and test rows for the given ESOL .pt file(s). Use for both case studies.
+Write real_id_to_smiles.json with a "split" column (train/val/test) for frontend use.
+Includes all requested split rows for the given ESOL .pt file(s). Use for both case studies.
 
 Usage:
   # One case: output path required
@@ -19,7 +19,7 @@ from pathlib import Path
 _BACKEND = Path(__file__).resolve().parent.parent
 if str(_BACKEND) not in sys.path:
     sys.path.insert(0, str(_BACKEND))
-from embedding_loader import load_real_id_smiles_both_splits
+from embedding_loader import load_real_id_smiles_rows
 
 # Default paths when using --both-cases
 DEFAULT_CHEMPROP_PT = Path("/global/cfs/projectdirs/m636/nhadler/projects/esol/data/chemprop-embeddings.pt")
@@ -29,16 +29,27 @@ FRONTEND_DATA = _BACKEND.resolve().parents[1] / "latentvis" / "frontend" / "publ
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Write real_id_to_smiles.json with real_id, smiles, and split (train/test) for frontend."
+        description="Write real_id_to_smiles.json with real_id, smiles, and split (train/val/test) for frontend."
     )
     ap.add_argument("--input", type=Path, help="Path to .pt file (ESOL format)")
     ap.add_argument("--output", type=Path, help="Output path for real_id_to_smiles.json")
+    ap.add_argument(
+        "--splits",
+        type=str,
+        default="test,val,train",
+        help="Comma-separated splits to include; default: test,val,train",
+    )
     ap.add_argument(
         "--both-cases",
         action="store_true",
         help="Write for both chemprop and chemeleon using default .pt paths and frontend/public/data/<case>/real_id_to_smiles.json",
     )
     args = ap.parse_args()
+
+    include_splits = [s.strip().lower() for s in args.splits.split(",") if s.strip()]
+    if not include_splits:
+        print("No valid splits requested.")
+        return 1
 
     if args.both_cases:
         if args.input or args.output:
@@ -52,15 +63,14 @@ def main():
             if not pt_path.exists():
                 print("Skip {}: .pt not found: {}".format(name, pt_path))
                 continue
-            rows = load_real_id_smiles_both_splits(pt_path)
+            rows = load_real_id_smiles_rows(pt_path, include_splits=include_splits)
             if not rows:
                 print("Skip {}: no real_id/smiles rows loaded.".format(name))
                 continue
             out_path.parent.mkdir(parents=True, exist_ok=True)
             out_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
-            n_test = sum(1 for r in rows if r.get("split") == "test")
-            n_train = sum(1 for r in rows if r.get("split") == "train")
-            print("Wrote {} ({} rows: {} test, {} train).".format(out_path, len(rows), n_test, n_train))
+            counts = {split: sum(1 for r in rows if r.get("split") == split) for split in include_splits}
+            print("Wrote {} ({} rows: {}).".format(out_path, len(rows), counts))
         return 0
 
     if not args.input or not args.output:
@@ -69,15 +79,14 @@ def main():
     if not args.input.exists():
         print("Input not found:", args.input)
         return 1
-    rows = load_real_id_smiles_both_splits(args.input)
+    rows = load_real_id_smiles_rows(args.input, include_splits=include_splits)
     if not rows:
-        print("No real_id/smiles rows loaded (not an ESOL .pt with id and smiles in test/train?).")
+        print("No real_id/smiles rows loaded (not an ESOL .pt with id and smiles in the requested splits?).")
         return 1
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(rows, indent=2), encoding="utf-8")
-    n_test = sum(1 for r in rows if r.get("split") == "test")
-    n_train = sum(1 for r in rows if r.get("split") == "train")
-    print("Wrote {} ({} rows: {} test, {} train).".format(args.output, len(rows), n_test, n_train))
+    counts = {split: sum(1 for r in rows if r.get("split") == split) for split in include_splits}
+    print("Wrote {} ({} rows: {}).".format(args.output, len(rows), counts))
     return 0
 
 
