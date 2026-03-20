@@ -5,7 +5,6 @@ import ZoomPan from "./ZoomPan";
 import { CLUSTER_COLORS, SANKEY_2D_COLUMN_LINK_COLOR, SANKEY_2D_ROW_LINK_COLOR } from "../theme/colors";
 import { fetchJsonCached } from "../utils/fetchCache";
 
-const SHOW_FMI_CSPA = false;
 const HIDDEN_LAYER = "ffn_layer_2";
 
 type SankeyEdge = {
@@ -326,6 +325,7 @@ const CELL_H = 60;
 const CELL_GAP = 10;
 const cellStepX = CELL_W + CELL_GAP;
 const cellStepY = CELL_H + CELL_GAP;
+const MAX_NODE_BAR_WIDTH = 20;
 
 
 export default function SankeyView({
@@ -700,6 +700,15 @@ export default function SankeyView({
             };
 
 
+            const maxClusters = Math.max(...data.cells.map((x) => x.children.length));
+
+            const xScale = d3.scaleBand<number>().range([0, innerW]).domain(d3.range(maxClusters)).padding(0.2);
+            // at most you can have the entire dataset in one cluster
+            const yScale = d3.scaleLinear().domain([1, data.molecule_ids.length]).range([innerH, 0]);
+
+            const nodeBarWidth = Math.min(xScale.bandwidth(), MAX_NODE_BAR_WIDTH);
+            const nodeBarOffset = (xScale.bandwidth() - nodeBarWidth) / 2;
+
             xs.forEach((xKey, col) => {
                 ys.forEach((yKey, row) => {
 
@@ -710,7 +719,8 @@ export default function SankeyView({
                         .datum({ rowName: xKey, columnName: yKey, col, row });
 
                     // only works for epochs as x and layers as y
-                    const cellCount = data.cells[col * data.epochs.length + row];
+                    const cellIdx = col * data.epochs.length + row;
+                    const cellCount = data.cells[cellIdx];
                     //const cellCount = cellClusterCount.get(`${rowName}|${columnName}`) ?? 0;
                     //const metricVal = cellMetricValue.get(`${rowName}|${columnName}`) ?? 0;
                     g.append("rect")
@@ -723,6 +733,80 @@ export default function SankeyView({
 
                     const innerG = g.append("g").attr("transform", `translate(${cellMargin.left}, ${cellMargin.top})`);
                     cells.push(innerG);
+
+                    const nodesForCell = data.cells[cellIdx].children.map((x) => data.nodes[x]);
+                    const bars = innerG.selectAll("rect.bar-main")
+                        .data(nodesForCell)
+                        .enter()
+                        .append("rect")
+                        .attr("class", "bar bar-main")
+                        .attr("x", (_d: any, i: number) => (xScale(i) as number) + nodeBarOffset)
+                        .attr("y", (d: any) => innerH - yScale(d.previous))
+                        .attr("width", nodeBarWidth)
+                        .attr("height", (d: any) => innerH - yScale(d.member_count))
+                        .attr("fill", "#aaa")
+                        .attr("data-row", xKey)
+                        .attr("data-column", yKey)
+                        .attr("data-cluster", (d: any) => {
+                            const c = d?.cluster;
+                            if (c !== null && c !== undefined && c !== "") return Number(c);
+                            const label = String(d?.label ?? "");
+                            const i = label.lastIndexOf("_C");
+                            if (i === -1) return "";
+                            return Number(label.slice(i + 2));
+                        });
+
+                    /*g.selectAll("rect.bar-test")
+                        .data(nodesForCell)
+                        .enter()
+                        .append("rect")
+                        .attr("class", "bar bar-test")
+                        .attr("x", (_d: any, i: number) => (xScale(i) as number) + nodeBarOffset)
+                        .attr("y", (d: any) => {
+                            const cluster =
+                                d?.cluster != null && d?.cluster !== "" ? Number(d.cluster) : parseClusterFromLabel(String(d?.label ?? ""));
+                            const totalValue = Number(d?.value ?? 0);
+                            const totalHeight = innerH - yScale(totalValue);
+                            const testValue = Number(
+                                secondaryNodeValueByCellCluster.get(`${rowName}|${columnName}|${String(cluster)}`) ?? 0
+                            );
+                            const clampedTest = Math.max(0, Math.min(totalValue, testValue));
+                            const testHeight = totalValue > 0 ? (totalHeight * clampedTest) / totalValue : 0;
+                            const topY = innerH - y(d.previous);
+                            return topY + Math.max(0, totalHeight - testHeight);
+                        })
+                        .attr("width", nodeBarWidth)
+                        .attr("height", (d: any) => {
+                            const cluster =
+                                d?.cluster != null && d?.cluster !== "" ? Number(d.cluster) : parseClusterFromLabel(String(d?.label ?? ""));
+                            const totalValue = Number(d?.value ?? 0);
+                            const totalHeight = innerH - y(totalValue);
+                            const testValue = Number(
+                                secondaryNodeValueByCellCluster.get(`${rowName}|${columnName}|${String(cluster)}`) ?? 0
+                            );
+                            const clampedTest = Math.max(0, Math.min(totalValue, testValue));
+                            return totalValue > 0 ? (totalHeight * clampedTest) / totalValue : 0;
+                        })
+                        .attr("fill", "#888")
+                        .attr("data-row", rowName)
+                        .attr("data-column", columnName)
+                        .attr("data-cluster", (d: any) => {
+                            const c = d?.cluster;
+                            if (c !== null && c !== undefined && c !== "") return Number(c);
+                            const label = String(d?.label ?? "");
+                            const i = label.lastIndexOf("_C");
+                            if (i === -1) return "";
+                            return Number(label.slice(i + 2));
+                        })
+                        .style("pointer-events", "none");*/
+
+                    bars
+                        .style("cursor", "pointer")
+                        .on("click", (event: any, d: any) => {
+                            event.stopPropagation();
+                            const c = d?.cluster_id;
+                            onNodeSelect?.({ model: xKey, layer: yKey, cluster: c });
+                        });
                 })
 
                 /* g.on("click", (_event: any, datum: any) => {
@@ -844,39 +928,6 @@ export default function SankeyView({
             });
 
 
-            const maxClusters = (() => {
-                let max = 0;
-                ROW_NAMES.forEach((rowKey) => {
-                    const nodesByColumn = data.epoch?.[rowKey]?.nodes || {};
-                    Object.keys(nodesByColumn).forEach((columnKey) => {
-                        const list = nodesByColumn[columnKey] || [];
-                        if (list.length > max) max = list.length;
-                    });
-                });
-                return Math.max(1, max);
-            })();
-
-            const maxInstance = (() => {
-                let max = 0;
-                ROW_NAMES.forEach((rowKey) => {
-                    const nodesByColumn = data.epoch?.[rowKey]?.nodes || {};
-                    Object.keys(nodesByColumn).forEach((columnKey) => {
-                        const list = nodesByColumn[columnKey] || [];
-                        list.forEach((node: any) => {
-                            const val = Number(node?.value ?? 0);
-                            const prev = Number(node?.previous ?? 0);
-                            const total = prev + val;
-                            if (total > max) max = total;
-                        });
-                    });
-                });
-                return Math.max(1, max);
-            })();
-            const x = d3.scaleBand<number>().range([0, innerW]).domain(d3.range(maxClusters)).padding(0.2);
-            const y = d3.scaleLinear().domain([0, maxInstance]).range([innerH, 0]);
-            const MAX_NODE_BAR_WIDTH = 20;
-            const nodeBarWidth = Math.min(x.bandwidth(), MAX_NODE_BAR_WIDTH);
-            const nodeBarOffset = (x.bandwidth() - nodeBarWidth) / 2;
 
             const pctByEpochTransition = new Map<string, number>();
             const normalizeTransitionLayer = (name: string): string => {
@@ -1618,104 +1669,20 @@ export default function SankeyView({
                 });
             }*/
 
-            // draw nodes after links so they are on top
-            /*if (showSankeyNodes) {
-                nodeDrawQueue.forEach(({ g, rowName, columnName, nodesForCell }) => {
-                    const bars = g.selectAll("rect.bar-main")
-                        .data(nodesForCell)
-                        .enter()
-                        .append("rect")
-                        .attr("class", "bar bar-main")
-                        .attr("x", (_d: any, i: number) => (x(i) as number) + nodeBarOffset)
-                        .attr("y", (d: any) => innerH - y(d.previous))
-                        .attr("width", nodeBarWidth)
-                        .attr("height", (d: any) => innerH - y(d.value))
-                        .attr("fill", "#aaa")
-                        .attr("data-row", rowName)
-                        .attr("data-column", columnName)
-                        .attr("data-cluster", (d: any) => {
-                            const c = d?.cluster;
-                            if (c !== null && c !== undefined && c !== "") return Number(c);
-                            const label = String(d?.label ?? "");
-                            const i = label.lastIndexOf("_C");
-                            if (i === -1) return "";
-                            return Number(label.slice(i + 2));
-                        });
-     
-                    g.selectAll("rect.bar-test")
-                        .data(nodesForCell)
-                        .enter()
-                        .append("rect")
-                        .attr("class", "bar bar-test")
-                        .attr("x", (_d: any, i: number) => (x(i) as number) + nodeBarOffset)
-                        .attr("y", (d: any) => {
-                            const cluster =
-                                d?.cluster != null && d?.cluster !== "" ? Number(d.cluster) : parseClusterFromLabel(String(d?.label ?? ""));
-                            const totalValue = Number(d?.value ?? 0);
-                            const totalHeight = innerH - y(totalValue);
-                            const testValue = Number(
-                                secondaryNodeValueByCellCluster.get(`${rowName}|${columnName}|${String(cluster)}`) ?? 0
-                            );
-                            const clampedTest = Math.max(0, Math.min(totalValue, testValue));
-                            const testHeight = totalValue > 0 ? (totalHeight * clampedTest) / totalValue : 0;
-                            const topY = innerH - y(d.previous);
-                            return topY + Math.max(0, totalHeight - testHeight);
-                        })
-                        .attr("width", nodeBarWidth)
-                        .attr("height", (d: any) => {
-                            const cluster =
-                                d?.cluster != null && d?.cluster !== "" ? Number(d.cluster) : parseClusterFromLabel(String(d?.label ?? ""));
-                            const totalValue = Number(d?.value ?? 0);
-                            const totalHeight = innerH - y(totalValue);
-                            const testValue = Number(
-                                secondaryNodeValueByCellCluster.get(`${rowName}|${columnName}|${String(cluster)}`) ?? 0
-                            );
-                            const clampedTest = Math.max(0, Math.min(totalValue, testValue));
-                            return totalValue > 0 ? (totalHeight * clampedTest) / totalValue : 0;
-                        })
-                        .attr("fill", "#888")
-                        .attr("data-row", rowName)
-                        .attr("data-column", columnName)
-                        .attr("data-cluster", (d: any) => {
-                            const c = d?.cluster;
-                            if (c !== null && c !== undefined && c !== "") return Number(c);
-                            const label = String(d?.label ?? "");
-                            const i = label.lastIndexOf("_C");
-                            if (i === -1) return "";
-                            return Number(label.slice(i + 2));
-                        })
-                        .style("pointer-events", "none");
-     
-                    bars
-                        .style("cursor", "pointer")
-                        .on("click", (event: any, d: any) => {
-                            event.stopPropagation();
-                            const c = d?.cluster;
-                            let cluster = c !== null && c !== undefined && c !== "" ? Number(c) : NaN;
-                            if (Number.isNaN(cluster)) {
-                                const label = String(d?.label ?? "");
-                                const i = label.lastIndexOf("_C");
-                                if (i !== -1) cluster = Number(label.slice(i + 2));
-                            }
-                            if (!Number.isNaN(cluster)) {
-                                onNodeSelect?.({ model: rowName, layer: columnName, cluster });
-                            }
-                        });
-                });
-            }
-     
+
+
             const btnDefault = document.getElementById("btnDefault") as HTMLButtonElement | null;
             const btnColumn = document.getElementById("btnColumn") as HTMLButtonElement | null;
             const btnRow = document.getElementById("btnRow") as HTMLButtonElement | null;
             const btnSwap = document.getElementById("btnSwap") as HTMLButtonElement | null;
-     
+
             function setMode(m: "default" | "column" | "row") {
                 if (btnDefault && btnColumn && btnRow) {
                     btnDefault.style.fontWeight = m === "default" ? "600" : "400";
                     btnColumn.style.fontWeight = m === "column" ? "600" : "400";
                     btnRow.style.fontWeight = m === "row" ? "600" : "400";
                 }
-     
+
                 if (m === "default") {
                     d3.selectAll('#chart svg g[id^="cell-"] rect').classed("cell-dimmed", false).classed("cell-highlight", false);
                     d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
@@ -1743,22 +1710,22 @@ export default function SankeyView({
                     }
                 }
             }
-     
+
             btnDefault?.addEventListener("click", () => setMode("default"));
             btnColumn?.addEventListener("click", () => setMode("column"));
             btnRow?.addEventListener("click", () => setMode("row"));
             btnSwap?.addEventListener("click", () => setSwapParam(!SWAP_AXES));
-     
+
             if (btnSwap) btnSwap.style.fontWeight = SWAP_AXES ? "600" : "400";
             setMode("default");
             applyLinkValueFilter(linkValueMin, Math.min(linkValueMax, nextMaxBound));
-     
+
             function setCellHighlight(rowName: string, columnName: string, on: boolean) {
                 if (on) {
                     d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", true).classed("cell-highlight", false);
                     d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
                     d3.selectAll("rect.gap-rect").classed("gap-dimmed", true);
-     
+
                     ROW_NAMES.forEach((row) => {
                         const cellSel = d3.select(`#cell-${row}-${columnName}`);
                         if (!cellSel.empty()) {
@@ -1766,7 +1733,7 @@ export default function SankeyView({
                             cellSel.selectAll("rect.bar").classed("cell-dimmed", false);
                         }
                     });
-     
+
                     COLUMN_NAMES.forEach((column) => {
                         const cellSel = d3.select(`#cell-${rowName}-${column}`);
                         if (!cellSel.empty()) {
@@ -1774,12 +1741,12 @@ export default function SankeyView({
                             cellSel.selectAll("rect.bar").classed("cell-dimmed", false);
                         }
                     });
-     
+
                     d3.selectAll("g.row-links path.link-path").each(function() {
                         const el = d3.select(this);
                         if (el.attr("data-row") === rowName) el.classed("link-dimmed", false).classed("link-highlight", true);
                     });
-     
+
                     d3.selectAll("g.column-links path.link-path").each(function() {
                         const el = d3.select(this);
                         if (el.attr("data-column") === columnName) el.classed("link-dimmed", false).classed("link-highlight", true);
@@ -1796,7 +1763,7 @@ export default function SankeyView({
                     d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
                     d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
                 }
-            }*/
+            }
         }
         return () => {
             cancelled = true;
@@ -1936,290 +1903,6 @@ export default function SankeyView({
         if (!showTooltips) setHoverTooltip(null);
     }, [showTooltips]);
 
-    useEffect(() => {
-        if (!SHOW_FMI_CSPA) return;
-        fetch(metricsPath)
-            .then((res) => {
-                if (!res.ok) throw new Error("Failed to load avg fmi/cspa metrics");
-                return res.json();
-            })
-            .then((json) => {
-                const layers: Array<{ layer: string; avg_fmi: number; avg_cspa: number }> = json?.layers || [];
-                const models: Array<{ model: string; avg_fmi: number; avg_cspa: number }> = json?.models || [];
-                const next = layers
-                    .map((d) => ({
-                        layer: d.layer,
-                        fmi: Number(d.avg_fmi),
-                        cspa: Number(d.avg_cspa),
-                    }))
-                    .filter((d) => Number.isFinite(d.fmi) && Number.isFinite(d.cspa));
-                const nextModels = models
-                    .map((d) => ({
-                        model: d.model,
-                        fmi: Number(d.avg_fmi),
-                        cspa: Number(d.avg_cspa),
-                    }))
-                    .filter((d) => Number.isFinite(d.fmi) && Number.isFinite(d.cspa));
-                setFmiData(next);
-                setRowMetricData(nextModels);
-            })
-            .catch((err) => {
-                console.error(err);
-            });
-    }, [metricsPath]);
-
-    // FMI_CPSA? this should be its own component
-    useEffect(() => {
-        if (!SHOW_FMI_CSPA) {
-            const container = fmiRef.current;
-            if (container) container.innerHTML = "";
-            return;
-        }
-        const container = fmiRef.current;
-        if (!container) return;
-        if (!layout || !fmiData.length) {
-            container.innerHTML = "";
-            return;
-        }
-
-        const ro = new ResizeObserver(() => draw());
-        ro.observe(container);
-
-        function draw() {
-            if (!container || !layout) return;
-            container.innerHTML = "";
-
-            const width = Math.max(1, container.clientWidth);
-            const height = Math.max(30, container.clientHeight || 40);
-            const margin = { top: 6, right: 8, bottom: 6, left: 0 };
-            const innerH = Math.max(1, height - margin.top - margin.bottom);
-            const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
-            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-            const fmiByLayer = new Map(fmiData.map((d) => [d.layer, d.fmi]));
-            const cspaByLayer = new Map(fmiData.map((d) => [d.layer, d.cspa]));
-            const fmiValues = fmiData.map((d) => d.fmi);
-            const cspaValues = fmiData.map((d) => d.cspa);
-            const fmiMin = Math.min(...fmiValues);
-            const fmiMax = Math.max(...fmiValues);
-            const fmiColor = d3
-                .scaleLinear<string>()
-                .domain([fmiMin, fmiMin + (fmiMax - fmiMin) * 0.4, fmiMin + (fmiMax - fmiMin) * 0.8, fmiMax])
-                .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
-            const cspaMin = Math.min(...cspaValues);
-            const cspaMax = Math.max(...cspaValues);
-            const cspaColor = d3
-                .scaleLinear<string>()
-                .domain([cspaMin, cspaMin + (cspaMax - cspaMin) * 0.4, cspaMin + (cspaMax - cspaMin) * 0.8, cspaMax])
-                .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
-
-            const points = layout.colNames
-                .map((name, i) => {
-                    const x =
-                        transform.x +
-                        transform.scale *
-                        (layout.margin.left + i * layout.cellStepX + layout.cellMargin.left + layout.innerW / 2);
-                    const fmi = fmiByLayer.get(name);
-                    const cspa = cspaByLayer.get(name);
-                    if (fmi == null || cspa == null) return null;
-                    return { x, fmi, cspa };
-                })
-                .filter((d): d is { x: number; fmi: number; cspa: number } => !!d);
-
-            const cellW = transform.scale * layout.cellW;
-            const rowHeight = Math.max(6, innerH * 0.28);
-            const rowGap = 6;
-            const fmiY = 16;
-            const cspaY = fmiY + rowHeight + rowGap;
-
-            g.append("text")
-                .attr("x", -8 + 30)
-                .attr("y", fmiY + rowHeight / 2 + 2)
-                .attr("text-anchor", "end")
-                .attr("font-size", 11)
-                .attr("fill", "#64748b")
-                .text("FMI");
-            g.append("text")
-                .attr("x", -8 + 30)
-                .attr("y", cspaY + rowHeight / 2 + 2)
-                .attr("text-anchor", "end")
-                .attr("font-size", 11)
-                .attr("fill", "#64748b")
-                .text("CSPA");
-
-            g.selectAll("rect.fmi-cell")
-                .data(points)
-                .enter()
-                .append("rect")
-                .attr("class", "fmi-cell")
-                .attr("x", (d) => (d.x - margin.left) - cellW / 2 + 40)
-                .attr("y", fmiY)
-                .attr("width", Math.max(1, cellW - 2))
-                .attr("height", rowHeight)
-                .attr("rx", 2)
-                .attr("fill", (d) => fmiColor(d.fmi));
-
-            g.selectAll("text.fmi-val")
-                .data(points)
-                .enter()
-                .append("text")
-                .attr("class", "fmi-val")
-                .attr("x", (d) => d.x - margin.left + 40)
-                .attr("y", fmiY + rowHeight / 2 + 3)
-                .attr("text-anchor", "middle")
-                .attr("font-size", 11)
-                .attr("fill", "#0f172a")
-                .text((d) => d.fmi.toFixed(3));
-
-            g.selectAll("rect.cspa-cell")
-                .data(points)
-                .enter()
-                .append("rect")
-                .attr("class", "cspa-cell")
-                .attr("x", (d) => (d.x - margin.left) - cellW / 2 + 40)
-                .attr("y", cspaY)
-                .attr("width", Math.max(1, cellW - 2))
-                .attr("height", rowHeight)
-                .attr("rx", 2)
-                .attr("fill", (d) => cspaColor(d.cspa));
-
-            g.selectAll("text.cspa-val")
-                .data(points)
-                .enter()
-                .append("text")
-                .attr("class", "cspa-val")
-                .attr("x", (d) => d.x - margin.left + 40)
-                .attr("y", cspaY + rowHeight / 2 + 3)
-                .attr("text-anchor", "middle")
-                .attr("font-size", 11)
-                .attr("fill", "#0f172a")
-                .text((d) => d.cspa.toFixed(3));
-        }
-
-        draw();
-        return () => ro.disconnect();
-    }, [layout, transform, fmiData]);
-
-    // not sure what this is?
-    useEffect(() => {
-        if (!SHOW_FMI_CSPA) {
-            const container = rowMetricRef.current;
-            if (container) container.innerHTML = "";
-            return;
-        }
-        const container = rowMetricRef.current;
-        if (!container) return;
-        if (!layout || !rowMetricData.length) {
-            container.innerHTML = "";
-            return;
-        }
-
-        const ro = new ResizeObserver(() => draw());
-        ro.observe(container);
-
-        function draw() {
-            if (!container || !layout) return;
-            container.innerHTML = "";
-            const width = Math.max(1, container.clientWidth);
-            const height = Math.max(30, container.clientHeight || 40);
-            const margin = { top: 6, right: 6, bottom: 6, left: 6 };
-            const innerW = Math.max(1, width - margin.left - margin.right);
-
-            const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
-            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-            const fmiByModel = new Map(rowMetricData.map((d) => [d.model, d.fmi]));
-            const cspaByModel = new Map(rowMetricData.map((d) => [d.model, d.cspa]));
-            const fmiValues = rowMetricData.map((d) => d.fmi);
-            const cspaValues = rowMetricData.map((d) => d.cspa);
-            const fmiMin = Math.min(...fmiValues);
-            const fmiMax = Math.max(...fmiValues);
-            const cspaMin = Math.min(...cspaValues);
-            const cspaMax = Math.max(...cspaValues);
-
-            const fmiColor = d3
-                .scaleLinear<string>()
-                .domain([fmiMin, fmiMin + (fmiMax - fmiMin) * 0.4, fmiMin + (fmiMax - fmiMin) * 0.8, fmiMax])
-                .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
-            const cspaColor = d3
-                .scaleLinear<string>()
-                .domain([cspaMin, cspaMin + (cspaMax - cspaMin) * 0.4, cspaMin + (cspaMax - cspaMin) * 0.8, cspaMax])
-                .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
-
-            const rowHeight = Math.max(10, transform.scale * layout.cellH);
-            const blockH = rowHeight;
-            const gap = 2;
-            const blockW = Math.min(15, Math.max(6, Math.floor(innerW / 2) - gap));
-            const fmiX = 8;
-            const cspaX = Math.min(innerW - blockW, blockW + gap) + 8;
-            const labelY = 6;
-
-            layout.rowNames.forEach((name, i) => {
-                const y =
-                    transform.y +
-                    transform.scale * (layout.margin.top + i * layout.cellStepY + layout.cellMargin.top + layout.innerH / 2);
-                const fmi = fmiByModel.get(name);
-                const cspa = cspaByModel.get(name);
-                if (fmi == null || cspa == null) return;
-
-                const yTop = y - margin.top - blockH / 2 + 7;
-                g.append("rect")
-                    .attr("x", fmiX)
-                    .attr("y", yTop)
-                    .attr("width", blockW)
-                    .attr("height", blockH)
-                    .attr("rx", 2)
-                    .attr("fill", fmiColor(fmi));
-
-                g.append("rect")
-                    .attr("x", cspaX)
-                    .attr("y", yTop)
-                    .attr("width", blockW)
-                    .attr("height", blockH)
-                    .attr("rx", 2)
-                    .attr("fill", cspaColor(cspa));
-
-                g.append("text")
-                    .attr("x", fmiX + blockW / 2)
-                    .attr("y", yTop + blockH / 2 + 2)
-                    .attr("text-anchor", "middle")
-                    .attr("font-size", 9)
-                    .attr("fill", "#111827")
-                    .attr("transform", `rotate(-90, ${fmiX + blockW / 2}, ${yTop + blockH / 2})`)
-                    .text(fmi.toFixed(3));
-
-                g.append("text")
-                    .attr("x", cspaX + blockW / 2)
-                    .attr("y", yTop + blockH / 2 + 2)
-                    .attr("text-anchor", "middle")
-                    .attr("font-size", 9)
-                    .attr("fill", "#111827")
-                    .attr("transform", `rotate(-90, ${cspaX + blockW / 2}, ${yTop + blockH / 2})`)
-                    .text(cspa.toFixed(3));
-            });
-
-            g.append("text")
-                .attr("x", fmiX + blockW / 2 + 5)
-                .attr("y", labelY + 2)
-                .attr("text-anchor", "middle")
-                .attr("font-size", 10)
-                .attr("fill", "#6b7280")
-                .attr("transform", `rotate(-90, ${fmiX + blockW / 2}, ${labelY})`)
-                .text("FMI");
-
-            g.append("text")
-                .attr("x", cspaX + blockW / 2 + 5)
-                .attr("y", labelY + 2)
-                .attr("text-anchor", "middle")
-                .attr("font-size", 8)
-                .attr("fill", "#6b7280")
-                .attr("transform", `rotate(-90, ${cspaX + blockW / 2}, ${labelY})`)
-                .text("CSPA");
-        }
-
-        draw();
-        return () => ro.disconnect();
-    }, [layout, transform, rowMetricData]);
 
     const clampedLinkMin = Math.max(0, Math.min(linkValueMin, linkValueMaxBound));
     const clampedLinkMax = Math.max(0, Math.min(linkValueMax, linkValueMaxBound));
