@@ -996,8 +996,8 @@ export default function SankeyView({
             const linkWidthScale = d3.scaleSqrt().domain([0, Math.max(1, renderData.molecule_ids.length)]).range([0.5, 20]).clamp(true);
 
             // get horizontal and vertical links
-            const intraEpoch = [];
-            const intraLayer = [];
+            const intraEpoch: Array<[any, any, number]> = [];
+            const intraLayer: Array<[any, any, number]> = [];
             const seenPairs = new Set();
             renderData.connectivity.keys().forEach(function(x) {
                 const thisNode = renderData.nodes[x];
@@ -1017,6 +1017,54 @@ export default function SankeyView({
                     }
                 });
             });
+            const getNodesForEpochLayer = (epochName: string, layerName: string): any[] => {
+                const epochIdx = renderData.epochs.indexOf(epochName);
+                const layerIdx = renderData.layers.indexOf(layerName);
+                if (epochIdx < 0 || layerIdx < 0) return [];
+                const cellIdx = layerIdx + epochIdx * renderData.layers.length;
+                const childIds = renderData.cells[cellIdx]?.children ?? [];
+                return childIds.map((nodeId) => renderData.nodes[nodeId]).filter(Boolean);
+            };
+
+            const existingEpochLayerPairs = new Set<string>();
+            intraEpoch.forEach((entry) => {
+                const fromN = entry[0];
+                const toN = entry[1];
+                const fromEpoch = String(fromN?.epoch ?? "");
+                const toEpoch = String(toN?.epoch ?? "");
+                const fromLayer = String(fromN?.layer ?? "");
+                const toLayer = String(toN?.layer ?? "");
+                if (!fromEpoch || !toEpoch || !fromLayer || !toLayer) return;
+                if (fromLayer !== toLayer) return;
+                existingEpochLayerPairs.add(`${fromEpoch}|${toEpoch}|${fromLayer}`);
+                existingEpochLayerPairs.add(`${toEpoch}|${fromEpoch}|${fromLayer}`);
+            });
+            const syntheticIntraEpoch: Array<[any, any, number]> = [];
+            for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
+                const fromEpoch = ROW_NAMES[i];
+                const toEpoch = ROW_NAMES[i + 1];
+                COLUMN_NAMES.forEach((layerName) => {
+                    const pairKey = `${fromEpoch}|${toEpoch}|${layerName}`;
+                    if (existingEpochLayerPairs.has(pairKey)) return;
+                    const srcNodes = getNodesForEpochLayer(fromEpoch, layerName).filter(
+                        (n) => Number(n?.member_count ?? n?.value ?? 0) > 0
+                    );
+                    const tgtNodes = getNodesForEpochLayer(toEpoch, layerName).filter(
+                        (n) => Number(n?.member_count ?? n?.value ?? 0) > 0
+                    );
+                    if (srcNodes.length === 0 || tgtNodes.length === 0) return;
+                    const bridges = buildGreedyBridgeLinks(srcNodes, tgtNodes);
+                    if (bridges.length === 0) return;
+                    bridges.forEach((bridge) => {
+                        const srcNode = srcNodes[bridge.sourceIdx];
+                        const tgtNode = tgtNodes[bridge.targetIdx];
+                        if (!srcNode || !tgtNode || bridge.value <= 0) return;
+                        syntheticIntraEpoch.push([srcNode, tgtNode, bridge.value]);
+                    });
+                    existingEpochLayerPairs.add(pairKey);
+                    existingEpochLayerPairs.add(`${toEpoch}|${fromEpoch}|${layerName}`);
+                });
+            }
 
             const drawArcs = (
                 dataGroup: Array<[any, any, number]>,
@@ -1064,15 +1112,18 @@ export default function SankeyView({
                     const tgtCenterY = (tgtTopY + tgtBottomY) / 2;
 
                     const verticalForward = tgtCenterY >= srcCenterY;
-                    const startY = verticalForward ? srcBottomY : srcTopY;
-                    const endY = verticalForward ? tgtTopY : tgtBottomY;
+                    const dxAbs = Math.abs(tgtCenterX - srcCenterX);
+                    const dyAbs = Math.abs(tgtCenterY - srcCenterY);
+                    const isMostlyHorizontal = dxAbs >= dyAbs;
+                    const startY = isMostlyHorizontal ? srcCenterY : (verticalForward ? srcBottomY : srcTopY);
+                    const endY = isMostlyHorizontal ? tgtCenterY : (verticalForward ? tgtTopY : tgtBottomY);
                     const startX = srcCenterX;
                     const endX = tgtCenterX;
 
                     let pathD = "";
-                    const dxAbs = Math.abs(endX - startX);
-                    const dyAbs = Math.abs(endY - startY);
-                    if (dxAbs >= dyAbs) {
+                    const drawDxAbs = Math.abs(endX - startX);
+                    const drawDyAbs = Math.abs(endY - startY);
+                    if (drawDxAbs >= drawDyAbs) {
                         const dx = Math.abs(endX - startX) * 0.45;
                         pathD = `M ${startX},${startY}
                          C ${startX + dx},${startY}
@@ -1111,7 +1162,7 @@ export default function SankeyView({
             const linkGroup2 = gRoot.append("g").attr("class", "links row-links");
             const nodeLayer = gRoot.append("g").attr("class", "cell-nodes");
 
-            drawArcs(intraEpoch, linkGroup, "column");
+            drawArcs([...intraEpoch, ...syntheticIntraEpoch], linkGroup, "column");
             drawArcs(intraLayer, linkGroup2, "row");
             // Keep links visually above cells/bars while not blocking interactions on nodes.
             linkGroup.style("pointer-events", "none");
@@ -1657,12 +1708,20 @@ export default function SankeyView({
                 sourceNodes: any[],
                 targetNodes: any[]
             ): Array<{ sourceIdx: number; targetIdx: number; value: number }> {
+                const clusterOf = (n: any, fallback: number) => {
+                    const raw = n?.cluster_id ?? n?.cluster ?? n?.id;
+                    const numeric = Number(raw);
+                    if (Number.isFinite(numeric)) return numeric;
+                    const parsed = parseClusterFromLabel(String(n?.label ?? ""));
+                    return Number.isFinite(parsed) ? parsed : fallback;
+                };
+                const massOf = (n: any) => Math.max(0, Number(n?.member_count ?? n?.value ?? 0));
                 const src = sourceNodes
-                    .map((n, i) => ({ i, cluster: Number(n?.id ?? i), rem: Math.max(0, Number(n?.value ?? 0)) }))
+                    .map((n, i) => ({ i, cluster: clusterOf(n, i), rem: massOf(n) }))
                     .filter((d) => d.rem > 0)
                     .sort((a, b) => a.cluster - b.cluster);
                 const tgt = targetNodes
-                    .map((n, i) => ({ i, cluster: Number(n?.id ?? i), rem: Math.max(0, Number(n?.value ?? 0)) }))
+                    .map((n, i) => ({ i, cluster: clusterOf(n, i), rem: massOf(n) }))
                     .filter((d) => d.rem > 0)
                     .sort((a, b) => a.cluster - b.cluster);
 
