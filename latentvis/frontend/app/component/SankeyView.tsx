@@ -532,6 +532,7 @@ const CELL_GAP = 10;
 const cellStepX = CELL_W + CELL_GAP;
 const cellStepY = CELL_H + CELL_GAP;
 const MAX_NODE_BAR_WIDTH = 20;
+const EPOCH_THRESHOLD_MAX = 100;
 
 
 export default function SankeyView({
@@ -568,17 +569,8 @@ export default function SankeyView({
     const [showGapHeatmap, setShowGapHeatmap] = useState(true);
     const [epochTransitionThreshold, setEpochTransitionThreshold] = useState(0);
     const [epochTransitionThresholdUi, setEpochTransitionThresholdUi] = useState(0);
-    const [maxEpochTransitionPct, setMaxEpochTransitionPct] = useState(100);
+    const maxEpochTransitionPct = EPOCH_THRESHOLD_MAX;
     const [visibleEpochSummary, setVisibleEpochSummary] = useState({ visible: 0, total: 0 });
-    const [epochFilterMeta, setEpochFilterMeta] = useState<{
-        allEpochKeys: string[];
-        lastEpoch: string | null;
-        pairPctByEpochPair: Record<string, number>;
-    }>({
-        allEpochKeys: [],
-        lastEpoch: null,
-        pairPctByEpochPair: {},
-    });
     const [cellLegendRange, setCellLegendRange] = useState({ min: 0, max: 1 });
     const [gapLegendMax, setGapLegendMax] = useState(1);
     const [linkValueMin, setLinkValueMin] = useState(0);
@@ -624,8 +616,9 @@ export default function SankeyView({
 
         const q = Number(p.get("epochMin"));
         if (Number.isFinite(q) && q >= 0) {
-            setEpochTransitionThreshold(q);
-            setEpochTransitionThresholdUi(q);
+            const clamped = Math.max(0, Math.min(EPOCH_THRESHOLD_MAX, q));
+            setEpochTransitionThreshold(clamped);
+            setEpochTransitionThresholdUi(clamped);
         }
         const qMin = Number(p.get("min"));
         const qMax = Number(p.get("max"));
@@ -637,10 +630,6 @@ export default function SankeyView({
     useEffect(() => {
         setEpochTransitionThresholdUi(epochTransitionThreshold);
     }, [epochTransitionThreshold]);
-
-    useEffect(() => {
-        setEpochTransitionThresholdUi((v) => Math.max(0, Math.min(v, maxEpochTransitionPct)));
-    }, [maxEpochTransitionPct]);
 
     // Recompute link-range upper bound whenever dataset context changes.
     useEffect(() => {
@@ -714,25 +703,7 @@ export default function SankeyView({
             if (!container) return;
             // Full redraw: remove stale layers/paths from previous renders.
             svg.selectAll("*").remove();
-            const xs = (SWAP_AXES) ? renderData.epochs : renderData.layers;
-            const ys = (SWAP_AXES) ? renderData.layers : renderData.epochs;
-
-            const width =
-                margin.left +
-                margin.right +
-                CELL_W * xs.length +
-                Math.max(0, xs.length - 1) * CELL_GAP;
-            const height =
-                margin.top +
-                margin.bottom +
-                CELL_H * ys.length +
-                Math.max(0, ys.length - 1) * CELL_GAP;
-
-            svg.attr("width", width)
-                .attr("height", height)
-                .attr("viewBox", `0 0 ${width} ${height}`)
-
-            console.log(data);
+            
             /*
             const isDimenetCase = /\/dimenet\//.test(String(dataPath || "")) || /dataset=dimenet/.test(String(dataPath || ""));
             const shouldHideFfn2Layer = !showFfn2 && !isDimenetCase;
@@ -768,15 +739,51 @@ export default function SankeyView({
             const allEpochKeys: string[] = sortRowKeys(renderData.epochs);
             const lastEpoch = allEpochKeys.length ? allEpochKeys[allEpochKeys.length - 1] : null;
             const epochPairMaxTransitionPct = new Map<string, number>();
-            /*transitionEntriesByLayer.forEach((d) => {
-                const fromEpoch = String(d?.from_epoch ?? "").trim();
-                const toEpoch = String(d?.to_epoch ?? "").trim();
-                const pct = Number(d?.pct_changed ?? 0);
-                if (!fromEpoch || !toEpoch || !Number.isFinite(pct)) return;
-                const key = `${fromEpoch}|${toEpoch}`;
+            const epochPairChangedTotal = new Map<string, { changed: number; total: number }>();
+            renderData.connectivity.forEach((targets, sourceNodeId) => {
+                const srcNode = renderData.nodes[sourceNodeId];
+                if (!srcNode || !Array.isArray(targets)) return;
+                const sourcePairAgg = new Map<string, { total: number; maxTo: number; byTarget: Map<number, number> }>();
+                targets.forEach((edge) => {
+                    const targetNodeId = Number(Array.isArray(edge) ? edge[0] : Number.NaN);
+                    const count = Number(Array.isArray(edge) ? edge[1] : 0);
+                    if (!Number.isFinite(targetNodeId) || !Number.isFinite(count) || count <= 0) return;
+                    const tgtNode = renderData.nodes[targetNodeId];
+                    if (!tgtNode) return;
+                    const srcEpochIdx = Number(srcNode.epoch_idx);
+                    const tgtEpochIdx = Number(tgtNode.epoch_idx);
+                    if (!Number.isFinite(srcEpochIdx) || !Number.isFinite(tgtEpochIdx)) return;
+                    if (Math.abs(srcEpochIdx - tgtEpochIdx) !== 1) return;
+                    if (Number(srcNode.layer_idx) !== Number(tgtNode.layer_idx)) return;
+                    const fromEpoch = String(srcNode.epoch ?? "").trim();
+                    const toEpoch = String(tgtNode.epoch ?? "").trim();
+                    if (!fromEpoch || !toEpoch) return;
+                    const key = `${fromEpoch}|${toEpoch}`;
+                    const pairAgg =
+                        sourcePairAgg.get(key) ??
+                        { total: 0, maxTo: 0, byTarget: new Map<number, number>() };
+                    pairAgg.total += count;
+                    const tgtKey = Number(tgtNode.node_id);
+                    const nextTo = (pairAgg.byTarget.get(tgtKey) ?? 0) + count;
+                    pairAgg.byTarget.set(tgtKey, nextTo);
+                    if (nextTo > pairAgg.maxTo) pairAgg.maxTo = nextTo;
+                    sourcePairAgg.set(key, pairAgg);
+                });
+                sourcePairAgg.forEach((pairAgg, key) => {
+                    if (pairAgg.total <= 0) return;
+                    const changedForSource = Math.max(0, pairAgg.total - pairAgg.maxTo);
+                    const agg = epochPairChangedTotal.get(key) ?? { changed: 0, total: 0 };
+                    agg.total += pairAgg.total;
+                    agg.changed += changedForSource;
+                    epochPairChangedTotal.set(key, agg);
+                });
+            });
+            epochPairChangedTotal.forEach((agg, key) => {
+                if (agg.total <= 0) return;
+                const pct = (agg.changed / agg.total) * 100;
                 const prev = epochPairMaxTransitionPct.get(key) ?? 0;
                 if (pct > prev) epochPairMaxTransitionPct.set(key, pct);
-            });*/
+            });
             const epochOrderIndex = new Map(allEpochKeys.map((e, i) => [e, i]));
             const getEpochPairTransitionPct = (fromEpoch: string, toEpoch: string): number => {
                 let best = 0;
@@ -799,11 +806,6 @@ export default function SankeyView({
                 }
                 return best;
             };
-            setEpochFilterMeta({
-                allEpochKeys,
-                lastEpoch,
-                pairPctByEpochPair: Object.fromEntries(epochPairMaxTransitionPct.entries()),
-            });
             const visibleEpochSet = new Set<string>();
             for (let i = 0; i < allEpochKeys.length - 1; i += 1) {
                 const fromEpoch = allEpochKeys[i];
@@ -817,14 +819,8 @@ export default function SankeyView({
             if (lastEpoch != null) visibleEpochSet.add(lastEpoch);
             const visibleEpochBase: string[] = allEpochKeys.filter((epoch) => visibleEpochSet.has(epoch));
             const ROW_NAMES: string[] = reverseEpochOrder ? [...visibleEpochBase].reverse() : visibleEpochBase;
-            const maxEpochPct = Math.max(0, ...Array.from(epochPairMaxTransitionPct.values()));
-            setMaxEpochTransitionPct(maxEpochPct);
             setVisibleEpochSummary({ visible: ROW_NAMES.length, total: allEpochKeys.length });
             onVisibleEpochsChange?.(visibleEpochBase);
-            if (epochTransitionThreshold > maxEpochPct) {
-                setEpochTransitionThreshold(maxEpochPct);
-                return;
-            }
             const COLUMN_NAMES: string[] = sortLayerKeys(renderData.layers);
 
 
@@ -833,6 +829,20 @@ export default function SankeyView({
 
             const X_NAMES = SWAP_AXES ? ROW_NAMES : COLUMN_NAMES;
             const Y_NAMES = SWAP_AXES ? COLUMN_NAMES : ROW_NAMES;
+            const width =
+                margin.left +
+                margin.right +
+                CELL_W * X_NAMES.length +
+                Math.max(0, X_NAMES.length - 1) * CELL_GAP;
+            const height =
+                margin.top +
+                margin.bottom +
+                CELL_H * Y_NAMES.length +
+                Math.max(0, Y_NAMES.length - 1) * CELL_GAP;
+
+            svg.attr("width", width)
+                .attr("height", height)
+                .attr("viewBox", `0 0 ${width} ${height}`);
 
             function cellOrigin(rowName: string, columnName: string, stepX: number, stepY: number) {
                 const col = SWAP_AXES ? (ROW_INDEX.get(rowName) ?? 0) : (COLUMN_INDEX.get(columnName) ?? 0);
@@ -1028,30 +1038,52 @@ export default function SankeyView({
                     const sBarH = innerH - yScale(Number(fromN.member_count ?? 0));
                     const tBarTop = innerH - yScale(Number(toN.previous ?? 0));
                     const tBarH = innerH - yScale(Number(toN.member_count ?? 0));
-                    const srcCellCol = SWAP_AXES ? Number(fromN.epoch_idx) : Number(fromN.layer_idx);
-                    const srcCellRow = SWAP_AXES ? Number(fromN.layer_idx) : Number(fromN.epoch_idx);
-                    const tgtCellCol = SWAP_AXES ? Number(toN.epoch_idx) : Number(toN.layer_idx);
-                    const tgtCellRow = SWAP_AXES ? Number(toN.layer_idx) : Number(toN.epoch_idx);
+                    const fromEpochName = String(fromN.epoch ?? "");
+                    const fromLayerName = String(fromN.layer ?? "");
+                    const toEpochName = String(toN.epoch ?? "");
+                    const toLayerName = String(toN.layer ?? "");
+                    const srcCellCol = SWAP_AXES ? ROW_INDEX.get(fromEpochName) : COLUMN_INDEX.get(fromLayerName);
+                    const srcCellRow = SWAP_AXES ? COLUMN_INDEX.get(fromLayerName) : ROW_INDEX.get(fromEpochName);
+                    const tgtCellCol = SWAP_AXES ? ROW_INDEX.get(toEpochName) : COLUMN_INDEX.get(toLayerName);
+                    const tgtCellRow = SWAP_AXES ? COLUMN_INDEX.get(toLayerName) : ROW_INDEX.get(toEpochName);
+                    if (
+                        srcCellCol == null ||
+                        srcCellRow == null ||
+                        tgtCellCol == null ||
+                        tgtCellRow == null
+                    ) {
+                        return;
+                    }
                     const srcCenterX = srcCellCol * cellStepX + cellMargin.left + srcBand + nodeBarOffset + nodeBarWidth / 2;
-                    const srcCenterY = srcCellRow * cellStepY + cellMargin.top + sBarTop + Math.max(0, sBarH) / 2;
+                    const srcTopY = srcCellRow * cellStepY + cellMargin.top + sBarTop;
+                    const srcBottomY = srcTopY + Math.max(0, sBarH);
+                    const srcCenterY = (srcTopY + srcBottomY) / 2;
                     const tgtCenterX = tgtCellCol * cellStepX + cellMargin.left + tgtBand + nodeBarOffset + nodeBarWidth / 2;
-                    const tgtCenterY = tgtCellRow * cellStepY + cellMargin.top + tBarTop + Math.max(0, tBarH) / 2;
+                    const tgtTopY = tgtCellRow * cellStepY + cellMargin.top + tBarTop;
+                    const tgtBottomY = tgtTopY + Math.max(0, tBarH);
+                    const tgtCenterY = (tgtTopY + tgtBottomY) / 2;
+
+                    const verticalForward = tgtCenterY >= srcCenterY;
+                    const startY = verticalForward ? srcBottomY : srcTopY;
+                    const endY = verticalForward ? tgtTopY : tgtBottomY;
+                    const startX = srcCenterX;
+                    const endX = tgtCenterX;
 
                     let pathD = "";
-                    const dxAbs = Math.abs(tgtCenterX - srcCenterX);
-                    const dyAbs = Math.abs(tgtCenterY - srcCenterY);
+                    const dxAbs = Math.abs(endX - startX);
+                    const dyAbs = Math.abs(endY - startY);
                     if (dxAbs >= dyAbs) {
-                        const dx = Math.abs(tgtCenterX - srcCenterX) * 0.45;
-                        pathD = `M ${srcCenterX},${srcCenterY}
-                         C ${srcCenterX + dx},${srcCenterY}
-                           ${tgtCenterX - dx},${tgtCenterY}
-                           ${tgtCenterX},${tgtCenterY}`;
+                        const dx = Math.abs(endX - startX) * 0.45;
+                        pathD = `M ${startX},${startY}
+                         C ${startX + dx},${startY}
+                           ${endX - dx},${endY}
+                           ${endX},${endY}`;
                     } else {
-                        const dy = Math.abs(tgtCenterY - srcCenterY) * 0.45;
-                        pathD = `M ${srcCenterX},${srcCenterY}
-                         C ${srcCenterX},${srcCenterY + dy}
-                           ${tgtCenterX},${tgtCenterY - dy}
-                           ${tgtCenterX},${tgtCenterY}`;
+                        const dy = Math.abs(endY - startY) * 0.45;
+                        pathD = `M ${startX},${startY}
+                         C ${startX},${startY + (verticalForward ? dy : -dy)}
+                           ${endX},${endY - (verticalForward ? dy : -dy)}
+                           ${endX},${endY}`;
                     }
 
                     const strokeColor = kind === "column" ? SANKEY_2D_COLUMN_LINK_COLOR : SANKEY_2D_ROW_LINK_COLOR;
@@ -1085,8 +1117,8 @@ export default function SankeyView({
             linkGroup.style("pointer-events", "none");
             linkGroup2.style("pointer-events", "none");
 
-            xs.forEach((xKey, col) => {
-                ys.forEach((yKey, row) => {
+            X_NAMES.forEach((xKey, col) => {
+                Y_NAMES.forEach((yKey, row) => {
                     const epochName = SWAP_AXES ? xKey : yKey;
                     const layerName = SWAP_AXES ? yKey : xKey;
                     const epochIdx = renderData.epochs.indexOf(epochName);
@@ -1096,7 +1128,7 @@ export default function SankeyView({
 
                     bgLayer
                         .append("rect")
-                        .attr("id", `cell-bg-${xKey}-${yKey}`)
+                        .attr("id", `cell-bg-${epochName}-${layerName}`)
                         .attr("class", "cell-bg")
                         .attr("x", col * cellStepX)
                         .attr("y", row * cellStepY)
@@ -1138,7 +1170,7 @@ export default function SankeyView({
 
                     const g = nodeLayer
                         .append("g")
-                        .attr("id", `cell-${xKey}-${yKey}`)
+                        .attr("id", `cell-${epochName}-${layerName}`)
                         .attr("transform", `translate(${col * cellStepX}, ${row * cellStepY})`)
                         .datum({ rowName: epochName, columnName: layerName, col, row });
 
@@ -2085,29 +2117,8 @@ export default function SankeyView({
     const linkEndPct = linkValueMaxBound > 0 ? (normalizedLinkMax / linkValueMaxBound) * 100 : 100;
     const normalizedEpochThresholdUi = Math.max(0, Math.min(maxEpochTransitionPct, epochTransitionThresholdUi));
     const epochPctPos = maxEpochTransitionPct > 0 ? (normalizedEpochThresholdUi / maxEpochTransitionPct) * 100 : 0;
-    const liveVisibleEpochSummary = (() => {
-        const allEpochKeys = epochFilterMeta.allEpochKeys;
-        const total = allEpochKeys.length || visibleEpochSummary.total;
-        if (!allEpochKeys.length) {
-            return { visible: visibleEpochSummary.visible, total };
-        }
-        const visibleSet = new Set<string>();
-        for (let i = 0; i < allEpochKeys.length - 1; i += 1) {
-            const fromEpoch = allEpochKeys[i];
-            const toEpoch = allEpochKeys[i + 1];
-            const pairPct = Math.max(
-                Number(epochFilterMeta.pairPctByEpochPair[`${fromEpoch}|${toEpoch}`] ?? 0),
-                Number(epochFilterMeta.pairPctByEpochPair[`${toEpoch}|${fromEpoch}`] ?? 0)
-            );
-            if (pairPct >= normalizedEpochThresholdUi) {
-                visibleSet.add(fromEpoch);
-                visibleSet.add(toEpoch);
-            }
-        }
-        if (epochFilterMeta.lastEpoch != null) visibleSet.add(epochFilterMeta.lastEpoch);
-        const visible = visibleSet.size;
-        return { visible, total };
-    })();
+    const shownEpochVisible = Math.max(0, Number(visibleEpochSummary.visible) || 0);
+    const shownEpochTotal = Math.max(shownEpochVisible, Number(visibleEpochSummary.total) || 0);
     const commitEpochThreshold = (nextRaw: number) => {
         const next = Math.max(0, Math.min(maxEpochTransitionPct, Number(nextRaw) || 0));
         setEpochTransitionThresholdUi(next);
@@ -2242,9 +2253,13 @@ export default function SankeyView({
                                         max={maxEpochTransitionPct}
                                         step={0.1}
                                         value={normalizedEpochThresholdUi}
+                                        onInput={(e) => {
+                                            const next = Number((e.target as HTMLInputElement).value);
+                                            commitEpochThreshold(next);
+                                        }}
                                         onChange={(e) => {
                                             const next = Number(e.target.value);
-                                            setEpochTransitionThresholdUi(Math.max(0, Math.min(next, maxEpochTransitionPct)));
+                                            commitEpochThreshold(next);
                                         }}
                                         onPointerUp={(e) => commitEpochThreshold(Number((e.target as HTMLInputElement).value))}
                                         onMouseUp={(e) => commitEpochThreshold(Number((e.target as HTMLInputElement).value))}
@@ -2270,7 +2285,7 @@ export default function SankeyView({
                                 {normalizedEpochThresholdUi.toFixed(2)}%
                             </span>
                             <span className="epoch-visible-summary">
-                                Shown: {liveVisibleEpochSummary.visible}/{liveVisibleEpochSummary.total}
+                                Shown: {shownEpochVisible}/{shownEpochTotal}
                             </span>
                         </div>
                     </div>
@@ -2621,7 +2636,8 @@ export default function SankeyView({
           left: 0;
           top: 7px;
           width: 100%;
-          pointer-events: none;
+          pointer-events: auto;
+          touch-action: none;
           -webkit-appearance: none;
           background: transparent;
         }

@@ -1979,7 +1979,9 @@ export default function Home() {
                                 selectedSplits={selectedSankeySplits}
                                 reverseEpochOrder={reverseEpochOrder}
                                 onToggleEpochOrder={() => setReverseEpochOrder((v) => !v)}
-                                onVisibleEpochsChange={null}
+                                onVisibleEpochsChange={(epochs) => {
+                                    setVisibleEpochs(Array.isArray(epochs) && epochs.length > 0 ? epochs : null);
+                                }}
                                 cellMetricByCell={null}
                                 selectedCellMetric={selectedCellBgMetric}
                                 externalTransform={sankeyViewExternalTransform}
