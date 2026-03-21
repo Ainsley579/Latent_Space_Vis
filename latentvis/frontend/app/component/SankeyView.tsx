@@ -578,7 +578,6 @@ export default function SankeyView({
     const [linkValueMaxBound, setLinkValueMaxBound] = useState(152);
     const autoInitLinkMaxRef = useRef(true);
     const [hoveredCellInfo, setHoveredCellInfo] = useState<CellInfoTag | null>(null);
-    const [pinnedCellInfo, setPinnedCellInfo] = useState<CellInfoTag | null>(null);
     const [hoverTooltip, setHoverTooltip] = useState<HoverTooltip | null>(null);
     const [showTooltips, setShowTooltips] = useState(true);
     const [layout, setLayout] = useState<{
@@ -882,13 +881,19 @@ export default function SankeyView({
                     const layerIdx = renderData.layers.indexOf(columnName);
                     const cellIndex = layerIdx + epochIdx * renderData.layers.length;
                     const children = renderData.cells[cellIndex]?.children ?? [];
-                    const nodesForCell = children.map((nodeId) => renderData.nodes[nodeId]);
+                    const nodesForCell = children.map((nodeId) => renderData.nodes[nodeId]).filter(Boolean);
                     const ids = new Set<number>();
                     nodesForCell.forEach((n: any) => {
-                        const c =
-                            n?.cluster != null && n?.cluster !== ""
-                                ? Number(n.cluster)
-                                : parseClusterFromLabel(String(n?.label ?? ""));
+                        const clusterId = Number(n?.cluster_id);
+                        const cluster = Number(n?.cluster);
+                        const label = String(n?.label ?? "");
+                        const labelMatch = /_C(\d+)$/.exec(label);
+                        const parsedFromLabel = labelMatch ? Number(labelMatch[1]) : Number.NaN;
+                        const c = Number.isFinite(clusterId)
+                            ? clusterId
+                            : Number.isFinite(cluster)
+                                ? cluster
+                                : parsedFromLabel;
                         if (Number.isFinite(c)) ids.add(c);
                     });
                     cellClusterCount.set(`${rowName}|${columnName}`, ids.size || nodesForCell.length || 0);
@@ -1168,21 +1173,12 @@ export default function SankeyView({
 
                 if (isSameLocked) {
                     lockedCell = null;
-                    setPinnedCellInfo(null);
                     setHoverTooltip(null);
                     onCellSelect?.(false);
                     return;
                 }
 
                 lockedCell = { rowName: epochName, columnName: layerName };
-                setPinnedCellInfo({
-                    rowName: epochName,
-                    columnName: layerName,
-                    epochName,
-                    layerName,
-                    col,
-                    row,
-                });
                 onModelSelect?.(epochName);
                 onLayerSelect?.(layerName);
                 onCellSelect?.(true);
@@ -2266,7 +2262,7 @@ export default function SankeyView({
         fowlkes_mallows: "FMI",
     };
     const cellMetricDisplayName = cellMetricDisplayNameMap[selectedCellMetric] ?? selectedCellMetric;
-    const displayCellInfo = pinnedCellInfo ?? hoveredCellInfo;
+    const displayCellInfo = hoveredCellInfo;
     const cellInfoLeft =
         displayCellInfo && layout
             ? transform.x +

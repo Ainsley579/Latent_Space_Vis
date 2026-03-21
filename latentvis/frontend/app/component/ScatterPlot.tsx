@@ -796,7 +796,7 @@ export default function ScatterPlot({
         .attr("fill-opacity", 0.75)
         .attr("stroke", "none")
         .attr("stroke-width", 0.9)
-        .style("cursor", "pointer")
+        .style("cursor", "default")
         .on("mouseover", (event, d) => {
           const token = ++hoverToken;
           const fmtNum = (v: unknown, digits = 5): string => {
@@ -850,14 +850,8 @@ export default function ScatterPlot({
           onPointHoverIdChangeRef.current?.(null);
           tooltip.style("display", "none");
         })
-        .on("click", (event, d) => {
+        .on("click", (event) => {
           event.stopPropagation();
-          onPointSelectRef.current?.({
-            model: modelKeyRef.current,
-            layer: layerKeyRef.current,
-            cluster: d.cluster_id,
-            real_id: String(d.real_id),
-          });
         });
 
       // Hover star is updated in a separate effect and rendered inside the same circle group.

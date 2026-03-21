@@ -644,6 +644,8 @@ export default function Sankey({
 
             const axisLabels = d3.select(groupsRef.axisLabels!);
             // model transition within a single layer
+            const epochsFromData =
+                Array.isArray(data?.epochs) ? data.epochs.map((x: any) => String(x)) : [];
             const visibleEpochOrder =
                 mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
                     ? (reverseEpochOrder ? [...visibleEpochs].reverse() : visibleEpochs).map((x) => String(x))
@@ -652,7 +654,7 @@ export default function Sankey({
                 mode === "model"
                     ? (visibleEpochOrder && visibleEpochOrder.length > 0
                         ? visibleEpochOrder
-                        : (Array.isArray(data?.epochs) ? data.epochs.map((x: any) => String(x)) : []))
+                        : (reverseEpochOrder ? [...epochsFromData].reverse() : epochsFromData))
                     : (Array.isArray(data?.layers) ? data.layers.map((x: any) => String(x)) : []);
             axisLabels.selectAll("text").remove();
 
@@ -717,12 +719,7 @@ export default function Sankey({
                     .text((d) => toShortLayerName(String(d)));
 
             }
-            const order =
-                mode === "model" && visibleEpochOrder
-                    ? visibleEpochOrder
-                    : mode === "model"
-                        ? (reverseEpochOrder ? [...MODEL_ORDER].reverse() : MODEL_ORDER)
-                        : LAYER_ORDER;
+            const order = mode === "model" ? renderOrder : LAYER_ORDER;
             const filterRowsForView = (rowsInput: SampleRow[]): SampleRow[] =>
                 mode === "model" && visibleEpochOrder
                     ? (() => {

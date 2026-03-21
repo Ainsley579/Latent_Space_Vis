@@ -2477,7 +2477,6 @@ export default function Home() {
                                                                                             setHoverFromMouse(null);
                                                                                             setHoverPreview(null);
                                                                                         }}
-                                                                                        onClick={() => toggleLockedHighlight(String(id))}
                                                                                     >
                                                                                         <div
                                                                                             className={
@@ -2524,12 +2523,11 @@ export default function Home() {
                                                                                         </button>
                                                                                         <div
                                                                                             className={
-                                                                                                `absolute bottom-0.5 left-0.5 text-xs px-1 rounded bg-white/85 cursor-pointer ` +
+                                                                                                `absolute bottom-0.5 left-0.5 text-xs px-1 rounded bg-white/85 ` +
                                                                                                 (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
                                                                                             }
                                                                                             onMouseEnter={() => setHoverFromMouse(String(id))}
                                                                                             onMouseLeave={() => setHoverFromMouse(null)}
-                                                                                            onClick={() => setHoveredId((prev) => (prev === String(id) ? null : String(id)))}
                                                                                         >
                                                                                             {id}
                                                                                         </div>

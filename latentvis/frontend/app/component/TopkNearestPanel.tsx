@@ -319,7 +319,6 @@ export default function TopkNearestPanel({
                                     onSmilesPreviewEnd?.();
                                   }
                             }
-                            onClick={id == null ? undefined : () => onSelectHoverId(String(id))}
                           >
                             {id == null ? (
                               <div
@@ -375,12 +374,11 @@ export default function TopkNearestPanel({
                                 </button>
                                 <div
                                   className={
-                                    `absolute bottom-0.5 left-0.5 text-[10px] px-1 rounded bg-white/85 cursor-pointer ` +
+                                    `absolute bottom-0.5 left-0.5 text-[10px] px-1 rounded bg-white/85 ` +
                                     (hoveredId === String(id) ? "text-amber-700 font-semibold" : "text-zinc-700")
                                   }
                                   onMouseEnter={() => onHoverIdChange(String(id))}
                                   onMouseLeave={() => onHoverIdChange(null)}
-                                  onClick={() => onToggleHoverId(String(id))}
                                 >
                                   {(() => {
                                     const parsed = parseSplitTaggedId(id);
