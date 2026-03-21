@@ -1430,6 +1430,174 @@ export default function Home() {
     }, [topkData, selectedModel, selectedLayer]);
 
     useEffect(() => {
+        const controller = new AbortController();
+        const fetchCellTopm = async () => {
+            setIsKnnTopmLoading(true);
+            try {
+                const res = await fetch(`${apiBase}/substructures/cluster-topm`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        dataset: selectedDataSet,
+                        clustering: selectedClustering,
+                        data_split: selectedDataSplit,
+                        epoch: selectedModel,
+                        layer: selectedLayer,
+                        cluster_id: "all",
+                        m: knnTopm,
+                        group: "knn",
+                    }),
+                });
+                if (res.status === 404) {
+                    setSubstructures((prev) =>
+                        prev.filter(
+                            (d) =>
+                                !(
+                                    String(d.model_type) === String(selectedModel) &&
+                                    String(d.layer_name) === String(selectedLayer) &&
+                                    d.group === "knn"
+                                )
+                        )
+                    );
+                    return;
+                }
+                if (!res.ok) throw new Error(`topm failed: ${res.status}`);
+                const json = await res.json();
+                const rows: unknown[] = Array.isArray(json?.rows) ? json.rows : [];
+                const normalizedRows = rows.map((row: unknown) => {
+                    const r = (row ?? {}) as Record<string, unknown>;
+                    const groupRaw = String(r.group ?? "knn").toLowerCase();
+                    const group: "knn" | "kfn" = groupRaw === "kfn" ? "kfn" : "knn";
+                    return {
+                        model_type: String(r.model_type ?? r.model ?? r.epoch ?? selectedModel),
+                        layer_name: String(r.layer_name ?? r.layer ?? selectedLayer),
+                        cluster_id: Number(r.cluster_id ?? r.cluster ?? -1),
+                        group,
+                        k: Number(r.k ?? knnTopm),
+                        real_ids: Array.isArray(r.real_ids) ? (r.real_ids as Array<string | number>) : [],
+                        real_id_smiles: Array.isArray(r.real_id_smiles)
+                            ? (r.real_id_smiles as Array<string | null>)
+                            : undefined,
+                        valid_molecules: Number(r.valid_molecules ?? 0),
+                        missing_real_ids: Array.isArray(r.missing_real_ids) ? (r.missing_real_ids as Array<string | number>) : [],
+                        invalid_smiles_real_ids: Array.isArray(r.invalid_smiles_real_ids)
+                            ? (r.invalid_smiles_real_ids as Array<string | number>)
+                            : [],
+                        mcs_smarts: (r.mcs_smarts ?? r.smarts ?? null) as string | null,
+                        mcs_smiles: (r.mcs_smiles ?? r.mcs_smile ?? r.smiles ?? null) as string | null,
+                    };
+                });
+                setSubstructures((prev) => {
+                    const keep = prev.filter(
+                        (d) =>
+                            !(
+                                String(d.model_type) === String(selectedModel) &&
+                                String(d.layer_name) === String(selectedLayer) &&
+                                d.group === "knn"
+                            )
+                    );
+                    return [...keep, ...normalizedRows.filter((d) => d.group === "knn")];
+                });
+            } catch (err) {
+                if ((err as Error)?.name === "AbortError") return;
+                console.error("Failed to refresh knn top-m substructures:", err);
+                setSubstructures((prev) =>
+                    prev.filter(
+                        (d) =>
+                            !(
+                                String(d.model_type) === String(selectedModel) &&
+                                String(d.layer_name) === String(selectedLayer) &&
+                                d.group === "knn"
+                            )
+                    )
+                );
+            } finally {
+                if (!controller.signal.aborted) setIsKnnTopmLoading(false);
+            }
+        };
+        fetchCellTopm();
+        return () => controller.abort();
+    }, [
+        apiBase,
+        selectedDataSet,
+        selectedClustering,
+        selectedDataSplit,
+        selectedModel,
+        selectedLayer,
+        knnTopm,
+    ]);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        const fetchClusterTanimoto = async () => {
+            setIsClusterTanimotoLoading(true);
+            try {
+                const mLimit = knnTopm === "all" ? null : Number(knnTopm);
+                const clusterRealIdsByCluster: Record<string, string[]> = {};
+                topkNearestRows.forEach((d) => {
+                    const cid = Number(d.cluster_id);
+                    if (!Number.isFinite(cid)) return;
+                    const ids = Array.isArray(d.top_k_closest_real_ids) ? d.top_k_closest_real_ids : [];
+                    const limited = mLimit == null ? ids : ids.slice(0, Math.max(1, mLimit));
+                    if (limited.length > 0) {
+                        clusterRealIdsByCluster[String(cid)] = limited.map((x) => String(x));
+                    }
+                });
+                if (Object.keys(clusterRealIdsByCluster).length === 0) {
+                    setClusterTanimotoByCluster({});
+                    return;
+                }
+                const res = await fetch(`${apiBase}/cluster-tanimoto`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        dataset: selectedDataSet,
+                        clustering: selectedClustering,
+                        data_split: selectedDataSplit,
+                        epoch: selectedModel,
+                        layer: selectedLayer,
+                        cluster_real_ids_by_cluster: clusterRealIdsByCluster,
+                    }),
+                });
+                if (res.status === 404) {
+                    setClusterTanimotoByCluster({});
+                    return;
+                }
+                if (!res.ok) throw new Error(`cluster-tanimoto failed: ${res.status}`);
+                const json = await res.json();
+                const rows = Array.isArray(json?.clusters) ? json.clusters : [];
+                const out: Record<number, number | null> = {};
+                rows.forEach((r: any) => {
+                    const cid = Number(r?.cluster_id);
+                    if (!Number.isFinite(cid)) return;
+                    const t = Number(r?.tanimoto);
+                    out[cid] = Number.isFinite(t) ? t : null;
+                });
+                setClusterTanimotoByCluster(out);
+            } catch (err) {
+                if ((err as Error)?.name === "AbortError") return;
+                console.error("Failed to fetch cluster tanimoto:", err);
+                setClusterTanimotoByCluster({});
+            } finally {
+                if (!controller.signal.aborted) setIsClusterTanimotoLoading(false);
+            }
+        };
+        fetchClusterTanimoto();
+        return () => controller.abort();
+    }, [
+        apiBase,
+        selectedDataSet,
+        selectedClustering,
+        selectedDataSplit,
+        selectedModel,
+        selectedLayer,
+        knnTopm,
+        topkNearestRows,
+    ]);
+
+    useEffect(() => {
         if (!selectedNode) return;
         if (Array.isArray(selectedIds) && selectedIds.length > 0) return;
         const row = clusterSortedMembers.find(
