@@ -436,6 +436,7 @@ export default function Home() {
     const [searchSmiles, setSearchSmiles] = useState<string>("");
     const [showSearchResultsInMembers, setShowSearchResultsInMembers] = useState(false);
     const [lastSearchCount, setLastSearchCount] = useState<number | null>(null);
+    const selectedIdsBeforeSearchRef = useRef<string[] | null>(null);
     const [uploadedUserClustering, setUploadedUserClustering] = useState<UploadedUserClustering | null>(null);
     const [cellMetricByCell, setCellMetricByCell] = useState<Record<string, Record<string, number | null>> | null>(null);
     const [cellMetricNames, setCellMetricNames] = useState<string[]>([]);
@@ -2220,13 +2221,16 @@ export default function Home() {
                             <StructureEditorPanel
                                 dataset={selectedDataSet}
                                 dataSplit={selectedDataSplit}
-                                onSearchResultIds={(ids, smiles) => {
-                                    const uniq = Array.from(new Set(ids.map((x) => String(x))));
-                                    setSearchResultIds(uniq);
-                                    setSearchSmiles(smiles);
-                                    setLastSearchCount(uniq.length);
-                                    setShowSearchResultsInMembers(uniq.length > 0);
-                                    setSelectedIds(uniq.length > 0 ? uniq : null);
+                                                    onSearchResultIds={(ids, smiles) => {
+                                                        const uniq = Array.from(new Set(ids.map((x) => String(x))));
+                                                        if (uniq.length > 0) {
+                                                            selectedIdsBeforeSearchRef.current = Array.isArray(selectedIds) ? [...selectedIds] : null;
+                                                        }
+                                                        setSearchResultIds(uniq);
+                                                        setSearchSmiles(smiles);
+                                                        setLastSearchCount(uniq.length);
+                                                        setShowSearchResultsInMembers(uniq.length > 0);
+                                                        setSelectedIds(uniq.length > 0 ? uniq : null);
                                     setHoveredId(null);
                                     setHoverLock(false);
                                 }}
@@ -2358,6 +2362,7 @@ export default function Home() {
                                                                         className="px-2 py-1 rounded border text-xs border-zinc-300 bg-white text-zinc-700"
                                                                         title={searchSmiles ? `SMILES: ${searchSmiles}` : "Show Search Results"}
                                                                         onClick={() => {
+                                                                            selectedIdsBeforeSearchRef.current = Array.isArray(selectedIds) ? [...selectedIds] : null;
                                                                             setShowSearchResultsInMembers(true);
                                                                             setSelectedIds(searchResultIds);
                                                                             setHoveredId(null);
@@ -2387,11 +2392,17 @@ export default function Home() {
                                                                             title={searchSmiles ? `SMILES: ${searchSmiles}` : "Show Search Results"}
                                                                             onClick={() => {
                                                                                 const next = !showSearchResultsInMembers;
+                                                                                if (next) {
+                                                                                    selectedIdsBeforeSearchRef.current = Array.isArray(selectedIds) ? [...selectedIds] : null;
+                                                                                }
                                                                                 setShowSearchResultsInMembers(next);
                                                                                 if (next) {
                                                                                     setSelectedIds(searchResultIds);
                                                                                     setHoveredId(null);
                                                                                     setHoverLock(false);
+                                                                                } else {
+                                                                                    setSelectedIds(selectedIdsBeforeSearchRef.current);
+                                                                                    setSuppressScatterCluster(false);
                                                                                 }
                                                                             }}
                                                                         >

@@ -2116,8 +2116,21 @@ export default function SankeyView({
             sel.attr("fill", function() {
                 return neutralFill(d3.select(this));
             });
-            sel.classed("node-highlight", false).classed("node-dimmed", false);
-            // Keep current cell/link highlight state (e.g., locked 2D cell focus) when cluster selection is cleared.
+            sel.classed("node-highlight", false).classed("node-dimmed", false).classed("node-context", false);
+            d3.select(container)
+                .selectAll<SVGRectElement, any>('svg rect.cell-bg')
+                .classed("cell-dimmed", false)
+                .classed("cell-highlight", false);
+            d3.select(container)
+                .selectAll<SVGRectElement, any>('svg g[id^="cell-"] rect.bar')
+                .classed("cell-dimmed", false);
+            d3.select(container)
+                .selectAll("path.link-path")
+                .classed("link-dimmed", false)
+                .classed("link-highlight", false);
+            d3.select(container)
+                .selectAll("rect.gap-rect")
+                .classed("gap-dimmed", false);
             return;
         }
         const clusterValues: number[] = [];
