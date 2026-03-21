@@ -1,0 +1,3864 @@
+[
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "12",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "Fenoxycarb",
+      "alloxantin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "12",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "12",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "12",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Carbromal",
+      "Butylbenzene",
+      "phenobarbital"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "Dicofol",
+      "triamcinolone diacetate",
+      "triamcinolone acetonide",
+      "cortisone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "12",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "12",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "mannitol",
+      "glucose",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "12",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "12",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "phenobarbital",
+      "Butylbenzene",
+      "Terbutryn"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Di(2-ethylhexyl)-phthalate",
+      "Dicofol",
+      "p-terphenyl",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "12",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "12",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "12",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "phenobarbital",
+      "Diphenylamine",
+      "Cycluron",
+      "p-t-Butylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "Benfluralin",
+      "p-terphenyl",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "12",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "15",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "Fenoxycarb",
+      "alloxantin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "15",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "15",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "15",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Carbromal",
+      "phenobarbital",
+      "Menadione"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "triamcinolone diacetate",
+      "Dicofol",
+      "triamcinolone acetonide",
+      "cortisone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "15",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "15",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "15",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "15",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "phenobarbital",
+      "Butylbenzene",
+      "Menadione"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "p-terphenyl",
+      "Pentachlorophenol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "15",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "15",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "15",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "phenobarbital",
+      "2,4,6-Trinitrotoluene",
+      "p-t-Butylphenol",
+      "Cycluron"
+    ],
+    "top_k_farthest_real_ids": [
+      "Dicofol",
+      "Benzo(b)fluorene",
+      "Benfluralin",
+      "p-terphenyl",
+      "Pentachlorophenol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "15",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "10",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "Fenoxycarb",
+      "alloxantin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "10",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "10",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "10",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Carbromal",
+      "Butylbenzene",
+      "phenobarbital"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "triamcinolone diacetate",
+      "triamcinolone acetonide",
+      "methyltestosterone acetate",
+      "cortisone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "10",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "10",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "mannitol",
+      "glucose",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "10",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "10",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Butylbenzene",
+      "p-t-Butylphenol",
+      "phenobarbital",
+      "Terbutryn"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "Di(2-ethylhexyl)-phthalate",
+      "9-Methylanthracene",
+      "p-terphenyl"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "10",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "10",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "10",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Terbutryn",
+      "phenobarbital",
+      "2,3-Dichlorophenol",
+      "Diphenylamine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "9-Methylanthracene",
+      "Pentachlorophenol",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "10",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "4",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Carbromal",
+      "Metranidazole",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "oxyphenbutazone",
+      "Griseofulvin",
+      "chloropropylate",
+      "Coumaphos",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "4",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "4",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "cortisone acetate",
+      "prednisolone acetate",
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "triamcinolone diacetate",
+      "Hydroxyprogesterone-17a",
+      "triamcinolone acetonide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "4",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "mannitol",
+      "glucose",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "4",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "4",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Butylbenzene",
+      "Menadione",
+      "2,3-Dichlorophenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "triamcinolone acetonide",
+      "Benzo(b)fluorene",
+      "triamcinolone diacetate",
+      "cortisone acetate",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "4",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "4",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Butylbenzene",
+      "m-Chloroiodobenzene",
+      "fensulfothion",
+      "p-t-Butylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Dicofol",
+      "Benzo(b)fluorene",
+      "Pentachlorophenol",
+      "9-Methylanthracene",
+      "p-terphenyl"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "4",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "4",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "m-Chloroiodobenzene",
+      "Butylbenzene",
+      "Ethion",
+      "cycloate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Dicofol",
+      "Benzo(b)fluorene",
+      "Pentachlorophenol",
+      "9-Methylanthracene",
+      "triamcinolone acetonide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "4",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 4
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "4",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Butylbenzene",
+      "1,2,4,5-Tetrabromobenzene"
+    ],
+    "top_k_farthest_real_ids": [
+      "oxyphenbutazone",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "p-terphenyl",
+      "Nitrazepam",
+      "Griseofulvin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "1",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "cortisone acetate",
+      "prednisolone acetate",
+      "Cortisone",
+      "methyltestosterone acetate",
+      "triamcinolone acetonide"
+    ],
+    "top_k_farthest_real_ids": [
+      "triamcinolone diacetate",
+      "Hydroxyprogesterone-17a",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Benzocaine",
+      "Terbutryn",
+      "1,2,4,5-Tetrabromobenzene",
+      "5-Allyl-5-isopropylbarbital"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5'-PCB",
+      "triamcinolone diacetate",
+      "triamcinolone acetonide",
+      "2,2',3,4,5,5',6-PCB",
+      "Benzo(b)fluorene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "1",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "Iodomethane"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Terbutryn",
+      "1,2,4,5-Tetrabromobenzene",
+      "5-Allyl-5-isopropylbarbital",
+      "Benzocaine"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,2',3,4,5,5',6-PCB",
+      "triamcinolone acetonide",
+      "triamcinolone diacetate",
+      "Benzo(b)fluorene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "1",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "Iodomethane"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "1",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Dapsone",
+      "Quinethazone",
+      "Fenoxycarb",
+      "Fluorene ",
+      "1,7-phenantroline"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,2',3,4,5,5',6-PCB",
+      "1,2,4,5-Tetrabromobenzene",
+      "triamcinolone acetonide",
+      "triamcinolone diacetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "1",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "1",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "Disulfoton",
+      "glucose",
+      "Pentachloroethane",
+      "4-hydroxypyridine",
+      "thiofanox"
+    ],
+    "top_k_farthest_real_ids": [
+      "fensulfothion",
+      "propachlor",
+      "Terbutryn",
+      "5-Allyl-5-isopropylbarbital",
+      "Benzocaine"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "7",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "chloropropylate",
+      "Fenoxycarb"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "7",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "7",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "7",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "mannitol",
+      "glucose",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "7",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Butylbenzene",
+      "Carbromal",
+      "Menadione"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "Benzo(b)fluorene",
+      "triamcinolone acetonide",
+      "triamcinolone diacetate",
+      "methyltestosterone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "7",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "7",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "7",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Butylbenzene",
+      "p-t-Butylphenol",
+      "phenobarbital",
+      "m-Chloronitrobenzene "
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "9-Methylanthracene",
+      "p-terphenyl",
+      "Pentachlorophenol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "7",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "7",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Butylbenzene",
+      "Menadione",
+      "phenobarbital",
+      "2,3-Dichlorophenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "Di(2-ethylhexyl)-phthalate",
+      "9-Methylanthracene",
+      "p-terphenyl"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "7",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 4
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "7",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "3",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "propachlor",
+      "Butylbenzene",
+      "Metranidazole"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,2',3,4,5,5',6-PCB",
+      "oxyphenbutazone",
+      "2,3',4,4',5-PCB"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "3",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "cortisone acetate",
+      "prednisolone acetate",
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "triamcinolone diacetate",
+      "Hydroxyprogesterone-17a",
+      "triamcinolone acetonide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "3",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "Pentachloroethane"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "3",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Butylbenzene",
+      "m-Chloronitrobenzene "
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "p-terphenyl",
+      "triamcinolone acetonide",
+      "chloropropylate",
+      "triamcinolone diacetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "3",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "3",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "mannitol",
+      "glucose"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 2
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "3",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "m-Chloronitrobenzene ",
+      "fensulfothion",
+      "Theophylline",
+      "4-Chloroanisole"
+    ],
+    "top_k_farthest_real_ids": [
+      "Dicofol",
+      "Benzo(b)fluorene",
+      "Pentachlorophenol",
+      "9-Methylanthracene",
+      "p-terphenyl"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "3",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "mannitol",
+      "glucose"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 2
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "3",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "3",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Theophylline",
+      "m-Chloronitrobenzene ",
+      "2,4,6-Trinitrotoluene",
+      "m-Chloroaniline"
+    ],
+    "top_k_farthest_real_ids": [
+      "Dicofol",
+      "Benzo(b)fluorene",
+      "Pentachlorophenol",
+      "9-Methylanthracene",
+      "p-terphenyl"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "3",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 4
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "3",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "6",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Benfluralin",
+      "Coumaphos",
+      "chloropropylate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "6",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "6",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "6",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "mannitol",
+      "glucose",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "6",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Butylbenzene",
+      "Carbromal",
+      "phenobarbital"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "triamcinolone acetonide",
+      "triamcinolone diacetate",
+      "cortisone acetate",
+      "methyltestosterone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "6",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "6",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "6",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Butylbenzene",
+      "phenobarbital",
+      "p-t-Butylphenol",
+      "m-Chloroiodobenzene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Dicofol",
+      "Benzo(b)fluorene",
+      "Pentachlorophenol",
+      "9-Methylanthracene",
+      "p-terphenyl"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "6",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "6",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "6",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Menadione",
+      "m-Chloroiodobenzene",
+      "2,3-Dichlorophenol",
+      "Butylbenzene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Dicofol",
+      "Benzo(b)fluorene",
+      "Di(2-ethylhexyl)-phthalate",
+      "Pentachlorophenol",
+      "methyltestosterone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "6",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "19",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "Fenoxycarb",
+      "alloxantin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "19",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "19",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "19",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Carbromal",
+      "Menadione",
+      "5-Allyl-5-isopropylbarbital"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "triamcinolone diacetate",
+      "triamcinolone acetonide",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "19",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,4,5,5',6-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benfluralin",
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "19",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "19",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "19",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "phenobarbital",
+      "Butylbenzene",
+      "Menadione"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "p-terphenyl",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "19",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "19",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "19",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "phenobarbital",
+      "p-t-Butylphenol",
+      "2,4,6-Trinitrotoluene",
+      "Cycluron"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "Benfluralin",
+      "p-terphenyl",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "19",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 2
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "18",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "Fenoxycarb",
+      "alloxantin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "18",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "18",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "18",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Carbromal",
+      "Menadione",
+      "5-Allyl-5-isopropylbarbital"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "triamcinolone diacetate",
+      "triamcinolone acetonide",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "18",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,4,5,5',6-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benfluralin",
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "18",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "18",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "18",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "phenobarbital",
+      "Butylbenzene",
+      "Menadione"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "p-terphenyl",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "18",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "18",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "18",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "phenobarbital",
+      "2,4,6-Trinitrotoluene",
+      "p-t-Butylphenol",
+      "Cycluron"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "Benfluralin",
+      "p-terphenyl",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "18",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "mannitol",
+      "glucose"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 2
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "14",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "Fenoxycarb",
+      "alloxantin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "14",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "14",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "14",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Carbromal",
+      "phenobarbital",
+      "Menadione"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "triamcinolone diacetate",
+      "Dicofol",
+      "triamcinolone acetonide",
+      "cortisone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "14",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "14",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "14",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "phenobarbital",
+      "Butylbenzene",
+      "Terbutryn"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "p-terphenyl",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "14",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "14",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "14",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "14",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "phenobarbital",
+      "2,4,6-Trinitrotoluene",
+      "p-t-Butylphenol",
+      "Cycluron"
+    ],
+    "top_k_farthest_real_ids": [
+      "Dicofol",
+      "Benzo(b)fluorene",
+      "Benfluralin",
+      "p-terphenyl",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "14",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Benzocaine",
+      "p-t-Butylphenol",
+      "Metranidazole",
+      "2,3,4,5-Tetrachlorophenol",
+      "2,3,4,6-Tetrachlorophenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "oxyphenbutazone",
+      "Griseofulvin",
+      "Nitrazepam",
+      "Fenoxycarb",
+      "chloropropylate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "0",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "cortisone acetate",
+      "prednisolone acetate",
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "triamcinolone diacetate",
+      "Hydroxyprogesterone-17a",
+      "triamcinolone acetonide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "cortisone acetate",
+      "prednisolone acetate",
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene",
+      "Di(2-ethylhexyl)-phthalate",
+      "triamcinolone diacetate",
+      "triamcinolone acetonide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Benzocaine",
+      "p-t-Butylphenol",
+      "Metranidazole",
+      "2,3,4,5-Tetrachlorophenol",
+      "2,3,4,6-Tetrachlorophenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Nitrazepam",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "chloropropylate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "0",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "Iodomethane"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "Metranidazole",
+      "2,3,4,6-Tetrachlorophenol",
+      "2,3,4,5-Tetrachlorophenol",
+      "Benzocaine",
+      "p-t-Butylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "oxyphenbutazone",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Nitrazepam",
+      "Benzo(b)fluorene",
+      "alloxantin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Iodomethane"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "0",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "prednisolone acetate",
+      "cortisone acetate",
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene",
+      "triamcinolone acetonide",
+      "triamcinolone diacetate",
+      "Griseofulvin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "0",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,3,4,6-Tetrachlorophenol",
+      "Metranidazole",
+      "2,3,4,5-Tetrachlorophenol",
+      "7-methylpteridine",
+      "2-hydroxypteridine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Nitrazepam",
+      "Benzo(b)fluorene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "0",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "prednisolone acetate",
+      "cortisone acetate",
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a"
+    ],
+    "top_k_farthest_real_ids": [
+      "triamcinolone acetonide",
+      "triamcinolone diacetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "0",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "13",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "Fenoxycarb",
+      "alloxantin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "13",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "13",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "13",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Carbromal",
+      "phenobarbital",
+      "Butylbenzene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "triamcinolone diacetate",
+      "triamcinolone acetonide",
+      "cortisone acetate",
+      "methyltestosterone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "13",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Dicofol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "13",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "mannitol",
+      "glucose",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "13",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "phenobarbital",
+      "Butylbenzene",
+      "Terbutryn"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "p-terphenyl",
+      "Pentachlorophenol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "13",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "13",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "13",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "13",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "phenobarbital",
+      "Diphenylamine",
+      "1-Napthol",
+      "p-t-Butylphenol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "Benfluralin",
+      "p-terphenyl",
+      "Pentachlorophenol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "13",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "11",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "Fenoxycarb",
+      "alloxantin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "11",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "11",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "11",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Carbromal",
+      "Butylbenzene",
+      "phenobarbital"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "Dicofol",
+      "triamcinolone diacetate",
+      "triamcinolone acetonide",
+      "cortisone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "11",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "11",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "mannitol",
+      "glucose",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "11",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "11",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Butylbenzene",
+      "p-t-Butylphenol",
+      "phenobarbital",
+      "Terbutryn"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "Di(2-ethylhexyl)-phthalate",
+      "p-terphenyl",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "11",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "11",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "phenobarbital",
+      "Menadione",
+      "2,3-Dichlorophenol",
+      "Terbutryn"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "9-Methylanthracene",
+      "p-terphenyl",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "11",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "11",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "5",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Carbromal",
+      "Metranidazole",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "chloropropylate",
+      "Fenoxycarb"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "5",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "5",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "cortisone acetate",
+      "Hydroxyprogesterone-17a",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Ethion",
+      "triamcinolone diacetate",
+      "Benfluralin",
+      "triamcinolone acetonide",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "5",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Butylbenzene",
+      "Menadione",
+      "Carbromal"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "triamcinolone acetonide",
+      "triamcinolone diacetate",
+      "Benzo(b)fluorene",
+      "cortisone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "5",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "5",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "mannitol",
+      "glucose",
+      "Propetamphos",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 4
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "5",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "5",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "5",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "fensulfothion",
+      "propachlor",
+      "phenobarbital",
+      "Menadione",
+      "ethofumesate"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Benzo(b)fluorene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "5",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "5",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Butylbenzene",
+      "Menadione",
+      "Diphenylamine",
+      "m-Chloroiodobenzene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "Di(2-ethylhexyl)-phthalate",
+      "9-Methylanthracene",
+      "Pentachlorophenol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "5",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "17",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "Fenoxycarb",
+      "alloxantin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "17",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "17",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "17",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Carbromal",
+      "Menadione",
+      "phenobarbital"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "triamcinolone diacetate",
+      "triamcinolone acetonide",
+      "cortisone acetate",
+      "methyltestosterone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "17",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,4,5,5',6-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benfluralin",
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "17",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "17",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "17",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "phenobarbital",
+      "Butylbenzene",
+      "ethofumesate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "p-terphenyl",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "17",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "17",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "phenobarbital",
+      "2,4,6-Trinitrotoluene",
+      "p-t-Butylphenol",
+      "Cycluron"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "Benfluralin",
+      "p-terphenyl"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "17",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "17",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 2
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "2",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Butylbenzene",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5'-PCB",
+      "oxyphenbutazone",
+      "2,2',3,4,5,5',6-PCB",
+      "Griseofulvin",
+      "p-terphenyl"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "2",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "2",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "cortisone acetate",
+      "prednisolone acetate",
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "triamcinolone diacetate",
+      "Hydroxyprogesterone-17a",
+      "triamcinolone acetonide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "2",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "1,3,5-Tribromobenzene",
+      "2,3-Dichlorophenol",
+      "Benzocaine",
+      "4-methylpteridine"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Dicofol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "2",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "2",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 2
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "2",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "2,3-Dichlorophenol",
+      "1,3,5-Tribromobenzene",
+      "4-methylpteridine",
+      "fensulfothion"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Benzo(b)fluorene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "2",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "2",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "mannitol"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "2",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "1,7-phenantroline",
+      "Benfluralin",
+      "Fluorene ",
+      "Pentachlorophenol",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Benzo(b)fluorene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "2",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 1
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "2",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "4-hydroxypyridine",
+      "Carbromal",
+      "Meprobamate",
+      "alloxan",
+      "Propetamphos"
+    ],
+    "top_k_farthest_real_ids": [
+      "fensulfothion",
+      "guanine",
+      "alloxantin",
+      "4-methylpteridine",
+      "propachlor"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "9",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "alloxantin",
+      "Fenoxycarb"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "9",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "9",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "9",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Carbromal",
+      "Butylbenzene",
+      "Menadione"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "Dicofol",
+      "triamcinolone diacetate",
+      "Benzo(b)fluorene",
+      "triamcinolone acetonide"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "9",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "9",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "9",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "9",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Butylbenzene",
+      "p-t-Butylphenol",
+      "phenobarbital",
+      "m-Chloronitrobenzene "
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "9-Methylanthracene",
+      "Di(2-ethylhexyl)-phthalate",
+      "p-terphenyl"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "9",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "9",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "9",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Menadione",
+      "2,3-Dichlorophenol",
+      "phenobarbital",
+      "Diphenylamine"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Di(2-ethylhexyl)-phthalate",
+      "Dicofol",
+      "9-Methylanthracene",
+      "Pentachlorophenol"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "9",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "16",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "Fenoxycarb",
+      "alloxantin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "16",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Benfluralin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "16",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "16",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Carbromal",
+      "Menadione",
+      "phenobarbital"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "triamcinolone diacetate",
+      "triamcinolone acetonide",
+      "cortisone acetate",
+      "methyltestosterone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "16",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,4,5,5',6-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benfluralin",
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "16",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "16",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "16",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "phenobarbital",
+      "Butylbenzene",
+      "Menadione"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "p-terphenyl",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "16",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "16",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "16",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "phenobarbital",
+      "2,4,6-Trinitrotoluene",
+      "p-t-Butylphenol",
+      "Cycluron"
+    ],
+    "top_k_farthest_real_ids": [
+      "Dicofol",
+      "Benzo(b)fluorene",
+      "Benfluralin",
+      "p-terphenyl",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "16",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 2
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "8",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "p-t-Butylphenol",
+      "Benzocaine",
+      "Metranidazole",
+      "Carbromal",
+      "propachlor"
+    ],
+    "top_k_farthest_real_ids": [
+      "Griseofulvin",
+      "oxyphenbutazone",
+      "Coumaphos",
+      "Benfluralin",
+      "alloxantin"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "8",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "Cortisone",
+      "methyltestosterone acetate",
+      "Hydroxyprogesterone-17a",
+      "cortisone acetate",
+      "prednisolone acetate"
+    ],
+    "top_k_farthest_real_ids": [
+      "Disulfoton",
+      "triamcinolone diacetate",
+      "Ethion",
+      "triamcinolone acetonide",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_1",
+    "model_type": "8",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,3',4,4',5-PCB",
+      "Dicofol",
+      "2,2',3,3',4,4',5,5'-PCB"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "8",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "p-t-Butylphenol",
+      "Carbromal",
+      "Butylbenzene",
+      "Menadione"
+    ],
+    "top_k_farthest_real_ids": [
+      "Di(2-ethylhexyl)-phthalate",
+      "triamcinolone diacetate",
+      "triamcinolone acetonide",
+      "Benzo(b)fluorene",
+      "methyltestosterone acetate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "8",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "Dicofol"
+    ],
+    "top_k_farthest_real_ids": [
+      "Coronene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_2",
+    "model_type": "8",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "8",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "8",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Butylbenzene",
+      "phenobarbital",
+      "p-t-Butylphenol",
+      "Menadione"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Dicofol",
+      "9-Methylanthracene",
+      "Pentachlorophenol",
+      "Di(2-ethylhexyl)-phthalate"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "gnn_layer_3",
+    "model_type": "8",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "8",
+    "cluster_id": 0,
+    "top_k_closest_real_ids": [
+      "2,2',3,4,5,5',6-PCB",
+      "2,2',3,3',4,4',5,5'-PCB",
+      "2,3',4,4',5-PCB",
+      "2,2',4,4',6,6'-PCB",
+      "Coronene"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "8",
+    "cluster_id": 1,
+    "top_k_closest_real_ids": [
+      "propachlor",
+      "Menadione",
+      "2,3-Dichlorophenol",
+      "Diphenylamine",
+      "Butylbenzene"
+    ],
+    "top_k_farthest_real_ids": [
+      "Benzo(b)fluorene",
+      "Di(2-ethylhexyl)-phthalate",
+      "Dicofol",
+      "Pentachlorophenol",
+      "9-Methylanthracene"
+    ],
+    "k": 5
+  },
+  {
+    "layer_name": "ffn_layer_1",
+    "model_type": "8",
+    "cluster_id": 2,
+    "top_k_closest_real_ids": [
+      "glucose",
+      "mannitol",
+      "alloxantin"
+    ],
+    "top_k_farthest_real_ids": [],
+    "k": 3
+  }
+]

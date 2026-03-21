@@ -1,0 +1,31 @@
+{
+  "runs": [
+    {
+      "dataset": "chemprop",
+      "split": "val",
+      "method": "knn",
+      "params": {
+        "k": 2
+      },
+      "path": "/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemprop/val/sweeps/knn/k_2"
+    },
+    {
+      "dataset": "chemprop",
+      "split": "val",
+      "method": "knn",
+      "params": {
+        "k": 3
+      },
+      "path": "/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemprop/val/sweeps/knn/k_3"
+    },
+    {
+      "dataset": "chemprop",
+      "split": "val",
+      "method": "knn",
+      "params": {
+        "k": 4
+      },
+      "path": "/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/data/chemprop/val/sweeps/knn/k_4"
+    }
+  ]
+}

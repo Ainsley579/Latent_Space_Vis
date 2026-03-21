@@ -7,14 +7,14 @@
       "2-Heptanone",
       "2-Hexanone",
       "2-Octanone",
-      "2-Ethylhexanal",
-      "diisooctyl phthalate"
+      "diisooctyl phthalate",
+      "Ethyl heptanoate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
+      "Tetrachloromethane",
       "Dibromomethane"
     ],
     "k": 5
@@ -31,11 +31,11 @@
       "Glafenine"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
+      "Ethane",
       "Mirex",
       "Kepone",
-      "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Methyl hydrazine",
+      "Hexachloroethane"
     ],
     "k": 5
   },
@@ -73,7 +73,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -84,11 +84,11 @@
     "model_type": "15",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Permethrin"
+      "Estragole",
+      "phenothrin"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -119,14 +119,14 @@
       "pyracarbolid",
       "Clomazone",
       "Carboxin",
-      "osthole"
+      "Oxazepam"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
-      "Tetrachloromethane",
-      "Chlorodibromethane",
-      "d-inositol"
+      "Diiodomethane",
+      "Urea",
+      "Thiourea"
     ],
     "k": 5
   },
@@ -142,11 +142,11 @@
       "3-Heptanol "
     ],
     "top_k_farthest_real_ids": [
-      "Urea",
-      "Diiodomethane",
-      "Thiourea",
       "Ethane",
-      "Dibromomethane"
+      "Ethyne",
+      "Hexachloroethane",
+      "Methyl hydrazine",
+      "Methanol"
     ],
     "k": 5
   },
@@ -159,7 +159,7 @@
       "ethiofencarb",
       "Napropamide",
       "Isoprocarb",
-      "ethyl cinnamate"
+      "Carboxin"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -175,11 +175,11 @@
     "model_type": "15",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
-      "1,2,4-Trichlorobenzene",
       "O,P'-DDD",
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
-      "1,2,3-Trichlorobenzene"
+      "1,2,3-Trichlorobenzene",
+      "2,3',5-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -196,62 +196,22 @@
     "cluster_id": 0,
     "top_k_closest_real_ids": [
       "Diazepam",
-      "Metolazone",
       "Clonazepam",
-      "osthole",
-      "Coumatetralyl"
+      "Coumatetralyl",
+      "pyracarbolid",
+      "Buturon"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Eicosane",
       "Benzo[ghi]perylene",
-      "Perylene"
+      "Perylene",
+      "Napthacene"
     ],
     "k": 5
   },
   {
     "layer_name": "gnn_layer_6",
-    "model_type": "15",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "1-Phenylethanol",
-      "Acetophenone",
-      "2-Chloroanisole",
-      "3-Chloroanisole",
-      "Eugenol"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Tribromomethane",
-      "Ethane",
-      "Urea",
-      "Diiodomethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "15",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Diazepam",
-      "Metolazone",
-      "Clonazepam",
-      "osthole",
-      "Coumatetralyl"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Eicosane",
-      "Benzo[ghi]perylene",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
     "model_type": "15",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
@@ -286,7 +246,7 @@
       "Methanol",
       "Methyl hydrazine",
       "Glycerol",
-      "Erythritol"
+      "Sorbitol"
     ],
     "k": 5
   },
@@ -303,50 +263,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Eicosane",
       "2,2',3,3',5,5',6,6'-PCB",
-      "Benzo[ghi]perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "15",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "4-Methylbiphenyl",
-      "Parathion",
-      "Betamethasone-17-valerate",
-      "Norethisterone",
-      "chlorquinox"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
       "Benzo[ghi]perylene",
-      "Eicosane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "15",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "4-Heptanol",
-      "5-methylcytosine",
-      "Ethane",
-      "3-Heptanol ",
-      "Caproaldehyde"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Methyl hydrazine",
-      "Urea",
-      "Glycerol",
-      "Acetamide"
+      "Perylene"
     ],
     "k": 5
   },
@@ -358,15 +278,15 @@
       "2-Heptanone",
       "2-Hexanone",
       "2-Octanone",
-      "Pebulate",
-      "2-Ethylhexanal"
+      "4-Heptanone",
+      "Ethyl heptanoate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
-      "Dibromomethane"
+      "Tetrachloromethane",
+      "Ethane"
     ],
     "k": 5
   },
@@ -382,11 +302,11 @@
       "Glafenine"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
       "Mirex",
       "Kepone",
       "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Dimethoxymethane",
+      "1,1,1-Trichloroethane"
     ],
     "k": 5
   },
@@ -424,7 +344,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -435,11 +355,11 @@
     "model_type": "8",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Estragole"
+      "Estragole",
+      "Neburon"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -477,7 +397,7 @@
       "Tribromomethane",
       "Urea",
       "Diiodomethane",
-      "Tetrachloromethane"
+      "Thiourea"
     ],
     "k": 5
   },
@@ -486,18 +406,18 @@
     "model_type": "8",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
+      "Estragole",
       "Carvacrol",
       "Anethole",
       "Carvone",
-      "Propylbenzene ",
-      "2-Ethyl-2-hexanal"
+      "Propylbenzene "
     ],
     "top_k_farthest_real_ids": [
-      "Thiourea",
       "Ethane",
       "Ethyne",
       "Methyl hydrazine",
-      "Methanol"
+      "Methanol",
+      "2,2,4-Trimethylpentane"
     ],
     "k": 5
   },
@@ -514,10 +434,10 @@
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
+      "Urea",
       "Tribromomethane",
-      "Tetrachloromethane",
-      "Chlorodibromethane",
-      "Bromodichloromethane"
+      "Thiourea",
+      "Diiodomethane"
     ],
     "k": 5
   },
@@ -533,11 +453,11 @@
       "Carvacrol"
     ],
     "top_k_farthest_real_ids": [
-      "Urea",
       "Ethane",
-      "Diiodomethane",
-      "Thiourea",
-      "Dibromomethane"
+      "Ethyne",
+      "Methyl hydrazine",
+      "Hexachloroethane",
+      "Methanol"
     ],
     "k": 5
   },
@@ -548,16 +468,16 @@
     "top_k_closest_real_ids": [
       "O,P'-DDD",
       "2,4'-PCB",
-      "2,6-PCB",
-      "2,2'-PCB",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "3,4-PCB",
+      "2,4,6-PCB"
     ],
     "top_k_farthest_real_ids": [
-      "hexacosane",
-      "Eicosane",
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "Hexadecane",
-      "Tetradecane"
+      "Benzo[ghi]perylene",
+      "Perylene",
+      "Napthacene",
+      "Benzo(a)pyrene"
     ],
     "k": 5
   },
@@ -568,56 +488,16 @@
     "top_k_closest_real_ids": [
       "Eugenol",
       "pyracarbolid",
-      "ethyl cinnamate",
       "Isoprocarb",
-      "Ethyl benzoate "
+      "Ethyl benzoate ",
+      "Risocaine"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Ethane",
-      "Tribromomethane",
-      "Urea",
-      "Diiodomethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "8",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "O,P'-DDD",
-      "2,4'-PCB",
-      "2,6-PCB",
-      "2,2'-PCB",
-      "2,3',5-PCB"
-    ],
-    "top_k_farthest_real_ids": [
-      "hexacosane",
       "Eicosane",
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "Hexadecane",
-      "Tetradecane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "8",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Eugenol",
-      "pyracarbolid",
-      "ethyl cinnamate",
-      "Isoprocarb",
-      "Ethyl benzoate "
-    ],
-    "top_k_farthest_real_ids": [
       "Tetrabromomethane",
+      "Hexadecane",
       "Ethane",
-      "Tribromomethane",
-      "Urea",
-      "Diiodomethane"
+      "Tribromomethane"
     ],
     "k": 5
   },
@@ -627,17 +507,17 @@
     "cluster_id": 0,
     "top_k_closest_real_ids": [
       "Siduron",
-      "osthole",
       "butachlor",
-      "Dienestrol",
-      "benodanil"
+      "benodanil",
+      "diethylstilbestrol",
+      "Warfarin"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Eicosane",
       "2,2',3,3',5,5',6,6'-PCB",
-      "Benzo[ghi]perylene"
+      "Benzo[ghi]perylene",
+      "Perylene"
     ],
     "k": 5
   },
@@ -649,55 +529,15 @@
       "3-Methylphenol",
       "Propyl acetate",
       "p-Cresol",
-      "Propyl formate",
-      "2-Methylphenol"
+      "2-Methylphenol",
+      "3-Chlorophenol"
     ],
     "top_k_farthest_real_ids": [
+      "Tetrabromomethane",
       "Urea",
       "Methanol",
       "Methyl hydrazine",
-      "Tribromomethane",
-      "Glycerol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "8",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Betamethasone-17-valerate",
-      "Ethylcyclohexane",
-      "1-Bromoheptane",
-      "Niclosamide",
-      "Lenacil"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "Eicosane",
-      "Benzo[ghi]perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "8",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "uracil",
-      "2,4-Dichlorophenol ",
-      "N-Methylaniline ",
-      "4-Heptanone",
-      "p-Chloroaniline"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Methyl hydrazine",
-      "Urea",
-      "Pyrimidine",
-      "Glycerol"
+      "Tribromomethane"
     ],
     "k": 5
   },
@@ -710,14 +550,14 @@
       "2-Hexanone",
       "diisooctyl phthalate",
       "Ethyl hexanoate",
-      "Pebulate"
+      "Ethyl butyrate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
-      "Dibromomethane"
+      "Tetrachloromethane",
+      "Ethane"
     ],
     "k": 5
   },
@@ -733,11 +573,11 @@
       "p-Chloroacetanilide"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
       "Mirex",
       "Kepone",
       "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Dimethoxymethane",
+      "1,1,1-Trichloroethane"
     ],
     "k": 5
   },
@@ -757,7 +597,7 @@
       "Ethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Urea"
+      "Decalin"
     ],
     "k": 5
   },
@@ -775,7 +615,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -786,11 +626,11 @@
     "model_type": "11",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Permethrin"
+      "Estragole",
+      "phenothrin"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -818,10 +658,10 @@
     "cluster_id": 0,
     "top_k_closest_real_ids": [
       "Propanil",
-      "Clomazone",
-      "Carboxin",
       "Diazepam",
-      "Metolazone"
+      "Metolazone",
+      "Neburon",
+      "Lorazepam"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -845,10 +685,10 @@
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
-      "d-inositol",
       "Ethyne",
       "Methyl hydrazine",
-      "Methanol"
+      "Methanol",
+      "Ethylene"
     ],
     "k": 5
   },
@@ -861,7 +701,7 @@
       "ethiofencarb",
       "Napropamide",
       "Isoprocarb",
-      "ethyl cinnamate"
+      "Carboxin"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -880,8 +720,8 @@
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
       "O,P'-DDD",
-      "1,2,4-Trichlorobenzene",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "2,3',4',5-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -898,17 +738,17 @@
     "cluster_id": 0,
     "top_k_closest_real_ids": [
       "Diazepam",
-      "Metolazone",
       "Clonazepam",
       "Coumatetralyl",
-      "osthole"
+      "pyracarbolid",
+      "Nimetazepam"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Benzo[ghi]perylene",
       "Eicosane",
-      "Perylene"
+      "Perylene",
+      "Napthacene"
     ],
     "k": 5
   },
@@ -919,49 +759,9 @@
     "top_k_closest_real_ids": [
       "Acetophenone",
       "1-Phenylethanol",
-      "2-Chloroanisole",
-      "3-Chloroanisole",
-      "Eugenol"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Ethane",
-      "Tribromomethane",
-      "Diiodomethane",
-      "Urea"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "11",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Diazepam",
-      "Metolazone",
-      "Clonazepam",
-      "Coumatetralyl",
-      "osthole"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Benzo[ghi]perylene",
-      "Eicosane",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "11",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Acetophenone",
-      "1-Phenylethanol",
-      "2-Chloroanisole",
-      "3-Chloroanisole",
-      "Eugenol"
+      "Thymol",
+      "Carvacrol",
+      "N-Ethylaniline"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -988,7 +788,7 @@
       "Methanol",
       "Methyl hydrazine",
       "Glycerol",
-      "Erythritol"
+      "Sorbitol"
     ],
     "k": 5
   },
@@ -1005,49 +805,9 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "2,2',3,3',5,5',6,6'-PCB",
       "Benzo[ghi]perylene",
-      "Eicosane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "11",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Aminocarb",
-      "Nerol",
-      "Secobarbital",
-      "Tetrachloromethane",
-      "Cyclopentyl-5-spirobarbituric acid"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Methyl hydrazine",
-      "Glycerol",
-      "Urea",
-      "Ethanol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "11",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "2,4,6-PCB",
-      "Dialifor",
-      "Dialifos",
-      "Trifluralin",
-      "1-Pentadecanol"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "Benzo[ghi]perylene",
+      "Eicosane",
       "Perylene"
     ],
     "k": 5
@@ -1060,14 +820,14 @@
       "2-Heptanone",
       "2-Hexanone",
       "2-Octanone",
-      "2-Ethylhexanal",
-      "diisooctyl phthalate"
+      "diisooctyl phthalate",
+      "Ethyl heptanoate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
+      "Tetrachloromethane",
       "Dibromomethane"
     ],
     "k": 5
@@ -1084,11 +844,11 @@
       "Glafenine"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
+      "Ethane",
       "Mirex",
       "Kepone",
-      "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Methyl hydrazine",
+      "Hexachloroethane"
     ],
     "k": 5
   },
@@ -1108,7 +868,7 @@
       "Ethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Urea"
+      "Decalin"
     ],
     "k": 5
   },
@@ -1126,7 +886,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -1137,11 +897,11 @@
     "model_type": "13",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Permethrin"
+      "Estragole",
+      "phenothrin"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -1172,14 +932,14 @@
       "Diazepam",
       "Carboxin",
       "pyracarbolid",
-      "osthole"
+      "Nimetazepam"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
+      "Diiodomethane",
       "Tetrachloromethane",
-      "Chlorodibromethane",
-      "Kepone"
+      "Dibromomethane"
     ],
     "k": 5
   },
@@ -1195,11 +955,11 @@
       "Carvone"
     ],
     "top_k_farthest_real_ids": [
-      "Diiodomethane",
       "Ethane",
       "Urea",
       "Thiourea",
-      "Dibromomethane"
+      "d-inositol",
+      "Ethyne"
     ],
     "k": 5
   },
@@ -1219,7 +979,7 @@
       "Tribromomethane",
       "Urea",
       "Diiodomethane",
-      "Tetrachloromethane"
+      "Thiourea"
     ],
     "k": 5
   },
@@ -1236,9 +996,9 @@
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
-      "Thiourea",
       "Ethyne",
       "Methyl hydrazine",
+      "Hexachloroethane",
       "Methanol"
     ],
     "k": 5
@@ -1249,62 +1009,22 @@
     "cluster_id": 0,
     "top_k_closest_real_ids": [
       "Diazepam",
-      "Metolazone",
       "Clonazepam",
-      "osthole",
-      "Coumatetralyl"
+      "Coumatetralyl",
+      "Napropamide",
+      "Nimetazepam"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Benzo[ghi]perylene",
       "Eicosane",
-      "Perylene"
+      "Perylene",
+      "Napthacene"
     ],
     "k": 5
   },
   {
     "layer_name": "gnn_layer_6",
-    "model_type": "13",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "1-Phenylethanol",
-      "Acetophenone",
-      "2-Chloroanisole",
-      "Eugenol",
-      "3-Chloroanisole"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Ethane",
-      "Tribromomethane",
-      "Diiodomethane",
-      "Urea"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "13",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Diazepam",
-      "Metolazone",
-      "Clonazepam",
-      "osthole",
-      "Coumatetralyl"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Benzo[ghi]perylene",
-      "Eicosane",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
     "model_type": "13",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
@@ -1336,10 +1056,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "2,2',3,3',5,5',6,6'-PCB",
       "Benzo[ghi]perylene",
-      "Eicosane"
+      "Eicosane",
+      "Perylene"
     ],
     "k": 5
   },
@@ -1349,57 +1069,17 @@
     "cluster_id": 1,
     "top_k_closest_real_ids": [
       "p-Hydroxyacetanilide",
-      "3,4-Dimethylphenol",
       "benzylurea",
       "2,4-Dimethylphenol",
-      "Methyl pentanoate"
+      "Methyl pentanoate",
+      "2,6-Dimethylphenol"
     ],
     "top_k_farthest_real_ids": [
+      "Tetrabromomethane",
       "Urea",
       "Methanol",
       "Methyl hydrazine",
-      "Glycerol",
-      "Erythritol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "13",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "2,6-Dichlorophenol",
-      "1,1-Dichloroethylene",
-      "Ethyl butyrate",
-      "5,5-Dimethylbarbituric acid",
-      "1,3-Butadiene"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Methyl hydrazine",
-      "Glycerol",
-      "Urea",
-      "Ethanol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "13",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "2-Methylheptane",
-      "Equilin",
-      "1-Nonene ",
-      "Hexamethylbenzene",
-      "Equilenin"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "Benzo[ghi]perylene",
-      "Perylene"
+      "Glycerol"
     ],
     "k": 5
   },
@@ -1411,15 +1091,15 @@
       "2-Heptanone",
       "2-Hexanone",
       "2-Octanone",
-      "2-Ethylhexanal",
-      "Pebulate"
+      "2-Ethylbutanal",
+      "diisooctyl phthalate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
-      "Dibromomethane"
+      "Tetrachloromethane",
+      "Ethane"
     ],
     "k": 5
   },
@@ -1435,11 +1115,11 @@
       "p-Chloroacetanilide"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
       "Mirex",
       "Kepone",
       "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Dimethoxymethane",
+      "1,1,1-Trichloroethane"
     ],
     "k": 5
   },
@@ -1477,7 +1157,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -1488,11 +1168,11 @@
     "model_type": "6",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Estragole"
+      "Estragole",
+      "Neburon"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -1528,9 +1208,9 @@
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
-      "Tetrachloromethane",
-      "Dibromomethane",
-      "Chlorodibromethane"
+      "Urea",
+      "Diiodomethane",
+      "Thiourea"
     ],
     "k": 5
   },
@@ -1541,16 +1221,16 @@
     "top_k_closest_real_ids": [
       "Estragole",
       "Carvacrol",
+      "Eugenol",
       "Anethole",
-      "Carvone",
-      "1-Hexene-3-ol"
+      "Carvone"
     ],
     "top_k_farthest_real_ids": [
-      "Diiodomethane",
-      "Urea",
       "Ethane",
-      "Thiourea",
-      "d-inositol"
+      "d-inositol",
+      "Ethyne",
+      "Methyl hydrazine",
+      "Methanol"
     ],
     "k": 5
   },
@@ -1563,7 +1243,7 @@
       "ethiofencarb",
       "Napropamide",
       "Isoprocarb",
-      "ethyl cinnamate"
+      "Carboxin"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -1581,9 +1261,9 @@
     "top_k_closest_real_ids": [
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
-      "1,2,4-Trichlorobenzene",
       "O,P'-DDD",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "2,4,6-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -1607,55 +1287,15 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Eicosane",
       "Benzo[ghi]perylene",
-      "Perylene"
+      "Perylene",
+      "Napthacene"
     ],
     "k": 5
   },
   {
     "layer_name": "gnn_layer_6",
-    "model_type": "6",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "1-Phenylethanol",
-      "Acetophenone",
-      "2-Chloroanisole",
-      "3-Chloroanisole",
-      "Eugenol"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Tribromomethane",
-      "Ethane",
-      "Urea",
-      "Diiodomethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "6",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Clonazepam",
-      "Diazepam",
-      "Metolazone",
-      "Nimetazepam",
-      "pyracarbolid"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Eicosane",
-      "Benzo[ghi]perylene",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
     "model_type": "6",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
@@ -1680,17 +1320,17 @@
     "cluster_id": 0,
     "top_k_closest_real_ids": [
       "Siduron",
-      "osthole",
       "Warfarin",
       "Fenarimol",
-      "butachlor"
+      "butachlor",
+      "Fluridone"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "2,2',3,3',5,5',6,6'-PCB",
       "Eicosane",
-      "Benzo[ghi]perylene"
+      "Benzo[ghi]perylene",
+      "2,2',3,4,4',5',6-PCB"
     ],
     "k": 5
   },
@@ -1702,55 +1342,15 @@
       "3-Methylphenol",
       "Propyl acetate",
       "p-Cresol",
-      "Propyl formate",
-      "3-Chlorophenol"
+      "3-Chlorophenol",
+      "2-Methylphenol"
     ],
     "top_k_farthest_real_ids": [
+      "Tetrabromomethane",
       "Urea",
       "Methanol",
       "Tribromomethane",
-      "Methyl hydrazine",
-      "Glycerol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "6",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "1,2,3,4-Tetrachlorobenzene",
-      "bromopropylate",
-      "1,2,3,5-Tetrachlorobenzene",
-      "Phoxim",
-      "Triallate"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "Eicosane",
-      "Benzo[ghi]perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "6",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "p-Methoxybenzaldehyde",
-      "Bromodichloromethane",
-      "o-Chloroaniline",
-      "Caproaldehyde",
-      "2-Heptanone"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Urea",
-      "Methyl hydrazine",
-      "Pyridazine",
-      "Glycerol"
+      "Methyl hydrazine"
     ],
     "k": 5
   },
@@ -1769,8 +1369,8 @@
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Dibromomethane",
-      "Ethane"
+      "Tetrachloromethane",
+      "Dibromomethane"
     ],
     "k": 5
   },
@@ -1786,11 +1386,11 @@
       "Indapamide"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
       "Mirex",
       "Kepone",
       "Hexachloroethane",
-      "Trichloromethane"
+      "Dimethoxymethane",
+      "1,1,1-Trichloroethane"
     ],
     "k": 5
   },
@@ -1808,9 +1408,9 @@
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Diiodomethane",
+      "Decalin",
       "Tribromomethane",
-      "Tetrachloromethane",
-      "Ethane"
+      "Tetrachloromethane"
     ],
     "k": 5
   },
@@ -1828,7 +1428,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -1841,9 +1441,9 @@
     "top_k_closest_real_ids": [
       "Indapamide",
       "Metolazone",
-      "Permethrin",
       "Lorazepam",
-      "Clomazone"
+      "Clomazone",
+      "pyracarbolid"
     ],
     "top_k_farthest_real_ids": [
       "Kepone",
@@ -1869,8 +1469,8 @@
       "Ethane",
       "Thiourea",
       "Urea",
-      "Sorbitol",
-      "Glycerol"
+      "Ethyne",
+      "Methanol"
     ],
     "k": 5
   },
@@ -1907,10 +1507,10 @@
     ],
     "top_k_farthest_real_ids": [
       "d-inositol",
+      "Glycerol",
       "Sorbitol",
-      "Kepone",
-      "Chloropicrin",
-      "2-cyanoguanidine"
+      "Fructose",
+      "L-arabinose"
     ],
     "k": 5
   },
@@ -1921,9 +1521,9 @@
     "top_k_closest_real_ids": [
       "pyracarbolid",
       "Carboxin",
-      "ethyl cinnamate",
       "ethiofencarb",
-      "Estragole"
+      "Estragole",
+      "Isoprocarb"
     ],
     "top_k_farthest_real_ids": [
       "d-inositol",
@@ -1942,8 +1542,8 @@
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
       "O,P'-DDD",
-      "1,2,4-Trichlorobenzene",
-      "2,3',4',5-PCB"
+      "2,3',4',5-PCB",
+      "2,4,6-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -1966,56 +1566,16 @@
       "pyracarbolid"
     ],
     "top_k_farthest_real_ids": [
-      "hexacosane",
       "Benzo[ghi]perylene",
       "2,2',3,3',4,4',5,5',6,6'-PCB",
       "Eicosane",
-      "Perylene"
+      "Perylene",
+      "2,2',3,3',5,5',6,6'-PCB"
     ],
     "k": 5
   },
   {
     "layer_name": "gnn_layer_6",
-    "model_type": "1",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Acetophenone",
-      "1-Phenylethanol",
-      "N-Ethylaniline",
-      "3-Chloroanisole",
-      "Estragole"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "d-inositol",
-      "Diiodomethane",
-      "Tetrachloromethane",
-      "Tribromomethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "1",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Diazepam",
-      "Neburon",
-      "Metolazone",
-      "Buturon",
-      "pyracarbolid"
-    ],
-    "top_k_farthest_real_ids": [
-      "hexacosane",
-      "Benzo[ghi]perylene",
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "Eicosane",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
     "model_type": "1",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
@@ -2047,10 +1607,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Benzo[ghi]perylene",
       "Eicosane",
-      "2,2',3,3',5,5',6,6'-PCB"
+      "2,2',3,3',5,5',6,6'-PCB",
+      "2,2',3,4,4',5',6-PCB"
     ],
     "k": 5
   },
@@ -2059,58 +1619,18 @@
     "model_type": "1",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
-      "3,4-Dimethylphenol",
       "2,4-Dimethylphenol",
       "2,4-Dimethylpyridine",
       "2,6-Dimethylphenol",
-      "3-Chlorophenol"
+      "3-Chlorophenol",
+      "2-Hexanone"
     ],
     "top_k_farthest_real_ids": [
       "Glycerol",
-      "Erythritol",
       "d-inositol",
       "Fructose",
+      "Tetrabromomethane",
       "Urea"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "1",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "2-Chloronapthalene",
-      "phenylbutazone",
-      "p-Chloroiodobenzene",
-      "norflurazon",
-      "Lorazepam"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Benzo[ghi]perylene",
-      "Eicosane",
-      "2,2',3,3',5,5',6,6'-PCB"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "1",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "2,4,6-Trimethylphenol",
-      "o-Hydroxybenzamide",
-      "Ethyl pentanoate",
-      "2-Methylpropene",
-      "4-Heptanol"
-    ],
-    "top_k_farthest_real_ids": [
-      "Glycerol",
-      "Erythritol",
-      "Fructose",
-      "d-inositol",
-      "L-arabinose"
     ],
     "k": 5
   },
@@ -2119,18 +1639,18 @@
     "model_type": "3",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "diisooctyl phthalate",
       "2-Hexanone",
-      "Pebulate",
       "Ethyl hexanoate",
-      "2-Heptanone"
+      "2-Heptanone",
+      "Pentyl acetate",
+      "Methyl hexanoate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
-      "Dibromomethane"
+      "Tetrachloromethane",
+      "Mirex"
     ],
     "k": 5
   },
@@ -2146,11 +1666,11 @@
       "Coumachlor"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
-      "Mirex",
-      "Kepone",
       "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Dimethoxymethane",
+      "1,1,1-Trichloroethane",
+      "Tetrachloroethylene",
+      "1,2-Dichlorotetrafluoroethane"
     ],
     "k": 5
   },
@@ -2169,8 +1689,8 @@
       "Tetrabromomethane",
       "Ethane",
       "Tribromomethane",
-      "Diiodomethane",
-      "Tetrachloromethane"
+      "Decalin",
+      "Diiodomethane"
     ],
     "k": 5
   },
@@ -2188,7 +1708,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -2199,11 +1719,11 @@
     "model_type": "3",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Neburon"
+      "Neburon",
+      "Estragole"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -2239,9 +1759,9 @@
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
+      "Urea",
       "Diiodomethane",
-      "Tetrachloromethane",
-      "Dibromomethane"
+      "Thiourea"
     ],
     "k": 5
   },
@@ -2257,11 +1777,11 @@
       "3-Heptanol "
     ],
     "top_k_farthest_real_ids": [
-      "Urea",
-      "Thiourea",
       "Ethane",
       "Ethyne",
-      "Methyl hydrazine"
+      "Methyl hydrazine",
+      "Methanol",
+      "Ethylene"
     ],
     "k": 5
   },
@@ -2273,8 +1793,8 @@
       "pyracarbolid",
       "ethiofencarb",
       "Carboxin",
-      "ethyl cinnamate",
-      "Isoprocarb"
+      "Isoprocarb",
+      "Napropamide"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -2293,8 +1813,8 @@
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
       "O,P'-DDD",
-      "1,2,4-Trichlorobenzene",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "2,3',4',5-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -2310,18 +1830,18 @@
     "model_type": "3",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "bromadiolone",
       "Atovaquone(0,430mg/ml) - neutral",
       "Equilenin",
-      "Coumachlor",
-      "Pencycuron"
+      "Estrone",
+      "phenothrin",
+      "Methoxychlor"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Perylene",
       "Eicosane",
-      "Benzo[ghi]perylene"
+      "Benzo[ghi]perylene",
+      "Picene"
     ],
     "k": 5
   },
@@ -2331,50 +1851,10 @@
     "cluster_id": 1,
     "top_k_closest_real_ids": [
       "Eugenol",
-      "ethyl cinnamate",
       "pyracarbolid",
       "Isoprocarb",
-      "Ethyl benzoate "
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Ethane",
-      "Tribromomethane",
-      "Urea",
-      "Diiodomethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "3",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "bromadiolone",
-      "Atovaquone(0,430mg/ml) - neutral",
-      "Equilenin",
-      "Coumachlor",
-      "Pencycuron"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Perylene",
-      "Eicosane",
-      "Benzo[ghi]perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "3",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Eugenol",
-      "ethyl cinnamate",
-      "pyracarbolid",
-      "Isoprocarb",
-      "Ethyl benzoate "
+      "Ethyl benzoate ",
+      "Risocaine"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -2401,7 +1881,7 @@
       "Glycerol",
       "Methanol",
       "Methyl hydrazine",
-      "Erythritol"
+      "Ethanol"
     ],
     "k": 5
   },
@@ -2410,58 +1890,18 @@
     "model_type": "3",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
-      "P,P'-DDD",
       "DDD",
       "P,P'-DDE",
       "2,3',4',5-PCB",
-      "2,2',3,4,6-PCB"
+      "2,2',3,4,6-PCB",
+      "DDT"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "2,2',3,3',5,5',6,6'-PCB",
       "Perylene",
-      "Eicosane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "3",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Acridine",
-      "Norethisterone",
-      "2,3,4-Trimethylpentane",
-      "1-Iodonapthalene",
-      "Spironolactone"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "2,3,3',4,4'6-PCB",
+      "Eicosane",
       "2,2',3,4,4',5',6-PCB"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "3",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "2-Methylpropene",
-      "o-Toluidine",
-      "Methylparaben",
-      "5,5-Dimethylbarbituric acid",
-      "Thiophene"
-    ],
-    "top_k_farthest_real_ids": [
-      "Urea",
-      "Methanol",
-      "Glycerol",
-      "Methyl hydrazine",
-      "Ethanol"
     ],
     "k": 5
   },
@@ -2473,15 +1913,15 @@
       "2-Heptanone",
       "2-Hexanone",
       "2-Octanone",
-      "Pebulate",
-      "2-Ethylhexanal"
+      "Ethyl heptanoate",
+      "Ethyl hexanoate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
-      "Dibromomethane"
+      "Tetrachloromethane",
+      "Ethane"
     ],
     "k": 5
   },
@@ -2497,11 +1937,11 @@
       "Glafenine"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
       "Mirex",
       "Kepone",
       "Hexachloroethane",
-      "Tetrachloroethylene"
+      "2,3,4-Trimethylpentane",
+      "Dimethoxymethane"
     ],
     "k": 5
   },
@@ -2521,7 +1961,7 @@
       "Ethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Urea"
+      "Decalin"
     ],
     "k": 5
   },
@@ -2539,7 +1979,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -2550,11 +1990,11 @@
     "model_type": "10",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Estragole"
+      "Estragole",
+      "Neburon"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -2590,9 +2030,9 @@
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
+      "Diiodomethane",
       "Tetrachloromethane",
-      "Chlorodibromethane",
-      "Kepone"
+      "Dibromomethane"
     ],
     "k": 5
   },
@@ -2603,16 +2043,16 @@
     "top_k_closest_real_ids": [
       "Carvacrol",
       "Carvone",
-      "1-Hexene-3-ol",
-      "2-Hexanol",
-      "linalool"
+      "Eugenol",
+      "Estragole",
+      "1-Hexene-3-ol"
     ],
     "top_k_farthest_real_ids": [
-      "Diiodomethane",
       "Ethane",
       "Urea",
       "Thiourea",
-      "Dibromomethane"
+      "d-inositol",
+      "Ethyne"
     ],
     "k": 5
   },
@@ -2630,9 +2070,9 @@
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
+      "Diiodomethane",
       "Tetrachloromethane",
-      "Chlorodibromethane",
-      "Bromodichloromethane"
+      "Dibromomethane"
     ],
     "k": 5
   },
@@ -2641,18 +2081,18 @@
     "model_type": "10",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
+      "Estragole",
       "Nerol",
       "1-Hexene-3-ol",
-      "1-Phenylethanol",
-      "3-Heptanol ",
-      "Carvacrol"
+      "Carvone",
+      "Anethole"
     ],
     "top_k_farthest_real_ids": [
-      "Diiodomethane",
       "Ethane",
       "Urea",
       "Thiourea",
-      "Dibromomethane"
+      "d-inositol",
+      "Ethyne"
     ],
     "k": 5
   },
@@ -2662,62 +2102,22 @@
     "cluster_id": 0,
     "top_k_closest_real_ids": [
       "Diazepam",
-      "Metolazone",
       "Clonazepam",
       "Coumatetralyl",
-      "osthole"
+      "Nimetazepam",
+      "pyracarbolid"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Benzo[ghi]perylene",
       "Eicosane",
-      "Perylene"
+      "Perylene",
+      "Napthacene"
     ],
     "k": 5
   },
   {
     "layer_name": "gnn_layer_6",
-    "model_type": "10",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "1-Phenylethanol",
-      "Acetophenone",
-      "2-Chloroanisole",
-      "3-Chloroanisole",
-      "Eugenol"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Ethane",
-      "Tribromomethane",
-      "Diiodomethane",
-      "Urea"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "10",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Diazepam",
-      "Metolazone",
-      "Clonazepam",
-      "Coumatetralyl",
-      "osthole"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Benzo[ghi]perylene",
-      "Eicosane",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
     "model_type": "10",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
@@ -2752,7 +2152,7 @@
       "Methanol",
       "Methyl hydrazine",
       "Glycerol",
-      "Erythritol"
+      "Sorbitol"
     ],
     "k": 5
   },
@@ -2769,50 +2169,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Benzo[ghi]perylene",
       "2,2',3,3',5,5',6,6'-PCB",
-      "Eicosane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "10",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "N,N-Dimethylaniline",
-      "meconin",
-      "Diethyl sulfide",
-      "Dioxacarb",
-      "2,7-dimethylquinoline"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Methyl hydrazine",
-      "Urea",
-      "Pyridazine",
-      "Pyrimidine"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "10",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "megestrol acetate",
-      "Nitrofen",
-      "biquinoline",
-      "captafol",
-      "Dihexyl phthalate"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Benzo[ghi]perylene",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "Eicosane"
+      "Eicosane",
+      "Perylene"
     ],
     "k": 5
   },
@@ -2823,16 +2183,16 @@
     "top_k_closest_real_ids": [
       "2-Hexanone",
       "2-Heptanone",
-      "Pebulate",
       "Ethyl hexanoate",
-      "diisooctyl phthalate"
+      "Ethyl butyrate",
+      "Pentyl acetate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
-      "Dibromomethane"
+      "Tetrachloromethane",
+      "Ethane"
     ],
     "k": 5
   },
@@ -2848,10 +2208,10 @@
       "Napropamide"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
       "Mirex",
       "Kepone",
       "Hexachloroethane",
+      "1,1,1-Trichloroethane",
       "Tetrachloroethylene"
     ],
     "k": 5
@@ -2871,8 +2231,8 @@
       "Tetrabromomethane",
       "Tribromomethane",
       "Ethane",
-      "Diiodomethane",
-      "Tetrachloromethane"
+      "Decalin",
+      "Diiodomethane"
     ],
     "k": 5
   },
@@ -2890,7 +2250,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -2910,8 +2270,8 @@
     "top_k_farthest_real_ids": [
       "Kepone",
       "Mirex",
-      "Urea",
       "Sorbitol",
+      "Glycerol",
       "Dieldrin"
     ],
     "k": 5
@@ -2949,10 +2309,10 @@
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
+      "Diiodomethane",
       "Tribromomethane",
       "Tetrachloromethane",
-      "Urea",
-      "Dibromomethane"
+      "Thiourea"
     ],
     "k": 5
   },
@@ -2968,11 +2328,11 @@
       "2-Hexanone"
     ],
     "top_k_farthest_real_ids": [
-      "Diiodomethane",
       "Ethane",
-      "Thiourea",
+      "Hexachloroethane",
       "Ethyne",
-      "Methanol"
+      "Methanol",
+      "Tetrachloroethylene"
     ],
     "k": 5
   },
@@ -2992,7 +2352,7 @@
       "Thiourea",
       "Urea",
       "Ethyne",
-      "hexacosane"
+      "Methanol"
     ],
     "k": 5
   },
@@ -3001,11 +2361,11 @@
     "model_type": "2",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
-      "1,2,4-Trichlorobenzene",
       "O,P'-DDD",
       "1,2-Dichlorobenzene",
       "2,2',3,5'-PCB",
-      "1,2,3-Trichlorobenzene"
+      "1,2,3-Trichlorobenzene",
+      "o-Chlorobromobenzene"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -3024,15 +2384,15 @@
       "pyracarbolid",
       "Eugenol",
       "Risocaine",
-      "ethyl cinnamate",
-      "Isoprocarb"
+      "Isoprocarb",
+      "Phenacetin"
     ],
     "top_k_farthest_real_ids": [
+      "Eicosane",
       "Tetrabromomethane",
       "Hexadecane",
       "Diiodomethane",
-      "Tribromomethane",
-      "Ethane"
+      "Tribromomethane"
     ],
     "k": 5
   },
@@ -3048,51 +2408,11 @@
       "O,P'-DDD"
     ],
     "top_k_farthest_real_ids": [
-      "hexacosane",
-      "Eicosane",
       "Benzo[ghi]perylene",
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "2",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "pyracarbolid",
-      "Eugenol",
-      "Risocaine",
-      "ethyl cinnamate",
-      "Isoprocarb"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Hexadecane",
-      "Diiodomethane",
-      "Tribromomethane",
-      "Ethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "2",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "2',3,4-PCB",
-      "2,4,6-PCB",
-      "2,3',5-PCB",
-      "2,2',3,3'-PCB",
-      "O,P'-DDD"
-    ],
-    "top_k_farthest_real_ids": [
-      "hexacosane",
-      "Eicosane",
-      "Benzo[ghi]perylene",
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "Perylene"
+      "Perylene",
+      "Mirex",
+      "Kepone"
     ],
     "k": 5
   },
@@ -3109,10 +2429,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Benzo[ghi]perylene",
       "2,2',3,3',5,5',6,6'-PCB",
-      "2,3,3',4,4'6-PCB"
+      "Eicosane",
+      "2,2',3,4,4',5',6-PCB"
     ],
     "k": 5
   },
@@ -3122,56 +2442,16 @@
     "cluster_id": 1,
     "top_k_closest_real_ids": [
       "3-Chlorophenol",
-      "3,4-Dimethylphenol",
       "2,4-Dimethylphenol",
       "m-Methylaniline",
-      "Benzamide"
+      "2,6-Dimethylphenol",
+      "3,5-Dimethylphenol"
     ],
     "top_k_farthest_real_ids": [
+      "Tetrabromomethane",
       "Urea",
       "Methanol",
-      "Glycerol",
-      "Methyl hydrazine",
-      "Tribromomethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "2",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Bibenzyl ",
-      "Pentamethylbenzene",
-      "Equilin",
-      "Equilenin",
-      "Benfuracarb"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "Benzo[ghi]perylene",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "2,3,3',4,4'6-PCB"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "2",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Amigdalin",
-      "Acetophenone",
-      "Benzotriazole",
-      "2-Methyl-2-hexanol",
-      "N-Methylaniline "
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Urea",
-      "Methyl hydrazine",
-      "Pyrimidine",
+      "Tetrachloromethane",
       "Glycerol"
     ],
     "k": 5
@@ -3184,15 +2464,15 @@
       "2-Heptanone",
       "2-Hexanone",
       "2-Octanone",
-      "2-Ethylhexanal",
-      "Pebulate"
+      "Ethyl heptanoate",
+      "Ethyl hexanoate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
-      "Dibromomethane"
+      "Tetrachloromethane",
+      "Ethane"
     ],
     "k": 5
   },
@@ -3208,11 +2488,11 @@
       "p-Chloroacetanilide"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
       "Mirex",
       "Kepone",
       "Hexachloroethane",
-      "Tetrachloroethylene"
+      "2,3,4-Trimethylpentane",
+      "Dimethoxymethane"
     ],
     "k": 5
   },
@@ -3232,7 +2512,7 @@
       "Ethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Urea"
+      "Decalin"
     ],
     "k": 5
   },
@@ -3250,7 +2530,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -3261,11 +2541,11 @@
     "model_type": "12",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Permethrin"
+      "Neburon",
+      "Estragole"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -3293,10 +2573,10 @@
     "cluster_id": 0,
     "top_k_closest_real_ids": [
       "Propanil",
-      "Clomazone",
-      "Carboxin",
       "Diazepam",
-      "Neburon"
+      "Neburon",
+      "Lorazepam",
+      "Clonazepam"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -3336,7 +2616,7 @@
       "ethiofencarb",
       "Napropamide",
       "Isoprocarb",
-      "ethyl cinnamate"
+      "Carboxin"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -3355,8 +2635,8 @@
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
       "O,P'-DDD",
-      "1,2,4-Trichlorobenzene",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "2,3',4',5-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -3372,18 +2652,18 @@
     "model_type": "12",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "bromadiolone",
-      "Triazolam",
-      "Fenarimol",
-      "Nitrofen",
-      "Coumachlor"
+      "Equilenin",
+      "Estrone",
+      "O,P'-DDD",
+      "2,4'-PCB",
+      "3-Ethanoyloxymethylphenytoin"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Benzo[ghi]perylene",
       "Perylene",
-      "Napthacene"
+      "Napthacene",
+      "Benzo(a)pyrene"
     ],
     "k": 5
   },
@@ -3393,50 +2673,10 @@
     "cluster_id": 1,
     "top_k_closest_real_ids": [
       "Eugenol",
-      "ethyl cinnamate",
       "Risocaine",
       "Ethyl benzoate ",
-      "Isoprocarb"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Ethane",
-      "Tribromomethane",
-      "Diiodomethane",
-      "Urea"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "12",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "bromadiolone",
-      "Triazolam",
-      "Fenarimol",
-      "Nitrofen",
-      "Coumachlor"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Benzo[ghi]perylene",
-      "Perylene",
-      "Napthacene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "12",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Eugenol",
-      "ethyl cinnamate",
-      "Risocaine",
-      "Ethyl benzoate ",
-      "Isoprocarb"
+      "Isoprocarb",
+      "pyracarbolid"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -3463,7 +2703,7 @@
       "Methanol",
       "Methyl hydrazine",
       "Glycerol",
-      "Erythritol"
+      "Sorbitol"
     ],
     "k": 5
   },
@@ -3483,47 +2723,7 @@
       "2,2',3,3',5,5',6,6'-PCB",
       "Benzo[ghi]perylene",
       "Perylene",
-      "hexacosane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "12",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Parathion",
-      "Lindane",
-      "Desmedipham",
-      "Triclosan",
-      "Acenapthene"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "Benzo[ghi]perylene",
-      "Perylene",
-      "Napthacene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "12",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "5-methylcytosine",
-      "3,5-Dichlorophenol",
-      "uracil",
-      "Sulfanilamide",
-      "Chloroethylene"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Methyl hydrazine",
-      "Urea",
-      "Glycerol",
-      "Ethanol"
+      "Benzo(a)pyrene"
     ],
     "k": 5
   },
@@ -3535,15 +2735,15 @@
       "2-Heptanone",
       "2-Hexanone",
       "2-Octanone",
-      "2-Ethylhexanal",
-      "Pebulate"
+      "4-Heptanone",
+      "Ethyl heptanoate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
-      "Dibromomethane"
+      "Tetrachloromethane",
+      "Ethane"
     ],
     "k": 5
   },
@@ -3559,11 +2759,11 @@
       "p-Chloroacetanilide"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
       "Mirex",
       "Kepone",
       "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Dimethoxymethane",
+      "1,1,1-Trichloroethane"
     ],
     "k": 5
   },
@@ -3601,7 +2801,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -3612,11 +2812,11 @@
     "model_type": "17",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Permethrin"
+      "phenothrin",
+      "Estragole"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -3644,10 +2844,10 @@
     "cluster_id": 0,
     "top_k_closest_real_ids": [
       "Propanil",
-      "Clomazone",
-      "Carboxin",
       "Diazepam",
-      "Metolazone"
+      "Metolazone",
+      "Clonazepam",
+      "Lorazepam"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -3687,7 +2887,7 @@
       "ethiofencarb",
       "Napropamide",
       "Isoprocarb",
-      "ethyl cinnamate"
+      "Carboxin"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -3706,8 +2906,8 @@
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
       "O,P'-DDD",
-      "1,2,4-Trichlorobenzene",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "2,3',4',5-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -3731,55 +2931,15 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Eicosane",
       "Benzo[ghi]perylene",
-      "Perylene"
+      "Perylene",
+      "Napthacene"
     ],
     "k": 5
   },
   {
     "layer_name": "gnn_layer_6",
-    "model_type": "17",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "1-Phenylethanol",
-      "Acetophenone",
-      "2-Chloroanisole",
-      "Eugenol",
-      "3-Chloroanisole"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Tribromomethane",
-      "Ethane",
-      "Urea",
-      "Diiodomethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "17",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Diazepam",
-      "Metolazone",
-      "Clonazepam",
-      "Coumatetralyl",
-      "Carbaryl"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Eicosane",
-      "Benzo[ghi]perylene",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
     "model_type": "17",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
@@ -3811,10 +2971,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "2,2',3,3',5,5',6,6'-PCB",
       "Eicosane",
-      "Benzo[ghi]perylene"
+      "Benzo[ghi]perylene",
+      "Perylene"
     ],
     "k": 5
   },
@@ -3823,58 +2983,18 @@
     "model_type": "17",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
-      "3,4-Dimethylphenol",
       "p-Hydroxyacetanilide",
       "2,4-Dimethylphenol",
       "Acetanilide",
-      "Methyl pentanoate"
+      "Methyl pentanoate",
+      "2,6-Dimethylphenol"
     ],
     "top_k_farthest_real_ids": [
       "Urea",
+      "Tetrabromomethane",
       "Methanol",
       "Methyl hydrazine",
-      "Glycerol",
-      "Erythritol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "17",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "o-Nitroanisole",
-      "Phenetole",
-      "1,1,1,2-Tetrachloroethane",
-      "metharbital",
-      "dimethirimol"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Methyl hydrazine",
-      "Acetamide",
-      "Urea",
       "Glycerol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "17",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Pencycuron",
-      "Bromophos",
-      "Atovaquone(0,430mg/ml) - neutral",
-      "2-Methylphenanthrene",
-      "2,3',5-PCB"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "Benzo[ghi]perylene",
-      "Eicosane"
     ],
     "k": 5
   },
@@ -3886,15 +3006,15 @@
       "2-Heptanone",
       "2-Octanone",
       "2-Hexanone",
-      "2-Ethylhexanal",
-      "1-Chlorobutane"
+      "1-Chlorobutane",
+      "4-Heptanone"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Dibromomethane",
-      "Ethane"
+      "Tetrachloromethane",
+      "Hexachloroethane"
     ],
     "k": 5
   },
@@ -3904,17 +3024,17 @@
     "cluster_id": 1,
     "top_k_closest_real_ids": [
       "Napropamide",
-      "Permethrin",
       "Chloroxuron",
       "Glafenine",
-      "Cyfluthrin"
+      "Cyfluthrin",
+      "Mefenacet"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
       "Mirex",
       "Kepone",
-      "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Dimethoxymethane",
+      "Sorbitol",
+      "1,2-Dichlorotetrafluoroethane"
     ],
     "k": 5
   },
@@ -3952,7 +3072,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -3963,11 +3083,11 @@
     "model_type": "7",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Estragole"
+      "Estragole",
+      "Neburon"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -4003,9 +3123,9 @@
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
-      "Tetrachloromethane",
-      "Chlorodibromethane",
-      "d-inositol"
+      "Diiodomethane",
+      "Urea",
+      "Thiourea"
     ],
     "k": 5
   },
@@ -4021,11 +3141,11 @@
       "3-Heptanol "
     ],
     "top_k_farthest_real_ids": [
-      "Diiodomethane",
-      "Urea",
-      "Thiourea",
       "Ethane",
-      "Dibromomethane"
+      "Ethyne",
+      "Hexachloroethane",
+      "Methyl hydrazine",
+      "Methanol"
     ],
     "k": 5
   },
@@ -4081,56 +3201,16 @@
       "Nimetazepam"
     ],
     "top_k_farthest_real_ids": [
-      "hexacosane",
       "2,2',3,3',4,4',5,5',6,6'-PCB",
       "Eicosane",
       "Napthacene",
-      "Benzo[ghi]perylene"
+      "Benzo[ghi]perylene",
+      "Perylene"
     ],
     "k": 5
   },
   {
     "layer_name": "gnn_layer_6",
-    "model_type": "7",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "1-Phenylethanol",
-      "Acetophenone",
-      "2-Chloroanisole",
-      "3-Chloroanisole",
-      "Anisole"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Tribromomethane",
-      "Ethane",
-      "Urea",
-      "Diiodomethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "7",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Metolazone",
-      "Clonazepam",
-      "Diazepam",
-      "pyracarbolid",
-      "Nimetazepam"
-    ],
-    "top_k_farthest_real_ids": [
-      "hexacosane",
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "Eicosane",
-      "Napthacene",
-      "Benzo[ghi]perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
     "model_type": "7",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
@@ -4162,10 +3242,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "2,2',3,3',5,5',6,6'-PCB",
       "Eicosane",
-      "Napthacene"
+      "Napthacene",
+      "Benzo[ghi]perylene"
     ],
     "k": 5
   },
@@ -4174,58 +3254,18 @@
     "model_type": "7",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
-      "3,4-Dimethylphenol",
       "2,4-Dimethylphenol",
       "p-Hydroxyacetanilide",
       "p-Hydroxybenzaldehyde ",
-      "m-Methylaniline"
+      "m-Methylaniline",
+      "benzylurea"
     ],
     "top_k_farthest_real_ids": [
       "Urea",
+      "Tetrabromomethane",
       "Methanol",
       "Methyl hydrazine",
-      "Glycerol",
-      "Erythritol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "7",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "2-Ethyl-1-hexanol",
-      "sulfaguanidine",
-      "p-Nitrophenol",
-      "nifuroxime",
-      "Methylparaben"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Methyl hydrazine",
-      "Urea",
-      "Glycerol",
-      "Ethanol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "7",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Kepone",
-      "Amitraz",
-      "2-aminoanthracene",
-      "Nonane",
-      "Phenanthrene"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "Napthacene",
-      "Eicosane"
+      "Glycerol"
     ],
     "k": 5
   },
@@ -4237,14 +3277,14 @@
       "2-Heptanone",
       "2-Hexanone",
       "2-Octanone",
-      "2-Ethylhexanal",
-      "diisooctyl phthalate"
+      "diisooctyl phthalate",
+      "Ethyl heptanoate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
+      "Tetrachloromethane",
       "Dibromomethane"
     ],
     "k": 5
@@ -4261,11 +3301,11 @@
       "Glafenine"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
+      "Ethane",
       "Mirex",
       "Kepone",
-      "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Methyl hydrazine",
+      "Hexachloroethane"
     ],
     "k": 5
   },
@@ -4285,7 +3325,7 @@
       "Ethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Urea"
+      "Decalin"
     ],
     "k": 5
   },
@@ -4303,7 +3343,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -4314,11 +3354,11 @@
     "model_type": "14",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Permethrin"
+      "Estragole",
+      "phenothrin"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -4349,14 +3389,14 @@
       "Diazepam",
       "Carboxin",
       "pyracarbolid",
-      "osthole"
+      "Nimetazepam"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
+      "Diiodomethane",
       "Tetrachloromethane",
-      "Chlorodibromethane",
-      "Kepone"
+      "Dibromomethane"
     ],
     "k": 5
   },
@@ -4372,11 +3412,11 @@
       "Carvone"
     ],
     "top_k_farthest_real_ids": [
-      "Diiodomethane",
       "Ethane",
       "Urea",
       "Thiourea",
-      "Dibromomethane"
+      "d-inositol",
+      "Ethyne"
     ],
     "k": 5
   },
@@ -4389,7 +3429,7 @@
       "ethiofencarb",
       "Napropamide",
       "Isoprocarb",
-      "ethyl cinnamate"
+      "Carboxin"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -4408,8 +3448,8 @@
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
       "O,P'-DDD",
-      "1,2,4-Trichlorobenzene",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "2,2',3,3'-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -4429,14 +3469,14 @@
       "Clonazepam",
       "Diazepam",
       "Nimetazepam",
-      "Coumatetralyl"
+      "Indapamide"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Benzo[ghi]perylene",
-      "Eicosane",
-      "Perylene"
+      "Perylene",
+      "Napthacene",
+      "Benzo(a)pyrene"
     ],
     "k": 5
   },
@@ -4453,50 +3493,10 @@
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
-      "Tribromomethane",
-      "Ethane",
-      "Urea",
-      "Diiodomethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "14",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Metolazone",
-      "Clonazepam",
-      "Diazepam",
-      "Nimetazepam",
-      "Coumatetralyl"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Benzo[ghi]perylene",
       "Eicosane",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "14",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "1-Phenylethanol",
-      "Acetophenone",
-      "2-Chloroanisole",
-      "Eugenol",
-      "3-Chloroanisole"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
       "Tribromomethane",
       "Ethane",
-      "Urea",
-      "Diiodomethane"
+      "Urea"
     ],
     "k": 5
   },
@@ -4513,10 +3513,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "2,2',3,3',5,5',6,6'-PCB",
       "Benzo[ghi]perylene",
-      "Eicosane"
+      "Eicosane",
+      "Perylene"
     ],
     "k": 5
   },
@@ -4526,57 +3526,17 @@
     "cluster_id": 1,
     "top_k_closest_real_ids": [
       "p-Hydroxyacetanilide",
-      "3,4-Dimethylphenol",
       "benzylurea",
       "2,4-Dimethylphenol",
-      "Methyl pentanoate"
-    ],
-    "top_k_farthest_real_ids": [
-      "Urea",
-      "Methanol",
-      "Methyl hydrazine",
-      "Glycerol",
-      "Erythritol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "14",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Stirofos",
-      "Lenacil",
-      "Glafenine",
-      "Dibenzofurane",
-      "2,2,4-Trimethylpentane"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "Benzo[ghi]perylene",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "14",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Trichloromethane",
-      "Acetanilide",
-      "Thiophene",
-      "2,4-Dimethyl-3-pentanone",
+      "Methyl pentanoate",
       "2,6-Dimethylphenol"
     ],
     "top_k_farthest_real_ids": [
+      "Tetrabromomethane",
+      "Urea",
       "Methanol",
       "Methyl hydrazine",
-      "Glycerol",
-      "Urea",
-      "Ethanol"
+      "Glycerol"
     ],
     "k": 5
   },
@@ -4595,8 +3555,8 @@
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
-      "Dibromomethane"
+      "Tetrachloromethane",
+      "Mirex"
     ],
     "k": 5
   },
@@ -4612,11 +3572,11 @@
       "Coumachlor"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
-      "Mirex",
-      "Kepone",
       "Hexachloroethane",
-      "Tetrachloroethylene"
+      "1,1,1-Trichloroethane",
+      "Tetrachloroethylene",
+      "1,2-Dichlorotetrafluoroethane",
+      "1,1,2-Trichlorotrifluoroethane"
     ],
     "k": 5
   },
@@ -4636,7 +3596,7 @@
       "Tribromomethane",
       "Ethane",
       "Diiodomethane",
-      "Urea"
+      "Decalin"
     ],
     "k": 5
   },
@@ -4654,7 +3614,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -4665,11 +3625,11 @@
     "model_type": "4",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Neburon"
+      "Neburon",
+      "phenothrin"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -4705,9 +3665,9 @@
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
+      "Diiodomethane",
       "Tetrachloromethane",
-      "Chlorodibromethane",
-      "Bromodichloromethane"
+      "Dibromomethane"
     ],
     "k": 5
   },
@@ -4723,11 +3683,11 @@
       "Carvone"
     ],
     "top_k_farthest_real_ids": [
-      "Diiodomethane",
       "Urea",
       "Ethane",
       "Thiourea",
-      "Dibromomethane"
+      "d-inositol",
+      "Ethyne"
     ],
     "k": 5
   },
@@ -4740,7 +3700,7 @@
       "ethiofencarb",
       "Isoprocarb",
       "Napropamide",
-      "ethyl cinnamate"
+      "Carboxin"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -4757,10 +3717,10 @@
     "cluster_id": 1,
     "top_k_closest_real_ids": [
       "O,P'-DDD",
-      "1,2,4-Trichlorobenzene",
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "2,4,6-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -4780,59 +3740,19 @@
       "Diazepam",
       "Metolazone",
       "Nimetazepam",
-      "osthole"
+      "pyracarbolid"
     ],
     "top_k_farthest_real_ids": [
-      "hexacosane",
       "2,2',3,3',4,4',5,5',6,6'-PCB",
       "Benzo[ghi]perylene",
       "Perylene",
-      "Eicosane"
+      "Eicosane",
+      "Napthacene"
     ],
     "k": 5
   },
   {
     "layer_name": "gnn_layer_6",
-    "model_type": "4",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "1-Phenylethanol",
-      "Acetophenone",
-      "3-Chloroanisole",
-      "2-Chloroanisole",
-      "Eugenol"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Tribromomethane",
-      "Ethane",
-      "Urea",
-      "Diiodomethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "4",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Clonazepam",
-      "Diazepam",
-      "Metolazone",
-      "Nimetazepam",
-      "osthole"
-    ],
-    "top_k_farthest_real_ids": [
-      "hexacosane",
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "Benzo[ghi]perylene",
-      "Perylene",
-      "Eicosane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
     "model_type": "4",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
@@ -4860,14 +3780,14 @@
       "m-Nitrotoluene",
       "o-Nitrotoluene",
       "Ethyl-p-hydroxybenzoate ",
-      "p-Fluoroacetanilide"
+      "isocarbamid"
     ],
     "top_k_farthest_real_ids": [
       "Urea",
       "Glycerol",
       "Methanol",
-      "Erythritol",
-      "Methyl hydrazine"
+      "Methyl hydrazine",
+      "Sorbitol"
     ],
     "k": 5
   },
@@ -4884,50 +3804,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Benzo[ghi]perylene",
       "Perylene",
-      "Eicosane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "4",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "1,2,3,4-Tetrachlorobenzene",
-      "1-Nonene ",
-      "2,2,5-Trimethylhexane",
-      "1-Iodoheptane",
-      "biquinoline"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Perylene",
-      "Benzo[ghi]perylene",
+      "Eicosane",
       "2,2',3,3',5,5',6,6'-PCB"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "4",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "5-Allyl-5-ethylbarbital",
-      "piperonal",
-      "1-Chloropropane",
-      "Isopentyl acetate",
-      "5-hydroxyquinoline"
-    ],
-    "top_k_farthest_real_ids": [
-      "Urea",
-      "Glycerol",
-      "Methanol",
-      "Pyrimidine",
-      "Pyridazine"
     ],
     "k": 5
   },
@@ -4946,8 +3826,8 @@
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
-      "Dibromomethane"
+      "Tetrachloromethane",
+      "Mirex"
     ],
     "k": 5
   },
@@ -4963,11 +3843,11 @@
       "p-Chloroacetanilide"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
-      "Mirex",
-      "Kepone",
+      "Methyl hydrazine",
       "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Ethyne",
+      "Methanol",
+      "Ethylene"
     ],
     "k": 5
   },
@@ -5005,7 +3885,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -5016,11 +3896,11 @@
     "model_type": "19",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Permethrin"
+      "phenothrin",
+      "Estragole"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -5050,8 +3930,8 @@
       "Estragole",
       "Anethole",
       "Eugenol",
-      "Carvone",
-      "Carvacrol"
+      "pyracarbolid",
+      "Clomazone"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -5067,18 +3947,18 @@
     "model_type": "19",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
-      "Carboxin",
-      "pyracarbolid",
       "Metolazone",
-      "Clomazone",
-      "Nimetazepam"
+      "Nimetazepam",
+      "Isoprocarb",
+      "Indapamide",
+      "piroxicam"
     ],
     "top_k_farthest_real_ids": [
       "Urea",
       "Thiourea",
       "d-inositol",
-      "Kepone",
-      "Mirex"
+      "Glycerol",
+      "Sorbitol"
     ],
     "k": 5
   },
@@ -5091,7 +3971,7 @@
       "ethiofencarb",
       "Napropamide",
       "Isoprocarb",
-      "ethyl cinnamate"
+      "Carboxin"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -5110,8 +3990,8 @@
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
       "O,P'-DDD",
-      "1,2,4-Trichlorobenzene",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "2,2',3,3'-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -5135,10 +4015,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Eicosane",
       "Benzo[ghi]perylene",
-      "Perylene"
+      "Perylene",
+      "Napthacene"
     ],
     "k": 5
   },
@@ -5149,49 +4029,9 @@
     "top_k_closest_real_ids": [
       "1-Phenylethanol",
       "Acetophenone",
-      "2-Chloroanisole",
-      "Eugenol",
-      "1-Hexene-3-ol"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Tribromomethane",
-      "Ethane",
-      "Urea",
-      "Diiodomethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "19",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Diazepam",
-      "Metolazone",
-      "Clonazepam",
-      "Coumatetralyl",
-      "Carbaryl"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Eicosane",
-      "Benzo[ghi]perylene",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "19",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "1-Phenylethanol",
-      "Acetophenone",
-      "2-Chloroanisole",
-      "Eugenol",
-      "1-Hexene-3-ol"
+      "1-Hexene-3-ol",
+      "Thymol",
+      "Carvacrol"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -5230,55 +4070,15 @@
       "P,P'-DDE",
       "Methoxychlor",
       "O,P'-DDD",
-      "P,P'-DDD",
-      "DDD"
+      "DDD",
+      "2,2',3,5'-PCB"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Eicosane",
       "2,2',3,3',5,5',6,6'-PCB",
-      "Benzo[ghi]perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "19",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "bromopropylate",
-      "Hexachloro-1,3-butadiene",
-      "RTI 22",
-      "Acenapthylene",
-      "1-Iodoheptane"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
       "Benzo[ghi]perylene",
-      "Eicosane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "19",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "1,3-Dichloropropane",
-      "Indole",
-      "p-Chloroaniline",
-      "5-Allyl-5-ethylbarbital",
-      "styrene oxide"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Methyl hydrazine",
-      "Acetamide",
-      "Urea",
-      "Ethanol"
+      "Perylene"
     ],
     "k": 5
   },
@@ -5291,14 +4091,14 @@
       "2-Hexanol",
       "2-Hexanone",
       "2-Octanone",
-      "2-Pentanol"
+      "4-Heptanone"
     ],
     "top_k_farthest_real_ids": [
+      "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Dibromomethane",
-      "Chlorodibromethane",
-      "Ethane"
+      "Tetrachloromethane",
+      "Dibromomethane"
     ],
     "k": 5
   },
@@ -5308,17 +4108,17 @@
     "cluster_id": 1,
     "top_k_closest_real_ids": [
       "Mefenacet",
-      "Permethrin",
       "Napropamide",
       "Glafenine",
-      "Chloroxuron"
+      "Chloroxuron",
+      "Propanil"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Tetrachloromethane",
       "Mirex",
       "Kepone",
-      "Hexachloroethane"
+      "Hexachloroethane",
+      "Methyl hydrazine",
+      "1,1,2,2-Tetrachloroethane"
     ],
     "k": 5
   },
@@ -5357,8 +4157,8 @@
       "Mirex",
       "Kepone",
       "Dienochlor",
-      "Decalin",
-      "Dieldrin"
+      "Dieldrin",
+      "Chlordane"
     ],
     "k": 5
   },
@@ -5377,8 +4177,8 @@
       "Tetrabromomethane",
       "Kepone",
       "Mirex",
-      "Tribromomethane",
-      "Tetrachloromethane"
+      "Diiodomethane",
+      "Tribromomethane"
     ],
     "k": 5
   },
@@ -5394,11 +4194,11 @@
       "Pentyl acetate"
     ],
     "top_k_farthest_real_ids": [
-      "Diiodomethane",
       "Ethane",
       "Thiourea",
       "Urea",
-      "Dibromomethane"
+      "Ethyne",
+      "1,1,1-Trichloroethane"
     ],
     "k": 5
   },
@@ -5415,10 +4215,10 @@
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
+      "Diiodomethane",
       "Tribromomethane",
       "Tetrachloromethane",
-      "Hexachloroethane",
-      "Chlorodibromethane"
+      "Thiourea"
     ],
     "k": 5
   },
@@ -5434,11 +4234,11 @@
       "Carvone"
     ],
     "top_k_farthest_real_ids": [
-      "Diiodomethane",
       "Ethane",
-      "Thiourea",
-      "Urea",
-      "Dibromomethane"
+      "Ethyne",
+      "1,1,1-Trichloroethane",
+      "Ethylene",
+      "Methanol"
     ],
     "k": 5
   },
@@ -5456,9 +4256,9 @@
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Benzo[ghi]perylene",
+      "Diiodomethane",
       "Tribromomethane",
-      "Tetrachloromethane",
-      "Perylene"
+      "Tetrachloromethane"
     ],
     "k": 5
   },
@@ -5474,11 +4274,11 @@
       "Pentyl acetate"
     ],
     "top_k_farthest_real_ids": [
-      "Diiodomethane",
-      "Thiourea",
-      "Urea",
+      "Hexachloroethane",
       "Ethane",
-      "Dibromomethane"
+      "Tetrachloroethylene",
+      "Ethyne",
+      "1,1,1-Trichloroethane"
     ],
     "k": 5
   },
@@ -5490,15 +4290,15 @@
       "Neburon",
       "Buturon",
       "Clomazone",
-      "osthole",
-      "Carboxin"
+      "Carboxin",
+      "ethiofencarb"
     ],
     "top_k_farthest_real_ids": [
       "Benzo[ghi]perylene",
       "Perylene",
-      "Benzo(e)pyrene",
       "Benzo(j)fluoranthene",
-      "Benzo(b)fluoranthene"
+      "Benzo(b)fluoranthene",
+      "Benzo(a)pyrene"
     ],
     "k": 5
   },
@@ -5514,51 +4314,11 @@
       "N-Ethylaniline"
     ],
     "top_k_farthest_real_ids": [
+      "Chrysene",
+      "5-Methylchrysene",
+      "6-Methylchrysene",
       "Tetrabromomethane",
-      "Tetrachloromethane",
-      "Tribromomethane",
-      "Diiodomethane",
-      "Pentachlorobenzene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "0",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Neburon",
-      "Buturon",
-      "Clomazone",
-      "osthole",
-      "Carboxin"
-    ],
-    "top_k_farthest_real_ids": [
-      "Benzo[ghi]perylene",
-      "Perylene",
-      "Benzo(e)pyrene",
-      "Benzo(j)fluoranthene",
-      "Benzo(b)fluoranthene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "0",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Acetophenone",
-      "1-Phenylethanol",
-      "2-Ethyl pyridine",
-      "N-Methylaniline ",
-      "N-Ethylaniline"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Tetrachloromethane",
-      "Tribromomethane",
-      "Diiodomethane",
-      "Pentachlorobenzene"
+      "Benzo(a)fluorene"
     ],
     "k": 5
   },
@@ -5577,8 +4337,8 @@
       "Benzo[ghi]perylene",
       "Perylene",
       "Benzo(j)fluoranthene",
-      "Benzo(e)pyrene",
-      "Benzo(b)fluoranthene"
+      "Benzo(b)fluoranthene",
+      "Benzo(k)fluoranthene"
     ],
     "k": 5
   },
@@ -5594,51 +4354,11 @@
       "p-Methoxybenzaldehyde"
     ],
     "top_k_farthest_real_ids": [
+      "Quintozene",
+      "Pentachlorobenzene",
       "Urea",
-      "Thiourea",
-      "2-cyanoguanidine",
-      "Acetamide",
-      "Methyl hydrazine"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "0",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "5,5-Diallylbarbital",
-      "Cyclopentyl-5-spirobarbituric acid",
-      "2-methylpteridine",
-      "2-methoxypteridine",
-      "Cyclobutyl-5-spirobarbituric acid"
-    ],
-    "top_k_farthest_real_ids": [
-      "Urea",
-      "2-cyanoguanidine",
-      "Thiourea",
-      "Acetamide",
-      "Amitrole"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "0",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Lovastatin",
-      "9,10-Dimethylanthracene",
-      "Betamethasone-17-valerate",
-      "3-Butanoyloxymethylphenytoin",
-      "phenanthridine"
-    ],
-    "top_k_farthest_real_ids": [
-      "Benzo[ghi]perylene",
-      "Perylene",
-      "Benzo(j)fluoranthene",
-      "Benzo(e)pyrene",
-      "Benzo(b)fluoranthene"
+      "Hexachloro-1,3-butadiene",
+      "1,2,3,4-Tetrachlorobenzene"
     ],
     "k": 5
   },
@@ -5649,16 +4369,16 @@
     "top_k_closest_real_ids": [
       "2-Heptanone",
       "2-Octanone",
-      "2-Ethylhexanal",
-      "5-Nonanone",
-      "2-Hexanone"
+      "2-Hexanone",
+      "2-Hexanol",
+      "1-Chlorobutane"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Dibromomethane",
-      "Ethane"
+      "Tetrachloromethane",
+      "Dibromomethane"
     ],
     "k": 5
   },
@@ -5667,18 +4387,18 @@
     "model_type": "16",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
-      "Permethrin",
       "Napropamide",
       "Cyfluthrin",
       "Chloroxuron",
-      "Cypermethrin"
+      "Glafenine",
+      "Mefenacet"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
+      "Ethane",
       "Mirex",
       "Kepone",
-      "Hexachloroethane",
-      "Trichloromethane"
+      "Methyl hydrazine",
+      "Hexachloroethane"
     ],
     "k": 5
   },
@@ -5716,7 +4436,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -5727,11 +4447,11 @@
     "model_type": "16",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Permethrin"
+      "phenothrin",
+      "Estragole"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -5758,18 +4478,18 @@
     "model_type": "16",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "Estragole",
-      "Anethole",
       "Carvone",
       "Carvacrol",
-      "3-Chloroanisole"
+      "Propylbenzene ",
+      "2-Chlorotoluene",
+      "N-Ethylaniline"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Ethane",
-      "Thiourea",
-      "Diiodomethane"
+      "Diiodomethane",
+      "Tetrachloromethane"
     ],
     "k": 5
   },
@@ -5782,14 +4502,14 @@
       "Carboxin",
       "Clomazone",
       "Nimetazepam",
-      "osthole"
+      "Glutethimide"
     ],
     "top_k_farthest_real_ids": [
       "Urea",
+      "Thiourea",
       "d-inositol",
-      "Kepone",
-      "Mirex",
-      "Erythritol"
+      "Glycerol",
+      "Sorbitol"
     ],
     "k": 5
   },
@@ -5802,7 +4522,7 @@
       "ethiofencarb",
       "Napropamide",
       "Isoprocarb",
-      "ethyl cinnamate"
+      "Carboxin"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -5821,8 +4541,8 @@
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
       "O,P'-DDD",
-      "1,2,4-Trichlorobenzene",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "2,3',4',5-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -5839,62 +4559,22 @@
     "cluster_id": 0,
     "top_k_closest_real_ids": [
       "Diazepam",
-      "Metolazone",
       "Clonazepam",
-      "osthole",
-      "Coumatetralyl"
+      "Coumatetralyl",
+      "pyracarbolid",
+      "Nimetazepam"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Benzo[ghi]perylene",
       "Eicosane",
-      "Perylene"
+      "Perylene",
+      "Napthacene"
     ],
     "k": 5
   },
   {
     "layer_name": "gnn_layer_6",
-    "model_type": "16",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Acetophenone",
-      "1-Phenylethanol",
-      "2-Chloroanisole",
-      "3-Chloroanisole",
-      "Eugenol"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Tribromomethane",
-      "Ethane",
-      "Urea",
-      "Diiodomethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "16",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Diazepam",
-      "Metolazone",
-      "Clonazepam",
-      "osthole",
-      "Coumatetralyl"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Benzo[ghi]perylene",
-      "Eicosane",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
     "model_type": "16",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
@@ -5929,7 +4609,7 @@
       "Methanol",
       "Methyl hydrazine",
       "Glycerol",
-      "Erythritol"
+      "Sorbitol"
     ],
     "k": 5
   },
@@ -5946,50 +4626,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "2,2',3,3',5,5',6,6'-PCB",
       "Eicosane",
-      "Benzo[ghi]perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "16",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "RTI 15",
-      "bromadiolone",
-      "Lenacil",
-      "Glafenine",
-      "1-Iodonapthalene"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
       "Benzo[ghi]perylene",
-      "Eicosane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "16",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "2-Ethylbutanal",
-      "Propylisopropylether",
-      "4-Heptanone",
-      "Thiophene",
-      "Acetanilide"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Methyl hydrazine",
-      "Glycerol",
-      "Urea",
-      "Acetamide"
+      "Perylene"
     ],
     "k": 5
   },
@@ -6008,8 +4648,8 @@
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
-      "Dibromomethane"
+      "Tetrachloromethane",
+      "Mirex"
     ],
     "k": 5
   },
@@ -6025,11 +4665,11 @@
       "p-Chloroacetanilide"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
-      "Mirex",
-      "Kepone",
+      "Methyl hydrazine",
       "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Ethyne",
+      "Methanol",
+      "Ethylene"
     ],
     "k": 5
   },
@@ -6067,7 +4707,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -6078,11 +4718,11 @@
     "model_type": "18",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Permethrin"
+      "phenothrin",
+      "Estragole"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -6109,18 +4749,18 @@
     "model_type": "18",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "Clomazone",
       "Diazepam",
-      "osthole",
-      "Carboxin",
-      "pyracarbolid"
+      "Nimetazepam",
+      "Metolazone",
+      "Coumachlor",
+      "Propanil"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
+      "Diiodomethane",
       "Tetrachloromethane",
-      "Dibromomethane",
-      "Chlorodibromethane"
+      "Dibromomethane"
     ],
     "k": 5
   },
@@ -6133,14 +4773,14 @@
       "Estragole",
       "Anethole",
       "Carvacrol",
-      "ethyl cinnamate"
+      "pyracarbolid"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
-      "Diiodomethane",
       "Urea",
       "Thiourea",
-      "d-inositol"
+      "d-inositol",
+      "Ethyne"
     ],
     "k": 5
   },
@@ -6153,7 +4793,7 @@
       "ethiofencarb",
       "Napropamide",
       "Isoprocarb",
-      "ethyl cinnamate"
+      "Carboxin"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -6172,8 +4812,8 @@
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
       "O,P'-DDD",
-      "1,2,4-Trichlorobenzene",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "2,2',3,3'-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -6197,10 +4837,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
+      "Eicosane",
       "Benzo[ghi]perylene",
       "Perylene",
-      "Napthacene"
+      "Urea"
     ],
     "k": 5
   },
@@ -6211,56 +4851,16 @@
     "top_k_closest_real_ids": [
       "1-Phenylethanol",
       "Acetophenone",
-      "2-Chloroanisole",
-      "3-Chloroanisole",
-      "Ethylbenzene"
+      "Ethylbenzene",
+      "1-Hexene-3-ol",
+      "2-Ethyl-2-hexanal"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
-      "Eicosane",
-      "Urea",
       "Tribromomethane",
-      "Ethane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "18",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Clonazepam",
-      "Metolazone",
-      "Diazepam",
-      "pyracarbolid",
-      "Coumatetralyl"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Benzo[ghi]perylene",
-      "Perylene",
-      "Napthacene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "18",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "1-Phenylethanol",
-      "Acetophenone",
-      "2-Chloroanisole",
-      "3-Chloroanisole",
-      "Ethylbenzene"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Eicosane",
-      "Urea",
-      "Tribromomethane",
-      "Ethane"
+      "Ethane",
+      "Diiodomethane",
+      "Tetrachloromethane"
     ],
     "k": 5
   },
@@ -6277,10 +4877,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "2,2',3,3',5,5',6,6'-PCB",
       "Eicosane",
-      "Benzo[ghi]perylene"
+      "Benzo[ghi]perylene",
+      "Perylene"
     ],
     "k": 5
   },
@@ -6292,55 +4892,15 @@
       "Propyl acetate",
       "p-Cresol",
       "2-Methylphenol",
-      "Propyl butyrate",
-      "3-Methylphenol"
+      "3-Methylphenol",
+      "2-Hexanone"
     ],
     "top_k_farthest_real_ids": [
+      "Tetrabromomethane",
       "Urea",
       "Methanol",
       "Methyl hydrazine",
-      "Tribromomethane",
-      "Glycerol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "18",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Pirimicarb",
-      "Minoxidil",
-      "1,4-Difluorobenzene",
-      "linalool",
-      "Camphor"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Methyl hydrazine",
-      "Urea",
-      "Acetamide",
-      "Ethanol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "18",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Dinitramine",
-      "1-Decene",
-      "Chlorothalonil",
-      "Amitraz",
-      "Dihexyl phthalate"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "Eicosane",
-      "Benzo[ghi]perylene"
+      "Tribromomethane"
     ],
     "k": 5
   },
@@ -6352,15 +4912,15 @@
       "2-Heptanone",
       "2-Hexanone",
       "2-Octanone",
-      "Pebulate",
-      "diisooctyl phthalate"
+      "diisooctyl phthalate",
+      "Ethyl hexanoate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Ethane",
-      "Dibromomethane"
+      "Tetrachloromethane",
+      "Ethane"
     ],
     "k": 5
   },
@@ -6376,11 +4936,11 @@
       "p-Chloroacetanilide"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
       "Mirex",
       "Kepone",
       "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Dimethoxymethane",
+      "1,1,1-Trichloroethane"
     ],
     "k": 5
   },
@@ -6400,7 +4960,7 @@
       "Ethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Urea"
+      "Decalin"
     ],
     "k": 5
   },
@@ -6418,7 +4978,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -6429,11 +4989,11 @@
     "model_type": "9",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Estragole"
+      "Estragole",
+      "Neburon"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -6462,9 +5022,9 @@
     "top_k_closest_real_ids": [
       "Estragole",
       "Anethole",
-      "3-Chloroanisole",
-      "N-Ethylaniline",
-      "Carvacrol"
+      "Eugenol",
+      "p-Chloroacetanilide",
+      "Clomazone"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -6480,18 +5040,18 @@
     "model_type": "9",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
-      "pyracarbolid",
-      "Clomazone",
-      "Carboxin",
       "Nimetazepam",
-      "osthole"
+      "Metolazone",
+      "RTI 23",
+      "Carbaryl",
+      "Indapamide"
     ],
     "top_k_farthest_real_ids": [
       "d-inositol",
-      "Kepone",
-      "Mirex",
+      "Glycerol",
       "Sorbitol",
-      "Chloropicrin"
+      "Benzo[ghi]perylene",
+      "Fructose"
     ],
     "k": 5
   },
@@ -6504,7 +5064,7 @@
       "ethiofencarb",
       "Napropamide",
       "Isoprocarb",
-      "ethyl cinnamate"
+      "Carboxin"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -6522,9 +5082,9 @@
     "top_k_closest_real_ids": [
       "2,2',3,5'-PCB",
       "2,2',4,5'-PCB",
-      "1,2,4-Trichlorobenzene",
       "O,P'-DDD",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "2,3',4',5-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -6541,62 +5101,22 @@
     "cluster_id": 0,
     "top_k_closest_real_ids": [
       "Diazepam",
-      "Metolazone",
       "Clonazepam",
-      "osthole",
-      "Coumatetralyl"
+      "Coumatetralyl",
+      "Nimetazepam",
+      "pyracarbolid"
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Benzo[ghi]perylene",
       "Perylene",
-      "Eicosane"
+      "Eicosane",
+      "Napthacene"
     ],
     "k": 5
   },
   {
     "layer_name": "gnn_layer_6",
-    "model_type": "9",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "1-Phenylethanol",
-      "Acetophenone",
-      "2-Chloroanisole",
-      "3-Chloroanisole",
-      "Eugenol"
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Tribromomethane",
-      "Ethane",
-      "Diiodomethane",
-      "Urea"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "9",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Diazepam",
-      "Metolazone",
-      "Clonazepam",
-      "osthole",
-      "Coumatetralyl"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Benzo[ghi]perylene",
-      "Perylene",
-      "Eicosane"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
     "model_type": "9",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
@@ -6628,10 +5148,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Benzo[ghi]perylene",
       "2,2',3,3',5,5',6,6'-PCB",
-      "Perylene"
+      "Perylene",
+      "Eicosane"
     ],
     "k": 5
   },
@@ -6644,53 +5164,13 @@
       "Acetanilide",
       "2-Heptanone",
       "Metolcarb",
-      "Ethyl pentanoate"
+      "o-Chloroaniline"
     ],
     "top_k_farthest_real_ids": [
       "Urea",
       "Methanol",
+      "Tetrabromomethane",
       "Methyl hydrazine",
-      "Glycerol",
-      "Erythritol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "9",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "2-Chlorobiphenyl",
-      "Desmedipham",
-      "Lenacil",
-      "Acenapthene",
-      "pregnenolone"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "Benzo[ghi]perylene",
-      "hexacosane",
-      "2,2',3,3',5,5',6,6'-PCB",
-      "Perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "9",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "2,2-Dimethylpentanol",
-      "Caproaldehyde",
-      "Trichloromethane",
-      "Ethane",
-      "N-Methylaniline "
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Methyl hydrazine",
-      "Urea",
-      "Ethanol",
       "Glycerol"
     ],
     "k": 5
@@ -6703,15 +5183,15 @@
       "2-Heptanone",
       "2-Hexanone",
       "2-Octanone",
-      "Pebulate",
-      "4-Heptanone"
+      "4-Heptanone",
+      "Ethyl heptanoate"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
       "Diiodomethane",
-      "Dibromomethane",
-      "Ethane"
+      "Tetrachloromethane",
+      "Dibromomethane"
     ],
     "k": 5
   },
@@ -6720,18 +5200,18 @@
     "model_type": "5",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
-      "Permethrin",
       "Cyfluthrin",
       "Napropamide",
       "Chloroxuron",
-      "Mefenacet"
+      "Mefenacet",
+      "Glafenine"
     ],
     "top_k_farthest_real_ids": [
-      "Tetrachloromethane",
       "Mirex",
       "Kepone",
       "Hexachloroethane",
-      "Tetrachloroethylene"
+      "Dimethoxymethane",
+      "Sorbitol"
     ],
     "k": 5
   },
@@ -6750,8 +5230,8 @@
       "Tetrabromomethane",
       "Ethane",
       "Tribromomethane",
-      "Diiodomethane",
-      "Urea"
+      "Decalin",
+      "Diiodomethane"
     ],
     "k": 5
   },
@@ -6769,7 +5249,7 @@
     "top_k_farthest_real_ids": [
       "Mirex",
       "Kepone",
-      "Decalin",
+      "Dienochlor",
       "Dieldrin",
       "Heptachlor"
     ],
@@ -6780,11 +5260,11 @@
     "model_type": "5",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "osthole",
       "pyracarbolid",
       "Isoprocarb",
       "Eugenol",
-      "Estragole"
+      "Estragole",
+      "Neburon"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -6820,9 +5300,9 @@
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
       "Tribromomethane",
-      "Tetrachloromethane",
-      "Dibromomethane",
-      "Chlorodibromethane"
+      "Diiodomethane",
+      "Urea",
+      "Thiourea"
     ],
     "k": 5
   },
@@ -6833,16 +5313,16 @@
     "top_k_closest_real_ids": [
       "Estragole",
       "Carvacrol",
+      "Eugenol",
       "Anethole",
-      "Carvone",
-      "1-Phenylethanol"
+      "Carvone"
     ],
     "top_k_farthest_real_ids": [
-      "Diiodomethane",
       "Ethane",
-      "Urea",
-      "Thiourea",
-      "Ethyne"
+      "Ethyne",
+      "d-inositol",
+      "Hexachloroethane",
+      "Methyl hydrazine"
     ],
     "k": 5
   },
@@ -6855,7 +5335,7 @@
       "ethiofencarb",
       "Isoprocarb",
       "Napropamide",
-      "ethyl cinnamate"
+      "Carboxin"
     ],
     "top_k_farthest_real_ids": [
       "Ethane",
@@ -6873,9 +5353,9 @@
     "top_k_closest_real_ids": [
       "2,2',3,5'-PCB",
       "O,P'-DDD",
-      "1,2,4-Trichlorobenzene",
       "2,2',4,5'-PCB",
-      "2,3',5-PCB"
+      "2,3',5-PCB",
+      "2,4,6-PCB"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -6891,18 +5371,18 @@
     "model_type": "5",
     "cluster_id": 0,
     "top_k_closest_real_ids": [
-      "bromadiolone",
       "Equilenin",
       "2,6-PCB",
       "2,4'-PCB",
-      "Triazolam"
+      "2,2'-PCB",
+      "3-Chlorobiphenyl"
     ],
     "top_k_farthest_real_ids": [
-      "hexacosane",
       "2,2',3,3',4,4',5,5',6,6'-PCB",
       "Eicosane",
       "Perylene",
-      "Benzo[ghi]perylene"
+      "Benzo[ghi]perylene",
+      "Diosgenin"
     ],
     "k": 5
   },
@@ -6913,49 +5393,9 @@
     "top_k_closest_real_ids": [
       "Eugenol",
       "Isoprocarb",
-      "ethyl cinnamate",
       "pyracarbolid",
-      "Ethyl benzoate "
-    ],
-    "top_k_farthest_real_ids": [
-      "Tetrabromomethane",
-      "Tribromomethane",
-      "Ethane",
-      "Diiodomethane",
-      "Urea"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "5",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "bromadiolone",
-      "Equilenin",
-      "2,6-PCB",
-      "2,4'-PCB",
-      "Triazolam"
-    ],
-    "top_k_farthest_real_ids": [
-      "hexacosane",
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "Eicosane",
-      "Perylene",
-      "Benzo[ghi]perylene"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "fingerprint",
-    "model_type": "5",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Eugenol",
-      "Isoprocarb",
-      "ethyl cinnamate",
-      "pyracarbolid",
-      "Ethyl benzoate "
+      "Ethyl benzoate ",
+      "Risocaine"
     ],
     "top_k_farthest_real_ids": [
       "Tetrabromomethane",
@@ -6979,10 +5419,10 @@
     ],
     "top_k_farthest_real_ids": [
       "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
       "Perylene",
       "Diosgenin",
-      "Benzo[ghi]perylene"
+      "Benzo[ghi]perylene",
+      "Deltamethrin"
     ],
     "k": 5
   },
@@ -6991,58 +5431,18 @@
     "model_type": "5",
     "cluster_id": 1,
     "top_k_closest_real_ids": [
-      "3,4-Dimethylphenol",
       "2,4-Dimethylphenol",
       "p-Hydroxyacetanilide",
       "2,6-Dimethylphenol",
-      "m-Methylaniline"
+      "m-Methylaniline",
+      "benzylurea"
     ],
     "top_k_farthest_real_ids": [
       "Urea",
+      "Tetrabromomethane",
       "Glycerol",
       "Methanol",
-      "Methyl hydrazine",
-      "Erythritol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "5",
-    "cluster_id": 0,
-    "top_k_closest_real_ids": [
-      "Cyclopropyl-5-spirobarbituric acid",
-      "Buthidazole",
-      "Pirimicarb",
-      "Sparsomycin (3,8mg/ml)",
-      "1,1,1,2-Tetrachloroethane"
-    ],
-    "top_k_farthest_real_ids": [
-      "Methanol",
-      "Glycerol",
-      "Urea",
-      "Methyl hydrazine",
-      "Ethanol"
-    ],
-    "k": 5
-  },
-  {
-    "layer_name": "ffn_layer_2",
-    "model_type": "5",
-    "cluster_id": 1,
-    "top_k_closest_real_ids": [
-      "Chlorothalonil",
-      "Digitoxin",
-      "deoxycorticosterone acetate",
-      "chlorpyrifos",
-      "Vinclozolin"
-    ],
-    "top_k_farthest_real_ids": [
-      "2,2',3,3',4,4',5,5',6,6'-PCB",
-      "hexacosane",
-      "Perylene",
-      "Deltamethrin",
-      "Benzo[ghi]perylene"
+      "Methyl hydrazine"
     ],
     "k": 5
   }
