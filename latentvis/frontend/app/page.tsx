@@ -89,10 +89,11 @@ const DEFAULT_WORKSPACE_WIDTH_PCT = 50; // right column default 50%
 const HALF_RIGHT_WORKSPACE_WIDTH_PCT = 83;
 const apiBase = (process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001").replace(/\/+$/, "");
 
-function parseSplitTaggedId(value: string | number): { split: "train" | "test" | null; realId: string } {
+function parseSplitTaggedId(value: string | number): { split: "train" | "test" | "val" | null; realId: string } {
     const raw = String(value ?? "").trim();
     if (raw.startsWith("train::")) return { split: "train", realId: raw.slice("train::".length) };
     if (raw.startsWith("test::")) return { split: "test", realId: raw.slice("test::".length) };
+    if (raw.startsWith("val::")) return { split: "val", realId: raw.slice("val::".length) };
     return { split: null, realId: raw };
 }
 
@@ -1838,6 +1839,65 @@ export default function Home() {
             : (selectedIds && selectedIds.length > 0 ? selectedIds : null);
     const showRightDetailPanels = detailsEverShown || cellSelected || selectedNode != null;
     const shouldShowBlockingOverlay = isBlockingInitLoading || isGeneratingRange;
+    const searchResultHighlightIds = useMemo(() => {
+        const out = new Set<string>();
+        const add = (value: string | number | null | undefined) => {
+            const s = String(value ?? "").trim();
+            if (!s) return;
+            out.add(s);
+            out.add(s.toLowerCase());
+            const idx = s.indexOf("::");
+            if (idx >= 0) {
+                const stripped = s.slice(idx + 2).trim();
+                if (stripped) {
+                    out.add(stripped);
+                    out.add(stripped.toLowerCase());
+                }
+            }
+        };
+        const splitByMolId = new Map<string, "train" | "test" | "val">();
+        const splitNames: string[] = Array.isArray((overviewData as any)?.split_names)
+            ? (overviewData as any).split_names.map((x: any) => String(x).toLowerCase())
+            : [];
+        const splits: any[] = Array.isArray((overviewData as any)?.splits) ? (overviewData as any).splits : [];
+        splitNames.forEach((name, idx) => {
+            const ids: any[] = Array.isArray(splits[idx]) ? splits[idx] : [];
+            const split =
+                name === "train" ? "train" : name === "test" ? "test" : name === "val" ? "val" : null;
+            if (!split) return;
+            ids.forEach((id) => {
+                splitByMolId.set(String(id), split);
+            });
+        });
+        const moleculeLabels: any[] = Array.isArray((overviewData as any)?.molecule_labels)
+            ? (overviewData as any).molecule_labels
+            : [];
+        searchResultIds.forEach((ridRaw) => {
+            const parsed = parseSplitTaggedId(ridRaw);
+            const base = String(parsed.realId ?? "").trim();
+            if (!base) return;
+            add(ridRaw);
+            add(base);
+            ["train", "test", "val"].forEach((split) => add(`${split}::${base}`));
+
+            const molIdx = Number(base);
+            const label =
+                Number.isFinite(molIdx) && moleculeLabels[molIdx] != null
+                    ? String(moleculeLabels[molIdx]).trim()
+                    : "";
+            if (label) {
+                add(label);
+                ["train", "test", "val"].forEach((split) => add(`${split}::${label}`));
+            }
+
+            const inferredSplit = parsed.split ?? splitByMolId.get(base) ?? null;
+            if (inferredSplit) {
+                add(`${inferredSplit}::${base}`);
+                if (label) add(`${inferredSplit}::${label}`);
+            }
+        });
+        return Array.from(out);
+    }, [searchResultIds, overviewData]);
     const verticalSankeyRenderKey = [
         "vertical",
         swapAxes ? "layer" : "model",
@@ -2089,7 +2149,7 @@ export default function Home() {
                                                     activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
                                                     activeIds={
                                                         showSearchResultsInMembers
-                                                            ? searchResultIds
+                                                            ? searchResultHighlightIds
                                                             : selectedIds
                                                     }
                                                     highlightId={hoveredId}
