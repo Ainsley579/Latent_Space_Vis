@@ -246,8 +246,6 @@ type SankeyProps = {
     visibleEpochs?: string[] | null;
     reverseEpochOrder?: boolean;
     activeNodeKey?: string | null;
-    highlightId?: string | null;
-    highlightIds?: string[] | null;
     onNodeSelect?: (sel: { model?: string; layer?: string; cluster: number; ids?: string[] }) => void;
     layout: "vertical" | "horizontal"
 };
@@ -513,8 +511,6 @@ export default function Sankey({
     visibleEpochs,
     reverseEpochOrder = false,
     activeNodeKey,
-    highlightId,
-    highlightIds,
     onNodeSelect,
     layout = "vertical",
 }: SankeyProps) {
@@ -935,58 +931,6 @@ export default function Sankey({
                 nodeSamples.get(src)!.add(sampleId);
                 nodeSamples.get(tgt)!.add(sampleId);
             });
-            const buildIdAliases = (raw: unknown): Set<string> => {
-                const out = new Set<string>();
-                const s0 = String(raw ?? "").trim();
-                if (!s0) return out;
-                const s = s0.toLowerCase();
-                out.add(s);
-                const parsed = stripTaggedRealId(s0);
-                const base = String(parsed.id ?? "").trim().toLowerCase();
-                if (base) out.add(base);
-                const idx = s.indexOf("::");
-                if (idx >= 0) {
-                    const tail = s.slice(idx + 2).trim();
-                    if (tail) out.add(tail);
-                }
-                const n = Number(base || s);
-                if (Number.isFinite(n)) {
-                    out.add(String(n));
-                    out.add(String(Math.trunc(n)));
-                }
-                return out;
-            };
-            const highlightedAliases = new Set<string>();
-            const appendHighlightId = (raw: unknown) => {
-                buildIdAliases(raw).forEach((k) => highlightedAliases.add(k));
-            };
-            if (highlightId) appendHighlightId(highlightId);
-            if (Array.isArray(highlightIds)) {
-                highlightIds.forEach((id) => appendHighlightId(id));
-            }
-            const highlightedNodeKeys = new Set<string>();
-            if (highlightedAliases.size > 0) {
-                nodeSamples.forEach((sampleSet, nodeKey) => {
-                    let hit = false;
-                    sampleSet.forEach((sid) => {
-                        if (hit) return;
-                        const aliases = buildIdAliases(sid);
-                        for (const a of aliases) {
-                            if (highlightedAliases.has(a)) {
-                                hit = true;
-                                break;
-                            }
-                        }
-                    });
-                    if (hit) {
-                        highlightedNodeKeys.add(nodeKey);
-                    }
-                });
-            }
-
-
-            // Remove point-level trajectories entirely.
-            sampleGroup.selectAll("line").remove();
             const darker = (hex: string, amount = 0.6) => {
                 const c = d3.color(hex);
                 return c ? c.darker(amount).formatHex() : hex;
@@ -1032,8 +976,7 @@ export default function Sankey({
                             return SANKEY_NODE_COLOR;
                         })
                         .attr("stroke", "none")
-                        .attr("stroke-width", 0)
-                        .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0")),
+                        .attr("stroke-width", 0),
                 (update) => update
                     .attr("x", (d: any) => d.x)
                     .attr("y", (d) => d.y)
@@ -1047,8 +990,7 @@ export default function Sankey({
                             return SANKEY_NODE_COLOR;
                         })
                     .attr("stroke", "none")
-                    .attr("stroke-width", 0)
-                    .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0")),
+                    .attr("stroke-width", 0),
                 (exit) => exit.remove());
 
             nodeGroup
@@ -1088,7 +1030,6 @@ export default function Sankey({
                                 return darker(SANKEY_NODE_COLOR, 0.6);
                             })
                             .attr("data-key", (d) => d.key)
-                            .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0"))
                             .attr("stroke", "none")
                             .attr("stroke-width", 0)
                             .style("pointer-events", "none"),
@@ -1122,7 +1063,6 @@ export default function Sankey({
                                 return darker(SANKEY_NODE_COLOR, 0.6);
                             })
                             .attr("data-key", (d) => d.key)
-                            .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0"))
                             .attr("stroke", "none")
                             .attr("stroke-width", 0)
                     ,
@@ -1162,7 +1102,6 @@ export default function Sankey({
                                 return darker(SANKEY_NODE_COLOR, 1.0);
                             })
                             .attr("data-key", (d) => d.key)
-                            .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0"))
                             .attr("stroke", "none")
                             .attr("stroke-width", 0)
                             .style("pointer-events", "none"),
@@ -1194,7 +1133,7 @@ export default function Sankey({
                                 return darker(SANKEY_NODE_COLOR, 1.0);
                             })
                             .attr("data-key", (d) => d.key)
-                            .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0")),
+                            ,
                     (exit) => exit.remove()
                 );
             nodeGroup
@@ -1215,14 +1154,13 @@ export default function Sankey({
                 .attr("y", (d) => d.y)
                 .attr("width", NODE_W)
                 .attr("height", (d) => Math.max(1, d.h))
-                .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0"))
                 .attr("stroke", (d) => {
                     if (displayActiveNode && d.key === displayActiveNode) return HIGHLIGHT_RED;
-                    return highlightedNodeKeys.has(d.key) ? HIGHLIGHT_RED : "none";
+                    return "none";
                 })
                 .attr("stroke-width", (d) => {
                     if (displayActiveNode && d.key === displayActiveNode) return 2.6;
-                    return highlightedNodeKeys.has(d.key) ? 2 : 0;
+                    return 0;
                 })
                 .attr("vector-effect", "non-scaling-stroke");
             nodeSel.append("title").text((d) => d.key);
@@ -1316,8 +1254,6 @@ export default function Sankey({
         showFfn2,
         !!syncTransform,
         activeNodeKey,
-        highlightId,
-        highlightIds,
     ]);
 
     useEffect(() => {
@@ -1359,20 +1295,16 @@ export default function Sankey({
         ) as SVGRectElement[];
         outlineRects.forEach((rect) => {
             const key = rect.getAttribute("data-key") || "";
-            const isPathHit = rect.getAttribute("data-path-hit") === "1";
             if (activeName && key === activeName) {
                 rect.setAttribute("stroke", HIGHLIGHT_RED);
                 rect.setAttribute("stroke-width", "2.6");
-            } else if (isPathHit) {
-                rect.setAttribute("stroke", HIGHLIGHT_RED);
-                rect.setAttribute("stroke-width", "2");
             } else {
                 rect.setAttribute("stroke", "none");
                 rect.setAttribute("stroke-width", "0");
             }
         });
 
-    }, [displayActiveNode, highlightId, highlightIds, mode, modelKey, layerKey]);
+    }, [displayActiveNode, mode, modelKey, layerKey]);
 
     useEffect(() => {
         const container = containerRef.current;

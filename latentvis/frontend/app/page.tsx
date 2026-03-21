@@ -2063,10 +2063,6 @@ export default function Home() {
     const sankeyViewExternalTransform =
         syncLinkedSankeyViews && !viewIsSyncSource ? sankeyTransform : undefined;
     const hasSelectedMemberIds = Array.isArray(selectedIds) && selectedIds.length > 0;
-    const globalHighlightIds =
-        showSearchResultsInMembers
-            ? searchResultIds
-            : (selectedIds && selectedIds.length > 0 ? selectedIds : null);
     const showRightDetailPanels = detailsEverShown || cellSelected || selectedNode != null || hasSelectedMemberIds;
     const shouldShowBlockingOverlay = isBlockingInitLoading || isGeneratingRange;
     const searchResultHighlightIds = useMemo(() => {
@@ -2252,8 +2248,6 @@ export default function Home() {
                                                     : `${selectedNode.model}_${selectedNode.cluster}`
                                                 : null
                                         }
-                                        highlightId={hoveredId}
-                                        highlightIds={globalHighlightIds}
                                         onNodeSelect={(sel) => {
                                             const normalized = resolveSankeyCellSelection(
                                                 { model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster, ids: sel.ids },
@@ -2311,8 +2305,6 @@ export default function Home() {
                                                     : `${selectedNode.layer}_${selectedNode.cluster}`
                                                 : null
                                         }
-                                        highlightId={hoveredId}
-                                        highlightIds={globalHighlightIds}
                                         onNodeSelect={(sel) => {
                                             const normalized = resolveSankeyCellSelection(
                                                 { model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: sel.ids },
