@@ -2090,7 +2090,7 @@ export default function Home() {
                                                     activeIds={
                                                         showSearchResultsInMembers
                                                             ? searchResultIds
-                                                            : (suppressScatterCluster ? null : selectedIds)
+                                                            : selectedIds
                                                     }
                                                     highlightId={hoveredId}
                                                     modelKey={selectedModel}

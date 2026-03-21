@@ -11,10 +11,13 @@ type ScatterPoint = {
   x: number;
   y: number;
   cluster_id: number;
-  split?: "train" | "test";
+  split?: "train" | "test" | "val";
   y_true?: number;
   y_pred?: number;
 };
+
+type SplitTag = "train" | "test" | "val";
+type SplitMetaTag = SplitTag | "both";
 
 type ColorMode = "cluster" | "label" | "split" | "y_true" | "y_pred" | "y_abs_err";
 
@@ -98,7 +101,7 @@ export default function ScatterPlot({
   const yTrueByIdRef = useRef<Record<string, number>>({});
   const yPredByIdRef = useRef<Record<string, number>>({});
   const yAbsErrByIdRef = useRef<Record<string, number>>({});
-  const splitByIdRef = useRef<Record<string, "train" | "test" | "both">>({});
+  const splitByIdRef = useRef<Record<string, SplitMetaTag>>({});
   const [legendClusters, setLegendClusters] = useState<number[]>([]);
   const [legendClusterIds, setLegendClusterIds] = useState<Record<number, string[]>>({});
   const [colorMode, setColorMode] = useState<ColorMode>("cluster");
@@ -157,8 +160,9 @@ export default function ScatterPlot({
     return out;
   }
 
-  function resolveBaseFillByMode(mode: ColorMode, id: string, cluster: number, split?: "train" | "test"): string {
+  function resolveBaseFillByMode(mode: ColorMode, id: string, cluster: number, split?: SplitTag): string {
     if (mode === "split") {
+      if (split === "val") return "#1e3a8a";
       if (split === "test") return "#2563eb";
       if (split === "train") return "#f59e0b";
       return "#9ca3af";
@@ -197,7 +201,7 @@ export default function ScatterPlot({
     return CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length];
   }
 
-  function resolveBaseFill(id: string, cluster: number, split?: "train" | "test"): string {
+  function resolveBaseFill(id: string, cluster: number, split?: SplitTag): string {
     return resolveBaseFillByMode(colorMode, id, cluster, split);
   }
 
@@ -211,7 +215,7 @@ export default function ScatterPlot({
     circles.forEach((el) => {
       const id = el.getAttribute("data-id") || "";
       const cluster = Number(el.getAttribute("data-cluster") || "0");
-      const split = (el.getAttribute("data-split") || "") as "train" | "test" | "";
+      const split = (el.getAttribute("data-split") || "") as SplitTag | "";
       const fill = resolveBaseFillByMode(mode, id, cluster, split || undefined);
       el.setAttribute("data-base-fill", fill);
       if (!highlightId || id !== String(highlightId)) {
@@ -246,7 +250,7 @@ export default function ScatterPlot({
     circles.forEach((el) => {
       const id = el.getAttribute("data-id") || "";
       const cluster = Number(el.getAttribute("data-cluster") || "0");
-      const split = (el.getAttribute("data-split") || "") as "train" | "test" | "";
+      const split = (el.getAttribute("data-split") || "") as SplitTag | "";
       const computedBaseFill = resolveBaseFill(id, cluster, split || undefined);
       el.setAttribute("data-base-fill", computedBaseFill);
       const baseFill = computedBaseFill;
@@ -317,7 +321,7 @@ export default function ScatterPlot({
     onHighlightIdsSelect?.(uniq);
   }
 
-  function idsForSplit(target: "train" | "test"): string[] {
+  function idsForSplit(target: SplitTag): string[] {
     const rows = rowsRef.current ?? [];
     return rows.filter((d) => d.split === target).map((d) => String(d.real_id));
   }
@@ -712,7 +716,7 @@ export default function ScatterPlot({
       }
       // Preferred schema: flat list rows in /id_smiles_y_true_y_pred.json
       if (Array.isArray(json)) {
-        const splitById: Record<string, "train" | "test" | "both"> = {};
+        const splitById: Record<string, SplitMetaTag> = {};
         const yTrueById: Record<string, number> = {};
         const yPredById: Record<string, number> = {};
         json.forEach((row: any) => {
@@ -722,10 +726,10 @@ export default function ScatterPlot({
           const rid = String(ridRaw).trim();
           if (!rid) return;
           const splitRaw = String(row.split ?? "").trim().toLowerCase();
-          const split = splitRaw === "train" || splitRaw === "test" ? splitRaw : "";
+          const split = splitRaw === "train" || splitRaw === "test" || splitRaw === "val" ? splitRaw : "";
           if (!split) return;
           const prev = splitById[rid];
-          splitById[rid] = prev && prev !== split ? "both" : (split as "train" | "test");
+          splitById[rid] = prev && prev !== split ? "both" : (split as SplitTag);
           const yt = Number(row.y_true);
           const yp = Number(row.y_pred);
           if (Number.isFinite(yt)) yTrueById[rid] = yt;
@@ -736,17 +740,17 @@ export default function ScatterPlot({
       // Backward-compatible schema from backend /real-id-split-map
       const map = json?.datasets?.[splitMapDataset]?.split_by_real_id;
       if (!map || typeof map !== "object") return null;
-      return { splitById: map as Record<string, "train" | "test" | "both"> };
+      return { splitById: map as Record<string, SplitMetaTag> };
     };
 
     const applyMergedRows = (
       merged: ScatterPoint[],
-      splitById: Record<string, "train" | "test" | "both">,
+      splitById: Record<string, SplitMetaTag>,
       yTrueById: Record<string, number>,
       yPredById: Record<string, number>
     ) => {
       splitByIdRef.current = splitById;
-      const splitKinds = new Set(merged.map((d) => d.split).filter((x): x is "train" | "test" => !!x));
+      const splitKinds = new Set(merged.map((d) => d.split).filter((x): x is SplitTag => !!x));
       const canUseSplit = splitKinds.size > 0;
       setHasSplitData(canUseSplit);
       const yTrueByIdNext: Record<string, number> = {};
@@ -849,10 +853,14 @@ export default function ScatterPlot({
           });
           const trainTagged = `train::${parsed}`;
           const testTagged = `test::${parsed}`;
+          const valTagged = `val::${parsed}`;
           idLookupKeys(trainTagged).forEach((k) => {
             if (!clusterByAlias.has(k)) clusterByAlias.set(k, cid);
           });
           idLookupKeys(testTagged).forEach((k) => {
+            if (!clusterByAlias.has(k)) clusterByAlias.set(k, cid);
+          });
+          idLookupKeys(valTagged).forEach((k) => {
             if (!clusterByAlias.has(k)) clusterByAlias.set(k, cid);
           });
         };
@@ -880,12 +888,13 @@ export default function ScatterPlot({
           return 0;
         };
 
-        const splitById: Record<string, "train" | "test" | "both"> = {};
+        const splitById: Record<string, SplitMetaTag> = {};
         const splitNames = Array.isArray(compactOverview?.split_names) ? compactOverview.split_names : [];
         const splits = Array.isArray(compactOverview?.splits) ? compactOverview.splits : [];
         splitNames.forEach((name: any, idx: number) => {
           const ids = Array.isArray(splits[idx]) ? splits[idx] : [];
-          const normalized: "train" | "test" | null = String(name) === "train" ? "train" : (String(name) === "test" || String(name) === "val" ? "test" : null);
+          const normalized: SplitTag | null =
+            String(name) === "train" ? "train" : String(name) === "test" ? "test" : String(name) === "val" ? "val" : null;
           if (!normalized) return;
           ids.forEach((id: any) => {
             const key = String(id);
@@ -899,7 +908,7 @@ export default function ScatterPlot({
         const resolveMetricForPoint = (
           lookup: Record<string, number> | undefined,
           ridRaw: string,
-          split: "train" | "test" | undefined
+          split: SplitTag | undefined
         ): number | undefined => {
           const rid = String(ridRaw ?? "").trim();
           if (!rid || !lookup) return undefined;
@@ -915,10 +924,16 @@ export default function ScatterPlot({
             idLookupKeys(ridLabel).forEach((k) => candidateKeys.add(k));
           }
 
-          if (split === "train" || split === "test") {
+          if (split === "train" || split === "test" || split === "val") {
             idLookupKeys(`${split}::${rid}`).forEach((k) => candidateKeys.add(k));
             if (ridLabel) {
               idLookupKeys(`${split}::${ridLabel}`).forEach((k) => candidateKeys.add(k));
+            }
+            if (split === "val") {
+              idLookupKeys(`test::${rid}`).forEach((k) => candidateKeys.add(k));
+              if (ridLabel) {
+                idLookupKeys(`test::${ridLabel}`).forEach((k) => candidateKeys.add(k));
+              }
             }
           }
 
@@ -935,7 +950,7 @@ export default function ScatterPlot({
             const y = Number(xy[1]);
             if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
             const splitRaw = splitById[String(rid)];
-            const split = splitRaw === "train" || splitRaw === "test" ? splitRaw : undefined;
+            const split = splitRaw === "train" || splitRaw === "test" || splitRaw === "val" ? splitRaw : undefined;
             if (dataSplit === "train" && split !== "train") return null;
             if (dataSplit === "test" && split !== "test") return null;
             const yTrue = resolveMetricForPoint(yTrueById, String(rid), split);
@@ -980,7 +995,7 @@ export default function ScatterPlot({
             const parseRows = (
               xySource: any,
               clusterSource: any,
-              split: "train" | "test" | undefined
+              split: SplitTag | undefined
             ): ScatterPoint[] => {
               const xyRows = Array.isArray(xySource) ? xySource : [];
               const clusterRows = Array.isArray(clusterSource) ? clusterSource : [];
@@ -1004,7 +1019,10 @@ export default function ScatterPlot({
                     }
                     return undefined;
                   })();
-                  const splitFromMap = splitFromMapRaw === "train" || splitFromMapRaw === "test" ? splitFromMapRaw : undefined;
+                  const splitFromMap =
+                    splitFromMapRaw === "train" || splitFromMapRaw === "test" || splitFromMapRaw === "val"
+                      ? splitFromMapRaw
+                      : undefined;
                   return {
                     real_id: id,
                     x: Number(d?.x ?? 0) || 0,
@@ -1016,7 +1034,7 @@ export default function ScatterPlot({
                 .filter((d: ScatterPoint | null): d is ScatterPoint => !!d);
             };
 
-            const primaryDefaultSplit: "train" | "test" | undefined =
+            const primaryDefaultSplit: SplitTag | undefined =
               secondaryXYJson ? "train" : (dataSplit === "train" || dataSplit === "test" ? dataSplit : undefined);
             const primaryRows = parseRows(xyJson, clusterJson, primaryDefaultSplit);
             const secondaryRows = secondaryXYJson
@@ -1128,7 +1146,7 @@ export default function ScatterPlot({
             } disabled:opacity-50`}
             onClick={() => setColorModeAndRefresh("split")}
             disabled={!hasSplitData}
-            title={hasSplitData ? "Color points by train/test split" : "Only available in train+test mode"}
+            title={hasSplitData ? "Color points by train/test/val split" : "Only available when split data exists"}
           >
             split
           </button>
@@ -1237,6 +1255,15 @@ export default function ScatterPlot({
             >
               <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#2563eb" }} />
               test
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
+              onClick={() => emitHighlightIds(idsForSplit("val"))}
+              title="Highlight val points"
+            >
+              <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#1e3a8a" }} />
+              val
             </button>
           </div>
         )}
