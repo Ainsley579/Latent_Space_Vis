@@ -20,8 +20,6 @@ type AicBicChartProps = {
 export default function AicBicChart({ dataPath, allDataPaths, isSelected }: AicBicChartProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const [activeMetric, setActiveMetric] = useState<"aic" | "bic" | "both">("both");
-  const [kMin, setKMin] = useState(0);
-  const [kMax, setKMax] = useState(1);
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
 
@@ -186,8 +184,6 @@ export default function AicBicChart({ dataPath, allDataPaths, isSelected }: AicB
         if (kValues.length) {
           const nextMin = Math.min(...kValues);
           const nextMax = Math.max(...kValues);
-          setKMin(nextMin);
-          setKMax(nextMax);
           setRangeMin((prev) => (prev < nextMin || prev > nextMax ? nextMin : prev));
           setRangeMax((prev) => (prev > nextMax || prev < nextMin ? nextMax : prev));
         }

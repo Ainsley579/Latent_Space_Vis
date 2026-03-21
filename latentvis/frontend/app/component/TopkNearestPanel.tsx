@@ -20,8 +20,6 @@ type TopkNearestPanelProps = {
   selectedLayer: string;
   selectedCluster: number | null;
   hoveredId: string | null;
-  onToggleHoverId: (id: string) => void;
-  onSelectHoverId: (id: string) => void;
   onHoverIdChange: (id: string | null) => void;
   getSmilesById: (realId: string | number) => string | null;
   getYTrueById: (realId: string | number) => number | null;
@@ -60,8 +58,6 @@ export default function TopkNearestPanel({
   selectedLayer,
   selectedCluster,
   hoveredId,
-  onToggleHoverId,
-  onSelectHoverId,
   onHoverIdChange,
   getSmilesById,
   getYTrueById,

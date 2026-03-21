@@ -64,7 +64,6 @@ type ScatterPlotProps = {
   onClusterSelect?: (sel: { model?: string; layer?: string; cluster: number; real_ids: string[] }) => void;
   onHighlightIdsSelect?: (ids: string[]) => void;
   onClearSelection?: () => void;
-  resolveImageSrc?: (realId: string | number, imageType: string) => string;
   getSmilesById?: (realId: string | number) => string | null;
   onUserClusteringUpload?: (
     payload: {
@@ -98,7 +97,6 @@ export default function ScatterPlot({
   onClusterSelect,
   onHighlightIdsSelect,
   onClearSelection,
-  resolveImageSrc,
   getSmilesById,
   onUserClusteringUpload,
 }: ScatterPlotProps) {
@@ -232,7 +230,6 @@ export default function ScatterPlot({
     const svg = container.querySelector("svg");
     if (!svg) return;
     const circles = Array.from(svg.querySelectorAll("circle[data-id]")) as SVGCircleElement[];
-    const highlightLookup = highlightId ? new Set(idLookupKeys(String(highlightId))) : null;
     circles.forEach((el) => {
       const id = el.getAttribute("data-id") || "";
       const cluster = Number(el.getAttribute("data-cluster") || "0");
@@ -774,7 +771,7 @@ export default function ScatterPlot({
       const x = d3.scaleLinear().domain(xExtent).range([0, innerW]).nice();
       const y = d3.scaleLinear().domain(yExtent).range([innerH, 0]).nice();
 
-      const circles = g.append("g")
+      g.append("g")
         .selectAll("circle")
         .data(lastRows)
         .enter()

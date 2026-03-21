@@ -7,56 +7,12 @@ import TopkNearestPanel from "./component/TopkNearestPanel";
 import SmilesStructure from "./component/SmilesStructure";
 import StructureEditorPanel from "./component/StructureEditorPanel";
 import SyncControlPanel from "./component/SyncControlPanel";
-import ClusterContainmentHeatmap from "./component/ClusterContainmentHeatmap";
 import { CLUSTER_COLORS } from "./theme/colors";
-import { fetchJsonCached } from "./utils/fetchCache";
-
-type SankeySampleRow = {
-    real_id: string | number;
-    from_layer: string;
-    to_layer: string;
-    from_model?: string;
-    to_model?: string;
-    from_cluster: number;
-    to_cluster: number;
-};
-
-type GeneratedSankeyPayload = {
-    dataset: DatasetKey;
-    clustering: ClusteringKey;
-    dataSplit: DataSplitKey;
-    allSankey: any;
-    modelSamples: Record<string, SankeySampleRow[]>;
-    verticalSamplesByLayer: Record<string, SankeySampleRow[]>;
-};
-
-type GeneratedRuntimePayload = {
-    dataset: DatasetKey;
-    clustering: ClusteringKey;
-    dataSplit: DataSplitKey;
-    runId: string;
-    topkRepresentatives: any[];
-    clusterSortedMembers: any[];
-    substructures: any[];
-    scatterClusterByCell: Record<string, Array<{ real_id: string | number; cluster_id: number }>>;
-};
 
 type UploadedUserClustering = {
     fileName: string;
     labelNames: string[];
     rows: Array<{ real_id: string; user_cluster_id: number }>;
-};
-
-type ClusterContainmentPayload = {
-    user_cluster_ids: number[];
-    our_cluster_ids: number[];
-    matrix: number[][];
-    entries: Array<{
-        user_cluster_id: number;
-        our_cluster_id: number;
-        count: number;
-        percentage_of_user_cluster: number;
-    }>;
 };
 
 type CellMetricByCellPayload = {
@@ -508,7 +464,6 @@ export default function Home() {
     }, []);
 
     const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
-    const [activeSankeyRows, setActiveSankeyRows] = useState<SankeySampleRow[]>([]);
     const [topkData, setTopkData] = useState<
         {
             layer_name: string;
@@ -727,18 +682,8 @@ export default function Home() {
 
     const syncTransformHorizontal = useMemo(
         () => ({ x: sankeyTransform.x, y: sankeyTransform.y, scale: sankeyTransform.scale }),
-        [sankeyTransform.x, sankeyTransform.scale]
+        [sankeyTransform.x, sankeyTransform.y, sankeyTransform.scale]
     );
-
-    function toggleLockedHighlight(id: string) {
-        if (hoverLock && hoveredId === id) {
-            setHoveredId(null);
-            setHoverLock(false);
-            return;
-        }
-        setHoveredId(id);
-        setHoverLock(true);
-    }
 
     function toggleBookmark(id: string) {
         setBookmarkedIds((prev) => {
@@ -930,7 +875,6 @@ export default function Home() {
             });
         return () => controller.abort();
     }, [
-        apiBase,
         uploadedUserClustering,
         selectedDataSet,
         selectedClustering,
@@ -1631,7 +1575,6 @@ export default function Home() {
         fetchCellTopm();
         return () => controller.abort();
     }, [
-        apiBase,
         selectedDataSet,
         selectedClustering,
         selectedDataSplit,
@@ -1701,7 +1644,6 @@ export default function Home() {
         fetchClusterTanimoto();
         return () => controller.abort();
     }, [
-        apiBase,
         selectedDataSet,
         selectedClustering,
         selectedDataSplit,
@@ -1866,7 +1808,7 @@ export default function Home() {
         const ro = new ResizeObserver(estimateScatterMinWidth);
         ro.observe(host);
         return () => ro.disconnect();
-    }, [HALF_RIGHT_WORKSPACE_WIDTH_PCT]);
+    }, []);
 
     const LEFT_COL_RATIO_IN_WORKSPACE = 45 / 55;
     const MID_COL_RATIO_IN_WORKSPACE = 10 / 55;
@@ -2048,7 +1990,6 @@ export default function Home() {
                             {<SankeyView
                                 data={overviewData}
                                 showFfn2={false}
-                                metricsPath={null}
                                 transitionStatsPath={null}
                                 onModelSelect={(model) => {
                                     setSelectedModel(model);
@@ -2588,8 +2529,6 @@ export default function Home() {
                                             selectedLayer={selectedLayer}
                                             selectedCluster={selectedNode?.cluster ?? null}
                                             hoveredId={hoveredId}
-                                            onToggleHoverId={(id) => setHoveredId((prev) => (prev === id ? null : id))}
-                                            onSelectHoverId={(id) => toggleLockedHighlight(id)}
                                             onHoverIdChange={(id) => setHoverFromMouse(id)}
                                             getSmilesById={getSmilesById}
                                             getYTrueById={getYTrueById}
@@ -2665,7 +2604,6 @@ export default function Home() {
                                         setSelectedNode(null);
                                         setSelectedIds(null);
                                         setCellSelected(false);
-                                        setActiveSankeyRows([]);
                                     }}
                                     datasetOptions={DATASET_OPTIONS_UI}
                                     dataSplit={selectedDataSplit}
@@ -2687,7 +2625,6 @@ export default function Home() {
                                         setSelectedNode(null);
                                         setSelectedIds(null);
                                         setCellSelected(false);
-                                        setActiveSankeyRows([]);
                                     }}
                                     sankeySplits={selectedSankeySplits}
                                     availableSankeySplits={availableSankeySplits}
@@ -2715,7 +2652,6 @@ export default function Home() {
                                         setSelectedNode(null);
                                         setSelectedIds(null);
                                         setCellSelected(false);
-                                        setActiveSankeyRows([]);
                                     }}
                                     cellBgMetric={selectedCellBgMetric}
                                     cellBgMetricOptions={cellBgMetricOptions}

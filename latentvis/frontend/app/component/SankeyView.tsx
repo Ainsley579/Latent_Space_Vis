@@ -3,25 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import ZoomPan from "./ZoomPan";
 import { CLUSTER_COLORS, SANKEY_2D_COLUMN_LINK_COLOR, SANKEY_2D_ROW_LINK_COLOR } from "../theme/colors";
-import { fetchJsonCached } from "../utils/fetchCache";
-
-const HIDDEN_LAYER = "ffn_layer_2";
-
-type SankeyEdge = {
-    source_node_id?: number;
-    target_node_id?: number;
-    source_label?: string;
-    target_label?: string;
-    value?: number;
-    pct_of_source?: number;
-};
-
-type SankeyNodeLike = {
-    id: number;
-    label: string;
-    value: number;
-    previous: number;
-};
 
 type CellInfoTag = {
     rowName: string;
@@ -42,193 +23,6 @@ type HoverTooltip = {
 function parseClusterFromLabel(label: string): number {
     const m = /_C(\d+)$/.exec(label);
     return m ? Number(m[1]) : 0;
-}
-
-function parseGroupFromLabel(label: string): string {
-    const i = label.lastIndexOf("_C");
-    return i === -1 ? label : label.slice(0, i);
-}
-
-function canonicalLayerForVisibility(name: string): string {
-    if (name === "fp") return "fingerprint";
-    if (/^fnn_layer_/.test(name)) return name.replace(/^fnn_layer_/, "ffn_layer_");
-    return name;
-}
-
-function isHiddenLayerName(name: string): boolean {
-    return canonicalLayerForVisibility(String(name ?? "").trim()) === HIDDEN_LAYER;
-}
-
-function filterHiddenLayer(dataIn: any, hideLayer: boolean): any {
-    if (!hideLayer) return normalizeSankeyData(dataIn);
-    const data = JSON.parse(JSON.stringify(dataIn ?? {}));
-    const nextEpoch: Record<string, any> = {};
-    const nextLayer: Record<string, any> = {};
-
-    Object.entries(data.epoch || {}).forEach(([rowKey, rowObjRaw]: [string, any]) => {
-        const rowObj = rowObjRaw || {};
-        const nodesObj = rowObj.nodes && typeof rowObj.nodes === "object" ? rowObj.nodes : {};
-        const nodesFiltered: Record<string, any> = {};
-        Object.entries(nodesObj).forEach(([colKey, nodes]) => {
-            if (isHiddenLayerName(String(colKey))) return;
-            nodesFiltered[colKey] = nodes;
-        });
-        const edgesFiltered = Array.isArray(rowObj.edges)
-            ? rowObj.edges.filter((e: any) => {
-                const src = parseGroupFromLabel(String(e?.source_label ?? ""));
-                const tgt = parseGroupFromLabel(String(e?.target_label ?? ""));
-                return !isHiddenLayerName(src) && !isHiddenLayerName(tgt);
-            })
-            : [];
-        nextEpoch[rowKey] = { ...rowObj, nodes: nodesFiltered, edges: edgesFiltered };
-    });
-
-    Object.entries(data.layer || {}).forEach(([layerKey, layerObjRaw]: [string, any]) => {
-        if (isHiddenLayerName(String(layerKey))) return;
-        const layerObj = layerObjRaw || {};
-        nextLayer[layerKey] = {
-            ...layerObj,
-            edges: Array.isArray(layerObj.edges) ? layerObj.edges : [],
-        };
-    });
-
-    return { ...data, epoch: nextEpoch, layer: nextLayer };
-}
-
-function buildNodesByGroup(edges: SankeyEdge[]): Record<string, SankeyNodeLike[]> {
-    const inSum = new Map<string, number>();
-    const outSum = new Map<string, number>();
-    const labelsByGroup = new Map<string, Set<string>>();
-
-    edges.forEach((e) => {
-        const src = String(e.source_label ?? "");
-        const tgt = String(e.target_label ?? "");
-        const val = Number(e.value ?? 0) || 0;
-        if (!src || !tgt || val <= 0) return;
-
-        outSum.set(src, (outSum.get(src) ?? 0) + val);
-        inSum.set(tgt, (inSum.get(tgt) ?? 0) + val);
-
-        const srcGroup = parseGroupFromLabel(src);
-        const tgtGroup = parseGroupFromLabel(tgt);
-        if (!labelsByGroup.has(srcGroup)) labelsByGroup.set(srcGroup, new Set());
-        if (!labelsByGroup.has(tgtGroup)) labelsByGroup.set(tgtGroup, new Set());
-        labelsByGroup.get(srcGroup)?.add(src);
-        labelsByGroup.get(tgtGroup)?.add(tgt);
-    });
-
-    const out: Record<string, SankeyNodeLike[]> = {};
-    labelsByGroup.forEach((labels, group) => {
-        const sorted = Array.from(labels).sort((a, b) => parseClusterFromLabel(a) - parseClusterFromLabel(b));
-        let previous = 0;
-        out[group] = sorted.map((label) => {
-            const value = Math.max(inSum.get(label) ?? 0, outSum.get(label) ?? 0);
-            const node = {
-                id: parseClusterFromLabel(label),
-                label,
-                value,
-                previous,
-            };
-            previous += value;
-            return node;
-        });
-    });
-
-    return out;
-}
-
-function normalizeSankeyData(raw: any): any {
-    const data = JSON.parse(JSON.stringify(raw ?? {}));
-
-    Object.keys(data.epoch || {}).forEach((rowKey) => {
-        const rowObj = data.epoch[rowKey] || {};
-        const edges: SankeyEdge[] = Array.isArray(rowObj.edges) ? rowObj.edges : [];
-        if (!rowObj.nodes || Object.keys(rowObj.nodes).length === 0) {
-            rowObj.nodes = buildNodesByGroup(edges);
-        }
-        data.epoch[rowKey] = rowObj;
-    });
-
-    Object.keys(data.layer || {}).forEach((colKey) => {
-        const colObj = data.layer[colKey] || {};
-        const edges: SankeyEdge[] = Array.isArray(colObj.edges) ? colObj.edges : [];
-        if (!colObj.nodes || Object.keys(colObj.nodes).length === 0) {
-            colObj.nodes = buildNodesByGroup(edges);
-        }
-        data.layer[colKey] = colObj;
-    });
-
-    return data;
-}
-
-function mergeEdgeLists(primaryEdges: SankeyEdge[], secondaryEdges: SankeyEdge[]): SankeyEdge[] {
-    const normalize = (edge: SankeyEdge): SankeyEdge => ({
-        source_label: String(edge?.source_label ?? ""),
-        target_label: String(edge?.target_label ?? ""),
-        source_node_id: typeof edge?.source_node_id === "number" ? edge.source_node_id : undefined,
-        target_node_id: typeof edge?.target_node_id === "number" ? edge.target_node_id : undefined,
-        value: Number(edge?.value ?? 0) || 0,
-        pct_of_source: Number(edge?.pct_of_source ?? 0) || 0,
-    });
-    return [...primaryEdges.map(normalize), ...secondaryEdges.map(normalize)];
-}
-
-function mergeSankeyDataForCombinedSplit(primaryRaw: any, secondaryRaw: any): {
-    mergedData: any;
-    secondaryNodeValueByCellCluster: Map<string, number>;
-} {
-    const primary = normalizeSankeyData(primaryRaw);
-    const secondary = normalizeSankeyData(secondaryRaw);
-
-    const mergedEpoch: Record<string, any> = {};
-    const epochKeys = new Set([
-        ...Object.keys(primary?.epoch || {}),
-        ...Object.keys(secondary?.epoch || {}),
-    ]);
-    epochKeys.forEach((epochKey) => {
-        const pEdges = Array.isArray(primary?.epoch?.[epochKey]?.edges) ? primary.epoch[epochKey].edges : [];
-        const sEdges = Array.isArray(secondary?.epoch?.[epochKey]?.edges) ? secondary.epoch[epochKey].edges : [];
-        mergedEpoch[epochKey] = {
-            edges: mergeEdgeLists(pEdges, sEdges),
-            nodes: {},
-        };
-    });
-
-    const mergedLayer: Record<string, any> = {};
-    const layerKeys = new Set([
-        ...Object.keys(primary?.layer || {}),
-        ...Object.keys(secondary?.layer || {}),
-    ]);
-    layerKeys.forEach((layerKey) => {
-        const pEdges = Array.isArray(primary?.layer?.[layerKey]?.edges) ? primary.layer[layerKey].edges : [];
-        const sEdges = Array.isArray(secondary?.layer?.[layerKey]?.edges) ? secondary.layer[layerKey].edges : [];
-        mergedLayer[layerKey] = {
-            edges: mergeEdgeLists(pEdges, sEdges),
-            nodes: {},
-        };
-    });
-
-    const secondaryNodeValueByCellCluster = new Map<string, number>();
-    Object.entries(secondary?.epoch || {}).forEach(([epochKey, epochObj]: [string, any]) => {
-        const nodesByLayer = epochObj?.nodes || {};
-        Object.entries(nodesByLayer).forEach(([layerKey, nodes]: [string, any]) => {
-            (Array.isArray(nodes) ? nodes : []).forEach((node: any) => {
-                const cluster =
-                    node?.cluster != null && node?.cluster !== "" ? Number(node.cluster) : parseClusterFromLabel(String(node?.label ?? ""));
-                const value = Number(node?.value ?? 0);
-                if (!Number.isFinite(cluster) || !Number.isFinite(value)) return;
-                secondaryNodeValueByCellCluster.set(`${epochKey}|${layerKey}|${String(cluster)}`, value);
-            });
-        });
-    });
-
-    return {
-        mergedData: normalizeSankeyData({
-            epoch: mergedEpoch,
-            layer: mergedLayer,
-        }),
-        secondaryNodeValueByCellCluster,
-    };
 }
 
 function sortRowKeys(keys: string[]): string[] {
@@ -301,7 +95,6 @@ type SankeyViewProps = {
     data: any;
     selectedSplits?: string[];
     showFfn2?: boolean;
-    metricsPath?: string;
     transitionStatsPath?: string;
     onModelSelect?: (modelKey: string) => void;
     onTransform?: (t: { x: number; y: number; scale: number }) => void;
@@ -541,7 +334,6 @@ export default function SankeyView({
     data,
     selectedSplits,
     showFfn2 = false,
-    metricsPath = "/data/dimenet/bic_aic/avg_fmi_cspa_by_layer.json",
     transitionStatsPath = "/data/dimenet/clustering_metrics/layer_transition_by_epoch.json",
     onModelSelect,
     onTransform,
@@ -562,11 +354,7 @@ export default function SankeyView({
 }: SankeyViewProps) {
     const chartRef = useRef<HTMLDivElement | null>(null);
     const chartPanelRef = useRef<HTMLDivElement | null>(null);
-    const fmiRef = useRef<HTMLDivElement | null>(null);
-    const rowMetricRef = useRef<HTMLDivElement | null>(null);
     const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
-    const [fmiData, setFmiData] = useState<Array<{ layer: string; fmi: number; cspa: number }>>([]);
-    const [rowMetricData, setRowMetricData] = useState<Array<{ model: string; fmi: number; cspa: number }>>([]);
     const [showSankeyPaths, setShowSankeyPaths] = useState(true);
     const [showSankeyNodes, setShowSankeyNodes] = useState(true);
     const [showCellBackground, setShowCellBackground] = useState(true);
@@ -720,9 +508,6 @@ export default function SankeyView({
 
             if (cancelled || chartRef.current !== container) return;
 
-            const epochCount = renderData.epochs.length;
-            const layerCount = renderData.layers.length;
-
             /*const secondaryNodeValueByCellCluster =
                 mergedForCombined?.secondaryNodeValueByCellCluster ?? new Map<string, number>();
     
@@ -852,13 +637,6 @@ export default function SankeyView({
             svg.attr("width", width)
                 .attr("height", height)
                 .attr("viewBox", `0 0 ${width} ${height}`);
-
-            function cellOrigin(rowName: string, columnName: string, stepX: number, stepY: number) {
-                const col = SWAP_AXES ? (ROW_INDEX.get(rowName) ?? 0) : (COLUMN_INDEX.get(columnName) ?? 0);
-                const row = SWAP_AXES ? (COLUMN_INDEX.get(columnName) ?? 0) : (ROW_INDEX.get(rowName) ?? 0);
-                return { col, row, x: col * stepX, y: row * stepY };
-            }
-
 
             (container.style as any).width = width + "px";
             (container.style as any).height = height + "px";
@@ -1176,7 +954,7 @@ export default function SankeyView({
             const linkGroup = gRoot.append("g").attr("class", "links column-links");
             const linkGroup2 = gRoot.append("g").attr("class", "links row-links");
             const nodeLayer = gRoot.append("g").attr("class", "cell-nodes");
-            const toggleCellLock = (epochName: string, layerName: string, col: number, row: number) => {
+            const toggleCellLock = (epochName: string, layerName: string) => {
                 const isSameLocked =
                     lockedCell?.rowName === epochName &&
                     lockedCell?.columnName === layerName;
@@ -1270,7 +1048,7 @@ export default function SankeyView({
                         })
                         .on("click", (event: any) => {
                             event.stopPropagation();
-                            toggleCellLock(epochName, layerName, col, row);
+                            toggleCellLock(epochName, layerName);
                         });
 
                     const g = nodeLayer
@@ -1395,7 +1173,7 @@ export default function SankeyView({
                                     ? clusterFromData
                                     : Number.NaN;
                             if (!Number.isFinite(c)) {
-                                toggleCellLock(epochName, layerName, col, row);
+                                toggleCellLock(epochName, layerName);
                                 return;
                             }
                             onNodeSelect?.({ model: epochName, layer: layerName, cluster: c });
@@ -2029,52 +1807,6 @@ export default function SankeyView({
                 onRenderComplete?.(renderRequestId);
             }
 
-            function setCellHighlight(rowName: string, columnName: string, on: boolean) {
-                if (on) {
-                    d3.selectAll('#chart svg rect.cell-bg, #chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", true).classed("cell-highlight", false);
-                    d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
-                    d3.selectAll("rect.gap-rect").classed("gap-dimmed", true);
-
-                    ROW_NAMES.forEach((row) => {
-                        const cellSel = d3.select(`#cell-${row}-${columnName}`);
-                        const bgSel = d3.select(`#cell-bg-${row}-${columnName}`);
-                        if (!cellSel.empty()) {
-                            bgSel.classed("cell-dimmed", false).classed("cell-highlight", true);
-                            cellSel.selectAll("rect.bar").classed("cell-dimmed", false);
-                        }
-                    });
-
-                    COLUMN_NAMES.forEach((column) => {
-                        const cellSel = d3.select(`#cell-${rowName}-${column}`);
-                        const bgSel = d3.select(`#cell-bg-${rowName}-${column}`);
-                        if (!cellSel.empty()) {
-                            bgSel.classed("cell-dimmed", false).classed("cell-highlight", true);
-                            cellSel.selectAll("rect.bar").classed("cell-dimmed", false);
-                        }
-                    });
-
-                    d3.selectAll("g.row-links path.link-path").each(function() {
-                        const el = d3.select(this);
-                        if (el.attr("data-row") === rowName) el.classed("link-dimmed", false).classed("link-highlight", true);
-                    });
-
-                    d3.selectAll("g.column-links path.link-path").each(function() {
-                        const el = d3.select(this);
-                        if (el.attr("data-column") === columnName) el.classed("link-dimmed", false).classed("link-highlight", true);
-                    });
-                    d3.selectAll("rect.gap-rect").each(function() {
-                        const el = d3.select(this);
-                        if (el.attr("data-row") === rowName || el.attr("data-column") === columnName) {
-                            el.classed("gap-dimmed", false);
-                        }
-                    });
-                } else {
-                    d3.selectAll('#chart svg rect.cell-bg').classed("cell-dimmed", false).classed("cell-highlight", false);
-                    d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
-                    d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
-                    d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
-                }
-            }
         }
         return () => {
             cancelled = true;

@@ -2,9 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import * as d3 from "d3";
-import { sankey, sankeyLinkHorizontal, SankeyLink, SankeyNode } from "d3-sankey";
 import { CLUSTER_COLORS, SANKEY_NODE_COLOR, SANKEY_LINK_COLOR, HIGHLIGHT_RED } from "../theme/colors";
-import { fetchJsonCached } from "../utils/fetchCache";
 
 type SampleRow = {
     real_id: string | number;
@@ -457,9 +455,6 @@ const LAYER_ORDER = [
     "u_mlp_l2",
 ];
 
-const MODEL_ORDER = ["dimenet_noaug", "dimenet10conf"];
-// Unsynced layout tweak: negative moves up, positive moves down (after rotated render).
-const UNSYNC_SHIFT_Y = 0;
 const UNSYNC_TOP_PAD = 14;
 const UNSYNC_BOTTOM_PAD = 14;
 const MIN_LAYER_GAP = 30;
@@ -470,20 +465,14 @@ const MIN_LAYER_GAP_HORIZONTAL = 30;
 const MIN_EPOCH_GAP_HORIZONTAL = 60;
 const MAX_LAYER_GAP_HORIZONTAL = 320;
 const MAX_EPOCH_GAP_HORIZONTAL = 360;
-const SYNC_VERTICAL_SHIFT_RATIO = 0.5;
-const CELL_W = 120;
-const CELL_MARGIN_LEFT = 10;
 const NODE_W = 12;
 const NODE_PAD = 4;
 const BOTTOM = 28;
 const TOP = 10;
-const INNER_W = 100;
 const labelYOffset = -8;
 
-const UNSYNC_SHIFT_X = 0;
 const UNSYNC_LEFT_PAD = 20;
 const UNSYNC_RIGHT_PAD = 20;
-const centerOffset = CELL_MARGIN_LEFT + INNER_W / 2;
 
 
 function toShortLayerName(name: string): string {
@@ -570,14 +559,9 @@ export default function Sankey({
 
         const groupsRef = {
             links: null as SVGGElement | null,
-            sampleTrajectories: null as SVGGElement | null,
             nodes: null as SVGGElement | null,
             axisLabels: null as SVGGElement | null,
         };
-        const pendingFrame = { id: 0 as number | null };
-        const lastRowsRef = { current: null as SampleRow[] | null };
-        const lastSecondaryRowsRef = { current: null as SampleRow[] | null };
-
         let rotationAxis: SVGElement | null = null;
 
         let svg = d3.select(container).select<SVGSVGElement>("svg.app-sankey");
@@ -595,7 +579,6 @@ export default function Sankey({
                 d3.select(rotationAxis).attr("transform", `translate(${container.clientWidth},0) rotate(90)`).node();
             }
             groupsRef.links = d3.select(rotationAxis).append("g").attr("class", "links").node() as SVGGElement;
-            groupsRef.sampleTrajectories = d3.select(rotationAxis).append("g").attr("class", "sample-trajectories").node() as SVGGElement;
             groupsRef.nodes = d3.select(rotationAxis).append("g").attr("class", "nodes").node() as SVGGElement;
             groupsRef.axisLabels = svg.append("g").attr("class", "axis-labels").node() as SVGGElement;
         }
@@ -740,7 +723,6 @@ export default function Sankey({
             const secondaryRows =
                 secondaryRowsSynthetic.length > 0 ? [...secondaryRowsReal, ...secondaryRowsSynthetic] : secondaryRowsReal;
             const combinedRows = secondaryRows.length > 0 ? [...rows, ...secondaryRows] : rows;
-            const MARGIN_LEFT = CELL_H * 2 + 10;
             const bandH = Math.max(1, drawH - TOP - BOTTOM);
 
             const nodeValue = new Map<string, number>();
@@ -761,9 +743,6 @@ export default function Sankey({
                 nodesByModel.get(model)!.push({ key, cluster, value });
             });
 
-
-            const isSynced = !!syncTransform;
-            const inferredOrderCombined = inferSequenceFromRows(combinedRows as SampleRow[], mode, order);
 
             const axisEnd = axisStart + occupiedAxisSpan;
             // In vertical mode the rotated x-axis maps to screen Y; allow overflow with native scroll if needed.
@@ -877,7 +856,6 @@ export default function Sankey({
             });
 
             const linkGroup = d3.select(groupsRef.links!);
-            const sampleGroup = d3.select(groupsRef.sampleTrajectories!);
             const nodeGroup = d3.select(groupsRef.nodes!);
 
             linkGroup
