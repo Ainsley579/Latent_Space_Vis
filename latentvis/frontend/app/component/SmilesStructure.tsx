@@ -14,7 +14,6 @@ const OCL_CDN =
 
 let oclLoadPromise: Promise<any> | null = null;
 let smilesDrawerLoadPromise: Promise<any> | null = null;
-const smilesSvgCache = new Map<string, string>();
 
 function loadOCL(): Promise<any> {
   if (typeof window === "undefined") return Promise.reject(new Error("no_window"));
@@ -171,17 +170,12 @@ export default function SmilesStructure({
 
     let alive = true;
     (async () => {
-      const cacheKey = `${s}__${width}x${height}`;
-      const cached = smilesSvgCache.get(cacheKey);
-      if (cached && alive) setSvgMarkup(cached);
-
       const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
       for (let attempt = 0; attempt < 3; attempt += 1) {
         try {
           const svg = await renderSmilesSvg(s, width, height);
           if (!alive) return;
           if (svg) {
-            smilesSvgCache.set(cacheKey, svg);
             setSvgMarkup(svg);
             return;
           }

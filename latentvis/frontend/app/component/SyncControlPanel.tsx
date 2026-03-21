@@ -8,6 +8,9 @@ type SyncControlPanelProps = {
   datasetOptions: string[];
   dataSplit?: "all" | "test" | "train";
   onDataSplitChange?: (split: "all" | "test" | "train") => void;
+  sankeySplits?: Array<"train" | "test" | "val">;
+  availableSankeySplits?: Array<"train" | "test" | "val">;
+  onSankeySplitsChange?: (splits: Array<"train" | "test" | "val">) => void;
   substructureMaxMembers?: number;
   onSubstructureMaxMembersChange?: (value: number) => void;
   clustering?: string;
@@ -42,8 +45,9 @@ export default function SyncControlPanel({
   dataset,
   onDatasetChange,
   datasetOptions,
-  dataSplit,
-  onDataSplitChange,
+  sankeySplits = ["train", "test", "val"],
+  availableSankeySplits = ["train", "test", "val"],
+  onSankeySplitsChange,
   substructureMaxMembers,
   onSubstructureMaxMembersChange,
   clustering,
@@ -114,24 +118,35 @@ export default function SyncControlPanel({
           ))}
         </select>
       </div>
-      {onDataSplitChange && (
-        <div className="flex items-center justify-between gap-2 min-w-0 mb-2">
-          <label className="text-[10px] text-zinc-700 shrink-0">DATA SPLIT</label>
-          <select
-            className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
-            value={dataset === "dimenet" ? "test" : (dataSplit ?? "all")}
-            onChange={(e) => onDataSplitChange(e.target.value as "all" | "test" | "train")}
-          >
-            {dataset === "dimenet" ? (
-              <option value="test">test</option>
-            ) : (
-              <>
-                <option value="all">train + test (default)</option>
-                <option value="test">test</option>
-                <option value="train">train</option>
-              </>
-            )}
-          </select>
+      {onSankeySplitsChange && (
+        <div className="flex flex-col gap-1 min-w-0 mb-2">
+          <label className="text-[10px] text-zinc-700 shrink-0">SANKEY SPLITS</label>
+          <div className="flex flex-wrap gap-2">
+            {availableSankeySplits.map((sp) => {
+              const checked = sankeySplits.includes(sp);
+              return (
+                <label
+                  key={`sankey-split-${sp}`}
+                  className="inline-flex items-center gap-1 text-[11px] text-zinc-700"
+                >
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 accent-emerald-600"
+                    checked={checked}
+                    onChange={(e) => {
+                      const nextSet = new Set(sankeySplits);
+                      if (e.target.checked) nextSet.add(sp);
+                      else nextSet.delete(sp);
+                      const next = availableSankeySplits.filter((x) => nextSet.has(x));
+                      if (next.length === 0) return;
+                      onSankeySplitsChange(next);
+                    }}
+                  />
+                  <span>{sp}</span>
+                </label>
+              );
+            })}
+          </div>
         </div>
       )}
       {onSubstructureMaxMembersChange && (

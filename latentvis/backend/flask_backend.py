@@ -118,15 +118,90 @@ def get_datasets():
     fp = os.path.join(DATA_PATH, "manifest.json")
     with open(fp, "r") as f:
         mf = json.load(f)
-    return jsonify(list(mf.keys()))
+    if isinstance(mf, dict):
+        return jsonify(list(mf.keys()))
+    return jsonify([])
+
+
+def _compact_merge_base_overlay(base_payload: dict, overlay_payload: dict) -> dict:
+    merged = dict(base_payload)
+    if isinstance(overlay_payload.get("source_variant"), str):
+        merged["source_variant"] = overlay_payload["source_variant"]
+
+    base_cells = merged.get("cells")
+    overlay_cells = overlay_payload.get("cells")
+    if isinstance(base_cells, list) and isinstance(overlay_cells, list):
+        overlay_by_key: Dict[str, dict] = {}
+        for cell in overlay_cells:
+            if not isinstance(cell, dict):
+                continue
+            key = str(cell.get("node_key", ""))
+            if key:
+                overlay_by_key[key] = cell
+
+        merged_cells: List[dict] = []
+        for idx, base_cell in enumerate(base_cells):
+            if not isinstance(base_cell, dict):
+                merged_cells.append(base_cell)
+                continue
+            out_cell = dict(base_cell)
+            overlay_cell = None
+            node_key = base_cell.get("node_key")
+            if node_key is not None:
+                overlay_cell = overlay_by_key.get(str(node_key))
+            if overlay_cell is None and idx < len(overlay_cells):
+                maybe = overlay_cells[idx]
+                if isinstance(maybe, dict):
+                    overlay_cell = maybe
+            if isinstance(overlay_cell, dict):
+                if isinstance(overlay_cell.get("cluster_labels"), dict):
+                    out_cell["cluster_labels"] = overlay_cell["cluster_labels"]
+                if isinstance(overlay_cell.get("cluster_representatives"), dict):
+                    out_cell["cluster_representatives"] = overlay_cell["cluster_representatives"]
+            merged_cells.append(out_cell)
+        merged["cells"] = merged_cells
+
+    for key in ("nodes", "connectivity", "split_connectivity", "node_lookup"):
+        if key in overlay_payload:
+            merged[key] = overlay_payload[key]
+    return merged
+
+
+def _load_compact_dataset(dataset: str, clustering: str) -> dict:
+    ds = str(dataset or "").strip()
+    method = _normalize_clustering(clustering)
+    dataset_dir = Path(DATA_PATH) / ds
+
+    base_path = dataset_dir / "base.json"
+    overlay_path = dataset_dir / "clusterings" / f"{method}.json"
+    fallback_overlay_path = dataset_dir / "clusterings" / "pgmeans.json"
+    legacy_path = dataset_dir / "overview.json"
+
+    if base_path.is_file():
+        base_payload = _read_json(base_path, None)
+        if isinstance(base_payload, dict):
+            overlay_payload = _read_json(overlay_path, None)
+            if not isinstance(overlay_payload, dict):
+                overlay_payload = _read_json(fallback_overlay_path, None)
+            if isinstance(overlay_payload, dict):
+                return _compact_merge_base_overlay(base_payload, overlay_payload)
+
+    if legacy_path.is_file():
+        legacy_payload = _read_json(legacy_path, None)
+        if isinstance(legacy_payload, dict):
+            return legacy_payload
+
+    raise FileNotFoundError(f"Compact dataset not found: dataset={ds}, clustering={method}")
 
 
 @app.route("/get_dataset/<string:dataset>", methods=["GET"])
 def get_dataset(dataset):
-    fp = os.path.join(DATA_PATH, dataset, "overview.json")
-    with open(fp, "r") as f:
-        mf = json.load(f)
-    return jsonify(mf)
+    clustering = request.args.get("clustering", DEFAULT_CLUSTERING)
+    try:
+        payload = _load_compact_dataset(dataset, clustering)
+    except FileNotFoundError as exc:
+        return jsonify({"ok": False, "error": "dataset_not_found", "detail": str(exc)}), 404
+    return jsonify(payload)
 
 
 def _normalize_smiles(s: str) -> str:

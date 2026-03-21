@@ -299,6 +299,7 @@ function sortLayerKeys(keys: string[]): string[] {
 
 type SankeyViewProps = {
     data: any;
+    selectedSplits?: string[];
     showFfn2?: boolean;
     metricsPath?: string;
     transitionStatsPath?: string;
@@ -318,6 +319,198 @@ type SankeyViewProps = {
     selectedCellMetric?: string;
 };
 
+type SankeyRenderNode = {
+    node_id: number;
+    epoch: string;
+    layer: string;
+    epoch_idx: number;
+    layer_idx: number;
+    cell_index: number;
+    cluster_id: number;
+    member_count: number;
+    value: number;
+    previous: number;
+};
+
+type SankeyRenderData = {
+    epochs: string[];
+    layers: string[];
+    molecule_ids: number[];
+    cells: Array<{ children: number[] }>;
+    nodes: SankeyRenderNode[];
+    connectivity: Array<Array<[number, number]>>;
+    epoch?: Record<string, any>;
+    layer?: Record<string, any>;
+};
+
+function buildRenderData(input: any, selectedSplits?: string[]): SankeyRenderData | null {
+    if (!input || !Array.isArray(input?.epochs) || !Array.isArray(input?.layers)) return null;
+    // Legacy shape already carries children arrays for cells.
+    if (
+        Array.isArray(input?.cells) &&
+        input.cells.length > 0 &&
+        Array.isArray(input.cells[0]?.children) &&
+        Array.isArray(input?.nodes) &&
+        Array.isArray(input?.connectivity)
+    ) {
+        return input as SankeyRenderData;
+    }
+
+    // Compact shape adapter: aggregate per (epoch_idx, layer_idx, cluster_id) across splits.
+    const epochs: string[] = input.epochs.map((x: any) => String(x));
+    const layers: string[] = input.layers.map((x: any) => String(x));
+    const moleculeIds: number[] = Array.isArray(input?.molecule_ids) ? input.molecule_ids.map((x: any) => Number(x) || 0) : [];
+    const originalNodes: any[] = Array.isArray(input?.nodes) ? input.nodes : [];
+    const originalConnectivity: Array<Array<[number, number]>> = Array.isArray(input?.connectivity) ? input.connectivity : [];
+    const splitNames: string[] = Array.isArray(input?.split_names)
+        ? input.split_names.map((x: any) => String(x).toLowerCase())
+        : [];
+    const splitConnectivity: Array<Array<Array<[number, number]>>> = Array.isArray(input?.split_connectivity)
+        ? input.split_connectivity
+        : [];
+    const normalizedSelectedSplits = Array.isArray(selectedSplits)
+        ? selectedSplits.map((x) => String(x).toLowerCase())
+        : [];
+    const selectedSplitSet =
+        normalizedSelectedSplits.length > 0 ? new Set(normalizedSelectedSplits) : null;
+    const allowedSplitIndices = new Set<number>();
+    if (splitNames.length > 0) {
+        splitNames.forEach((name, idx) => {
+            if (!selectedSplitSet || selectedSplitSet.has(name)) allowedSplitIndices.add(idx);
+        });
+    }
+    const nCells = epochs.length * layers.length;
+
+    const aggKeyToId = new Map<string, number>();
+    const aggNodes: SankeyRenderNode[] = [];
+    const originalToAgg = new Map<number, number>();
+
+    function keyOf(epochIdx: number, layerIdx: number, clusterId: number): string {
+        return `${epochIdx}|${layerIdx}|${clusterId}`;
+    }
+
+    originalNodes.forEach((n: any, idx: number) => {
+        const nodeSplit = Number(n?.split);
+        if (
+            allowedSplitIndices.size > 0 &&
+            Number.isFinite(nodeSplit) &&
+            !allowedSplitIndices.has(nodeSplit)
+        ) {
+            return;
+        }
+        const epochIdx = Number(n?.epoch_idx ?? -1);
+        const layerIdx = Number(n?.layer_idx ?? -1);
+        const clusterId = Number(n?.cluster_id ?? -1);
+        const memberCount = Number(n?.member_count ?? 0);
+        if (!Number.isFinite(epochIdx) || !Number.isFinite(layerIdx) || !Number.isFinite(clusterId)) return;
+        if (epochIdx < 0 || epochIdx >= epochs.length || layerIdx < 0 || layerIdx >= layers.length) return;
+        const key = keyOf(epochIdx, layerIdx, clusterId);
+        let aggId = aggKeyToId.get(key);
+        if (aggId == null) {
+            aggId = aggNodes.length;
+            aggKeyToId.set(key, aggId);
+            aggNodes.push({
+                node_id: aggId,
+                epoch: epochs[epochIdx],
+                layer: layers[layerIdx],
+                epoch_idx: epochIdx,
+                layer_idx: layerIdx,
+                cell_index: layerIdx + epochIdx * layers.length,
+                cluster_id: clusterId,
+                member_count: 0,
+                value: 0,
+                previous: 0,
+            });
+        }
+        aggNodes[aggId].member_count += Math.max(0, memberCount);
+        aggNodes[aggId].value = aggNodes[aggId].member_count;
+        originalToAgg.set(idx, aggId);
+    });
+
+    const byCell = new Map<number, SankeyRenderNode[]>();
+    aggNodes.forEach((n) => {
+        const arr = byCell.get(n.cell_index) ?? [];
+        arr.push(n);
+        byCell.set(n.cell_index, arr);
+    });
+    byCell.forEach((arr) => {
+        arr.sort((a, b) => a.cluster_id - b.cluster_id);
+        let prev = 0;
+        arr.forEach((n) => {
+            n.previous = prev;
+            prev += n.member_count;
+        });
+    });
+
+    const cells: Array<{ children: number[] }> = Array.from({ length: nCells }, () => ({ children: [] }));
+    byCell.forEach((arr, cellIndex) => {
+        if (cellIndex < 0 || cellIndex >= nCells) return;
+        cells[cellIndex] = { children: arr.map((n) => n.node_id) };
+    });
+
+    const connectivitySource: Array<Array<[number, number]>> = (() => {
+        if (!Array.isArray(splitConnectivity) || splitConnectivity.length === 0) return originalConnectivity;
+        const acc: Array<Array<[number, number]>> = Array.from({ length: originalNodes.length }, () => []);
+        const edgeMapBySource = new Map<string, number>();
+        splitConnectivity.forEach((splitEdges, splitIdx) => {
+            if (allowedSplitIndices.size > 0 && !allowedSplitIndices.has(splitIdx)) return;
+            if (!Array.isArray(splitEdges)) return;
+            splitEdges.forEach((targets: any, sourceOrigId: number) => {
+                if (!Array.isArray(targets)) return;
+                targets.forEach((edge: any) => {
+                    const targetOrigId = Number(edge?.[0]);
+                    const count = Number(edge?.[1]);
+                    if (!Number.isFinite(targetOrigId) || !Number.isFinite(count) || count <= 0) return;
+                    const key = `${sourceOrigId}|${targetOrigId}`;
+                    edgeMapBySource.set(key, (edgeMapBySource.get(key) ?? 0) + count);
+                });
+            });
+        });
+        edgeMapBySource.forEach((count, key) => {
+            const [src, dst] = key.split("|").map((x) => Number(x));
+            if (!Number.isFinite(src) || !Number.isFinite(dst)) return;
+            if (src < 0 || src >= acc.length) return;
+            acc[src].push([dst, count]);
+        });
+        return acc;
+    })();
+
+    const edgeMap = new Map<string, number>();
+    connectivitySource.forEach((targets, sourceOrigId) => {
+        const sourceAggId = originalToAgg.get(sourceOrigId);
+        if (sourceAggId == null || !Array.isArray(targets)) return;
+        targets.forEach((edge: any) => {
+            const targetOrigId = Number(edge?.[0]);
+            const count = Number(edge?.[1]);
+            if (!Number.isFinite(targetOrigId) || !Number.isFinite(count) || count <= 0) return;
+            const targetAggId = originalToAgg.get(targetOrigId);
+            if (targetAggId == null) return;
+            const k = `${sourceAggId}|${targetAggId}`;
+            edgeMap.set(k, (edgeMap.get(k) ?? 0) + count);
+        });
+    });
+
+    const connectivity: Array<Array<[number, number]>> = Array.from({ length: aggNodes.length }, () => []);
+    edgeMap.forEach((count, key) => {
+        const [s, t] = key.split("|").map((x) => Number(x));
+        if (!Number.isFinite(s) || !Number.isFinite(t)) return;
+        if (s < 0 || s >= connectivity.length) return;
+        connectivity[s].push([t, count]);
+    });
+    connectivity.forEach((list) => list.sort((a, b) => a[0] - b[0]));
+
+    return {
+        epochs,
+        layers,
+        molecule_ids: moleculeIds,
+        cells,
+        nodes: aggNodes,
+        connectivity,
+        epoch: input?.epoch ?? {},
+        layer: input?.layer ?? {},
+    };
+}
+
 
 const margin = { top: 20, left: 0, right: 0, bottom: 20 };
 const CELL_W = 120;
@@ -330,6 +523,7 @@ const MAX_NODE_BAR_WIDTH = 20;
 
 export default function SankeyView({
     data,
+    selectedSplits,
     showFfn2 = false,
     metricsPath = "/data/dimenet/bic_aic/avg_fmi_cspa_by_layer.json",
     transitionStatsPath = "/data/dimenet/clustering_metrics/layer_transition_by_epoch.json",
@@ -452,6 +646,8 @@ export default function SankeyView({
     useEffect(() => {
         const container = chartRef.current;
         if (!container || !data) return;
+        const renderData = buildRenderData(data, selectedSplits);
+        if (!renderData) return;
         let cancelled = false;
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -473,8 +669,10 @@ export default function SankeyView({
 
         function draw() {
             if (!container) return;
-            const xs = (SWAP_AXES) ? data.layers : data.epochs;
-            const ys = (SWAP_AXES) ? data.epochs : data.layers;
+            // Full redraw: remove stale layers/paths from previous renders.
+            svg.selectAll("*").remove();
+            const xs = (SWAP_AXES) ? renderData.epochs : renderData.layers;
+            const ys = (SWAP_AXES) ? renderData.layers : renderData.epochs;
 
             const width =
                 margin.left +
@@ -499,8 +697,8 @@ export default function SankeyView({
 
             if (cancelled || chartRef.current !== container) return;
 
-            const epochCount = Object.keys(data?.epoch || {}).length;
-            const layerCount = Object.keys(data?.layer || {}).length;
+            const epochCount = renderData.epochs.length;
+            const layerCount = renderData.layers.length;
 
             /*const secondaryNodeValueByCellCluster =
                 mergedForCombined?.secondaryNodeValueByCellCluster ?? new Map<string, number>();
@@ -524,7 +722,7 @@ export default function SankeyView({
                     (Array.isArray((transitionLayerJson as any)?.by_layer) ? (transitionLayerJson as any).by_layer : [])
                 ).filter((d: any) => !shouldHideFfn2Layer || !isHiddenLayerName(String(d?.layer ?? "")));*/
 
-            const allEpochKeys: string[] = sortRowKeys(Object.keys(data?.epoch || {}));
+            const allEpochKeys: string[] = sortRowKeys(renderData.epochs);
             const lastEpoch = allEpochKeys.length ? allEpochKeys[allEpochKeys.length - 1] : null;
             const epochPairMaxTransitionPct = new Map<string, number>();
             /*transitionEntriesByLayer.forEach((d) => {
@@ -584,7 +782,7 @@ export default function SankeyView({
                 setEpochTransitionThreshold(maxEpochPct);
                 return;
             }
-            const COLUMN_NAMES: string[] = sortLayerKeys(Object.keys(data?.layer || {}));
+            const COLUMN_NAMES: string[] = sortLayerKeys(renderData.layers);
 
 
             const ROW_INDEX = new Map(ROW_NAMES.map((d, i) => [d, i]));
@@ -627,7 +825,11 @@ export default function SankeyView({
             const cellClusterCount = new Map<string, number>();
             ROW_NAMES.forEach((rowName) => {
                 COLUMN_NAMES.forEach((columnName) => {
-                    const nodesForCell = (data.epoch?.[rowName]?.nodes?.[columnName] || []) as any[];
+                    const epochIdx = renderData.epochs.indexOf(rowName);
+                    const layerIdx = renderData.layers.indexOf(columnName);
+                    const cellIndex = layerIdx + epochIdx * renderData.layers.length;
+                    const children = renderData.cells[cellIndex]?.children ?? [];
+                    const nodesForCell = children.map((nodeId) => renderData.nodes[nodeId]);
                     const ids = new Set<number>();
                     nodesForCell.forEach((n: any) => {
                         const c =
@@ -699,14 +901,21 @@ export default function SankeyView({
             };
 
 
-            const maxClusters = Math.max(...data.cells.map((x) => x.children.length));
+            const maxClusters = Math.max(1, ...renderData.cells.map((x) => (Array.isArray(x?.children) ? x.children.length : 0)));
             const xScale = d3.scaleBand<number>().range([0, innerW]).domain(d3.range(maxClusters)).padding(0.2);
 
             // at most you can have the entire dataset in one cluster
-            const yScale = d3.scaleLinear().domain([1, data.molecule_ids.length]).range([innerH, 0]);
+            const yScale = d3.scaleLinear().domain([1, Math.max(1, renderData.molecule_ids.length)]).range([innerH, 0]);
 
             const nodeBarWidth = Math.min(xScale.bandwidth(), MAX_NODE_BAR_WIDTH);
             const nodeBarOffset = (xScale.bandwidth() - nodeBarWidth) / 2;
+            const nodeIndexById = new Map<number, number>();
+            renderData.cells.forEach((cell) => {
+                const children = Array.isArray(cell?.children) ? cell.children : [];
+                children.forEach((nodeId: number, idx: number) => {
+                    nodeIndexById.set(nodeId, idx);
+                });
+            });
 
             /*const allEdgeValues: number[] = [];
             const maxEdgeVal = d3.max(allEdgeValues) || 1;
@@ -731,20 +940,21 @@ export default function SankeyView({
             } else {
                 setLinkValueMax((v) => Math.max(0, Math.min(v, nextMaxBound)));
             }*/
-            const linkWidthScale = d3.scaleSqrt().domain([0, data.molecule_ids.length]).range([0.5, 20]).clamp(true);
+            const linkWidthScale = d3.scaleSqrt().domain([0, Math.max(1, renderData.molecule_ids.length)]).range([0.5, 20]).clamp(true);
 
             // get horizontal and vertical links
             const intraEpoch = [];
             const intraLayer = [];
             const seenPairs = new Set();
-            data.connectivity.keys().forEach(function(x) {
-                const thisNode = data.nodes[x];
-                const vals = data.connectivity[x];
-                const vNodes = vals.map((x) => data.nodes[x[0]]);
+            renderData.connectivity.keys().forEach(function(x) {
+                const thisNode = renderData.nodes[x];
+                const vals = renderData.connectivity[x];
+                const vNodes = vals.map((x) => renderData.nodes[x[0]]);
                 vNodes.forEach(function(y, idx) {
-                    if (seenPairs.has([x, y]) || seenPairs.has([y, x])) {
-                        return;
-                    }
+                    if (!y) return;
+                    const pairKey = `${x}->${y.node_id}`;
+                    if (seenPairs.has(pairKey)) return;
+                    seenPairs.add(pairKey);
                     // across epochs
                     if (thisNode.layer_idx === y.layer_idx) {
                         intraEpoch.push([thisNode, y, vals[idx][1]])
@@ -755,80 +965,96 @@ export default function SankeyView({
                 });
             });
 
-            console.log(intraEpoch, intraLayer);
+            const drawArcs = (
+                dataGroup: Array<[any, any, number]>,
+                svgGroup: d3.Selection<SVGGElement, unknown, null, undefined>,
+                kind: "column" | "row"
+            ) => {
+                dataGroup.forEach((entry) => {
+                    const fromN = entry[0];
+                    const toN = entry[1];
+                    const moveCount = Number(entry[2] ?? 0);
+                    if (!fromN || !toN || moveCount <= 0) return;
+                    const srcIdx = nodeIndexById.get(Number(fromN.node_id)) ?? 0;
+                    const tgtIdx = nodeIndexById.get(Number(toN.node_id)) ?? 0;
+                    const srcBand = xScale(srcIdx);
+                    const tgtBand = xScale(tgtIdx);
+                    if (srcBand == null || tgtBand == null) return;
 
-            const drawArcs = (dataGroup, svgGroup) => {
-                dataGroup.forEach(function(x) {
-                    const fromN = x[0];
-                    const toN = x[1];
-                    const moveCount = x[2];
-                    const srcBand = xScale(fromN.cluster_id);
-                    const tgtBand = xScale(toN.cluster_id);
-
-                    const sBarY = innerH;
-                    const sBarH = innerH - yScale(fromN.member_count);
-                    const tBarY = innerH;
-                    const tBarH = innerH - yScale(toN.member_count);
-
-                    const strokeW = linkWidthScale(moveCount);
-
+                    const sBarTop = innerH - yScale(Number(fromN.previous ?? 0));
+                    const sBarH = innerH - yScale(Number(fromN.member_count ?? 0));
+                    const tBarTop = innerH - yScale(Number(toN.previous ?? 0));
+                    const tBarH = innerH - yScale(Number(toN.member_count ?? 0));
+                    const srcCellCol = SWAP_AXES ? Number(fromN.epoch_idx) : Number(fromN.layer_idx);
+                    const srcCellRow = SWAP_AXES ? Number(fromN.layer_idx) : Number(fromN.epoch_idx);
+                    const tgtCellCol = SWAP_AXES ? Number(toN.epoch_idx) : Number(toN.layer_idx);
+                    const tgtCellRow = SWAP_AXES ? Number(toN.layer_idx) : Number(toN.epoch_idx);
+                    const srcCenterX = srcCellCol * cellStepX + cellMargin.left + srcBand + nodeBarOffset + nodeBarWidth / 2;
+                    const srcCenterY = srcCellRow * cellStepY + cellMargin.top + sBarTop + Math.max(0, sBarH) / 2;
+                    const tgtCenterX = tgtCellCol * cellStepX + cellMargin.left + tgtBand + nodeBarOffset + nodeBarWidth / 2;
+                    const tgtCenterY = tgtCellRow * cellStepY + cellMargin.top + tBarTop + Math.max(0, tBarH) / 2;
 
                     let pathD = "";
-                    if (!SWAP_AXES) {
-                        const srcCenterX = fromN.epoch_idx * cellStepX + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
-                        const srcCenterY = fromN.layer_idx * cellStepY + cellMargin.top + sBarY + Math.max(0, sBarH);
-                        const tgtCenterX = toN.epoch_idx * cellStepX + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
-                        const tgtCenterY = toN.epoch_idx * cellStepY + cellMargin.top + tBarY;
-                        const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
+                    const dxAbs = Math.abs(tgtCenterX - srcCenterX);
+                    const dyAbs = Math.abs(tgtCenterY - srcCenterY);
+                    if (dxAbs >= dyAbs) {
+                        const dx = Math.abs(tgtCenterX - srcCenterX) * 0.45;
+                        pathD = `M ${srcCenterX},${srcCenterY}
+                         C ${srcCenterX + dx},${srcCenterY}
+                           ${tgtCenterX - dx},${tgtCenterY}
+                           ${tgtCenterX},${tgtCenterY}`;
+                    } else {
+                        const dy = Math.abs(tgtCenterY - srcCenterY) * 0.45;
                         pathD = `M ${srcCenterX},${srcCenterY}
                          C ${srcCenterX},${srcCenterY + dy}
                            ${tgtCenterX},${tgtCenterY - dy}
                            ${tgtCenterX},${tgtCenterY}`;
-                        /*} else {
-                            const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
-                            const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
-                            const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
-                            const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
-                            const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
-                            pathD = `M ${srcCenterX},${srcCenterY}
-                                 C ${srcCenterX + dx},${srcCenterY}
-                                   ${tgtCenterX - dx},${tgtCenterY}
-                                   ${tgtCenterX},${tgtCenterY}`;
-                        }*/
-                        svgGroup
-                            .append("path")
-                            .attr("d", pathD)
-                            .attr("fill", "red")
-                            .attr("stroke", moveCount)
-                            .attr("stroke-width", strokeW)
-                            .attr("stroke-opacity", SANKEY_2D_COLUMN_LINK_COLOR)
-                            .attr("class", "2link-path")
-                            .attr("data-value", moveCount);
+                    }
 
-                        //p.attr("data-column", columnKey);
+                    const strokeColor = kind === "column" ? SANKEY_2D_COLUMN_LINK_COLOR : SANKEY_2D_ROW_LINK_COLOR;
+                    const strokeW = linkWidthScale(moveCount);
+                    const path = svgGroup
+                        .append("path")
+                        .attr("d", pathD)
+                        .attr("fill", "none")
+                        .attr("stroke", strokeColor)
+                        .attr("stroke-width", strokeW)
+                        .attr("stroke-opacity", 0.35)
+                        .attr("class", "link-path")
+                        .attr("data-value", moveCount);
+
+                    if (kind === "column") {
+                        path.attr("data-column", String(fromN.layer));
+                    } else {
+                        path.attr("data-row", String(fromN.epoch));
                     }
                 });
-
-            }
+            };
 
             const linkGroup = gRoot.append("g").attr("class", "links column-links");
-            const linkGroup2 = gRoot.append("g").attr("class", "links column-links");
+            const linkGroup2 = gRoot.append("g").attr("class", "links row-links");
 
-            drawArcs(intraEpoch, linkGroup);
-            //drawArcs(intraLayer, linkGroup2);
+            drawArcs(intraEpoch, linkGroup, "column");
+            drawArcs(intraLayer, linkGroup2, "row");
+            // Keep links visually above cells/bars while not blocking interactions on nodes.
+            linkGroup.style("pointer-events", "none");
+            linkGroup2.style("pointer-events", "none");
 
             xs.forEach((xKey, col) => {
                 ys.forEach((yKey, row) => {
+                    const epochName = SWAP_AXES ? xKey : yKey;
+                    const layerName = SWAP_AXES ? yKey : xKey;
+                    const epochIdx = renderData.epochs.indexOf(epochName);
+                    const layerIdx = renderData.layers.indexOf(layerName);
+                    if (epochIdx < 0 || layerIdx < 0) return;
+                    const cellIdx = layerIdx + epochIdx * renderData.layers.length;
 
                     const g = gRoot
                         .append("g")
                         .attr("id", `cell-${xKey}-${yKey}`)
                         .attr("transform", `translate(${col * cellStepX}, ${row * cellStepY})`)
-                        .datum({ rowName: xKey, columnName: yKey, col, row });
-
-                    // only works for epochs as x and layers as y
-                    const cellIdx = col * data.epochs.length + row;
-                    const cellCount = data.cells[cellIdx];
+                        .datum({ rowName: epochName, columnName: layerName, col, row });
+                    const cellCount = renderData.cells[cellIdx]?.children?.length ?? 0;
                     //const cellCount = cellClusterCount.get(`${rowName}|${columnName}`) ?? 0;
                     //const metricVal = cellMetricValue.get(`${rowName}|${columnName}`) ?? 0;
                     g.append("rect")
@@ -842,7 +1068,7 @@ export default function SankeyView({
                     const innerG = g.append("g").attr("transform", `translate(${cellMargin.left}, ${cellMargin.top})`);
                     cells.push(innerG);
 
-                    const nodesForCell = data.cells[cellIdx].children.map((x) => data.nodes[x]);
+                    const nodesForCell = (renderData.cells[cellIdx]?.children ?? []).map((x) => renderData.nodes[x]);
                     const bars = innerG.selectAll("rect.bar-main")
                         .data(nodesForCell)
                         .enter()
@@ -853,8 +1079,8 @@ export default function SankeyView({
                         .attr("width", nodeBarWidth)
                         .attr("height", (d: any) => innerH - yScale(d.member_count))
                         .attr("fill", "#aaa")
-                        .attr("data-row", xKey)
-                        .attr("data-column", yKey)
+                        .attr("data-row", epochName)
+                        .attr("data-column", layerName)
                         .attr("data-cluster", (d: any) => {
                             const c = d?.cluster_id;
                             if (c !== null && c !== undefined && c !== "") return Number(c);
@@ -912,8 +1138,20 @@ export default function SankeyView({
                         .style("cursor", "pointer")
                         .on("click", (event: any, d: any) => {
                             event.stopPropagation();
-                            const c = d?.cluster_id;
-                            onNodeSelect?.({ model: xKey, layer: yKey, cluster: c });
+                            const clusterFromAttr = Number(
+                                d3.select(event.currentTarget as SVGRectElement).attr("data-cluster")
+                            );
+                            const clusterFromData =
+                                d?.cluster_id != null && d?.cluster_id !== ""
+                                    ? Number(d.cluster_id)
+                                    : parseClusterFromLabel(String(d?.label ?? ""));
+                            const c = Number.isFinite(clusterFromAttr)
+                                ? clusterFromAttr
+                                : Number.isFinite(clusterFromData)
+                                    ? clusterFromData
+                                    : Number.NaN;
+                            if (!Number.isFinite(c)) return;
+                            onNodeSelect?.({ model: epochName, layer: layerName, cluster: c });
                         });
                 })
 
@@ -1034,6 +1272,10 @@ export default function SankeyView({
                      });
              });*/
             });
+
+            // Ensure links stay on top after all cells/bars are appended.
+            linkGroup.raise();
+            linkGroup2.raise();
 
 
 
@@ -1459,6 +1701,14 @@ export default function SankeyView({
             const btnColumn = document.getElementById("btnColumn") as HTMLButtonElement | null;
             const btnRow = document.getElementById("btnRow") as HTMLButtonElement | null;
             const btnSwap = document.getElementById("btnSwap") as HTMLButtonElement | null;
+            const setSwapParam = (swapOn: boolean) => {
+                SWAP_AXES = swapOn;
+                const p = new URLSearchParams(window.location.search);
+                p.set("swap", swapOn ? "1" : "0");
+                window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+                draw();
+                onSwapAxes?.(swapOn);
+            };
 
             function setMode(m: "default" | "column" | "row") {
                 if (btnDefault && btnColumn && btnRow) {
@@ -1502,7 +1752,7 @@ export default function SankeyView({
 
             if (btnSwap) btnSwap.style.fontWeight = SWAP_AXES ? "600" : "400";
             setMode("default");
-            applyLinkValueFilter(linkValueMin, Math.min(linkValueMax, nextMaxBound));
+            applyLinkValueFilter(linkValueMin, Math.min(linkValueMax, linkValueMaxBound));
 
             function setCellHighlight(rowName: string, columnName: string, on: boolean) {
                 if (on) {
@@ -1567,6 +1817,7 @@ export default function SankeyView({
         selectedCellMetric,
         cellMetricByCell,
         showFfn2,
+        selectedSplits,
     ]);
 
     useEffect(() => {

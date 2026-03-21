@@ -31,7 +31,10 @@ type TopkNearestPanelProps = {
   onClusterSelect?: (cluster: number) => void;
   hideTopk?: boolean;
   largePreviewOn?: boolean;
-  onSmilesPreviewStart?: (smiles: string | null, anchor?: DOMRect) => void;
+  onSmilesPreviewStart?: (
+    smiles: string | null,
+    anchor?: HTMLElement | SVGElement | DOMRect | null
+  ) => void;
   onSmilesPreviewEnd?: () => void;
   bookmarkedIds: Set<string>;
   onToggleBookmark: (id: string) => void;
@@ -236,7 +239,7 @@ export default function TopkNearestPanel({
                   <div className="flex flex-col items-center">
                     <div
                       className="relative w-full max-w-[100px] aspect-square mx-auto"
-                      onMouseEnter={(e) => onSmilesPreviewStart?.(subData.knnSmiles, e.currentTarget.getBoundingClientRect())}
+                      onMouseEnter={(e) => onSmilesPreviewStart?.(subData.knnSmiles, e.currentTarget)}
                       onMouseLeave={() => onSmilesPreviewEnd?.()}
                     >
                       {subData.knn ? (
@@ -288,7 +291,7 @@ export default function TopkNearestPanel({
                                     onHoverIdChange(String(id));
                                     onSmilesPreviewStart?.(
                                       getSmilesById(id),
-                                      e.currentTarget.getBoundingClientRect()
+                                      e.currentTarget
                                     );
                                   }
                             }

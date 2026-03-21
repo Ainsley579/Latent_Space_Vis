@@ -19,8 +19,9 @@ type ScatterPoint = {
 type ColorMode = "cluster" | "label" | "split" | "y_true" | "y_pred" | "y_abs_err";
 
 type ScatterPlotProps = {
-  dataPathXY: string;
-  dataPathCluster: string;
+  compactOverview?: any;
+  dataPathXY?: string;
+  dataPathCluster?: string;
   secondaryDataPathXY?: string;
   secondaryDataPathCluster?: string;
   splitMapPath?: string;
@@ -50,6 +51,7 @@ type ScatterPlotProps = {
 };
 
 export default function ScatterPlot({
+  compactOverview,
   dataPathXY,
   dataPathCluster,
   secondaryDataPathXY,
@@ -106,9 +108,17 @@ export default function ScatterPlot({
     const s = String(raw ?? "").trim();
     if (!s) return [];
     const keys = new Set<string>([s]);
-    if (/^-?\d+(\.0+)?$/.test(s)) {
-      const n = Number(s);
-      if (Number.isFinite(n)) keys.add(String(Math.trunc(n)));
+    const stripped = (() => {
+      const idx = s.indexOf("::");
+      return idx >= 0 ? s.slice(idx + 2) : s;
+    })();
+    keys.add(stripped);
+    if (/^-?\d+(\.0+)?$/.test(stripped)) {
+      const n = Number(stripped);
+      if (Number.isFinite(n)) {
+        keys.add(String(Math.trunc(n)));
+        keys.add(String(n));
+      }
     }
     return Array.from(keys);
   }
@@ -184,6 +194,7 @@ export default function ScatterPlot({
     const svg = container.querySelector("svg");
     if (!svg) return;
     const circles = Array.from(svg.querySelectorAll("circle[data-id]")) as SVGCircleElement[];
+    const highlightLookup = highlightId ? new Set(idLookupKeys(String(highlightId))) : null;
     circles.forEach((el) => {
       const id = el.getAttribute("data-id") || "";
       const cluster = Number(el.getAttribute("data-cluster") || "0");
@@ -628,152 +639,213 @@ export default function ScatterPlot({
       return { splitById: map as Record<string, "train" | "test" | "both"> };
     };
 
-    const requests: Array<Promise<any>> = [
-      fetchScatterJson(dataPathXY, "xy"),
-      fetchScatterJson(dataPathCluster, "cluster"),
-      fetchSplitMap(),
-    ];
-    if (secondaryDataPathXY && secondaryDataPathCluster) {
-      requests.push(fetchScatterJson(secondaryDataPathXY, "xy"));
-      requests.push(fetchScatterJson(secondaryDataPathCluster, "cluster"));
-    }
-
-    Promise.all(requests)
-      .then((allJson) => {
-        const [xyJson, clusterJson, splitMeta, secondaryXYJson, secondaryClusterJson] = allJson;
-        const splitById = splitMeta?.splitById ?? {};
-        splitByIdRef.current = splitById;
-        const yTrueById = splitMeta?.yTrueById ?? {};
-        const yPredById = splitMeta?.yPredById ?? {};
-
-          const parseRows = (
-          xySource: any,
-          clusterSource: any,
-          split: "train" | "test" | undefined
-        ): ScatterPoint[] => {
-          const xyRows = Array.isArray(xySource) ? xySource : [];
-          const clusterRows = Array.isArray(clusterSource) ? clusterSource : [];
-          const clusterById = new Map<string, number>();
-          clusterRows.forEach((d: any) => {
-            const id = String(d?.real_id ?? "");
-            if (!id) return;
-            clusterById.set(id, Number(d?.cluster_id ?? 0) || 0);
-          });
-          return xyRows
-            .map((d: any) => {
-              const id = String(d?.real_id ?? "");
-              if (!id) return null;
-              const clusterFromMap = clusterById.get(id);
-              const clusterFromRow = Number(d?.cluster_id ?? 0) || 0;
-              const splitFromMapRaw = (() => {
-                const keys = idLookupKeys(id);
-                for (let i = 0; i < keys.length; i += 1) {
-                  const v = splitById?.[keys[i]];
-                  if (v) return v;
-                }
-                return undefined;
-              })();
-              const splitFromMap = splitFromMapRaw === "train" || splitFromMapRaw === "test" ? splitFromMapRaw : undefined;
-              return {
-                real_id: id,
-                x: Number(d?.x ?? 0) || 0,
-                y: Number(d?.y ?? 0) || 0,
-                cluster_id: clusterFromMap ?? clusterFromRow,
-                split: splitFromMap ?? split,
-                y_true: (() => {
-                  const keys = idLookupKeys(id);
-                  for (let i = 0; i < keys.length; i += 1) {
-                    const v = Number(yTrueById?.[keys[i]]);
-                    if (Number.isFinite(v)) return v;
-                  }
-                  return undefined;
-                })(),
-                y_pred: (() => {
-                  const keys = idLookupKeys(id);
-                  for (let i = 0; i < keys.length; i += 1) {
-                    const v = Number(yPredById?.[keys[i]]);
-                    if (Number.isFinite(v)) return v;
-                  }
-                  return undefined;
-                })(),
-              } as ScatterPoint;
-            })
-            .filter((d: ScatterPoint | null): d is ScatterPoint => !!d);
-        };
-
-        const primaryDefaultSplit: "train" | "test" | undefined =
-          secondaryXYJson ? "train" : (dataSplit === "train" || dataSplit === "test" ? dataSplit : undefined);
-        const primaryRows = parseRows(xyJson, clusterJson, primaryDefaultSplit);
-        const secondaryRows = secondaryXYJson
-          ? parseRows(secondaryXYJson, secondaryClusterJson, "test")
-          : [];
-        const merged: ScatterPoint[] = [...primaryRows, ...secondaryRows];
-        const splitKinds = new Set(merged.map((d) => d.split).filter((x): x is "train" | "test" => !!x));
-        const canUseSplit = splitKinds.size > 0;
-        setHasSplitData(canUseSplit);
-        const yTrueVals = merged.map((d) => Number(d.y_true)).filter((v) => Number.isFinite(v));
-        const yPredVals = merged.map((d) => Number(d.y_pred)).filter((v) => Number.isFinite(v));
-        const yAbsErrVals = merged
-          .map((d) => {
-            const yt = Number(d.y_true);
-            const yp = Number(d.y_pred);
-            return Number.isFinite(yt) && Number.isFinite(yp) ? Math.log(Math.abs(yt - yp) + 1e-6) : Number.NaN;
-          })
-          .filter((v) => Number.isFinite(v));
-        const yAllVals = [...yTrueVals, ...yPredVals];
-        const yTrueByIdNext: Record<string, number> = {};
-        const yPredByIdNext: Record<string, number> = {};
-        const yAbsErrByIdNext: Record<string, number> = {};
-        merged.forEach((d) => {
-          const rid = String(d.real_id);
+    const applyMergedRows = (
+      merged: ScatterPoint[],
+      splitById: Record<string, "train" | "test" | "both">,
+      yTrueById: Record<string, number>,
+      yPredById: Record<string, number>
+    ) => {
+      splitByIdRef.current = splitById;
+      const splitKinds = new Set(merged.map((d) => d.split).filter((x): x is "train" | "test" => !!x));
+      const canUseSplit = splitKinds.size > 0;
+      setHasSplitData(canUseSplit);
+      const yTrueVals = merged.map((d) => Number(d.y_true)).filter((v) => Number.isFinite(v));
+      const yPredVals = merged.map((d) => Number(d.y_pred)).filter((v) => Number.isFinite(v));
+      const yAbsErrVals = merged
+        .map((d) => {
           const yt = Number(d.y_true);
           const yp = Number(d.y_pred);
-          if (Number.isFinite(yt)) yTrueByIdNext[rid] = yt;
-          if (Number.isFinite(yp)) yPredByIdNext[rid] = yp;
-          if (Number.isFinite(yt) && Number.isFinite(yp)) yAbsErrByIdNext[rid] = Math.log(Math.abs(yt - yp) + 1e-6);
-        });
-        yTrueByIdRef.current = yTrueByIdNext;
-        yPredByIdRef.current = yPredByIdNext;
-        yAbsErrByIdRef.current = yAbsErrByIdNext;
-        setYTrueRange(yTrueVals.length ? { min: Math.min(...yTrueVals), max: Math.max(...yTrueVals) } : null);
-        setYPredRange(yPredVals.length ? { min: Math.min(...yPredVals), max: Math.max(...yPredVals) } : null);
-        setYAbsErrRange(yAbsErrVals.length ? { min: Math.min(...yAbsErrVals), max: Math.max(...yAbsErrVals) } : null);
-        setYSharedRange(yAllVals.length ? { min: Math.min(...yAllVals), max: Math.max(...yAllVals) } : null);
-        if (!canUseSplit && colorMode === "split") {
-          setColorMode("cluster");
-        }
-        if (colorMode === "y_true" && yTrueVals.length === 0) setColorMode("cluster");
-        if (colorMode === "y_pred" && yPredVals.length === 0) setColorMode("cluster");
-        if (colorMode === "y_abs_err" && yAbsErrVals.length === 0) setColorMode("cluster");
+          return Number.isFinite(yt) && Number.isFinite(yp) ? Math.log(Math.abs(yt - yp) + 1e-6) : Number.NaN;
+        })
+        .filter((v) => Number.isFinite(v));
+      const yAllVals = [...yTrueVals, ...yPredVals];
+      const yTrueByIdNext: Record<string, number> = {};
+      const yPredByIdNext: Record<string, number> = {};
+      const yAbsErrByIdNext: Record<string, number> = {};
+      merged.forEach((d) => {
+        const rid = String(d.real_id);
+        const keys = idLookupKeys(rid);
+        const yt = Number(
+          keys.map((k) => yTrueById?.[k]).find((v) => Number.isFinite(Number(v))) ?? d.y_true
+        );
+        const yp = Number(
+          keys.map((k) => yPredById?.[k]).find((v) => Number.isFinite(Number(v))) ?? d.y_pred
+        );
+        if (Number.isFinite(yt)) yTrueByIdNext[rid] = yt;
+        if (Number.isFinite(yp)) yPredByIdNext[rid] = yp;
+        if (Number.isFinite(yt) && Number.isFinite(yp)) yAbsErrByIdNext[rid] = Math.log(Math.abs(yt - yp) + 1e-6);
+      });
+      yTrueByIdRef.current = yTrueByIdNext;
+      yPredByIdRef.current = yPredByIdNext;
+      yAbsErrByIdRef.current = yAbsErrByIdNext;
+      setYTrueRange(yTrueVals.length ? { min: Math.min(...yTrueVals), max: Math.max(...yTrueVals) } : null);
+      setYPredRange(yPredVals.length ? { min: Math.min(...yPredVals), max: Math.max(...yPredVals) } : null);
+      setYAbsErrRange(yAbsErrVals.length ? { min: Math.min(...yAbsErrVals), max: Math.max(...yAbsErrVals) } : null);
+      setYSharedRange(yAllVals.length ? { min: Math.min(...yAllVals), max: Math.max(...yAllVals) } : null);
+      if (!canUseSplit && colorMode === "split") setColorMode("cluster");
+      if (colorMode === "y_true" && yTrueVals.length === 0) setColorMode("cluster");
+      if (colorMode === "y_pred" && yPredVals.length === 0) setColorMode("cluster");
+      if (colorMode === "y_abs_err" && yAbsErrVals.length === 0) setColorMode("cluster");
 
-        lastRows = merged;
-        rowsRef.current = merged;
-        const clusterIds = Array.from(new Set(merged.map((d) => d.cluster_id))).sort((a, b) => a - b);
-        const idsByCluster: Record<number, string[]> = {};
-        merged.forEach((d) => {
-          const cid = d.cluster_id;
-          if (!idsByCluster[cid]) idsByCluster[cid] = [];
-          idsByCluster[cid].push(String(d.real_id));
+      lastRows = merged;
+      rowsRef.current = merged;
+      const clusterIds = Array.from(new Set(merged.map((d) => d.cluster_id))).sort((a, b) => a - b);
+      const idsByCluster: Record<number, string[]> = {};
+      merged.forEach((d) => {
+        const cid = d.cluster_id;
+        if (!idsByCluster[cid]) idsByCluster[cid] = [];
+        idsByCluster[cid].push(String(d.real_id));
+      });
+      Object.keys(idsByCluster).forEach((k) => {
+        const cid = Number(k);
+        idsByCluster[cid] = Array.from(new Set(idsByCluster[cid]));
+      });
+      setLegendClusters(clusterIds);
+      setLegendClusterIds(idsByCluster);
+      draw();
+      requestAnimationFrame(() => repaintBaseFillForMode(colorModeRef.current));
+    };
+
+    if (compactOverview && Array.isArray(compactOverview?.cells)) {
+      try {
+        const cells = compactOverview.cells as any[];
+        const selectedCell =
+          cells.find((c: any) => String(c?.epoch ?? "") === String(modelKey ?? "") && String(c?.layer ?? "") === String(layerKey ?? "")) ??
+          cells[0];
+        const drObj = selectedCell?.dr ?? {};
+        const method = projection ?? "pca";
+        const coordsMap =
+          drObj?.[method] ??
+          drObj?.default ??
+          drObj?.pca ??
+          drObj?.umap ??
+          drObj?.tsne ??
+          drObj?.mds ??
+          {};
+        const clusterLabels = selectedCell?.cluster_labels ?? {};
+
+        const splitById: Record<string, "train" | "test" | "both"> = {};
+        const splitNames = Array.isArray(compactOverview?.split_names) ? compactOverview.split_names : [];
+        const splits = Array.isArray(compactOverview?.splits) ? compactOverview.splits : [];
+        splitNames.forEach((name: any, idx: number) => {
+          const ids = Array.isArray(splits[idx]) ? splits[idx] : [];
+          const normalized: "train" | "test" | null = String(name) === "train" ? "train" : (String(name) === "test" || String(name) === "val" ? "test" : null);
+          if (!normalized) return;
+          ids.forEach((id: any) => {
+            const key = String(id);
+            const prev = splitById[key];
+            splitById[key] = prev && prev !== normalized ? "both" : normalized;
+          });
         });
-        Object.keys(idsByCluster).forEach((k) => {
-          const cid = Number(k);
-          idsByCluster[cid] = Array.from(new Set(idsByCluster[cid]));
-        });
-        setLegendClusters(clusterIds);
-        setLegendClusterIds(idsByCluster);
-        draw();
-        requestAnimationFrame(() => repaintBaseFillForMode(colorModeRef.current));
-      })
-      .catch((err) => {
+
+        const yTrueById: Record<string, number> = {};
+        const yPredById: Record<string, number> = {};
+        const merged = Object.entries(coordsMap)
+          .map(([rid, pair]: [string, any]) => {
+            const xy = Array.isArray(pair) ? pair : [];
+            const x = Number(xy[0]);
+            const y = Number(xy[1]);
+            if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+            const splitRaw = splitById[String(rid)];
+            const split = splitRaw === "train" || splitRaw === "test" ? splitRaw : undefined;
+            if (dataSplit === "train" && split !== "train") return null;
+            if (dataSplit === "test" && split !== "test") return null;
+            return {
+              real_id: String(rid),
+              x,
+              y,
+              cluster_id: Number(clusterLabels?.[String(rid)] ?? 0) || 0,
+              split,
+            } as ScatterPoint;
+          })
+          .filter((d: ScatterPoint | null): d is ScatterPoint => !!d);
+        applyMergedRows(merged, splitById, yTrueById, yPredById);
+      } catch (err) {
         console.error(err);
         if (container) container.innerHTML = "<div style='color:red'>Failed to load scatter data.</div>";
-      });
+      }
+    } else {
+      if (!dataPathXY || !dataPathCluster) {
+        if (container) container.innerHTML = "<div style='color:red'>Missing scatter data source.</div>";
+      } else {
+        const requests: Array<Promise<any>> = [
+          fetchScatterJson(dataPathXY, "xy"),
+          fetchScatterJson(dataPathCluster, "cluster"),
+          fetchSplitMap(),
+        ];
+        if (secondaryDataPathXY && secondaryDataPathCluster) {
+          requests.push(fetchScatterJson(secondaryDataPathXY, "xy"));
+          requests.push(fetchScatterJson(secondaryDataPathCluster, "cluster"));
+        }
+
+        Promise.all(requests)
+          .then((allJson) => {
+            const [xyJson, clusterJson, splitMeta, secondaryXYJson, secondaryClusterJson] = allJson;
+            const splitById = splitMeta?.splitById ?? {};
+            const yTrueById = splitMeta?.yTrueById ?? {};
+            const yPredById = splitMeta?.yPredById ?? {};
+
+            const parseRows = (
+              xySource: any,
+              clusterSource: any,
+              split: "train" | "test" | undefined
+            ): ScatterPoint[] => {
+              const xyRows = Array.isArray(xySource) ? xySource : [];
+              const clusterRows = Array.isArray(clusterSource) ? clusterSource : [];
+              const clusterById = new Map<string, number>();
+              clusterRows.forEach((d: any) => {
+                const id = String(d?.real_id ?? "");
+                if (!id) return;
+                clusterById.set(id, Number(d?.cluster_id ?? 0) || 0);
+              });
+              return xyRows
+                .map((d: any) => {
+                  const id = String(d?.real_id ?? "");
+                  if (!id) return null;
+                  const clusterFromMap = clusterById.get(id);
+                  const clusterFromRow = Number(d?.cluster_id ?? 0) || 0;
+                  const splitFromMapRaw = (() => {
+                    const keys = idLookupKeys(id);
+                    for (let i = 0; i < keys.length; i += 1) {
+                      const v = splitById?.[keys[i]];
+                      if (v) return v;
+                    }
+                    return undefined;
+                  })();
+                  const splitFromMap = splitFromMapRaw === "train" || splitFromMapRaw === "test" ? splitFromMapRaw : undefined;
+                  return {
+                    real_id: id,
+                    x: Number(d?.x ?? 0) || 0,
+                    y: Number(d?.y ?? 0) || 0,
+                    cluster_id: clusterFromMap ?? clusterFromRow,
+                    split: splitFromMap ?? split,
+                  } as ScatterPoint;
+                })
+                .filter((d: ScatterPoint | null): d is ScatterPoint => !!d);
+            };
+
+            const primaryDefaultSplit: "train" | "test" | undefined =
+              secondaryXYJson ? "train" : (dataSplit === "train" || dataSplit === "test" ? dataSplit : undefined);
+            const primaryRows = parseRows(xyJson, clusterJson, primaryDefaultSplit);
+            const secondaryRows = secondaryXYJson
+              ? parseRows(secondaryXYJson, secondaryClusterJson, "test")
+              : [];
+            const merged: ScatterPoint[] = [...primaryRows, ...secondaryRows];
+            applyMergedRows(merged, splitById, yTrueById, yPredById);
+          })
+          .catch((err) => {
+            console.error(err);
+            if (container) container.innerHTML = "<div style='color:red'>Failed to load scatter data.</div>";
+          });
+      }
+    }
 
     return () => {
       tooltip.remove();
       ro.disconnect();
     };
   }, [
+    compactOverview,
     dataPathXY,
     dataPathCluster,
     secondaryDataPathXY,
@@ -781,6 +853,9 @@ export default function ScatterPlot({
     splitMapPath,
     splitMapDataset,
     dataSplit,
+    modelKey,
+    layerKey,
+    projection,
   ]);
 
   useEffect(() => {
@@ -792,7 +867,25 @@ export default function ScatterPlot({
     if (!rows) return;
 
     const activeIdSet = activeIds ? new Set(activeIds.map((x) => String(x))) : null;
+    const activeLookup = new Set<string>();
+    if (activeIdSet) {
+      activeIdSet.forEach((id) => {
+        idLookupKeys(id).forEach((k) => activeLookup.add(k));
+      });
+    }
+    const highlightLookup = highlightId ? new Set(idLookupKeys(String(highlightId))) : null;
     const circles = Array.from(svg.querySelectorAll("circle[data-id]")) as SVGCircleElement[];
+    let matchedActiveCount = 0;
+    const activeMatchedByCircle = new Map<string, boolean>();
+    if (activeLookup.size > 0) {
+      circles.forEach((el) => {
+        const id = el.getAttribute("data-id") || "";
+        const hit = idLookupKeys(id).some((k) => activeLookup.has(k));
+        if (hit) matchedActiveCount += 1;
+        activeMatchedByCircle.set(id, hit);
+      });
+    }
+    const hasUsableActiveSelection = activeLookup.size > 0 && matchedActiveCount > 0;
     circles.forEach((el) => {
       const id = el.getAttribute("data-id") || "";
       const cluster = Number(el.getAttribute("data-cluster") || "0");
@@ -800,8 +893,8 @@ export default function ScatterPlot({
       const computedBaseFill = resolveBaseFill(id, cluster, split || undefined);
       el.setAttribute("data-base-fill", computedBaseFill);
       const baseFill = computedBaseFill;
-      const isHovered = !!highlightId && id === String(highlightId);
-      const inActiveIds = !!activeIdSet && activeIdSet.has(id);
+      const isHovered = !!highlightLookup && idLookupKeys(id).some((k) => highlightLookup.has(k));
+      const inActiveIds = activeMatchedByCircle.get(id) === true;
 
       el.setAttribute("r", isHovered ? "5.2" : "3.2");
       el.setAttribute("fill", isHovered ? "#f59e0b" : baseFill);
@@ -809,7 +902,7 @@ export default function ScatterPlot({
         el.setAttribute("fill-opacity", "1");
         el.setAttribute("stroke", "#dc2626");
         el.setAttribute("stroke-width", "1.8");
-      } else if (activeIdSet) {
+      } else if (hasUsableActiveSelection) {
         el.setAttribute("fill-opacity", inActiveIds ? "1" : "0.22");
         el.setAttribute("stroke", inActiveIds ? "#dc2626" : "none");
         el.setAttribute("stroke-width", "0.9");
@@ -828,7 +921,11 @@ export default function ScatterPlot({
     d3.select(svg).selectAll("path.hover-star-overlay-path").remove();
     if (highlightId) {
       const targetId = String(highlightId);
-      const hitCircle = circles.find((c) => (c.getAttribute("data-id") || "") === targetId);
+      const hitKeys = new Set(idLookupKeys(targetId));
+      const hitCircle = circles.find((c) => {
+        const cid = c.getAttribute("data-id") || "";
+        return idLookupKeys(cid).some((k) => hitKeys.has(k));
+      });
       if (hitCircle && hitCircle.parentElement) {
         const cx = Number(hitCircle.getAttribute("cx") || "0");
         const cy = Number(hitCircle.getAttribute("cy") || "0");

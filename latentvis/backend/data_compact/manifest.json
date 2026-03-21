@@ -1,5 +1,32 @@
 {
-  "chemprop": "/Users/chenjiaqing/Documents/GitHub/Latent_Space_Vis/latentvis/backend/data_compact/chemprop/overview.json",
-  "chemeleon": "/Users/chenjiaqing/Documents/GitHub/Latent_Space_Vis/latentvis/backend/data_compact/chemeleon/overview.json",
-  "dimenet": "/Users/chenjiaqing/Documents/GitHub/Latent_Space_Vis/latentvis/backend/data_compact/dimenet/overview.json"
+  "chemprop": {
+    "clusterings": {
+      "pgmeans": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/chemprop/clusterings/pgmeans.json",
+      "agglomerative": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/chemprop/clusterings/agglomerative.json",
+      "hdbscan": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/chemprop/clusterings/hdbscan.json",
+      "knn": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/chemprop/clusterings/knn.json"
+    },
+    "base": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/chemprop/base.json",
+    "overview": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/chemprop/overview.json"
+  },
+  "chemeleon": {
+    "clusterings": {
+      "pgmeans": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/chemeleon/clusterings/pgmeans.json",
+      "agglomerative": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/chemeleon/clusterings/agglomerative.json",
+      "hdbscan": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/chemeleon/clusterings/hdbscan.json",
+      "knn": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/chemeleon/clusterings/knn.json"
+    },
+    "base": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/chemeleon/base.json",
+    "overview": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/chemeleon/overview.json"
+  },
+  "dimenet": {
+    "clusterings": {
+      "pgmeans": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/dimenet/clusterings/pgmeans.json",
+      "agglomerative": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/dimenet/clusterings/agglomerative.json",
+      "hdbscan": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/dimenet/clusterings/hdbscan.json",
+      "knn": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/dimenet/clusterings/knn.json"
+    },
+    "base": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/dimenet/base.json",
+    "overview": "/Users/shiyiliu/Desktop/Latent_Space_Vis/latentvis/backend/data_compact/dimenet/overview.json"
+  }
 }

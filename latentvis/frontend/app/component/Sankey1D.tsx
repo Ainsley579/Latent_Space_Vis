@@ -16,6 +16,100 @@ type SampleRow = {
     to_cluster: number;
 };
 
+function rowsFromCompactOverview(
+    overview: any,
+    showFfn2: boolean,
+    selectedSplits?: string[]
+): SampleRow[] {
+    const epochs: string[] = Array.isArray(overview?.epochs) ? overview.epochs.map((x: any) => String(x)) : [];
+    const layersRaw: string[] = Array.isArray(overview?.layers) ? overview.layers.map((x: any) => String(x)) : [];
+    const layers = showFfn2 ? layersRaw : layersRaw.filter((layer) => normalizeLayerForVisibility(layer) !== HIDDEN_LAYER);
+    const cells: any[] = Array.isArray(overview?.cells) ? overview.cells : [];
+    if (epochs.length === 0 || layers.length === 0 || cells.length === 0) return [];
+
+    const layerIndexByName = new Map(layersRaw.map((name, idx) => [name, idx]));
+    const labelByMoleculeId: Record<string, string> = {};
+    if (Array.isArray(overview?.molecule_labels)) {
+        overview.molecule_labels.forEach((label: any, idx: number) => {
+            labelByMoleculeId[String(idx)] = String(label);
+        });
+    }
+
+    const splitById = new Map<string, SplitTag>();
+    const splitNames: string[] = Array.isArray(overview?.split_names) ? overview.split_names.map((x: any) => String(x).toLowerCase()) : [];
+    const splits: any[] = Array.isArray(overview?.splits) ? overview.splits : [];
+    const selectedSplitSet = Array.isArray(selectedSplits) && selectedSplits.length > 0
+        ? new Set(selectedSplits.map((x) => String(x).toLowerCase()))
+        : null;
+    const allowedMolIds = new Set<string>();
+    if (selectedSplitSet) {
+        splitNames.forEach((name, idx) => {
+            if (!selectedSplitSet.has(name)) return;
+            const ids: any[] = Array.isArray(splits[idx]) ? splits[idx] : [];
+            ids.forEach((id) => allowedMolIds.add(String(id)));
+        });
+    }
+    splitNames.forEach((name, idx) => {
+        const ids: any[] = Array.isArray(splits[idx]) ? splits[idx] : [];
+        const split: SplitTag | null = name === "train" ? "train" : (name === "test" || name === "val" ? "test" : null);
+        if (!split) return;
+        ids.forEach((id) => {
+            splitById.set(String(id), split);
+        });
+    });
+
+    const rows: SampleRow[] = [];
+    const addPair = (
+        fromEpochIdx: number,
+        fromLayerName: string,
+        toEpochIdx: number,
+        toLayerName: string
+    ) => {
+        const fromLayerIdx = layerIndexByName.get(fromLayerName);
+        const toLayerIdx = layerIndexByName.get(toLayerName);
+        if (fromLayerIdx == null || toLayerIdx == null) return;
+        const fromCellIdx = fromLayerIdx + fromEpochIdx * layersRaw.length;
+        const toCellIdx = toLayerIdx + toEpochIdx * layersRaw.length;
+        const fromLabels = cells[fromCellIdx]?.cluster_labels;
+        const toLabels = cells[toCellIdx]?.cluster_labels;
+        if (!fromLabels || !toLabels) return;
+        Object.entries(fromLabels).forEach(([molIdRaw, fromClusterRaw]) => {
+            if (selectedSplitSet && !allowedMolIds.has(String(molIdRaw))) return;
+            const toClusterRaw = (toLabels as Record<string, unknown>)[molIdRaw];
+            if (toClusterRaw == null) return;
+            const fromCluster = Number(fromClusterRaw);
+            const toCluster = Number(toClusterRaw);
+            if (!Number.isFinite(fromCluster) || !Number.isFinite(toCluster)) return;
+            const molId = String(molIdRaw);
+            const visibleId = labelByMoleculeId[molId] ?? molId;
+            const split = splitById.get(molId);
+            const realId = split ? `${split}::${visibleId}` : visibleId;
+            rows.push({
+                real_id: realId,
+                from_model: epochs[fromEpochIdx],
+                to_model: epochs[toEpochIdx],
+                from_layer: fromLayerName,
+                to_layer: toLayerName,
+                from_cluster: fromCluster,
+                to_cluster: toCluster,
+            });
+        });
+    };
+
+    for (let e = 0; e < epochs.length; e += 1) {
+        for (let l = 0; l < layers.length - 1; l += 1) {
+            addPair(e, layers[l], e, layers[l + 1]);
+        }
+    }
+    for (let e = 0; e < epochs.length - 1; e += 1) {
+        for (let l = 0; l < layers.length; l += 1) {
+            addPair(e, layers[l], e + 1, layers[l]);
+        }
+    }
+
+    return rows;
+}
+
 type SplitTag = "train" | "test";
 const HIDDEN_LAYER = "ffn_layer_2";
 
@@ -104,6 +198,7 @@ function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): 
 type SankeyProps = {
     data: any;
     selectedDataSet: string;
+    selectedSplits?: string[];
     secondaryDataPath?: string;
     showFfn2?: boolean;
     syncTransform?: { x: number; y: number; scale: number };
@@ -363,6 +458,8 @@ function toShortLayerName(name: string): string {
 export default function Sankey({
     data,
     selectedDataSet,
+    selectedSplits,
+    secondaryDataPath,
     showFfn2 = false,
     syncTransform,
     onSyncTransform,
@@ -479,9 +576,16 @@ export default function Sankey({
             return d.to_model;
         } : (d) => { return d.to_layer };
 
+        const rowsFromData = (() => {
+            if (Array.isArray(data)) return data as SampleRow[];
+            return rowsFromCompactOverview(data, showFfn2, selectedSplits);
+        })();
+        lastRows = Array.isArray(rowsFromData) ? rowsFromData.filter((r) => showFfn2 || isVisibleRow(r)) : [];
+        lastSecondaryRows = null;
+
         function draw() {
             if (!container) return;
-            //if (!lastRows) return;
+            const baseRows = Array.isArray(lastRows) ? lastRows : [];
 
             const width = Math.max(1, container.clientWidth);
             const height = Math.max(1, container.clientHeight);
@@ -497,6 +601,7 @@ export default function Sankey({
 
             const axisLabels = d3.select(groupsRef.axisLabels!);
             const renderOrder = mode === "model" ? data.epochs : data.layers;
+            axisLabels.selectAll("text").remove();
 
             const minGap = mode === "model" ? MIN_EPOCH_GAP : MIN_LAYER_GAP;
             const MODEL_GAP = CELL_H;
@@ -507,8 +612,7 @@ export default function Sankey({
                 axisLabels
                     .selectAll("text")
                     .data(renderOrder)
-                    .enter()
-                    .append("text")
+                    .join("text")
                     .attr("x", width - 6)
                     .attr("y", (_d, i) => baseLeft + i * MODEL_GAP + offsetY + labelYOffset)
                     .attr("text-anchor", "end")
@@ -522,18 +626,13 @@ export default function Sankey({
                     .style("pointer-events", "none")
                     .text((d) => toShortLayerName(String(d)));
             } else {
-
-                //TODO: fix axis labels
                 axisLabels
                     .selectAll("text")
                     .data(renderOrder)
-                    .enter()
-                    .append("text")
-                    .attr("x", (_d, i) => {
-                        return i * 50;
-                    })
-                    .attr("y", height - 16)
-                    .attr("text-anchor", "end")
+                    .join("text")
+                    .attr("x", (_d, i) => baseLeft + i * MODEL_GAP + offsetY + NODE_W / 2)
+                    .attr("y", height - 14)
+                    .attr("text-anchor", "middle")
                     .attr("dominant-baseline", "middle")
                     .attr("font-size", 12)
                     .attr("font-weight", 600)
@@ -571,7 +670,7 @@ export default function Sankey({
                         });
                     })()
                     : rowsInput;
-            const filteredRows = filterRowsForView(lastRows);
+            const filteredRows = filterRowsForView(baseRows);
             const filteredSecondaryRows = lastSecondaryRows ? filterRowsForView(lastSecondaryRows) : [];
 
             const rowsReal = normalizeAdjacentRows(filteredRows, mode, order) as any[];
@@ -666,7 +765,8 @@ export default function Sankey({
                 activeModel = idx === -1 ? displayActiveNode : displayActiveNode.slice(0, idx);
             }
             const focusGroup = activeModel ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
-            const primarySplit = inferSplitFromPath(dataPath);
+            const primarySplit: SplitTag =
+                String(selectedDataSet ?? "").toLowerCase() === "dimenet" ? "test" : "train";
             const secondarySplit: SplitTag = secondaryDataPath
                 ? (String(secondaryDataPath).toLowerCase().includes("split=train") ? "train" : "test")
                 : primarySplit;
@@ -1031,11 +1131,18 @@ export default function Sankey({
                 const scale = syncTransform.scale;
                 const offsetX = syncTransform.y - SYNC_BASE_OFFSET * scale;
                 contentGroups.attr("transform", `translate(${offsetX},0) scale(${scale},1)`);
-                // Keep labels on screen-space vertical transform (not horizontal drift).
-                labelGroups.attr("transform", `translate(0,${offsetX}) scale(1,${scale})`);
+                if (layout === "horizontal") {
+                    labelGroups.attr("transform", `translate(${offsetX},0) scale(${scale},1)`);
+                } else {
+                    labelGroups.attr("transform", `translate(0,${offsetX}) scale(1,${scale})`);
+                }
             } else if (panY !== 0 || zoomX !== 1) {
                 contentGroups.attr("transform", `translate(${panY},0) scale(${zoomX},1)`);
-                labelGroups.attr("transform", `translate(0,${panY}) scale(1,${zoomX})`);
+                if (layout === "horizontal") {
+                    labelGroups.attr("transform", `translate(${panY},0) scale(${zoomX},1)`);
+                } else {
+                    labelGroups.attr("transform", `translate(0,${panY}) scale(1,${zoomX})`);
+                }
             } else {
                 contentGroups.attr("transform", null);
                 labelGroups.attr("transform", null);
@@ -1061,6 +1168,8 @@ export default function Sankey({
                 console.error(err);
                 if (container) container.innerHTML = "<div style='color:red'>Failed to load sankey data.</div>";
             });*/
+
+        draw();
 
         function onWheel(e: WheelEvent) {
             const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
@@ -1088,7 +1197,7 @@ export default function Sankey({
             ro.disconnect();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [data, selectedDataSet, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, showFfn2, !!syncTransform]);
+    }, [data, selectedDataSet, selectedSplits, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, showFfn2, !!syncTransform]);
 
     /*useEffect(() => {
         const container = containerRef.current;
@@ -1184,11 +1293,17 @@ export default function Sankey({
             const scale = syncTransform.scale;
             const offsetX = syncTransform.y - SYNC_BASE_OFFSET * scale;
             contentTransformAttr = `translate(${offsetX},0) scale(${scale},1)`;
-            labelTransformAttr = `translate(0,${offsetX}) scale(1,${scale})`;
+            labelTransformAttr =
+                layout === "horizontal"
+                    ? `translate(${offsetX},0) scale(${scale},1)`
+                    : `translate(0,${offsetX}) scale(1,${scale})`;
         } else if (panY !== 0 || zoomX !== 1) {
             // In rotated space, x-translate maps to on-screen vertical movement.
             contentTransformAttr = `translate(${panY},0) scale(${zoomX},1)`;
-            labelTransformAttr = `translate(0,${panY}) scale(1,${zoomX})`;
+            labelTransformAttr =
+                layout === "horizontal"
+                    ? `translate(${panY},0) scale(${zoomX},1)`
+                    : `translate(0,${panY}) scale(1,${zoomX})`;
         }
 
         contentGroups.forEach((el) => {
@@ -1199,7 +1314,7 @@ export default function Sankey({
             if (labelTransformAttr) (el as SVGGElement).setAttribute("transform", labelTransformAttr);
             else (el as SVGGElement).removeAttribute("transform");
         });
-    }, [syncTransform, panY, zoomX]);
+    }, [syncTransform, panY, zoomX, layout]);
 
     function onMouseDown(e: React.MouseEvent<HTMLDivElement>) {
         if (e.button !== 0) return;

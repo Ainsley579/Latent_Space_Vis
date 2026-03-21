@@ -26,6 +26,7 @@ DEFAULT_COORD_DECIMALS = 2
 API_VERSION = "compact_overview_v6"
 PROJECTION_METHODS = ("default", "pca", "mds", "umap", "tsne")
 SUPPORTED_SPLITS = ("train", "val", "test")
+SUPPORTED_CLUSTERINGS = ("pgmeans", "agglomerative", "hdbscan", "knn")
 
 
 @dataclass(frozen=True)
@@ -43,6 +44,13 @@ class DatasetConfig:
     metadata_json: Path
     split_sources: Tuple[SplitSource, ...]
     source_variant: str
+
+
+@dataclass(frozen=True)
+class DatasetSpec:
+    name: str
+    root: Path
+    metadata_json: Path
 
 
 def read_json(path: Path) -> Any:
@@ -735,92 +743,195 @@ def build_overview(config: DatasetConfig, coord_decimals: int) -> Dict[str, Any]
     return overview
 
 
-def dataset_configs() -> Tuple[DatasetConfig, ...]:
+def dataset_specs() -> Tuple[DatasetSpec, ...]:
     chemprop_root = ROOT / "data" / "chemprop"
     chemeleon_root = ROOT / "data" / "chemeleon"
     dimenet_root = ROOT / "data" / "dimenet"
-
     return (
-        DatasetConfig(
+        DatasetSpec(
             name="chemprop",
+            root=chemprop_root,
             metadata_json=chemprop_root / "id_smiles_y_true_y_pred.json",
-            source_variant="knn",
-            split_sources=(
-                SplitSource(
-                    split="train",
-                    scatter_dir=chemprop_root / "train" / "knn" / "scatterplot",
-                    cluster_csv=chemprop_root / "train" / "knn" / "clustering_metrics" / "cluster_assignments_with_real_id.csv",
-                    representatives_json=chemprop_root / "train" / "knn" / "topk" / "cluster_representatives.json",
-                    sankey_json=chemprop_root / "train" / "knn" / "sankey" / "all_sankey.json",
-                ),
-                SplitSource(
-                    split="val",
-                    scatter_dir=chemprop_root / "val" / "knn" / "scatterplot",
-                    cluster_csv=chemprop_root / "val" / "knn" / "clustering_metrics" / "cluster_assignments_with_real_id.csv",
-                    representatives_json=chemprop_root / "val" / "knn" / "topk" / "cluster_representatives.json",
-                    sankey_json=chemprop_root / "val" / "knn" / "sankey" / "all_sankey.json",
-                ),
-                SplitSource(
-                    split="test",
-                    scatter_dir=chemprop_root / "test" / "knn" / "scatterplot",
-                    cluster_csv=chemprop_root / "test" / "knn" / "clustering_metrics" / "cluster_assignments_with_real_id.csv",
-                    representatives_json=chemprop_root / "test" / "knn" / "topk" / "cluster_representatives.json",
-                    sankey_json=chemprop_root / "test" / "knn" / "sankey" / "all_sankey.json",
-                ),
-            ),
         ),
-        DatasetConfig(
+        DatasetSpec(
             name="chemeleon",
+            root=chemeleon_root,
             metadata_json=chemeleon_root / "id_smiles_y_true_y_pred.json",
-            source_variant="knn",
-            split_sources=(
-                SplitSource(
-                    split="train",
-                    scatter_dir=chemeleon_root / "train" / "knn" / "scatterplot",
-                    cluster_csv=chemeleon_root / "train" / "knn" / "clustering_metrics" / "cluster_assignments_with_real_id.csv",
-                    representatives_json=chemeleon_root / "train" / "knn" / "topk" / "cluster_representatives.json",
-                    sankey_json=chemeleon_root / "train" / "knn" / "sankey" / "all_sankey.json",
-                ),
-                SplitSource(
-                    split="val",
-                    scatter_dir=chemeleon_root / "val" / "knn" / "scatterplot",
-                    cluster_csv=chemeleon_root / "val" / "knn" / "clustering_metrics" / "cluster_assignments_with_real_id.csv",
-                    representatives_json=chemeleon_root / "val" / "knn" / "topk" / "cluster_representatives.json",
-                    sankey_json=chemeleon_root / "val" / "knn" / "sankey" / "all_sankey.json",
-                ),
-                SplitSource(
-                    split="test",
-                    scatter_dir=chemeleon_root / "test" / "knn" / "scatterplot",
-                    cluster_csv=chemeleon_root / "test" / "knn" / "clustering_metrics" / "cluster_assignments_with_real_id.csv",
-                    representatives_json=chemeleon_root / "test" / "knn" / "topk" / "cluster_representatives.json",
-                    sankey_json=chemeleon_root / "test" / "knn" / "sankey" / "all_sankey.json",
-                ),
-            ),
         ),
-        DatasetConfig(
+        DatasetSpec(
             name="dimenet",
+            root=dimenet_root,
             metadata_json=dimenet_root / "id_smiles_y_true_y_pred.json",
-            source_variant="default",
-            split_sources=(
-                SplitSource(
-                    split="test",
-                    scatter_dir=dimenet_root / "test" / "scatterplot",
-                    cluster_csv=dimenet_root / "test" / "clustering_metrics" / "cluster_assignments_with_real_id.csv",
-                    representatives_json=dimenet_root / "test" / "topk" / "cluster_representatives.json",
-                    sankey_json=dimenet_root / "test" / "sankey" / "all_sankey.json",
-                ),
-            ),
         ),
     )
 
 
-def build_all(output_root: Path, coord_decimals: int) -> Dict[str, str]:
-    manifest: Dict[str, str] = {}
-    for config in dataset_configs():
-        overview = build_overview(config, coord_decimals=coord_decimals)
-        output_path = output_root / config.name / "overview.json"
-        write_json(output_path, overview)
-        manifest[config.name] = str(output_path)
+def _pick_method_root(dataset_root: Path, split: str, method: str) -> Path:
+    if method == "pgmeans":
+        # For pgmeans, many datasets keep scatterplot under <split>/scatterplot
+        # while other artifacts may also exist under <split>/pgmeans.
+        # Prefer split root first so DR coordinates are not missed.
+        candidates = [
+            dataset_root / split,
+            dataset_root / split / method,
+            dataset_root / split / "clustering" / method,
+        ]
+    else:
+        candidates = [
+            dataset_root / split / method,
+            dataset_root / split / "clustering" / method,
+        ]
+    for path in candidates:
+        if path.exists():
+            return path
+    return candidates[0]
+
+
+def build_dataset_config(spec: DatasetSpec, method: str) -> DatasetConfig:
+    split_sources: List[SplitSource] = []
+    for split in SUPPORTED_SPLITS:
+        if method == "pgmeans":
+            root_candidates = [
+                spec.root / split,
+                spec.root / split / "pgmeans",
+                spec.root / split / "clustering" / "pgmeans",
+            ]
+        else:
+            root_candidates = [
+                spec.root / split / method,
+                spec.root / split / "clustering" / method,
+            ]
+
+        scatter_dir: Optional[Path] = None
+        cluster_csv: Optional[Path] = None
+        representatives_json: Optional[Path] = None
+        sankey_json: Optional[Path] = None
+        for root in root_candidates:
+            cand_scatter = root / "scatterplot"
+            cand_cluster = root / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
+            cand_rep = root / "topk" / "cluster_representatives.json"
+            cand_sankey = root / "sankey" / "all_sankey.json"
+            if scatter_dir is None and cand_scatter.exists():
+                scatter_dir = cand_scatter
+            if cluster_csv is None and cand_cluster.is_file():
+                cluster_csv = cand_cluster
+            if representatives_json is None and cand_rep.is_file():
+                representatives_json = cand_rep
+            if sankey_json is None and cand_sankey.is_file():
+                sankey_json = cand_sankey
+
+        if not (
+            scatter_dir is not None
+            or cluster_csv is not None
+            or representatives_json is not None
+            or sankey_json is not None
+        ):
+            continue
+
+        split_sources.append(
+            SplitSource(
+                split=split,
+                scatter_dir=scatter_dir,
+                cluster_csv=cluster_csv,
+                representatives_json=representatives_json,
+                sankey_json=sankey_json,
+            )
+        )
+
+    return DatasetConfig(
+        name=spec.name,
+        metadata_json=spec.metadata_json,
+        split_sources=tuple(split_sources),
+        source_variant=method,
+    )
+
+
+def split_overview_base_and_overlay(
+    overview: Dict[str, Any],
+    method: str,
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    base: Dict[str, Any] = {
+        "api_version": overview["api_version"],
+        "dataset": overview["dataset"],
+        "source_variant": "pgmeans_base",
+        "molecule_ids": overview["molecule_ids"],
+        "split_names": overview["split_names"],
+        "splits": overview["splits"],
+        "epochs": overview["epochs"],
+        "layers": overview["layers"],
+        "cells": [],
+    }
+    if "molecule_labels" in overview:
+        base["molecule_labels"] = overview["molecule_labels"]
+
+    for cell in overview["cells"]:
+        base["cells"].append(
+            {
+                "node_key": cell["node_key"],
+                "epoch": cell["epoch"],
+                "layer": cell["layer"],
+                "epoch_idx": cell["epoch_idx"],
+                "layer_idx": cell["layer_idx"],
+                "global_node_index": cell["global_node_index"],
+                "dr": cell["dr"],
+            }
+        )
+
+    overlay: Dict[str, Any] = {
+        "api_version": overview["api_version"],
+        "dataset": overview["dataset"],
+        "source_variant": method,
+        "cells": [],
+        "nodes": overview["nodes"],
+        "connectivity": overview["connectivity"],
+        "split_connectivity": overview["split_connectivity"],
+        "node_lookup": overview["node_lookup"],
+    }
+    for cell in overview["cells"]:
+        overlay["cells"].append(
+            {
+                "node_key": cell["node_key"],
+                "cluster_labels": cell["cluster_labels"],
+                "cluster_representatives": cell["cluster_representatives"],
+            }
+        )
+
+    return base, overlay
+
+
+def build_all(output_root: Path, coord_decimals: int) -> Dict[str, Dict[str, Any]]:
+    manifest: Dict[str, Dict[str, Any]] = {}
+    for spec in dataset_specs():
+        dataset_manifest: Dict[str, Any] = {"clusterings": {}}
+        config_pgmeans = build_dataset_config(spec, "pgmeans")
+        if not config_pgmeans.split_sources:
+            continue
+
+        pgmeans_overview = build_overview(config_pgmeans, coord_decimals=coord_decimals)
+        base_payload, _pgmeans_overlay = split_overview_base_and_overlay(pgmeans_overview, "pgmeans")
+
+        base_path = output_root / spec.name / "base.json"
+        write_json(base_path, base_payload)
+        dataset_manifest["base"] = str(base_path)
+
+        for method in SUPPORTED_CLUSTERINGS:
+            config = build_dataset_config(spec, method)
+            if not config.split_sources:
+                continue
+            try:
+                method_overview = build_overview(config, coord_decimals=coord_decimals)
+            except Exception:
+                continue
+            _method_base, method_overlay = split_overview_base_and_overlay(method_overview, method)
+            method_path = output_root / spec.name / "clusterings" / f"{method}.json"
+            write_json(method_path, method_overlay)
+            dataset_manifest["clusterings"][method] = str(method_path)
+
+        overview_path = output_root / spec.name / "overview.json"
+        write_json(overview_path, pgmeans_overview)
+        dataset_manifest["overview"] = str(overview_path)
+        manifest[spec.name] = dataset_manifest
+
     write_json(output_root / "manifest.json", manifest)
     return manifest
 

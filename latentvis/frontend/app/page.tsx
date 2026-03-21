@@ -72,6 +72,7 @@ type HoverPreviewState =
 type DatasetKey = "dimenet" | "chemprop" | "chemeleon";
 type ClusteringKey = "pgmeans" | "agglomerative" | "hdbscan" | "knn";
 type DataSplitKey = "all" | "test" | "train";
+type SankeySplitKey = "train" | "test" | "val";
 const DATASET_OPTIONS_UI: DatasetKey[] = ["dimenet", "chemprop", "chemeleon"];
 const CLUSTERING_OPTIONS: Array<{ value: ClusteringKey; label: string }> = [
     { value: "pgmeans", label: "PG Means" },
@@ -100,6 +101,7 @@ export default function Home() {
     const [selectedDataSet, setSelectedDataSet] = useState<DatasetKey>("dimenet");
     const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("agglomerative");
     const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("all");
+    const [selectedSankeySplits, setSelectedSankeySplits] = useState<SankeySplitKey[]>(["test"]);
     // UI-selected K (does not trigger fetch until Generate is clicked)
     const [selectedKnnK, setSelectedKnnK] = useState<number>(2);
     // Applied K used in backend data-file requests
@@ -112,9 +114,30 @@ export default function Home() {
     const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
     const [isBlockingInitLoading, setIsBlockingInitLoading] = useState(true);
     const [overviewData, setOverviewData] = useState(null);
+    const availableSankeySplits = useMemo<SankeySplitKey[]>(() => {
+        const splitNames: string[] = Array.isArray((overviewData as any)?.split_names)
+            ? (overviewData as any).split_names.map((x: any) => String(x).toLowerCase())
+            : [];
+        const out: SankeySplitKey[] = [];
+        splitNames.forEach((name) => {
+            if ((name === "train" || name === "test" || name === "val") && !out.includes(name)) {
+                out.push(name);
+            }
+        });
+        if (out.length > 0) return out;
+        return selectedDataSet === "dimenet" ? ["test"] : ["train", "test", "val"];
+    }, [overviewData, selectedDataSet]);
 
     useEffect(() => {
-        fetch(`${apiBase}/get_dataset/${selectedDataSet}`, { method: "GET" })
+        setSelectedSankeySplits((prev) => {
+            const filtered = prev.filter((sp) => availableSankeySplits.includes(sp));
+            if (filtered.length > 0) return filtered;
+            return [...availableSankeySplits];
+        });
+    }, [availableSankeySplits]);
+
+    useEffect(() => {
+        fetch(`${apiBase}/get_dataset/${selectedDataSet}?clustering=${encodeURIComponent(selectedClustering)}`, { method: "GET" })
             .then((response) => {
                 setIsBlockingInitLoading(false);
                 if (!response.ok) {
@@ -128,7 +151,114 @@ export default function Home() {
                 alert(`Failed to load dataset ${selectedDataSet}: ${err}`);
             });
 
-    }, [selectedDataSet]);
+    }, [selectedDataSet, selectedClustering]);
+
+    useEffect(() => {
+        if (!overviewData || !Array.isArray((overviewData as any)?.cells)) {
+            setClusterSortedMembers([]);
+            setTopkData([]);
+            return;
+        }
+        const payload = overviewData as any;
+        const cells: any[] = Array.isArray(payload.cells) ? payload.cells : [];
+        const moleculeLabels: any[] = Array.isArray(payload.molecule_labels) ? payload.molecule_labels : [];
+        const splitNames: string[] = Array.isArray(payload.split_names)
+            ? payload.split_names.map((x: any) => String(x).toLowerCase())
+            : [];
+        const splits: any[] = Array.isArray(payload.splits) ? payload.splits : [];
+
+        const splitByMolId = new Map<string, "train" | "test">();
+        splitNames.forEach((name, idx) => {
+            const ids = Array.isArray(splits[idx]) ? splits[idx] : [];
+            const normalized: "train" | "test" | null =
+                name === "train" ? "train" : (name === "test" || name === "val" ? "test" : null);
+            if (!normalized) return;
+            ids.forEach((id: any) => splitByMolId.set(String(id), normalized));
+        });
+
+        const normalizeDisplayId = (molIdRaw: string): string => {
+            const molIdx = Number(molIdRaw);
+            const base = Number.isFinite(molIdx) && moleculeLabels[molIdx] != null
+                ? String(moleculeLabels[molIdx])
+                : String(molIdRaw);
+            if (selectedDataSplit === "all") {
+                const sp = splitByMolId.get(String(molIdRaw));
+                return sp ? `${sp}::${base}` : base;
+            }
+            return base;
+        };
+
+        const shouldKeepMol = (molIdRaw: string): boolean => {
+            if (selectedDataSplit === "all") return true;
+            const sp = splitByMolId.get(String(molIdRaw));
+            if (!sp) return selectedDataSplit !== "train";
+            return sp === selectedDataSplit;
+        };
+
+        const sortIds = (ids: string[]) => {
+            return [...ids].sort((a, b) => {
+                const pa = parseSplitTaggedId(a);
+                const pb = parseSplitTaggedId(b);
+                const na = Number(pa.realId);
+                const nb = Number(pb.realId);
+                if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+                return pa.realId.localeCompare(pb.realId, undefined, { numeric: true });
+            });
+        };
+
+        const derivedSorted: Array<{
+            layer_name: string;
+            model_type: string;
+            cluster_id: number;
+            sorted_real_ids: Array<string | number>;
+            count?: number;
+        }> = [];
+        const derivedTopk: Array<{
+            layer_name: string;
+            model_type: string;
+            cluster_id: number;
+            top_k_closest_real_ids: Array<string | number>;
+            top_k_farthest_real_ids: Array<string | number>;
+            k: number;
+        }> = [];
+
+        cells.forEach((cell: any) => {
+            const model = String(cell?.epoch ?? "");
+            const layer = String(cell?.layer ?? "");
+            const labels = cell?.cluster_labels && typeof cell.cluster_labels === "object" ? cell.cluster_labels : {};
+            const idsByCluster = new Map<number, string[]>();
+            Object.entries(labels).forEach(([molIdRaw, clusterRaw]) => {
+                if (!shouldKeepMol(String(molIdRaw))) return;
+                const cid = Number(clusterRaw);
+                if (!Number.isFinite(cid)) return;
+                const rid = normalizeDisplayId(String(molIdRaw));
+                if (!idsByCluster.has(cid)) idsByCluster.set(cid, []);
+                idsByCluster.get(cid)!.push(rid);
+            });
+            Array.from(idsByCluster.keys()).sort((a, b) => a - b).forEach((cid) => {
+                const sorted = sortIds(idsByCluster.get(cid) ?? []);
+                derivedSorted.push({
+                    layer_name: layer,
+                    model_type: model,
+                    cluster_id: cid,
+                    sorted_real_ids: sorted,
+                    count: sorted.length,
+                });
+                const k = Math.max(1, sorted.length);
+                derivedTopk.push({
+                    layer_name: layer,
+                    model_type: model,
+                    cluster_id: cid,
+                    top_k_closest_real_ids: sorted.slice(0, k),
+                    top_k_farthest_real_ids: [...sorted].reverse().slice(0, k),
+                    k,
+                });
+            });
+        });
+
+        setClusterSortedMembers(derivedSorted);
+        setTopkData(derivedTopk);
+    }, [overviewData, selectedDataSplit]);
 
     //const scatterOverrideUrlRef = useRef<string | null>(null);
     const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
@@ -1184,6 +1314,125 @@ export default function Home() {
         setHoverPreview(null);
     }, [clusterPage, clusterPageSize, selectedNode?.model, selectedNode?.layer, selectedNode?.cluster, showSearchResultsInMembers]);
 
+    const displayedMemberIds = useMemo(() => {
+        if (showSearchResultsInMembers) return searchResultIds;
+        return Array.isArray(selectedIds) ? selectedIds : [];
+    }, [showSearchResultsInMembers, searchResultIds, selectedIds]);
+
+    const clusterTotalPages = useMemo(() => {
+        if (displayedMemberIds.length === 0) return 1;
+        return Math.max(1, Math.ceil(displayedMemberIds.length / Math.max(1, clusterPageSize)));
+    }, [displayedMemberIds.length, clusterPageSize]);
+
+    const clusterPagedIds = useMemo(() => {
+        const size = Math.max(1, clusterPageSize);
+        const start = clusterPage * size;
+        return displayedMemberIds.slice(start, start + size);
+    }, [displayedMemberIds, clusterPage, clusterPageSize]);
+
+    function clusterBadgeColor(cluster: number) {
+        const len = CLUSTER_COLORS.length || 1;
+        const idx = ((Number(cluster) % len) + len) % len;
+        return CLUSTER_COLORS[idx];
+    }
+
+    function getSmilesById(realId: string | number): string | null {
+        const parsed = parseSplitTaggedId(realId);
+        const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
+        const base = parsed.realId.trim().toLowerCase();
+        return (tagged ? smilesByRealId[tagged] : undefined) ?? smilesByRealId[base] ?? null;
+    }
+
+    function getYTrueById(realId: string | number): number | null {
+        const parsed = parseSplitTaggedId(realId);
+        const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
+        const base = parsed.realId.trim().toLowerCase();
+        const v = (tagged ? yTrueByRealId[tagged] : undefined) ?? yTrueByRealId[base];
+        return Number.isFinite(Number(v)) ? Number(v) : null;
+    }
+
+    function getYPredById(realId: string | number): number | null {
+        const parsed = parseSplitTaggedId(realId);
+        const tagged = parsed.split ? `${parsed.split}::${parsed.realId}`.toLowerCase() : "";
+        const base = parsed.realId.trim().toLowerCase();
+        const v = (tagged ? yPredByRealId[tagged] : undefined) ?? yPredByRealId[base];
+        return Number.isFinite(Number(v)) ? Number(v) : null;
+    }
+
+    const substructureByCluster = useMemo(() => {
+        const out: Record<number, { knn: boolean; kfn: boolean; knnSmiles: string | null; knnSmarts: string | null }> = {};
+        const rows = Array.isArray(substructures) ? substructures : [];
+        rows.forEach((d: any) => {
+            if (String(d?.model_type) !== String(selectedModel) || String(d?.layer_name) !== String(selectedLayer)) return;
+            const cid = Number(d?.cluster_id);
+            if (!Number.isFinite(cid)) return;
+            if (!out[cid]) out[cid] = { knn: false, kfn: false, knnSmiles: null, knnSmarts: null };
+            const hasData = d?.mcs_smiles != null || d?.mcs_smarts != null;
+            if (d?.group === "knn") {
+                out[cid].knn = hasData;
+                out[cid].knnSmiles = d?.mcs_smiles ?? null;
+                out[cid].knnSmarts = d?.mcs_smarts ?? null;
+            } else if (d?.group === "kfn") {
+                out[cid].kfn = hasData;
+            }
+        });
+        return out;
+    }, [substructures, selectedModel, selectedLayer]);
+
+    const topkNearestRows = useMemo(() => {
+        const rows = Array.isArray(topkData) ? topkData : [];
+        return rows
+            .filter((d: any) => String(d?.model_type) === String(selectedModel) && String(d?.layer_name) === String(selectedLayer))
+            .map((d: any) => ({
+                layer_name: String(d?.layer_name ?? selectedLayer),
+                model_type: String(d?.model_type ?? selectedModel),
+                cluster_id: Number(d?.cluster_id ?? 0),
+                top_k_closest_real_ids: Array.isArray(d?.top_k_closest_real_ids) ? d.top_k_closest_real_ids : [],
+                top_k_farthest_real_ids: Array.isArray(d?.top_k_farthest_real_ids) ? d.top_k_farthest_real_ids : [],
+                k: Number(d?.k ?? 5),
+            }));
+    }, [topkData, selectedModel, selectedLayer]);
+
+    useEffect(() => {
+        if (!selectedNode) return;
+        if (Array.isArray(selectedIds) && selectedIds.length > 0) return;
+        const row = clusterSortedMembers.find(
+            (d) =>
+                String(d.model_type) === String(selectedNode.model) &&
+                String(d.layer_name) === String(selectedNode.layer) &&
+                Number(d.cluster_id) === Number(selectedNode.cluster)
+        );
+        const ids = Array.isArray(row?.sorted_real_ids) ? row!.sorted_real_ids.map((x) => String(x)) : [];
+        if (ids.length > 0) setSelectedIds(ids);
+    }, [selectedNode, selectedIds, clusterSortedMembers]);
+
+    function showSmilesPreviewAt(
+        smiles: string | null | undefined,
+        anchor?: HTMLElement | SVGElement | DOMRect | null,
+        source: "topk" | "members" | "other" = "other"
+    ) {
+        const text = String(smiles ?? "").trim();
+        if (!text) return;
+        let rect: DOMRect | null = null;
+        if (anchor && typeof (anchor as { getBoundingClientRect?: unknown }).getBoundingClientRect === "function") {
+            rect = (anchor as HTMLElement | SVGElement).getBoundingClientRect();
+        } else if (
+            anchor &&
+            typeof (anchor as DOMRect).left === "number" &&
+            typeof (anchor as DOMRect).top === "number"
+        ) {
+            rect = anchor as DOMRect;
+        }
+        if (!rect) return;
+        setHoverPreview({
+            kind: "smiles",
+            smiles: text,
+            left: rect.right + 10,
+            top: rect.top,
+            source,
+        });
+    }
+
     /* function resolveImageSrc(realId: string | number, imageType: string) {
          const parsed = parseSplitTaggedId(realId);
          const splitForImage = parsed.split ?? effectiveDataSplitForFiles(selectedDataSplit);
@@ -1436,6 +1685,7 @@ export default function Home() {
                                     }
                                 }}
                                 onSwapAxes={(swap) => setSwapAxes(swap)}
+                                selectedSplits={selectedSankeySplits}
                                 reverseEpochOrder={reverseEpochOrder}
                                 onToggleEpochOrder={() => setReverseEpochOrder((v) => !v)}
                                 onVisibleEpochsChange={null}
@@ -1456,6 +1706,8 @@ export default function Home() {
                             </div>
                             <Sankey
                                 data={overviewData}
+                                selectedDataSet={selectedDataSet}
+                                selectedSplits={selectedSankeySplits}
                                 mode={swapAxes ? "layer" : "model"}
                                 showFfn2={effectiveShowFfn2}
                                 layerKey={selectedLayer}
@@ -1499,6 +1751,7 @@ export default function Home() {
                             <Sankey
                                 data={overviewData}
                                 selectedDataSet={selectedDataSet}
+                                selectedSplits={selectedSankeySplits}
                                 mode={swapAxes ? "model" : "layer"}
                                 showFfn2={effectiveShowFfn2}
                                 modelKey={selectedModel}
@@ -1579,14 +1832,11 @@ export default function Home() {
                                                 id="scatterplot"
                                                 className="flex-1 min-h-0 w-full bg-white"
                                             >
-                                                {/*<ScatterPlot
-                                                    data={overviewData}
-                                                    clusterLabels={overviewData}
+                                                <ScatterPlot
+                                                    compactOverview={overviewData}
                                                     splitMapPath={null}
-                                                    splitMapDataset={selectedDataset}
+                                                    splitMapDataset={selectedDataSet}
                                                     dataSplit={selectedDataSplit}
-                                                    secondaryDataPathXY={undefined}
-                                                    secondaryDataPathCluster={undefined}
                                                     projection={scatterProjection}
                                                     onProjectionChange={(next) => setScatterProjection(next)}
                                                     onUserClusteringUpload={(payload) => setUploadedUserClustering(payload)}
@@ -1631,9 +1881,7 @@ export default function Home() {
                                                         setHoverLock(false);
                                                         setSuppressScatterCluster(false);
                                                     }}
-                                                    resolveImageSrc={resolveImageSrc}
-                                                    getSmilesById={getSmilesById}
-                                                />*/}
+                                                />
                                             </div>
                                             <button
                                                 type="button"
@@ -1788,7 +2036,7 @@ export default function Home() {
                                                                                             setHoverFromMouse(String(id));
                                                                                             showSmilesPreviewAt(
                                                                                                 getSmilesById(id),
-                                                                                                e.currentTarget.getBoundingClientRect(),
+                                                                                                e.currentTarget,
                                                                                                 "members"
                                                                                             );
                                                                                         }}
@@ -1947,6 +2195,7 @@ export default function Home() {
                                             next === "dimenet" ? "test" : selectedDataSplit;
                                         setSelectedDataSet(next);
                                         setSelectedDataSplit(nextSplit);
+                                        setSelectedSankeySplits(next === "dimenet" ? ["test"] : ["train", "test", "val"]);
                                         setSelectedModel(defaults.model);
                                         setSelectedLayer(defaults.layer);
                                         //syncSankeyPaths(defaults.model, defaults.layer, next, nextClustering, nextSplit);
@@ -1989,6 +2238,9 @@ export default function Home() {
                                         setCellSelected(false);
                                         setActiveSankeyRows([]);
                                     }}
+                                    sankeySplits={selectedSankeySplits}
+                                    availableSankeySplits={availableSankeySplits}
+                                    onSankeySplitsChange={setSelectedSankeySplits}
                                     clustering={selectedClustering}
                                     clusteringOptions={CLUSTERING_OPTIONS}
                                     onClusteringChange={(c) => {
