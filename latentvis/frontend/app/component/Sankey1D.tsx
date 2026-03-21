@@ -19,7 +19,10 @@ type SampleRow = {
 function rowsFromCompactOverview(
     overview: any,
     showFfn2: boolean,
-    selectedSplits?: string[]
+    selectedSplits?: string[],
+    mode?: "layer" | "model",
+    modelKey?: string,
+    layerKey?: string
 ): SampleRow[] {
     const epochs: string[] = Array.isArray(overview?.epochs) ? overview.epochs.map((x: any) => String(x)) : [];
     const layersRaw: string[] = Array.isArray(overview?.layers) ? overview.layers.map((x: any) => String(x)) : [];
@@ -96,6 +99,34 @@ function rowsFromCompactOverview(
         });
     };
 
+    // Contextual rows:
+    // - mode=model  => transitions across epochs within selected layer
+    // - mode=layer  => transitions across layers within selected epoch(model)
+    if (mode === "model") {
+        const wantedLayer = canonicalLayerKey(String(layerKey ?? ""));
+        const chosenLayer =
+            layers.find((name) => canonicalLayerKey(name) === wantedLayer) ??
+            layers.find((name) => canonicalLayerKey(name) === canonicalLayerKey(normalizeLayerForVisibility(layerKey)));
+        if (chosenLayer) {
+            for (let e = 0; e < epochs.length - 1; e += 1) {
+                addPair(e, chosenLayer, e + 1, chosenLayer);
+            }
+            return rows;
+        }
+    }
+
+    if (mode === "layer") {
+        const wantedModel = String(modelKey ?? "");
+        const epochIdx = epochs.findIndex((e) => String(e) === wantedModel);
+        if (epochIdx >= 0) {
+            for (let l = 0; l < layers.length - 1; l += 1) {
+                addPair(epochIdx, layers[l], epochIdx, layers[l + 1]);
+            }
+            return rows;
+        }
+    }
+
+    // Fallback: full row generation.
     for (let e = 0; e < epochs.length; e += 1) {
         for (let l = 0; l < layers.length - 1; l += 1) {
             addPair(e, layers[l], e, layers[l + 1]);
@@ -142,11 +173,6 @@ function ensureTaggedSampleId(value: string | number, split: SplitTag): string {
     const parsed = stripTaggedRealId(value);
     if (parsed.split) return String(value);
     return `${split}::${parsed.id}`;
-}
-
-function sameSampleId(a: string, b: string): boolean {
-    if (a === b) return true;
-    return stripTaggedRealId(a).id === stripTaggedRealId(b).id;
 }
 
 function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): SampleRow[] {
@@ -469,13 +495,10 @@ export default function Sankey({
     visibleEpochs,
     reverseEpochOrder = false,
     activeNodeKey,
-    highlightId,
-    highlightIds,
     onNodeSelect,
     layout = "vertical",
 }: SankeyProps) {
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const nodeSamplesRef = useRef<Map<string, Set<string>>>(new Map());
     const onNodeSelectRef = useRef(onNodeSelect);
     const syncTransformRef = useRef(syncTransform);
     const onSyncTransformRef = useRef(onSyncTransform);
@@ -578,7 +601,7 @@ export default function Sankey({
 
         const rowsFromData = (() => {
             if (Array.isArray(data)) return data as SampleRow[];
-            return rowsFromCompactOverview(data, showFfn2, selectedSplits);
+            return rowsFromCompactOverview(data, showFfn2, selectedSplits, mode, modelKey, layerKey);
         })();
         lastRows = Array.isArray(rowsFromData) ? rowsFromData.filter((r) => showFfn2 || isVisibleRow(r)) : [];
         lastSecondaryRows = null;
@@ -777,7 +800,7 @@ export default function Sankey({
 
             const clusterValues: number[] = [];
             nodes.forEach((n) => {
-                if (!activeModel || n.model !== activeModel) return;
+                if (!focusGroup || n.model !== focusGroup) return;
                 const idx = n.key.lastIndexOf("_");
                 const cluster = Number(idx === -1 ? 0 : n.key.slice(idx + 1));
                 if (Number.isFinite(cluster)) clusterValues.push(cluster);
@@ -852,7 +875,6 @@ export default function Sankey({
                 });
 
             const nodeSamples = new Map<string, Set<string>>();
-            const focusClusterBySample = new Map<string, number>();
             combinedRowsWithSplit.forEach((r: any) => {
                 const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
                 const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
@@ -865,147 +887,11 @@ export default function Sankey({
                 if (!nodeSamples.has(tgt)) nodeSamples.set(tgt, new Set());
                 nodeSamples.get(src)!.add(sampleId);
                 nodeSamples.get(tgt)!.add(sampleId);
-                if (focusGroup) {
-                    if (fromKey === focusGroup) focusClusterBySample.set(sampleId, Number(r.from_cluster));
-                    if (toKey === focusGroup) focusClusterBySample.set(sampleId, Number(r.to_cluster));
-                }
-            });
-            nodeSamplesRef.current = nodeSamples;
-
-            const sampleNodeY = new Map<string, Map<string, number>>();
-            nodes.forEach((node) => {
-                const samples = Array.from(nodeSamples.get(node.key) || []);
-                if (samples.length === 0) return;
-                samples.sort((a, b) => Number(a) - Number(b));
-                samples.forEach((id, i) => {
-                    const y = node.h <= 1 ? node.y : node.y + (i + 0.5) * (node.h / samples.length);
-                    if (!sampleNodeY.has(id)) sampleNodeY.set(id, new Map());
-                    sampleNodeY.get(id)!.set(node.key, y);
-                });
             });
 
-            const sampleLines: Array<{
-                id: string;
-                x1: number;
-                y1: number;
-                x2: number;
-                y2: number;
-                split: SplitTag;
-                baseStroke: string;
-                fromKey: string;
-                toKey: string;
-                fromCluster: number;
-                toCluster: number;
-                focusCluster: number;
-            }> = [];
-            combinedRowsWithSplit.forEach((r: any) => {
-                const fromKey = fromKeyFn(r);
-                const toKey = toKeyFn(r);
-                const src = `${fromKey}_${r.from_cluster}`;
-                const tgt = `${toKey}_${r.to_cluster}`;
-                const s = nodeByKey.get(src);
-                const t = nodeByKey.get(tgt);
-                if (!s || !t) return;
-                const parsed = stripTaggedRealId(r.real_id);
-                const split: SplitTag = (parsed.split ?? r.__split ?? primarySplit) as SplitTag;
-                const sampleId = ensureTaggedSampleId(r.real_id, split);
-                const y1 = sampleNodeY.get(sampleId)?.get(src);
-                const y2 = sampleNodeY.get(sampleId)?.get(tgt);
-                if (y1 == null || y2 == null) return;
-                const focusCluster = focusClusterBySample.get(sampleId);
-                const base =
-                    focusGroup && Number.isFinite(focusCluster)
-                        ? color(Math.max(0, Number(focusCluster)))
-                        : SANKEY_LINK_COLOR;
-                const c = d3.color(base);
-                const baseStroke = split === "test" ? (c ? c.darker(0.6).formatHex() : base) : base;
-                sampleLines.push({
-                    id: sampleId,
-                    x1: s.x + NODE_W,
-                    y1,
-                    x2: t.x,
-                    y2,
-                    split,
-                    baseStroke,
-                    fromKey: String(fromKey),
-                    toKey: String(toKey),
-                    fromCluster: Number(r.from_cluster),
-                    toCluster: Number(r.to_cluster),
-                    focusCluster: Number.isFinite(Number(focusCluster)) ? Number(focusCluster) : Number.NaN,
-                });
-            });
 
-            const baseOpacity = (d: { id: string }) => {
-                const highlightList = (highlightIds ?? []).map((x) => String(x));
-                if (highlightList.length > 0) {
-                    return highlightList.some((hid) => sameSampleId(hid, d.id)) ? 0.4 : 0;
-                }
-                if (displayActiveNode) {
-                    const samples = nodeSamples.get(displayActiveNode) || new Set();
-                    return Array.from(samples).some((sid) => sameSampleId(sid, d.id)) ? 0.4 : 0;
-                }
-                return 0;
-            };
-
-
-            sampleGroup
-                .selectAll("line")
-                .data(sampleLines, (d) => d.id)
-                .join((enter) =>
-                    enter.append("line")
-                        .attr("x1", (d) => d.x1)
-                        .attr("y1", (d) => d.y1)
-                        .attr("x2", (d) => d.x2)
-                        .attr("y2", (d) => d.y2)
-                        .attr("stroke", (d) => d.baseStroke)
-                        .attr("vector-effect", "non-scaling-stroke")
-                        .attr("stroke-width", 1.1)
-                        .attr("opacity", 0)
-                        .attr("class", "sample-line")
-                        .attr("data-id", (d) => d.id)
-                        .attr("data-split", (d) => d.split)
-                        .attr("data-base-stroke", (d) => d.baseStroke)
-                        .attr("data-from-key", (d) => d.fromKey)
-                        .attr("data-to-key", (d) => d.toKey)
-                        .attr("data-from-cluster", (d) => String(d.fromCluster))
-                        .attr("data-to-cluster", (d) => String(d.toCluster))
-                        .attr("data-focus-cluster", (d) => (Number.isFinite(d.focusCluster) ? String(d.focusCluster) : ""))
-                        .attr("opacity", (d) => {
-                            const highlightList = (highlightIds ?? []).map((x) => String(x));
-                            const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
-                            const isSearchHit = highlightList.some((hid) => sameSampleId(hid, d.id));
-                            return (isHovered || isSearchHit) ? 0.4 : baseOpacity(d);
-                        })
-                        .attr("stroke", (d) => {
-                            const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
-                            return isHovered ? HIGHLIGHT_RED : d.baseStroke;
-                        })
-                        .attr("stroke-width", (d) => {
-                            const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
-                            return isHovered ? 2 : 1.1;
-                        }),
-                    (update) =>
-                        update
-                            .attr("x1", (d) => d.x1)
-                            .attr("y1", (d) => d.y1)
-                            .attr("x2", (d) => d.x2)
-                            .attr("y2", (d) => d.y2)
-                            .attr("opacity", (d) => {
-                                const highlightList = (highlightIds ?? []).map((x) => String(x));
-                                const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
-                                const isSearchHit = highlightList.some((hid) => sameSampleId(hid, d.id));
-                                return (isHovered || isSearchHit) ? 0.4 : baseOpacity(d);
-                            })
-                            .attr("stroke", (d) => {
-                                const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
-                                return isHovered ? HIGHLIGHT_RED : d.baseStroke;
-                            })
-                            .attr("stroke-width", (d) => {
-                                const isHovered = !!highlightId && sameSampleId(d.id, String(highlightId));
-                                return isHovered ? 2 : 1.1;
-                            }),
-                    (exit) => exit.remove()
-                )
+            // Remove point-level trajectories entirely.
+            sampleGroup.selectAll("line").remove();
             const darker = (hex: string) => {
                 const c = d3.color(hex);
                 return c ? c.darker(0.6).formatHex() : hex;
@@ -1051,11 +937,21 @@ export default function Sankey({
                             return SANKEY_NODE_COLOR;
                         })
                         .attr("stroke", (d) => (displayActiveNode && d.key === displayActiveNode ? HIGHLIGHT_RED : "none"))
-                        .attr("stroke-width", (d) => (displayActiveNode && d.key === displayActiveNode ? 2 : 0)),
+                        .attr("stroke-width", (d) => (displayActiveNode && d.key === displayActiveNode ? 2.2 : 0)),
                 (update) => update
                     .attr("x", (d: any) => d.x)
                     .attr("y", (d) => d.y)
-                    .attr("height", (d) => Math.max(1, d.h)),
+                    .attr("height", (d) => Math.max(1, d.h))
+                    .attr("fill", (d) => {
+                        if (focusGroup && d.model === focusGroup) {
+                            const idx = d.key.lastIndexOf("_");
+                            const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
+                            if (Number.isFinite(cluster)) return color(Math.max(0, cluster));
+                            }
+                            return SANKEY_NODE_COLOR;
+                        })
+                    .attr("stroke", (d) => (displayActiveNode && d.key === displayActiveNode ? HIGHLIGHT_RED : "none"))
+                    .attr("stroke-width", (d) => (displayActiveNode && d.key === displayActiveNode ? 2.2 : 0)),
                 (exit) => exit.remove());
 
             nodeGroup
@@ -1197,9 +1093,21 @@ export default function Sankey({
             ro.disconnect();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [data, selectedDataSet, selectedSplits, mode, modelKey, layerKey, visibleEpochs, reverseEpochOrder, showFfn2, !!syncTransform]);
+    }, [
+        data,
+        selectedDataSet,
+        selectedSplits,
+        mode,
+        modelKey,
+        layerKey,
+        visibleEpochs,
+        reverseEpochOrder,
+        showFfn2,
+        !!syncTransform,
+        activeNodeKey,
+    ]);
 
-    /*useEffect(() => {
+    useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
         const svg = container.querySelector("svg");
@@ -1240,45 +1148,7 @@ export default function Sankey({
             }
         });
 
-        const samplesForActive = activeName ? nodeSamplesRef.current.get(activeName) || new Set<string>() : new Set<string>();
-        const highlightList = (highlightIds ?? []).map((x) => String(x));
-        const lines = Array.from(svg.querySelectorAll("g.sample-trajectories line[data-id]")) as SVGLineElement[];
-        lines.forEach((line) => {
-            const id = line.getAttribute("data-id") || "";
-            const isHovered = !!highlightId && sameSampleId(id, String(highlightId));
-            const isSearchHit = highlightList.some((hid) => sameSampleId(hid, id));
-            const opacity = highlightList.length > 0
-                ? (isSearchHit ? 0.4 : 0)
-                : isHovered
-                    ? 0.4
-                    : activeName
-                        ? (Array.from(samplesForActive).some((sid) => sameSampleId(sid, id)) ? 0.4 : 0)
-                        : 0;
-            line.setAttribute("opacity", String(opacity));
-            const split = (line.getAttribute("data-split") || "train").toLowerCase() === "test" ? "test" : "train";
-            const fromKey = line.getAttribute("data-from-key") || "";
-            const toKey = line.getAttribute("data-to-key") || "";
-            const fromCluster = Number(line.getAttribute("data-from-cluster") || "");
-            const toCluster = Number(line.getAttribute("data-to-cluster") || "");
-            const focusCluster = Number(line.getAttribute("data-focus-cluster") || "");
-            let baseStroke = SANKEY_LINK_COLOR;
-            if (focusGroup) {
-                const cluster = Number.isFinite(focusCluster)
-                    ? focusCluster
-                    : (fromKey === focusGroup ? fromCluster : (toKey === focusGroup ? toCluster : Number.NaN));
-                if (Number.isFinite(cluster)) {
-                    baseStroke = CLUSTER_COLORS[Math.max(0, Number(cluster)) % CLUSTER_COLORS.length];
-                }
-            }
-            if (split === "test") {
-                const c = d3.color(baseStroke);
-                baseStroke = c ? c.darker(0.6).formatHex() : baseStroke;
-            }
-            line.setAttribute("data-base-stroke", baseStroke);
-            line.setAttribute("stroke", isHovered ? HIGHLIGHT_RED : baseStroke);
-            line.setAttribute("stroke-width", isHovered ? "2" : "1.1");
-        });
-    }, [displayActiveNode, highlightId, highlightIds, mode, modelKey, layerKey]);*/
+    }, [displayActiveNode, mode, modelKey, layerKey]);
 
     useEffect(() => {
         const container = containerRef.current;

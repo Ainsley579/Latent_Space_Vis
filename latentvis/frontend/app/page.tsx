@@ -96,6 +96,13 @@ function parseSplitTaggedId(value: string | number): { split: "train" | "test" |
     return { split: null, realId: raw };
 }
 
+function normalizeLayerKey(value: string): string {
+    const raw = String(value ?? "").trim();
+    if (raw === "fp") return "fingerprint";
+    if (/^fnn_layer_/.test(raw)) return raw.replace(/^fnn_layer_/, "ffn_layer_");
+    return raw;
+}
+
 export default function Home() {
     // this shouldn't be hardcoded. won't change it now but there's a route in the backend to get the datasets available now
     const [selectedDataSet, setSelectedDataSet] = useState<DatasetKey>("dimenet");
@@ -371,7 +378,7 @@ export default function Home() {
     const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
     const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
     const syncSourceRef = useRef<{ source: "view" | "vertical" | "horizontal"; ts: number } | null>(null);
-    function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }) {
+    function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }): boolean {
         setHoverLock(false);
         if (
             selectedNode &&
@@ -383,7 +390,7 @@ export default function Home() {
             setSelectedIds(null);
             setCellSelected(false);
             setSuppressScatterCluster(false);
-            return;
+            return false;
         }
         setSelectedNode(sel);
         if (Array.isArray(sel.ids)) {
@@ -395,6 +402,22 @@ export default function Home() {
             setSelectedIds(null);
         }
         setSuppressScatterCluster(false);
+        return true;
+    }
+
+    function resolveSankeyCellSelection(
+        sel: { model?: string; layer?: string; cluster: number; ids?: string[] },
+        fallback: { model: string; layer: string }
+    ): { model: string; layer: string; cluster: number; ids?: string[] } | null {
+        const model = String(sel.model ?? fallback.model ?? "").trim();
+        const layer = normalizeLayerKey(String(sel.layer ?? fallback.layer ?? "").trim());
+        if (!model || !layer) return null;
+        return {
+            model,
+            layer,
+            cluster: Number(sel.cluster),
+            ids: Array.isArray(sel.ids) ? sel.ids : undefined,
+        };
     }
 
     function setHoverFromMouse(id: string | null) {
@@ -540,7 +563,12 @@ export default function Home() {
     }
 
     useEffect(() => {
-        const smilesSourcePath =
+        const apiSourceUrl =
+            `${apiBase}/data-file` +
+            `?dataset=${encodeURIComponent(selectedDataSet)}` +
+            `&dataset_root=1` +
+            `&file=${encodeURIComponent("id_smiles_y_true_y_pred.json")}`;
+        const fallbackSourcePath =
             selectedDataSet === "dimenet"
                 ? "/dimnet/id_smiles_y_true_y_pred.json"
                 : "/id_smiles_y_true_y_pred.json";
@@ -549,11 +577,14 @@ export default function Home() {
             json: unknown,
             out: Record<string, string>,
             yTrueOut: Record<string, number>,
-            yPredOut: Record<string, number>
+            yPredOut: Record<string, number>,
+            targetDataset: DatasetKey
         ) => {
             if (Array.isArray(json)) {
                 json.forEach((row) => {
                     if (!row || typeof row !== "object") return;
+                    const rowDataset = String((row as any).dataset ?? "").trim().toLowerCase();
+                    if (rowDataset && rowDataset !== String(targetDataset).toLowerCase()) return;
                     const rid = String((row as any).real_id ?? "").trim();
                     if (!rid) return;
                     const smiles = typeof (row as any).smiles === "string" ? (row as any).smiles : "";
@@ -572,8 +603,9 @@ export default function Home() {
                         yPredOut[rid] = yPred;
                         yPredOut[rid.toLowerCase()] = yPred;
                     }
-                    if (split === "train" || split === "test") {
-                        const tagged = `${split}::${rid}`.toLowerCase();
+                    if (split === "train" || split === "test" || split === "val") {
+                        const splitTag = split === "val" ? "test" : split;
+                        const tagged = `${splitTag}::${rid}`.toLowerCase();
                         if (Number.isFinite(yTrue)) yTrueOut[tagged] = yTrue;
                         if (Number.isFinite(yPred)) yPredOut[tagged] = yPred;
                     }
@@ -592,17 +624,21 @@ export default function Home() {
             }
         };
 
-        fetch(smilesSourcePath)
+        fetch(apiSourceUrl)
             .then(async (res) => {
-                if (res.status === 404) return {};
-                if (!res.ok) throw new Error(`Failed to load ${smilesSourcePath}`);
-                return res.json();
+                if (res.ok) return res.json();
+                if (res.status !== 404) throw new Error(`Failed to load ${apiSourceUrl}`);
+                if (selectedDataSet !== "dimenet") return {};
+                const fallbackRes = await fetch(fallbackSourcePath);
+                if (fallbackRes.status === 404) return {};
+                if (!fallbackRes.ok) throw new Error(`Failed to load ${fallbackSourcePath}`);
+                return fallbackRes.json();
             })
             .then((primaryJson) => {
                 const out: Record<string, string> = {};
                 const yTrueOut: Record<string, number> = {};
                 const yPredOut: Record<string, number> = {};
-                normalizeJsonInto(primaryJson, out, yTrueOut, yPredOut);
+                normalizeJsonInto(primaryJson, out, yTrueOut, yPredOut, selectedDataSet);
                 setSmilesByRealId(out);
                 setYTrueByRealId(yTrueOut);
                 setYPredByRealId(yPredOut);
@@ -1634,6 +1670,28 @@ export default function Home() {
             : (selectedIds && selectedIds.length > 0 ? selectedIds : null);
     const showRightDetailPanels = detailsEverShown || cellSelected || selectedNode != null;
     const shouldShowBlockingOverlay = isBlockingInitLoading || isGeneratingRange;
+    const verticalSankeyRenderKey = [
+        "vertical",
+        swapAxes ? "layer" : "model",
+        swapAxes ? selectedModel : selectedLayer,
+        selectedDataSet,
+        selectedClustering,
+        selectedDataSplit,
+        selectedSankeySplits.join(","),
+        reverseEpochOrder ? "rev" : "fwd",
+        effectiveShowFfn2 ? "ffn2on" : "ffn2off",
+    ].join("|");
+    const horizontalSankeyRenderKey = [
+        "horizontal",
+        swapAxes ? "model" : "layer",
+        swapAxes ? selectedLayer : selectedModel,
+        selectedDataSet,
+        selectedClustering,
+        selectedDataSplit,
+        selectedSankeySplits.join(","),
+        reverseEpochOrder ? "rev" : "fwd",
+        effectiveShowFfn2 ? "ffn2on" : "ffn2off",
+    ].join("|");
 
     return (
         <div className="flex min-h-screen w-full">
@@ -1667,10 +1725,15 @@ export default function Home() {
                                     setSelectedIds(null);
                                 }}
                                 onNodeSelect={(sel) => {
-                                    toggleNode(sel);
-                                    setSelectedModel(sel.model);
-                                    setSelectedLayer(sel.layer);
-                                    setCellSelected(true);
+                                    const normalized = resolveSankeyCellSelection(sel, {
+                                        model: selectedModel,
+                                        layer: selectedLayer,
+                                    });
+                                    if (!normalized) return;
+                                    const didSelect = toggleNode(normalized);
+                                    setSelectedModel(normalized.model);
+                                    setSelectedLayer(normalized.layer);
+                                    setCellSelected(didSelect);
                                 }}
                                 selectedNode={selectedNode}
                                 activeCell={cellSelected ? { model: selectedModel, layer: selectedLayer } : null}
@@ -1705,6 +1768,7 @@ export default function Home() {
                                 {swapAxes ? selectedModel : selectedLayer}
                             </div>
                             <Sankey
+                                key={verticalSankeyRenderKey}
                                 data={overviewData}
                                 selectedDataSet={selectedDataSet}
                                 selectedSplits={selectedSankeySplits}
@@ -1729,12 +1793,18 @@ export default function Home() {
                                 highlightId={hoveredId}
                                 highlightIds={globalHighlightIds}
                                 onNodeSelect={(sel) => {
-                                    if (!sel.model || sel.layer == null) return;
-                                    toggleNode({ model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster, ids: sel.ids });
-                                    setSelectedModel(sel.model);
-                                    setSelectedLayer(sel.layer ?? selectedLayer);
+                                    const normalized = resolveSankeyCellSelection(
+                                        { model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster, ids: sel.ids },
+                                        { model: selectedModel, layer: selectedLayer }
+                                    );
+                                    if (!normalized) return;
+                                    const didSelect = toggleNode(normalized);
+                                    setSelectedModel(normalized.model);
+                                    setSelectedLayer(normalized.layer);
                                     //syncSankeyPaths(sel.model, sel.layer ?? selectedLayer);
-                                    setCellSelected(true);
+                                    setCellSelected(didSelect);
+                                    // Keep cluster highlight for the clicked 1D node.
+                                    setSuppressScatterCluster(false);
                                 }}
                                 layout="vertical"
                             />
@@ -1749,6 +1819,7 @@ export default function Home() {
                                 {swapAxes ? selectedLayer : selectedModel}
                             </div>
                             <Sankey
+                                key={horizontalSankeyRenderKey}
                                 data={overviewData}
                                 selectedDataSet={selectedDataSet}
                                 selectedSplits={selectedSankeySplits}
@@ -1773,12 +1844,17 @@ export default function Home() {
                                 highlightId={hoveredId}
                                 highlightIds={globalHighlightIds}
                                 onNodeSelect={(sel) => {
-                                    if (!sel.layer || !sel.model) return;
-                                    toggleNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: sel.ids });
-                                    setSelectedModel(sel.model);
-                                    setSelectedLayer(sel.layer);
-                                    syncSankeyPaths(sel.model, sel.layer);
-                                    setCellSelected(true);
+                                    const normalized = resolveSankeyCellSelection(
+                                        { model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: sel.ids },
+                                        { model: selectedModel, layer: selectedLayer }
+                                    );
+                                    if (!normalized) return;
+                                    const didSelect = toggleNode(normalized);
+                                    setSelectedModel(normalized.model);
+                                    setSelectedLayer(normalized.layer);
+                                    setCellSelected(didSelect);
+                                    // Keep cluster highlight for the clicked 1D node.
+                                    setSuppressScatterCluster(false);
                                 }}
                                 layout="horizontal"
                             />
@@ -1837,11 +1913,17 @@ export default function Home() {
                                                     splitMapPath={null}
                                                     splitMapDataset={selectedDataSet}
                                                     dataSplit={selectedDataSplit}
+                                                    yTrueLookup={yTrueByRealId}
+                                                    yPredLookup={yPredByRealId}
                                                     projection={scatterProjection}
                                                     onProjectionChange={(next) => setScatterProjection(next)}
                                                     onUserClusteringUpload={(payload) => setUploadedUserClustering(payload)}
                                                     activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
-                                                    activeIds={showSearchResultsInMembers ? searchResultIds : selectedIds}
+                                                    activeIds={
+                                                        showSearchResultsInMembers
+                                                            ? searchResultIds
+                                                            : (suppressScatterCluster ? null : selectedIds)
+                                                    }
                                                     highlightId={hoveredId}
                                                     modelKey={selectedModel}
                                                     layerKey={selectedLayer}
@@ -1856,23 +1938,25 @@ export default function Home() {
                                                     }}
                                                     onPointSelect={(sel) => {
                                                         if (!sel.model || !sel.layer) return;
-                                                        setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
+                                                        const normalizedLayer = normalizeLayerKey(sel.layer);
+                                                        setSelectedNode({ model: sel.model, layer: normalizedLayer, cluster: sel.cluster });
                                                         setSelectedIds([sel.real_id]);
                                                         setHoveredId(String(sel.real_id));
                                                         setHoverLock(true);
                                                         setSuppressScatterCluster(true);
                                                         setSelectedModel(sel.model);
-                                                        setSelectedLayer(sel.layer);
+                                                        setSelectedLayer(normalizedLayer);
                                                     }}
                                                     onClusterSelect={(sel) => {
                                                         if (!sel.model || !sel.layer) return;
-                                                        setSelectedNode({ model: sel.model, layer: sel.layer, cluster: sel.cluster });
+                                                        const normalizedLayer = normalizeLayerKey(sel.layer);
+                                                        setSelectedNode({ model: sel.model, layer: normalizedLayer, cluster: sel.cluster });
                                                         setSelectedIds(sel.real_ids);
                                                         setHoveredId(null);
                                                         setHoverLock(false);
                                                         setSuppressScatterCluster(false);
                                                         setSelectedModel(sel.model);
-                                                        setSelectedLayer(sel.layer);
+                                                        setSelectedLayer(normalizedLayer);
                                                     }}
                                                     onClearSelection={() => {
                                                         setSelectedNode(null);
@@ -2193,6 +2277,9 @@ export default function Home() {
                                         const nextClustering = selectedClustering;
                                         const nextSplit: DataSplitKey =
                                             next === "dimenet" ? "test" : selectedDataSplit;
+                                        // Clear stale overview immediately so split defaults are computed
+                                        // against the new dataset instead of old split_names.
+                                        setOverviewData(null);
                                         setSelectedDataSet(next);
                                         setSelectedDataSplit(nextSplit);
                                         setSelectedSankeySplits(next === "dimenet" ? ["test"] : ["train", "test", "val"]);

@@ -18,6 +18,13 @@ type ScatterPoint = {
 
 type ColorMode = "cluster" | "label" | "split" | "y_true" | "y_pred" | "y_abs_err";
 
+function normalizeLayerKey(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (raw === "fp") return "fingerprint";
+  if (/^fnn_layer_/.test(raw)) return raw.replace(/^fnn_layer_/, "ffn_layer_");
+  return raw;
+}
+
 type ScatterPlotProps = {
   compactOverview?: any;
   dataPathXY?: string;
@@ -27,6 +34,8 @@ type ScatterPlotProps = {
   splitMapPath?: string;
   splitMapDataset?: string;
   dataSplit?: "all" | "train" | "test";
+  yTrueLookup?: Record<string, number>;
+  yPredLookup?: Record<string, number>;
   projection?: "pca" | "mds" | "umap" | "tsne";
   onProjectionChange?: (next: "pca" | "mds" | "umap" | "tsne") => void;
   activeCluster?: number | null;
@@ -59,6 +68,8 @@ export default function ScatterPlot({
   splitMapPath,
   splitMapDataset,
   dataSplit,
+  yTrueLookup,
+  yPredLookup,
   projection,
   onProjectionChange,
   activeCluster,
@@ -108,11 +119,13 @@ export default function ScatterPlot({
     const s = String(raw ?? "").trim();
     if (!s) return [];
     const keys = new Set<string>([s]);
+    keys.add(s.toLowerCase());
     const stripped = (() => {
       const idx = s.indexOf("::");
       return idx >= 0 ? s.slice(idx + 2) : s;
     })();
     keys.add(stripped);
+    keys.add(stripped.toLowerCase());
     if (/^-?\d+(\.0+)?$/.test(stripped)) {
       const n = Number(stripped);
       if (Number.isFinite(n)) {
@@ -205,6 +218,90 @@ export default function ScatterPlot({
         el.setAttribute("fill", fill);
       }
     });
+  }
+
+  function applySelectionStateToSvg(svg: SVGElement) {
+    const rows = rowsRef.current;
+    if (!rows) return;
+    const activeIdSet = activeIds ? new Set(activeIds.map((x) => String(x))) : null;
+    const activeLookup = new Set<string>();
+    if (activeIdSet) {
+      activeIdSet.forEach((id) => {
+        idLookupKeys(id).forEach((k) => activeLookup.add(k));
+      });
+    }
+    const highlightLookup = highlightId ? new Set(idLookupKeys(String(highlightId))) : null;
+    const circles = Array.from(svg.querySelectorAll("circle[data-id]")) as SVGCircleElement[];
+    let matchedActiveCount = 0;
+    const activeMatchedByCircle = new Map<string, boolean>();
+    if (activeLookup.size > 0) {
+      circles.forEach((el) => {
+        const id = el.getAttribute("data-id") || "";
+        const hit = idLookupKeys(id).some((k) => activeLookup.has(k));
+        if (hit) matchedActiveCount += 1;
+        activeMatchedByCircle.set(id, hit);
+      });
+    }
+    const hasUsableActiveSelection = activeLookup.size > 0 && matchedActiveCount > 0;
+    circles.forEach((el) => {
+      const id = el.getAttribute("data-id") || "";
+      const cluster = Number(el.getAttribute("data-cluster") || "0");
+      const split = (el.getAttribute("data-split") || "") as "train" | "test" | "";
+      const computedBaseFill = resolveBaseFill(id, cluster, split || undefined);
+      el.setAttribute("data-base-fill", computedBaseFill);
+      const baseFill = computedBaseFill;
+      const isHovered = !!highlightLookup && idLookupKeys(id).some((k) => highlightLookup.has(k));
+      const inActiveIds = activeMatchedByCircle.get(id) === true;
+
+      el.setAttribute("r", isHovered ? "5.2" : "3.2");
+      el.setAttribute("fill", isHovered ? "#f59e0b" : baseFill);
+      if (isHovered) {
+        el.setAttribute("fill-opacity", "1");
+        el.setAttribute("stroke", "#dc2626");
+        el.setAttribute("stroke-width", "1.8");
+      } else if (hasUsableActiveSelection) {
+        el.setAttribute("fill-opacity", inActiveIds ? "1" : "0.22");
+        el.setAttribute("stroke", inActiveIds ? "#dc2626" : "none");
+        el.setAttribute("stroke-width", "0.9");
+      } else if (activeCluster == null) {
+        el.setAttribute("fill-opacity", "0.75");
+        el.setAttribute("stroke", "none");
+        el.setAttribute("stroke-width", "0.9");
+      } else {
+        const match = cluster === activeCluster;
+        el.setAttribute("fill-opacity", match ? "1" : "0.22");
+        el.setAttribute("stroke", match ? "#dc2626" : "none");
+        el.setAttribute("stroke-width", "0.9");
+      }
+    });
+
+    d3.select(svg).selectAll("path.hover-star-overlay-path").remove();
+    if (highlightId) {
+      const targetId = String(highlightId);
+      const hitKeys = new Set(idLookupKeys(targetId));
+      const hitCircle = circles.find((c) => {
+        const cid = c.getAttribute("data-id") || "";
+        return idLookupKeys(cid).some((k) => hitKeys.has(k));
+      });
+      if (hitCircle && hitCircle.parentElement) {
+        const cx = Number(hitCircle.getAttribute("cx") || "0");
+        const cy = Number(hitCircle.getAttribute("cy") || "0");
+        const fillColor =
+          hitCircle.getAttribute("data-base-fill") ||
+          CLUSTER_COLORS[Math.max(0, Number(hitCircle.getAttribute("data-cluster") || "0")) % CLUSTER_COLORS.length];
+        const star = d3.symbol().type(d3.symbolStar).size(180);
+        d3.select(hitCircle.parentElement)
+          .append("path")
+          .attr("class", "hover-star-overlay-path")
+          .attr("d", star)
+          .attr("transform", `translate(${cx},${cy})`)
+          .attr("fill", fillColor)
+          .attr("stroke", HIGHLIGHT_RED)
+          .attr("stroke-width", 1.2)
+          .attr("opacity", 0.95)
+          .style("pointer-events", "none");
+      }
+    }
   }
 
   function setColorModeAndRefresh(next: ColorMode) {
@@ -574,6 +671,9 @@ export default function ScatterPlot({
         onClearSelectionRef.current?.();
       });
 
+      const svgEl = svg.node();
+      if (svgEl) applySelectionStateToSvg(svgEl);
+
       function positionTooltip(clientX: number, clientY: number) {
         const pad = 12;
         const tipBounds = (tooltip.node() as HTMLDivElement | null)?.getBoundingClientRect();
@@ -649,19 +749,12 @@ export default function ScatterPlot({
       const splitKinds = new Set(merged.map((d) => d.split).filter((x): x is "train" | "test" => !!x));
       const canUseSplit = splitKinds.size > 0;
       setHasSplitData(canUseSplit);
-      const yTrueVals = merged.map((d) => Number(d.y_true)).filter((v) => Number.isFinite(v));
-      const yPredVals = merged.map((d) => Number(d.y_pred)).filter((v) => Number.isFinite(v));
-      const yAbsErrVals = merged
-        .map((d) => {
-          const yt = Number(d.y_true);
-          const yp = Number(d.y_pred);
-          return Number.isFinite(yt) && Number.isFinite(yp) ? Math.log(Math.abs(yt - yp) + 1e-6) : Number.NaN;
-        })
-        .filter((v) => Number.isFinite(v));
-      const yAllVals = [...yTrueVals, ...yPredVals];
       const yTrueByIdNext: Record<string, number> = {};
       const yPredByIdNext: Record<string, number> = {};
       const yAbsErrByIdNext: Record<string, number> = {};
+      const yTrueVals: number[] = [];
+      const yPredVals: number[] = [];
+      const yAbsErrVals: number[] = [];
       merged.forEach((d) => {
         const rid = String(d.real_id);
         const keys = idLookupKeys(rid);
@@ -671,10 +764,21 @@ export default function ScatterPlot({
         const yp = Number(
           keys.map((k) => yPredById?.[k]).find((v) => Number.isFinite(Number(v))) ?? d.y_pred
         );
-        if (Number.isFinite(yt)) yTrueByIdNext[rid] = yt;
-        if (Number.isFinite(yp)) yPredByIdNext[rid] = yp;
-        if (Number.isFinite(yt) && Number.isFinite(yp)) yAbsErrByIdNext[rid] = Math.log(Math.abs(yt - yp) + 1e-6);
+        if (Number.isFinite(yt)) {
+          yTrueByIdNext[rid] = yt;
+          yTrueVals.push(yt);
+        }
+        if (Number.isFinite(yp)) {
+          yPredByIdNext[rid] = yp;
+          yPredVals.push(yp);
+        }
+        if (Number.isFinite(yt) && Number.isFinite(yp)) {
+          const logAbsErr = Math.log(Math.abs(yt - yp) + 1e-6);
+          yAbsErrByIdNext[rid] = logAbsErr;
+          yAbsErrVals.push(logAbsErr);
+        }
       });
+      const yAllVals = [...yTrueVals, ...yPredVals];
       yTrueByIdRef.current = yTrueByIdNext;
       yPredByIdRef.current = yPredByIdNext;
       yAbsErrByIdRef.current = yAbsErrByIdNext;
@@ -709,8 +813,16 @@ export default function ScatterPlot({
     if (compactOverview && Array.isArray(compactOverview?.cells)) {
       try {
         const cells = compactOverview.cells as any[];
+        const modelNorm = String(modelKey ?? "").trim();
+        const layerNorm = normalizeLayerKey(layerKey);
         const selectedCell =
-          cells.find((c: any) => String(c?.epoch ?? "") === String(modelKey ?? "") && String(c?.layer ?? "") === String(layerKey ?? "")) ??
+          cells.find(
+            (c: any) =>
+              String(c?.epoch ?? "").trim() === modelNorm &&
+              normalizeLayerKey(c?.layer) === layerNorm
+          ) ??
+          cells.find((c: any) => String(c?.epoch ?? "").trim() === modelNorm) ??
+          cells.find((c: any) => normalizeLayerKey(c?.layer) === layerNorm) ??
           cells[0];
         const drObj = selectedCell?.dr ?? {};
         const method = projection ?? "pca";
@@ -723,6 +835,50 @@ export default function ScatterPlot({
           drObj?.mds ??
           {};
         const clusterLabels = selectedCell?.cluster_labels ?? {};
+        const moleculeLabels: any[] = Array.isArray(compactOverview?.molecule_labels) ? compactOverview.molecule_labels : [];
+        const clusterByAlias = new Map<string, number>();
+        const addAlias = (keyRaw: unknown, cid: number) => {
+          const key = String(keyRaw ?? "").trim();
+          if (!key) return;
+          idLookupKeys(key).forEach((k) => {
+            if (!clusterByAlias.has(k)) clusterByAlias.set(k, cid);
+          });
+          const parsed = key.includes("::") ? key.slice(key.indexOf("::") + 2) : key;
+          idLookupKeys(parsed).forEach((k) => {
+            if (!clusterByAlias.has(k)) clusterByAlias.set(k, cid);
+          });
+          const trainTagged = `train::${parsed}`;
+          const testTagged = `test::${parsed}`;
+          idLookupKeys(trainTagged).forEach((k) => {
+            if (!clusterByAlias.has(k)) clusterByAlias.set(k, cid);
+          });
+          idLookupKeys(testTagged).forEach((k) => {
+            if (!clusterByAlias.has(k)) clusterByAlias.set(k, cid);
+          });
+        };
+        Object.entries(clusterLabels as Record<string, unknown>).forEach(([molId, cidRaw]) => {
+          const cid = Number(cidRaw);
+          if (!Number.isFinite(cid)) return;
+          addAlias(molId, cid);
+          const molIdx = Number(molId);
+          if (Number.isFinite(molIdx) && moleculeLabels[molIdx] != null) {
+            addAlias(String(moleculeLabels[molIdx]), cid);
+          }
+        });
+
+        const resolveClusterForPoint = (ridRaw: string): number => {
+          const rid = String(ridRaw ?? "").trim();
+          if (!rid) return 0;
+          const aliases = new Set<string>();
+          idLookupKeys(rid).forEach((k) => aliases.add(k));
+          const stripped = rid.includes("::") ? rid.slice(rid.indexOf("::") + 2) : rid;
+          idLookupKeys(stripped).forEach((k) => aliases.add(k));
+          for (const key of aliases) {
+            const cid = clusterByAlias.get(key);
+            if (Number.isFinite(cid)) return Number(cid);
+          }
+          return 0;
+        };
 
         const splitById: Record<string, "train" | "test" | "both"> = {};
         const splitNames = Array.isArray(compactOverview?.split_names) ? compactOverview.split_names : [];
@@ -738,8 +894,40 @@ export default function ScatterPlot({
           });
         });
 
-        const yTrueById: Record<string, number> = {};
-        const yPredById: Record<string, number> = {};
+        const yTrueById: Record<string, number> = yTrueLookup ?? {};
+        const yPredById: Record<string, number> = yPredLookup ?? {};
+        const resolveMetricForPoint = (
+          lookup: Record<string, number> | undefined,
+          ridRaw: string,
+          split: "train" | "test" | undefined
+        ): number | undefined => {
+          const rid = String(ridRaw ?? "").trim();
+          if (!rid || !lookup) return undefined;
+          const candidateKeys = new Set<string>();
+          idLookupKeys(rid).forEach((k) => candidateKeys.add(k));
+
+          const ridNum = Number(rid);
+          const ridLabel =
+            Number.isFinite(ridNum) && moleculeLabels[ridNum] != null
+              ? String(moleculeLabels[ridNum]).trim()
+              : "";
+          if (ridLabel) {
+            idLookupKeys(ridLabel).forEach((k) => candidateKeys.add(k));
+          }
+
+          if (split === "train" || split === "test") {
+            idLookupKeys(`${split}::${rid}`).forEach((k) => candidateKeys.add(k));
+            if (ridLabel) {
+              idLookupKeys(`${split}::${ridLabel}`).forEach((k) => candidateKeys.add(k));
+            }
+          }
+
+          for (const key of candidateKeys) {
+            const v = Number(lookup[key]);
+            if (Number.isFinite(v)) return v;
+          }
+          return undefined;
+        };
         const merged = Object.entries(coordsMap)
           .map(([rid, pair]: [string, any]) => {
             const xy = Array.isArray(pair) ? pair : [];
@@ -750,12 +938,16 @@ export default function ScatterPlot({
             const split = splitRaw === "train" || splitRaw === "test" ? splitRaw : undefined;
             if (dataSplit === "train" && split !== "train") return null;
             if (dataSplit === "test" && split !== "test") return null;
+            const yTrue = resolveMetricForPoint(yTrueById, String(rid), split);
+            const yPred = resolveMetricForPoint(yPredById, String(rid), split);
             return {
               real_id: String(rid),
               x,
               y,
-              cluster_id: Number(clusterLabels?.[String(rid)] ?? 0) || 0,
+              cluster_id: resolveClusterForPoint(String(rid)),
               split,
+              y_true: Number.isFinite(Number(yTrue)) ? Number(yTrue) : undefined,
+              y_pred: Number.isFinite(Number(yPred)) ? Number(yPred) : undefined,
             } as ScatterPoint;
           })
           .filter((d: ScatterPoint | null): d is ScatterPoint => !!d);
@@ -853,6 +1045,8 @@ export default function ScatterPlot({
     splitMapPath,
     splitMapDataset,
     dataSplit,
+    yTrueLookup,
+    yPredLookup,
     modelKey,
     layerKey,
     projection,
@@ -863,88 +1057,7 @@ export default function ScatterPlot({
     if (!container) return;
     const svg = container.querySelector("svg");
     if (!svg) return;
-    const rows = rowsRef.current;
-    if (!rows) return;
-
-    const activeIdSet = activeIds ? new Set(activeIds.map((x) => String(x))) : null;
-    const activeLookup = new Set<string>();
-    if (activeIdSet) {
-      activeIdSet.forEach((id) => {
-        idLookupKeys(id).forEach((k) => activeLookup.add(k));
-      });
-    }
-    const highlightLookup = highlightId ? new Set(idLookupKeys(String(highlightId))) : null;
-    const circles = Array.from(svg.querySelectorAll("circle[data-id]")) as SVGCircleElement[];
-    let matchedActiveCount = 0;
-    const activeMatchedByCircle = new Map<string, boolean>();
-    if (activeLookup.size > 0) {
-      circles.forEach((el) => {
-        const id = el.getAttribute("data-id") || "";
-        const hit = idLookupKeys(id).some((k) => activeLookup.has(k));
-        if (hit) matchedActiveCount += 1;
-        activeMatchedByCircle.set(id, hit);
-      });
-    }
-    const hasUsableActiveSelection = activeLookup.size > 0 && matchedActiveCount > 0;
-    circles.forEach((el) => {
-      const id = el.getAttribute("data-id") || "";
-      const cluster = Number(el.getAttribute("data-cluster") || "0");
-      const split = (el.getAttribute("data-split") || "") as "train" | "test" | "";
-      const computedBaseFill = resolveBaseFill(id, cluster, split || undefined);
-      el.setAttribute("data-base-fill", computedBaseFill);
-      const baseFill = computedBaseFill;
-      const isHovered = !!highlightLookup && idLookupKeys(id).some((k) => highlightLookup.has(k));
-      const inActiveIds = activeMatchedByCircle.get(id) === true;
-
-      el.setAttribute("r", isHovered ? "5.2" : "3.2");
-      el.setAttribute("fill", isHovered ? "#f59e0b" : baseFill);
-      if (isHovered) {
-        el.setAttribute("fill-opacity", "1");
-        el.setAttribute("stroke", "#dc2626");
-        el.setAttribute("stroke-width", "1.8");
-      } else if (hasUsableActiveSelection) {
-        el.setAttribute("fill-opacity", inActiveIds ? "1" : "0.22");
-        el.setAttribute("stroke", inActiveIds ? "#dc2626" : "none");
-        el.setAttribute("stroke-width", "0.9");
-      } else if (activeCluster == null) {
-        el.setAttribute("fill-opacity", "0.75");
-        el.setAttribute("stroke", "none");
-        el.setAttribute("stroke-width", "0.9");
-      } else {
-        const match = cluster === activeCluster;
-        el.setAttribute("fill-opacity", match ? "1" : "0.22");
-        el.setAttribute("stroke", match ? "#dc2626" : "none");
-        el.setAttribute("stroke-width", "0.9");
-      }
-    });
-
-    d3.select(svg).selectAll("path.hover-star-overlay-path").remove();
-    if (highlightId) {
-      const targetId = String(highlightId);
-      const hitKeys = new Set(idLookupKeys(targetId));
-      const hitCircle = circles.find((c) => {
-        const cid = c.getAttribute("data-id") || "";
-        return idLookupKeys(cid).some((k) => hitKeys.has(k));
-      });
-      if (hitCircle && hitCircle.parentElement) {
-        const cx = Number(hitCircle.getAttribute("cx") || "0");
-        const cy = Number(hitCircle.getAttribute("cy") || "0");
-        const fillColor =
-          hitCircle.getAttribute("data-base-fill") ||
-          CLUSTER_COLORS[Math.max(0, Number(hitCircle.getAttribute("data-cluster") || "0")) % CLUSTER_COLORS.length];
-        const star = d3.symbol().type(d3.symbolStar).size(180);
-        d3.select(hitCircle.parentElement)
-          .append("path")
-          .attr("class", "hover-star-overlay-path")
-          .attr("d", star)
-          .attr("transform", `translate(${cx},${cy})`)
-          .attr("fill", fillColor)
-          .attr("stroke", HIGHLIGHT_RED)
-          .attr("stroke-width", 1.2)
-          .attr("opacity", 0.95)
-          .style("pointer-events", "none");
-      }
-    }
+    applySelectionStateToSvg(svg);
   }, [activeCluster, activeIds, highlightId, colorMode, labelById, labelBySmiles, labelColors, ySharedRange, yAbsErrRange]);
 
   return (

@@ -629,6 +629,36 @@ export default function SankeyView({
         setEpochTransitionThresholdUi((v) => Math.max(0, Math.min(v, maxEpochTransitionPct)));
     }, [maxEpochTransitionPct]);
 
+    // Recompute link-range upper bound whenever dataset context changes.
+    useEffect(() => {
+        const renderData = buildRenderData(data, selectedSplits);
+        if (!renderData) return;
+
+        let maxLinkValue = 0;
+        const connectivity = Array.isArray(renderData.connectivity) ? renderData.connectivity : [];
+        connectivity.forEach((targets) => {
+            if (!Array.isArray(targets)) return;
+            targets.forEach((edge) => {
+                const value = Number(Array.isArray(edge) ? edge[1] : 0);
+                if (!Number.isFinite(value) || value <= 0) return;
+                if (value > maxLinkValue) maxLinkValue = value;
+            });
+        });
+
+        const nextMaxBound = Math.max(1, Math.ceil(maxLinkValue));
+        const p = new URLSearchParams(window.location.search);
+        const qMin = Number(p.get("min"));
+        const nextMin = Number.isFinite(qMin) && qMin >= 0 ? Math.max(0, Math.min(qMin, nextMaxBound)) : 0;
+
+        setLinkValueMaxBound(nextMaxBound);
+        setLinkValueMin(nextMin);
+        setLinkValueMax(nextMaxBound);
+
+        p.set("min", String(nextMin));
+        p.set("max", String(nextMaxBound));
+        window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+    }, [data, selectedSplits, showFfn2]);
+
     function applyLinkValueFilter(minVal: number, maxVal: number) {
         const container = chartRef.current;
         if (!container) return;
@@ -1031,8 +1061,10 @@ export default function SankeyView({
                 });
             };
 
+            const bgLayer = gRoot.append("g").attr("class", "cell-backgrounds");
             const linkGroup = gRoot.append("g").attr("class", "links column-links");
             const linkGroup2 = gRoot.append("g").attr("class", "links row-links");
+            const nodeLayer = gRoot.append("g").attr("class", "cell-nodes");
 
             drawArcs(intraEpoch, linkGroup, "column");
             drawArcs(intraLayer, linkGroup2, "row");
@@ -1049,21 +1081,53 @@ export default function SankeyView({
                     if (epochIdx < 0 || layerIdx < 0) return;
                     const cellIdx = layerIdx + epochIdx * renderData.layers.length;
 
-                    const g = gRoot
+                    bgLayer
+                        .append("rect")
+                        .attr("id", `cell-bg-${xKey}-${yKey}`)
+                        .attr("class", "cell-bg")
+                        .attr("x", col * cellStepX)
+                        .attr("y", row * cellStepY)
+                        .attr("width", cellW)
+                        .attr("height", cellH)
+                        .attr("fill", "white")
+                        .attr("stroke", "#888")
+                        .attr("data-row", epochName)
+                        .attr("data-column", layerName)
+                        .attr("data-cluster-count", renderData.cells[cellIdx]?.children?.length ?? 0)
+                        .style("cursor", "pointer")
+                        .on("click", (event: any) => {
+                            event.stopPropagation();
+                            const isSameLocked =
+                                lockedCell?.rowName === epochName &&
+                                lockedCell?.columnName === layerName;
+
+                            if (isSameLocked) {
+                                lockedCell = null;
+                                setPinnedCellInfo(null);
+                                setHoverTooltip(null);
+                                onCellSelect?.(false);
+                                return;
+                            }
+
+                            lockedCell = { rowName: epochName, columnName: layerName };
+                            setPinnedCellInfo({
+                                rowName: epochName,
+                                columnName: layerName,
+                                epochName,
+                                layerName,
+                                col,
+                                row,
+                            });
+                            onModelSelect?.(epochName);
+                            onLayerSelect?.(layerName);
+                            onCellSelect?.(true);
+                        });
+
+                    const g = nodeLayer
                         .append("g")
                         .attr("id", `cell-${xKey}-${yKey}`)
                         .attr("transform", `translate(${col * cellStepX}, ${row * cellStepY})`)
                         .datum({ rowName: epochName, columnName: layerName, col, row });
-                    const cellCount = renderData.cells[cellIdx]?.children?.length ?? 0;
-                    //const cellCount = cellClusterCount.get(`${rowName}|${columnName}`) ?? 0;
-                    //const metricVal = cellMetricValue.get(`${rowName}|${columnName}`) ?? 0;
-                    g.append("rect")
-                        .attr("width", cellW)
-                        .attr("height", cellH)
-                        .attr("fill", "white")//showCellBackground ? cellBgColor(metricVal) : "white")
-                        .attr("stroke", "#888")
-                        .attr("data-cluster-count", cellCount);
-                    //  .attr("data-cell-metric", metricVal);
 
                     const innerG = g.append("g").attr("transform", `translate(${cellMargin.left}, ${cellMargin.top})`);
                     cells.push(innerG);
@@ -1697,6 +1761,12 @@ export default function SankeyView({
 
 
 
+            // Enforce final paint order: background (bottom) -> links -> nodes (top).
+            bgLayer.lower();
+            linkGroup.raise();
+            linkGroup2.raise();
+            nodeLayer.raise();
+
             const btnDefault = document.getElementById("btnDefault") as HTMLButtonElement | null;
             const btnColumn = document.getElementById("btnColumn") as HTMLButtonElement | null;
             const btnRow = document.getElementById("btnRow") as HTMLButtonElement | null;
@@ -1718,7 +1788,7 @@ export default function SankeyView({
                 }
 
                 if (m === "default") {
-                    d3.selectAll('#chart svg g[id^="cell-"] rect').classed("cell-dimmed", false).classed("cell-highlight", false);
+                    d3.selectAll('#chart svg rect.cell-bg').classed("cell-dimmed", false).classed("cell-highlight", false);
                     d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
                     d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
                     d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
@@ -1756,22 +1826,24 @@ export default function SankeyView({
 
             function setCellHighlight(rowName: string, columnName: string, on: boolean) {
                 if (on) {
-                    d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", true).classed("cell-highlight", false);
+                    d3.selectAll('#chart svg rect.cell-bg, #chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", true).classed("cell-highlight", false);
                     d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
                     d3.selectAll("rect.gap-rect").classed("gap-dimmed", true);
 
                     ROW_NAMES.forEach((row) => {
                         const cellSel = d3.select(`#cell-${row}-${columnName}`);
+                        const bgSel = d3.select(`#cell-bg-${row}-${columnName}`);
                         if (!cellSel.empty()) {
-                            cellSel.select("rect").classed("cell-dimmed", false).classed("cell-highlight", true);
+                            bgSel.classed("cell-dimmed", false).classed("cell-highlight", true);
                             cellSel.selectAll("rect.bar").classed("cell-dimmed", false);
                         }
                     });
 
                     COLUMN_NAMES.forEach((column) => {
                         const cellSel = d3.select(`#cell-${rowName}-${column}`);
+                        const bgSel = d3.select(`#cell-bg-${rowName}-${column}`);
                         if (!cellSel.empty()) {
-                            cellSel.select("rect").classed("cell-dimmed", false).classed("cell-highlight", true);
+                            bgSel.classed("cell-dimmed", false).classed("cell-highlight", true);
                             cellSel.selectAll("rect.bar").classed("cell-dimmed", false);
                         }
                     });
@@ -1792,7 +1864,7 @@ export default function SankeyView({
                         }
                     });
                 } else {
-                    d3.selectAll('#chart svg g[id^="cell-"] rect').classed("cell-dimmed", false).classed("cell-highlight", false);
+                    d3.selectAll('#chart svg rect.cell-bg').classed("cell-dimmed", false).classed("cell-highlight", false);
                     d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
                     d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
                     d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
@@ -1834,6 +1906,10 @@ export default function SankeyView({
         };
         const focusModel = selectedNode?.model ?? activeCell?.model ?? null;
         const focusLayer = selectedNode?.layer ?? activeCell?.layer ?? null;
+        const inColorCell = (row: string, col: string) => {
+            if (selectedNode) return row === selectedNode.model && col === selectedNode.layer;
+            return row === focusModel && col === focusLayer;
+        };
         if (!focusModel || !focusLayer) {
             sel.attr("fill", function() {
                 return d3.select(this).classed("bar-test") ? "#888" : "#aaa";
@@ -1847,7 +1923,7 @@ export default function SankeyView({
             const el = d3.select(this);
             const row = el.attr("data-row");
             const col = el.attr("data-column");
-            if (row !== focusModel || col !== focusLayer) return;
+            if (!inColorCell(row, col)) return;
             const cluster = Number(el.attr("data-cluster"));
             if (Number.isFinite(cluster)) clusterValues.push(cluster);
         });
@@ -1861,7 +1937,7 @@ export default function SankeyView({
             const row = el.attr("data-row");
             const col = el.attr("data-column");
             const cluster = Number(el.attr("data-cluster"));
-            if (row === focusModel && col === focusLayer && Number.isFinite(cluster)) {
+            if (inColorCell(row, col) && Number.isFinite(cluster)) {
                 const base = color(Math.max(0, cluster));
                 el.attr("fill", el.classed("bar-test") ? darker(base) : base);
             } else {
@@ -1870,38 +1946,47 @@ export default function SankeyView({
             if (!selectedNode) {
                 el.classed("node-highlight", false);
                 el.classed("node-dimmed", false);
+                el.classed("node-context", false);
                 return;
             }
+            const isRowOrCol =
+                row === selectedNode.model ||
+                col === selectedNode.layer;
             const isMatch =
                 row === selectedNode.model &&
                 col === selectedNode.layer &&
                 Number.isFinite(cluster) &&
                 cluster === selectedNode.cluster;
             el.classed("node-highlight", isMatch);
-            el.classed("node-dimmed", false);
+            el.classed("node-context", isRowOrCol && !isMatch);
+            el.classed("node-dimmed", !isRowOrCol);
         });
 
-        if (!selectedNode) return;
+        if (!focusModel || !focusLayer) return;
 
-        const rowKey = selectedNode.model;
-        const colKey = selectedNode.layer;
-        const cellSel = d3.select(container).selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar');
+        const rowKey = focusModel;
+        const colKey = focusLayer;
+        const cellSel = d3.select(container).selectAll('svg rect.cell-bg, svg g[id^="cell-"] rect.bar');
         cellSel.classed("cell-dimmed", true).classed("cell-highlight", false);
 
         d3.select(container)
-            .selectAll<SVGGElement, any>('#chart svg g[id^="cell-"]')
+            .selectAll<SVGRectElement, any>('svg rect.cell-bg')
             .each(function() {
-                const g = d3.select(this);
-                const id = g.attr("id") || "";
-                if (!id.startsWith("cell-")) return;
-                const raw = id.slice(5);
-                const idx = raw.lastIndexOf("-");
-                if (idx === -1) return;
-                const row = raw.slice(0, idx);
-                const col = raw.slice(idx + 1);
+                const bg = d3.select(this);
+                const row = String(bg.attr("data-row") ?? "");
+                const col = String(bg.attr("data-column") ?? "");
                 if (row === rowKey || col === colKey) {
-                    g.select("rect").classed("cell-dimmed", false).classed("cell-highlight", true);
-                    g.selectAll("rect.bar").classed("cell-dimmed", false);
+                    bg.classed("cell-dimmed", false).classed("cell-highlight", true);
+                }
+            });
+        d3.select(container)
+            .selectAll<SVGRectElement, any>('svg g[id^="cell-"] rect.bar')
+            .each(function() {
+                const bar = d3.select(this);
+                const row = String(bar.attr("data-row") ?? "");
+                const col = String(bar.attr("data-column") ?? "");
+                if (row === rowKey || col === colKey) {
+                    bar.classed("cell-dimmed", false);
                 }
             });
 
@@ -2607,10 +2692,15 @@ export default function SankeyView({
         :global(#chart svg rect.bar.node-highlight) {
           stroke: #ef4444 !important;
           stroke-width: 2 !important;
+          opacity: 1 !important;
+        }
+
+        :global(#chart svg rect.bar.node-context) {
+          opacity: 1 !important;
         }
 
         :global(#chart svg rect.bar.node-dimmed) {
-          opacity: 0.18 !important;
+          opacity: 0.12 !important;
         }
 
         :global(#chart svg path.link-path) {
