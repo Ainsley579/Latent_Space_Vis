@@ -1211,12 +1211,57 @@ export default function SankeyView({
                         .attr("y", row * cellStepY)
                         .attr("width", cellW)
                         .attr("height", cellH)
-                        .attr("fill", "white")
+                        .attr("fill", () => {
+                            if (!showCellBackground) return "white";
+                            const key = `${epochName}|${layerName}`;
+                            const metricValue = Number(cellMetricValue.get(key) ?? 0);
+                            return cellBgColor(metricValue);
+                        })
                         .attr("stroke", "#888")
                         .attr("data-row", epochName)
                         .attr("data-column", layerName)
                         .attr("data-cluster-count", renderData.cells[cellIdx]?.children?.length ?? 0)
                         .style("cursor", "pointer")
+                        .on("mouseenter", (event: any) => {
+                            setHoveredCellInfo({
+                                rowName: epochName,
+                                columnName: layerName,
+                                epochName,
+                                layerName,
+                                col,
+                                row,
+                            });
+                            const key = `${epochName}|${layerName}`;
+                            const clusterCount = Number(cellClusterCount.get(key) ?? 0);
+                            const metricValue = Number(cellMetricValue.get(key) ?? 0);
+                            const lines = [
+                                `Layer: ${layerName}`,
+                                `Epoch: ${epochName}`,
+                                `Cluster Number: ${clusterCount.toFixed(0)}`,
+                            ];
+                            if (selectedCellMetric !== "cluster_count") {
+                                lines.push(`${activeMetricLabel}: ${Number.isFinite(metricValue) ? metricValue.toFixed(3) : "0.000"}`);
+                            }
+                            placeTooltipFromEvent(event, "Cell Metrics", lines);
+                        })
+                        .on("mousemove", (event: any) => {
+                            const key = `${epochName}|${layerName}`;
+                            const clusterCount = Number(cellClusterCount.get(key) ?? 0);
+                            const metricValue = Number(cellMetricValue.get(key) ?? 0);
+                            const lines = [
+                                `Layer: ${layerName}`,
+                                `Epoch: ${epochName}`,
+                                `Cluster Number: ${clusterCount.toFixed(0)}`,
+                            ];
+                            if (selectedCellMetric !== "cluster_count") {
+                                lines.push(`${activeMetricLabel}: ${Number.isFinite(metricValue) ? metricValue.toFixed(3) : "0.000"}`);
+                            }
+                            placeTooltipFromEvent(event, "Cell Metrics", lines);
+                        })
+                        .on("mouseleave", () => {
+                            setHoveredCellInfo(null);
+                            setHoverTooltip(null);
+                        })
                         .on("click", (event: any) => {
                             event.stopPropagation();
                             toggleCellLock(epochName, layerName, col, row);
@@ -1475,93 +1520,115 @@ export default function SankeyView({
 
 
 
-            const normalizeTransitionLayer = (name: string): string => {
-                const n = String(name ?? "").trim();
-                if (n === "fp") return "fingerprint";
-                if (/^fnn_layer_/.test(n)) return n.replace(/^fnn_layer_/, "ffn_layer_");
-                return n;
+            type GapSourceAgg = {
+                total: number;
+                maxTo: number;
+                byTarget: Map<number, number>;
+            };
+            const layerGapAggByPair = new Map<string, Map<number, GapSourceAgg>>();
+            const epochGapAggByPair = new Map<string, Map<number, GapSourceAgg>>();
+            const addGapEdge = (
+                byPair: Map<string, Map<number, GapSourceAgg>>,
+                pairKey: string,
+                sourceNodeId: number,
+                targetNodeId: number,
+                value: number
+            ) => {
+                if (!Number.isFinite(sourceNodeId) || !Number.isFinite(targetNodeId)) return;
+                if (!Number.isFinite(value) || value <= 0) return;
+                const bySource = byPair.get(pairKey) ?? new Map<number, GapSourceAgg>();
+                const sourceAgg = bySource.get(sourceNodeId) ?? {
+                    total: 0,
+                    maxTo: 0,
+                    byTarget: new Map<number, number>(),
+                };
+                sourceAgg.total += value;
+                const nextTo = (sourceAgg.byTarget.get(targetNodeId) ?? 0) + value;
+                sourceAgg.byTarget.set(targetNodeId, nextTo);
+                if (nextTo > sourceAgg.maxTo) sourceAgg.maxTo = nextTo;
+                bySource.set(sourceNodeId, sourceAgg);
+                byPair.set(pairKey, bySource);
+            };
+            const pctFromGapAgg = (bySource: Map<number, GapSourceAgg> | undefined): number => {
+                if (!bySource || bySource.size === 0) return 0;
+                let total = 0;
+                let changed = 0;
+                bySource.forEach((sourceAgg) => {
+                    if (!Number.isFinite(sourceAgg.total) || sourceAgg.total <= 0) return;
+                    total += sourceAgg.total;
+                    changed += Math.max(0, sourceAgg.total - sourceAgg.maxTo);
+                });
+                if (total <= 0) return 0;
+                return (changed / total) * 100;
             };
 
-            /*transitionEntriesByEpoch.forEach((d) => {
-                const epoch = String(d?.epoch ?? "").trim();
-                const fromLayerRaw = String(d?.from_layer ?? "").trim();
-                const toLayerRaw = String(d?.to_layer ?? "").trim();
-                const pct = Number(d?.pct_changed ?? 0);
-                if (!epoch || !fromLayerRaw || !toLayerRaw || !Number.isFinite(pct)) return;
-                const fromLayer = normalizeTransitionLayer(fromLayerRaw);
-                const toLayer = normalizeTransitionLayer(toLayerRaw);
-                const next = Math.max(0, pct);
-                const keys = new Set<string>([
-                    `${epoch}|${fromLayer}|${toLayer}`,
-                    `${epoch}|${fromLayerRaw}|${toLayerRaw}`,
-                ]);
-                transitionLayerAliases(fromLayerRaw).forEach((f) => {
-                    transitionLayerAliases(toLayerRaw).forEach((t) => keys.add(`${epoch}|${f}|${t}`));
-                });
-                keys.forEach((key) => {
-                    const prev = pctByEpochTransition.get(key) ?? 0;
-                    if (next > prev) pctByEpochTransition.set(key, next);
-                });
-            });
-            const pctByLayerTransition = new Map<string, number>();
-            transitionEntriesByLayer.forEach((d) => {
-                const layerRaw = String(d?.layer ?? "").trim();
-                const fromEpoch = String(d?.from_epoch ?? "").trim();
-                const toEpoch = String(d?.to_epoch ?? "").trim();
-                const pct = Number(d?.pct_changed ?? 0);
-                if (!layerRaw || !fromEpoch || !toEpoch || !Number.isFinite(pct)) return;
-                const layer = normalizeTransitionLayer(layerRaw);
-                const next = Math.max(0, pct);
-                const keys = new Set<string>([
-                    `${layer}|${fromEpoch}|${toEpoch}`,
-                    `${layerRaw}|${fromEpoch}|${toEpoch}`,
-                ]);
-                transitionLayerAliases(layerRaw).forEach((l) => keys.add(`${l}|${fromEpoch}|${toEpoch}`));
-                keys.forEach((key) => {
-                    const prev = pctByLayerTransition.get(key) ?? 0;
-                    if (next > prev) pctByLayerTransition.set(key, next);
-                });
-            });
-            const getEpochTransitionPct = (epoch: string, fromLayer: string, toLayer: string): number => {
-                let best = 0;
-                transitionLayerAliases(fromLayer).forEach((f) => {
-                    transitionLayerAliases(toLayer).forEach((t) => {
-                        const v = pctByEpochTransition.get(`${epoch}|${f}|${t}`) ?? 0;
-                        if (v > best) best = v;
-                    });
-                });
-                return best;
-            };
-            const getLayerTransitionPct = (layer: string, fromEpoch: string, toEpoch: string): number => {
-                let best = 0;
-                transitionLayerAliases(layer).forEach((l) => {
-                    const v1 = pctByLayerTransition.get(`${l}|${fromEpoch}|${toEpoch}`) ?? 0;
-                    const v2 = pctByLayerTransition.get(`${l}|${toEpoch}|${fromEpoch}`) ?? 0;
-                    if (v1 > best) best = v1;
-                    if (v2 > best) best = v2;
-                    const fromIdx = allEpochKeys.indexOf(fromEpoch);
-                    const toIdx = allEpochKeys.indexOf(toEpoch);
-                    if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
-                        const start = Math.min(fromIdx, toIdx);
-                        const end = Math.max(fromIdx, toIdx);
-                        for (let i = start; i < end; i += 1) {
-                            const a = allEpochKeys[i];
-                            const b = allEpochKeys[i + 1];
-                            const seg = Math.max(
-                                pctByLayerTransition.get(`${l}|${a}|${b}`) ?? 0,
-                                pctByLayerTransition.get(`${l}|${b}|${a}`) ?? 0
-                            );
-                            if (seg > best) best = seg;
-                        }
+            renderData.connectivity.forEach((targets, sourceNodeId) => {
+                const srcNode = renderData.nodes[sourceNodeId];
+                if (!srcNode || !Array.isArray(targets)) return;
+                const srcEpoch = String(srcNode.epoch ?? "");
+                const srcLayer = String(srcNode.layer ?? "");
+                const srcRowIdx = ROW_INDEX.get(srcEpoch);
+                const srcColIdx = COLUMN_INDEX.get(srcLayer);
+                if (srcRowIdx == null || srcColIdx == null) return;
+
+                targets.forEach((edge) => {
+                    const targetNodeId = Number(Array.isArray(edge) ? edge[0] : Number.NaN);
+                    const value = Number(Array.isArray(edge) ? edge[1] : 0);
+                    if (!Number.isFinite(targetNodeId) || !Number.isFinite(value) || value <= 0) return;
+                    const tgtNode = renderData.nodes[targetNodeId];
+                    if (!tgtNode) return;
+                    const tgtEpoch = String(tgtNode.epoch ?? "");
+                    const tgtLayer = String(tgtNode.layer ?? "");
+                    const tgtRowIdx = ROW_INDEX.get(tgtEpoch);
+                    const tgtColIdx = COLUMN_INDEX.get(tgtLayer);
+                    if (tgtRowIdx == null || tgtColIdx == null) return;
+
+                    if (srcEpoch === tgtEpoch && Math.abs(srcColIdx - tgtColIdx) === 1) {
+                        const forward = srcColIdx <= tgtColIdx;
+                        const fromColIdx = forward ? srcColIdx : tgtColIdx;
+                        const toColIdx = forward ? tgtColIdx : srcColIdx;
+                        const fromLayer = COLUMN_NAMES[fromColIdx];
+                        const toLayer = COLUMN_NAMES[toColIdx];
+                        const pairKey = `${srcEpoch}|${fromLayer}|${toLayer}`;
+                        const fromNodeId = forward ? Number(srcNode.node_id) : Number(tgtNode.node_id);
+                        const toNodeId = forward ? Number(tgtNode.node_id) : Number(srcNode.node_id);
+                        addGapEdge(layerGapAggByPair, pairKey, fromNodeId, toNodeId, value);
+                    }
+
+                    if (srcLayer === tgtLayer && Math.abs(srcRowIdx - tgtRowIdx) === 1) {
+                        const forward = srcRowIdx <= tgtRowIdx;
+                        const fromRowIdx = forward ? srcRowIdx : tgtRowIdx;
+                        const toRowIdx = forward ? tgtRowIdx : srcRowIdx;
+                        const fromEpoch = ROW_NAMES[fromRowIdx];
+                        const toEpoch = ROW_NAMES[toRowIdx];
+                        const pairKey = `${srcLayer}|${fromEpoch}|${toEpoch}`;
+                        const fromNodeId = forward ? Number(srcNode.node_id) : Number(tgtNode.node_id);
+                        const toNodeId = forward ? Number(tgtNode.node_id) : Number(srcNode.node_id);
+                        addGapEdge(epochGapAggByPair, pairKey, fromNodeId, toNodeId, value);
                     }
                 });
-                return best;
+            });
+
+            const getLayerGapPct = (epoch: string, fromLayer: string, toLayer: string): number => {
+                const key = `${epoch}|${fromLayer}|${toLayer}`;
+                return pctFromGapAgg(layerGapAggByPair.get(key));
             };
-            const maxGapPct = Math.max(
-                1,
-                ...Array.from(pctByEpochTransition.values()),
-                ...Array.from(pctByLayerTransition.values())
-            );
+            const getEpochGapPct = (layer: string, fromEpoch: string, toEpoch: string): number => {
+                const key = `${layer}|${fromEpoch}|${toEpoch}`;
+                return pctFromGapAgg(epochGapAggByPair.get(key));
+            };
+            const allGapPcts: number[] = [];
+            ROW_NAMES.forEach((epoch) => {
+                for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
+                    allGapPcts.push(getLayerGapPct(epoch, COLUMN_NAMES[i], COLUMN_NAMES[i + 1]));
+                }
+            });
+            COLUMN_NAMES.forEach((layer) => {
+                for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
+                    allGapPcts.push(getEpochGapPct(layer, ROW_NAMES[i], ROW_NAMES[i + 1]));
+                }
+            });
+            const maxGapPct = Math.max(1, ...allGapPcts.filter((v) => Number.isFinite(v) && v >= 0));
             setGapLegendMax((prev) => (prev === maxGapPct ? prev : maxGapPct));
             const redGapColor = d3
                 .scaleLinear<string>()
@@ -1575,18 +1642,18 @@ export default function SankeyView({
                 .clamp(true);
             const horizontalGapColor = SWAP_AXES ? greenGapColor : redGapColor;
             const verticalGapColor = SWAP_AXES ? redGapColor : greenGapColor;
+
             if (showGapHeatmap) {
                 const gapHeatmap = gRoot.append("g").attr("class", "cell-gap-heatmap");
                 if (!SWAP_AXES) {
-                    // Horizontal gaps: layer-to-layer transitions for each epoch (by_epoch)
                     ROW_NAMES.forEach((epoch, rowIdx) => {
                         for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
                             const fromLayer = COLUMN_NAMES[i];
                             const toLayer = COLUMN_NAMES[i + 1];
-                            const pct = getEpochTransitionPct(epoch, fromLayer, toLayer);
+                            const pct = getLayerGapPct(epoch, fromLayer, toLayer);
                             const xGap = i * cellStepX + cellW;
                             const yGap = rowIdx * cellStepY;
-                            const gapRect = gapHeatmap
+                            gapHeatmap
                                 .append("rect")
                                 .attr("class", "gap-rect")
                                 .attr("x", xGap)
@@ -1598,27 +1665,24 @@ export default function SankeyView({
                                 .attr("stroke-width", 0.7)
                                 .attr("data-row", epoch)
                                 .attr("data-column-from", fromLayer)
-                                .attr("data-column-to", toLayer);
-                            gapRect
-                                .on("mouseenter mousemove", (_event: any) => {
+                                .attr("data-column-to", toLayer)
+                                .on("mouseenter mousemove", (event: any) => {
                                     placeTooltipFromEvent(event, "Gap Transition", [
                                         `${epoch}: ${fromLayer} -> ${toLayer}`,
                                         `${pct.toFixed(2)}% changed to other clusters`,
                                     ]);
                                 })
                                 .on("mouseleave", () => setHoverTooltip(null));
-                            gapRect.append("title").text(`${epoch}: ${fromLayer} -> ${toLayer}, ${pct.toFixed(2)}%`);
                         }
                     });
-                    // Vertical gaps: epoch-to-epoch transitions for each layer (by_layer)
                     COLUMN_NAMES.forEach((layer, colIdx) => {
                         for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
                             const fromEpoch = ROW_NAMES[i];
                             const toEpoch = ROW_NAMES[i + 1];
-                            const pct = getLayerTransitionPct(layer, fromEpoch, toEpoch);
+                            const pct = getEpochGapPct(layer, fromEpoch, toEpoch);
                             const xGap = colIdx * cellStepX;
                             const yGap = i * cellStepY + cellH;
-                            const gapRect = gapHeatmap
+                            gapHeatmap
                                 .append("rect")
                                 .attr("class", "gap-rect")
                                 .attr("x", xGap)
@@ -1630,28 +1694,25 @@ export default function SankeyView({
                                 .attr("stroke-width", 0.7)
                                 .attr("data-column", layer)
                                 .attr("data-row-from", fromEpoch)
-                                .attr("data-row-to", toEpoch);
-                            gapRect
-                                .on("mouseenter mousemove", (_event: any) => {
+                                .attr("data-row-to", toEpoch)
+                                .on("mouseenter mousemove", (event: any) => {
                                     placeTooltipFromEvent(event, "Gap Transition", [
                                         `${layer}: ${fromEpoch} -> ${toEpoch}`,
                                         `${pct.toFixed(2)}% changed to other clusters`,
                                     ]);
                                 })
                                 .on("mouseleave", () => setHoverTooltip(null));
-                            gapRect.append("title").text(`${layer}: ${fromEpoch} -> ${toEpoch}, ${pct.toFixed(2)}%`);
                         }
                     });
                 } else {
-                    // Horizontal gaps: epoch-to-epoch transitions for each layer (by_layer)
                     COLUMN_NAMES.forEach((layer, rowIdx) => {
                         for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
                             const fromEpoch = ROW_NAMES[i];
                             const toEpoch = ROW_NAMES[i + 1];
-                            const pct = getLayerTransitionPct(layer, fromEpoch, toEpoch);
+                            const pct = getEpochGapPct(layer, fromEpoch, toEpoch);
                             const xGap = i * cellStepX + cellW;
                             const yGap = rowIdx * cellStepY;
-                            const gapRect = gapHeatmap
+                            gapHeatmap
                                 .append("rect")
                                 .attr("class", "gap-rect")
                                 .attr("x", xGap)
@@ -1663,27 +1724,24 @@ export default function SankeyView({
                                 .attr("stroke-width", 0.7)
                                 .attr("data-column", layer)
                                 .attr("data-row-from", fromEpoch)
-                                .attr("data-row-to", toEpoch);
-                            gapRect
-                                .on("mouseenter mousemove", (_event: any) => {
+                                .attr("data-row-to", toEpoch)
+                                .on("mouseenter mousemove", (event: any) => {
                                     placeTooltipFromEvent(event, "Gap Transition", [
                                         `${layer}: ${fromEpoch} -> ${toEpoch}`,
                                         `${pct.toFixed(2)}% changed to other clusters`,
                                     ]);
                                 })
                                 .on("mouseleave", () => setHoverTooltip(null));
-                            gapRect.append("title").text(`${layer}: ${fromEpoch} -> ${toEpoch}, ${pct.toFixed(2)}%`);
                         }
                     });
-                    // Vertical gaps: layer-to-layer transitions for each epoch (by_epoch)
                     ROW_NAMES.forEach((epoch, colIdx) => {
                         for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
                             const fromLayer = COLUMN_NAMES[i];
                             const toLayer = COLUMN_NAMES[i + 1];
-                            const pct = getEpochTransitionPct(epoch, fromLayer, toLayer);
+                            const pct = getLayerGapPct(epoch, fromLayer, toLayer);
                             const xGap = colIdx * cellStepX;
                             const yGap = i * cellStepY + cellH;
-                            const gapRect = gapHeatmap
+                            gapHeatmap
                                 .append("rect")
                                 .attr("class", "gap-rect")
                                 .attr("x", xGap)
@@ -1695,20 +1753,18 @@ export default function SankeyView({
                                 .attr("stroke-width", 0.7)
                                 .attr("data-row", epoch)
                                 .attr("data-column-from", fromLayer)
-                                .attr("data-column-to", toLayer);
-                            gapRect
-                                .on("mouseenter mousemove", (_event: any) => {
+                                .attr("data-column-to", toLayer)
+                                .on("mouseenter mousemove", (event: any) => {
                                     placeTooltipFromEvent(event, "Gap Transition", [
                                         `${epoch}: ${fromLayer} -> ${toLayer}`,
                                         `${pct.toFixed(2)}% changed to other clusters`,
                                     ]);
                                 })
                                 .on("mouseleave", () => setHoverTooltip(null));
-                            gapRect.append("title").text(`${epoch}: ${fromLayer} -> ${toLayer}, ${pct.toFixed(2)}%`);
                         }
                     });
                 }
-            }*/
+            }
 
             function buildGreedyBridgeLinks(
                 sourceNodes: any[],
