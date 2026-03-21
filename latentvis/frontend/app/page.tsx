@@ -2156,6 +2156,7 @@ export default function Home() {
                                                     projection={scatterProjection}
                                                     onProjectionChange={(next) => setScatterProjection(next)}
                                                     onUserClusteringUpload={(payload) => setUploadedUserClustering(payload)}
+                                                    getSmilesById={getSmilesById}
                                                     activeCluster={suppressScatterCluster ? null : selectedNode?.cluster ?? null}
                                                     activeIds={
                                                         showSearchResultsInMembers

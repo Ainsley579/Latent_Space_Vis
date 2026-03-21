@@ -37,6 +37,10 @@ function stripSplitTag(rawId: string): string {
   return raw;
 }
 
+function normalizeSmilesKey(raw: string): string {
+  return String(raw ?? "").trim().replace(/\s+/g, "");
+}
+
 type ScatterPlotProps = {
   compactOverview?: any;
   dataPathXY?: string;
@@ -120,6 +124,7 @@ export default function ScatterPlot({
   const [labelLegend, setLabelLegend] = useState<string[]>([]);
   const [labelFileName, setLabelFileName] = useState<string>("");
   const [labelLoadError, setLabelLoadError] = useState<string | null>(null);
+  const [labelMatchInfo, setLabelMatchInfo] = useState<string>("");
   const [hasSplitData, setHasSplitData] = useState(false);
   const [yTrueRange, setYTrueRange] = useState<{ min: number; max: number } | null>(null);
   const [yPredRange, setYPredRange] = useState<{ min: number; max: number } | null>(null);
@@ -143,6 +148,13 @@ export default function ScatterPlot({
       if (Number.isFinite(n)) {
         keys.add(String(Math.trunc(n)));
         keys.add(String(n));
+      }
+    }
+    const parsed = Number(stripped);
+    if (Number.isFinite(parsed)) {
+      keys.add(String(parsed));
+      if (Math.abs(parsed - Math.round(parsed)) < 1e-9) {
+        keys.add(String(Math.round(parsed)));
       }
     }
     return Array.from(keys);
@@ -181,7 +193,7 @@ export default function ScatterPlot({
       if (direct) return labelColors[direct] ?? "#9ca3af";
       const smiles = getSmilesByIdRef.current?.(String(id));
       if (smiles) {
-        const bySmiles = labelBySmiles[String(smiles).trim()];
+        const bySmiles = labelBySmiles[normalizeSmilesKey(String(smiles))];
         if (bySmiles) return labelColors[bySmiles] ?? "#9ca3af";
       }
       return "#9ca3af";
@@ -337,14 +349,14 @@ export default function ScatterPlot({
 
   function idsForLabel(targetLabel: string): string[] {
     const rows = rowsRef.current ?? [];
-    return rows
+        return rows
       .filter((d) => {
         const rid = String(d.real_id);
         const direct = lookupLabelById(labelById, rid);
         if (direct) return direct === targetLabel;
         const smiles = getSmilesByIdRef.current?.(rid);
         if (!smiles) return false;
-        return (labelBySmiles[String(smiles).trim()] ?? "") === targetLabel;
+        return (labelBySmiles[normalizeSmilesKey(String(smiles))] ?? "") === targetLabel;
       })
       .map((d) => String(d.real_id));
   }
@@ -405,6 +417,7 @@ export default function ScatterPlot({
 
   function handleLabelFileUpload(file: File) {
     setLabelLoadError(null);
+    setLabelMatchInfo("");
     file
       .text()
       .then((text) => {
@@ -517,12 +530,31 @@ export default function ScatterPlot({
         const nextLabelById: Record<string, string> = {};
         const nextLabelBySmiles: Record<string, string> = {};
         const uploadedIdLabelRows: Array<{ real_id: string; label: string }> = [];
+        const points = rowsRef.current ?? [];
+        const countMatchedScatterPoints = (
+          mapById: Record<string, string>,
+          mapBySmiles: Record<string, string>
+        ): number => {
+          let matched = 0;
+          points.forEach((pt) => {
+            const rid = String(pt.real_id);
+            if (lookupLabelById(mapById, rid)) {
+              matched += 1;
+              return;
+            }
+            const smiles = getSmilesByIdRef.current?.(rid);
+            if (smiles && mapBySmiles[normalizeSmilesKey(String(smiles))]) {
+              matched += 1;
+            }
+          });
+          return matched;
+        };
         if (smilesCol) {
           rows.forEach((row) => {
             const smiles = String((row as Record<string, unknown>)[smilesCol] ?? "").trim();
             const label = String((row as Record<string, unknown>)[labelCol] ?? "").trim();
             if (!smiles || !label) return;
-            nextLabelBySmiles[smiles] = label;
+            nextLabelBySmiles[normalizeSmilesKey(smiles)] = label;
           });
         }
         if (idCol) {
@@ -534,9 +566,14 @@ export default function ScatterPlot({
             idLookupKeys(id).forEach((k) => {
               nextLabelById[k] = label;
             });
+            const canonical = stripSplitTag(id);
+            if (canonical) {
+              idLookupKeys(canonical).forEach((k) => {
+                nextLabelById[k] = label;
+              });
+            }
           });
         } else if (!smilesCol) {
-          const points = rowsRef.current ?? [];
           if (points.length !== rows.length) {
             throw new Error("Missing id column. Please provide 'real_id' or 'id'.");
           }
@@ -549,6 +586,25 @@ export default function ScatterPlot({
             });
           });
         }
+        let matchedForColorPre = countMatchedScatterPoints(nextLabelById, nextLabelBySmiles);
+        if (matchedForColorPre === 0 && points.length > 0 && points.length === rows.length) {
+          rows.forEach((row, idx) => {
+            const ridRaw = String(points[idx]?.real_id ?? "").trim();
+            const label = String((row as Record<string, unknown>)[labelCol] ?? "").trim();
+            if (!ridRaw || !label) return;
+            idLookupKeys(ridRaw).forEach((k) => {
+              nextLabelById[k] = label;
+            });
+            const canonical = stripSplitTag(ridRaw);
+            if (canonical) {
+              idLookupKeys(canonical).forEach((k) => {
+                nextLabelById[k] = label;
+              });
+              uploadedIdLabelRows.push({ real_id: canonical, label });
+            }
+          });
+          matchedForColorPre = countMatchedScatterPoints(nextLabelById, nextLabelBySmiles);
+        }
 
         const labels = Array.from(new Set([...Object.values(nextLabelById), ...Object.values(nextLabelBySmiles)]));
         if (!labels.length) throw new Error("No valid id-label rows found.");
@@ -556,7 +612,6 @@ export default function ScatterPlot({
         const colors = buildLabelColors(legend);
         const labelToCluster = new Map<string, number>();
         legend.forEach((name, idx) => labelToCluster.set(name, idx));
-        const points = rowsRef.current ?? [];
         const userRowMap = new Map<string, number>();
         if (uploadedIdLabelRows.length > 0) {
           uploadedIdLabelRows.forEach(({ real_id, label }) => {
@@ -572,7 +627,7 @@ export default function ScatterPlot({
             let label = lookupLabelById(nextLabelById, rid);
             if (!label) {
               const smiles = getSmilesByIdRef.current?.(rid);
-              if (smiles) label = nextLabelBySmiles[String(smiles).trim()];
+              if (smiles) label = nextLabelBySmiles[normalizeSmilesKey(String(smiles))];
             }
             if (!label) return;
             const cid = labelToCluster.get(label);
@@ -587,12 +642,30 @@ export default function ScatterPlot({
           userRows.push({ real_id, user_cluster_id });
         });
         userRows.sort((a, b) => a.real_id.localeCompare(b.real_id, undefined, { numeric: true }));
+        const scatterRows = rowsRef.current ?? [];
+        let matchedForColor = 0;
+        scatterRows.forEach((pt) => {
+          const rid = String(pt.real_id);
+          const labelByIdHit = lookupLabelById(nextLabelById, rid);
+          if (labelByIdHit) {
+            matchedForColor += 1;
+            return;
+          }
+          const smiles = getSmilesByIdRef.current?.(rid);
+          if (smiles && nextLabelBySmiles[normalizeSmilesKey(String(smiles))]) {
+            matchedForColor += 1;
+          }
+        });
         setLabelById(nextLabelById);
         setLabelBySmiles(nextLabelBySmiles);
         setLabelColors(colors);
         setLabelLegend(legend);
         setLabelFileName(file.name);
-        setColorMode("label");
+        setColorModeAndRefresh("label");
+        setLabelMatchInfo(`matched ${matchedForColor} / ${scatterRows.length} points`);
+        if (scatterRows.length > 0 && matchedForColor === 0) {
+          setLabelLoadError("Upload succeeded, but 0 scatter points matched your id/smiles columns.");
+        }
         if (userRows.length === 0) {
           setLabelLoadError("Labels loaded, but no points matched current scatter IDs/SMILES.");
           onUserClusteringUpload?.(null);
@@ -606,6 +679,7 @@ export default function ScatterPlot({
       })
       .catch((err) => {
         setLabelLoadError(err instanceof Error ? err.message : String(err));
+        setLabelMatchInfo("");
         onUserClusteringUpload?.(null);
       });
   }
@@ -624,6 +698,14 @@ export default function ScatterPlot({
 
   useEffect(() => {
     getSmilesByIdRef.current = getSmilesById;
+    const container = containerRef.current;
+    if (!container) return;
+    const svg = container.querySelector("svg");
+    if (!svg) return;
+    requestAnimationFrame(() => {
+      repaintBaseFillForMode(colorModeRef.current);
+      applySelectionStateToSvg(svg);
+    });
   }, [getSmilesById]);
 
   useEffect(() => {
@@ -1075,17 +1157,26 @@ export default function ScatterPlot({
             const x = Number(xy[0]);
             const y = Number(xy[1]);
             if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
-            const splitRaw = splitById[String(rid)];
+            const ridRaw = String(rid).trim();
+            const ridNum = Number(ridRaw);
+            const ridLabel =
+              Number.isFinite(ridNum) && moleculeLabels[ridNum] != null
+                ? String(moleculeLabels[ridNum]).trim()
+                : ridRaw;
+            const splitRaw = splitById[ridRaw] ?? splitById[ridLabel];
             const split = splitRaw === "train" || splitRaw === "test" || splitRaw === "val" ? splitRaw : undefined;
             if (dataSplit === "train" && split !== "train") return null;
             if (dataSplit === "test" && split !== "test") return null;
-            const yTrue = resolveMetricForPoint(yTrueById, String(rid), split);
-            const yPred = resolveMetricForPoint(yPredById, String(rid), split);
+            const yTrue = resolveMetricForPoint(yTrueById, ridLabel || ridRaw, split);
+            const yPred = resolveMetricForPoint(yPredById, ridLabel || ridRaw, split);
+            const splitTag = split === "val" ? "test" : split;
+            const displayRid =
+              dataSplit === "all" && splitTag ? `${splitTag}::${ridLabel || ridRaw}` : (ridLabel || ridRaw);
             return {
-              real_id: String(rid),
+              real_id: displayRid,
               x,
               y,
-              cluster_id: resolveClusterForPoint(String(rid)),
+              cluster_id: resolveClusterForPoint(ridLabel || ridRaw),
               split,
               y_true: Number.isFinite(Number(yTrue)) ? Number(yTrue) : undefined,
               y_pred: Number.isFinite(Number(yPred)) ? Number(yPred) : undefined,
@@ -1202,7 +1293,7 @@ export default function ScatterPlot({
     const svg = container.querySelector("svg");
     if (!svg) return;
     applySelectionStateToSvg(svg);
-  }, [activeCluster, activeIds, highlightId, colorMode, labelById, labelBySmiles, labelColors, ySharedRange, yAbsErrRange]);
+  }, [activeCluster, activeIds, highlightId, colorMode, labelById, labelBySmiles, labelColors, ySharedRange, yAbsErrRange, getSmilesById]);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -1310,6 +1401,11 @@ export default function ScatterPlot({
             log diff
           </button>
           {labelLoadError && <span className="text-[11px] text-red-600 truncate max-w-[240px]">{labelLoadError}</span>}
+          {!labelLoadError && labelMatchInfo && (
+            <span className="text-[11px] text-emerald-700 truncate max-w-[220px]" title={labelMatchInfo}>
+              {labelMatchInfo}
+            </span>
+          )}
           <div className="inline-flex flex-col items-start leading-none">
             <button
               type="button"
