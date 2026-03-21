@@ -1080,33 +1080,37 @@ export default function Home() {
 
 
     const tabCycleData = useMemo(() => {
-        if (!selectedNode) return null;
+        const model = selectedNode?.model ?? (cellSelected ? selectedModel : null);
+        const layer = selectedNode?.layer ?? (cellSelected ? selectedLayer : null);
+        if (!model || !layer) return null;
 
         const clusterSet = new Set<number>();
         const idsByCluster = new Map<number, Set<string>>();
 
-        const add = (cluster: number, id: string | number) => {
+        const add = (cluster: number, ids: Array<string | number>) => {
             if (!Number.isFinite(cluster)) return;
             clusterSet.add(cluster);
             if (!idsByCluster.has(cluster)) idsByCluster.set(cluster, new Set());
-            idsByCluster.get(cluster)?.add(String(id));
+            const bucket = idsByCluster.get(cluster)!;
+            ids.forEach((id) => bucket.add(String(id)));
         };
 
-        activeSankeyRows.forEach((r) => {
-            if (swapAxes) {
-                const fromModel = r.from_model ?? r.from_layer;
-                const toModel = r.to_model ?? r.to_layer;
-                if (fromModel === selectedNode.model) add(r.from_cluster, r.real_id);
-                if (toModel === selectedNode.model) add(r.to_cluster, r.real_id);
-            } else {
-                if (r.from_layer === selectedNode.layer) add(r.from_cluster, r.real_id);
-                if (r.to_layer === selectedNode.layer) add(r.to_cluster, r.real_id);
-            }
+        clusterSortedMembers.forEach((row) => {
+            if (String(row.model_type) !== String(model) || String(row.layer_name) !== String(layer)) return;
+            const cid = Number(row.cluster_id);
+            if (!Number.isFinite(cid)) return;
+            const ids = Array.isArray(row.sorted_real_ids) ? row.sorted_real_ids : [];
+            add(cid, ids);
         });
 
         const clusters = Array.from(clusterSet).sort((a, b) => a - b);
-        return { clusters, idsByCluster };
-    }, [activeSankeyRows, selectedNode, swapAxes]);
+        if (clusters.length === 0) return null;
+        const currentCluster =
+            selectedNode && String(selectedNode.model) === String(model) && String(selectedNode.layer) === String(layer)
+                ? selectedNode.cluster
+                : null;
+        return { model, layer, clusters, idsByCluster, currentCluster };
+    }, [cellSelected, selectedModel, selectedLayer, selectedNode, clusterSortedMembers]);
 
     useEffect(() => {
         function isInteractiveTarget(target: EventTarget | null) {
@@ -1123,28 +1127,30 @@ export default function Home() {
 
         function onKeyDown(event: KeyboardEvent) {
             if (event.key !== "Tab") return;
-            if (!selectedNode || !tabCycleData || tabCycleData.clusters.length === 0) return;
+            if (!tabCycleData || tabCycleData.clusters.length === 0) return;
             if (isInteractiveTarget(event.target)) return;
 
             event.preventDefault();
 
-            const { clusters, idsByCluster } = tabCycleData;
-            const currIdx = clusters.indexOf(selectedNode.cluster);
+            const { clusters, idsByCluster, model, layer, currentCluster } = tabCycleData;
+            const currIdx = currentCluster == null ? -1 : clusters.indexOf(currentCluster);
             const nextIdx = event.shiftKey
                 ? (currIdx <= 0 ? clusters.length - 1 : currIdx - 1)
                 : (currIdx === -1 ? 0 : (currIdx + 1) % clusters.length);
             const nextCluster = clusters[nextIdx];
+            const nextIds = Array.from(idsByCluster.get(nextCluster) ?? []);
 
             setSelectedNode({
-                model: selectedNode.model,
-                layer: selectedNode.layer,
+                model,
+                layer,
                 cluster: nextCluster,
             });
-            setSelectedIds(Array.from(idsByCluster.get(nextCluster) ?? []));
-            setSelectedModel(selectedNode.model);
-            setSelectedLayer(selectedNode.layer);
+            setSelectedIds(nextIds.length > 0 ? nextIds : null);
+            setSelectedModel(model);
+            setSelectedLayer(layer);
             setCellSelected(true);
             setSuppressScatterCluster(false);
+            setShowSearchResultsInMembers(false);
             setHoveredId(null);
             setHoverLock(false);
         }
@@ -1153,7 +1159,7 @@ export default function Home() {
         return () => {
             window.removeEventListener("keydown", onKeyDown);
         };
-    }, [selectedNode, tabCycleData]);
+    }, [tabCycleData]);
 
     /*
     useEffect(() => {
