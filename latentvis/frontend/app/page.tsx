@@ -195,14 +195,16 @@ export default function Home() {
     const [selectedClustering, setSelectedClustering] = useState<ClusteringKey>("agglomerative");
     const [selectedDataSplit, setSelectedDataSplit] = useState<DataSplitKey>("all");
     const [selectedSankeySplits, setSelectedSankeySplits] = useState<SankeySplitKey[]>(["test"]);
-    // UI-selected K (does not trigger fetch until Generate is clicked)
+    // UI-selected K for KNN sweep selection.
     const [selectedKnnK, setSelectedKnnK] = useState<number>(2);
-    // Applied K used in backend data-file requests
-    const [appliedKnnK, setAppliedKnnK] = useState<number>(2);
+    const [selectedPgmeansRange, setSelectedPgmeansRange] = useState<{ min: number; max: number }>({ min: 2, max: 10 });
+    const [usePgmeansSweepParams, setUsePgmeansSweepParams] = useState(false);
+    const [selectedAgglomerativeParams, setSelectedAgglomerativeParams] = useState<{
+        k: number | null;
+        linkage: "ward" | "complete" | "average";
+    }>({ k: null, linkage: "ward" });
     const [sankeyTransform, setSankeyTransform] = useState({ x: 0, y: 0, scale: 1 });
     const [selectedLayer, setSelectedLayer] = useState("fingerprint");
-    const [showFfn2, setShowFfn2] = useState(false);
-    const effectiveShowFfn2 = selectedDataSet === "dimenet" ? true : showFfn2;
     const [selectedModel, setSelectedModel] = useState("0");
     const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
     const [isBlockingInitLoading, setIsBlockingInitLoading] = useState(true);
@@ -239,7 +241,21 @@ export default function Home() {
         setSankeyRenderRequestId(requestId);
         setIsBlockingInitLoading(true);
         setOverviewData(null);
-        fetch(`${apiBase}/get_dataset/${selectedDataSet}?clustering=${encodeURIComponent(selectedClustering)}`, {
+        setSelectedSankeySplits(selectedDataSet === "dimenet" ? ["test"] : ["train", "test", "val"]);
+        const datasetParams = new URLSearchParams();
+        datasetParams.set("clustering", selectedClustering);
+        if (selectedClustering === "pgmeans" && usePgmeansSweepParams) {
+            datasetParams.set("k_min", String(selectedPgmeansRange.min));
+            datasetParams.set("k_max", String(selectedPgmeansRange.max));
+        } else if (selectedClustering === "agglomerative") {
+            datasetParams.set("linkage", selectedAgglomerativeParams.linkage);
+            if (selectedAgglomerativeParams.k != null) {
+                datasetParams.set("k", String(selectedAgglomerativeParams.k));
+            }
+        } else if (selectedClustering === "knn") {
+            datasetParams.set("k", String(selectedKnnK));
+        }
+        fetch(`${apiBase}/get_dataset/${selectedDataSet}?${datasetParams.toString()}`, {
             method: "GET",
             signal: controller.signal,
         })
@@ -263,7 +279,16 @@ export default function Home() {
             cancelled = true;
             controller.abort();
         };
-    }, [selectedDataSet, selectedClustering]);
+    }, [
+        selectedDataSet,
+        selectedClustering,
+        usePgmeansSweepParams,
+        selectedPgmeansRange.min,
+        selectedPgmeansRange.max,
+        selectedAgglomerativeParams.k,
+        selectedAgglomerativeParams.linkage,
+        selectedKnnK,
+    ]);
 
     const handleSankeyViewRendered = useCallback((requestId: number) => {
         if (!Number.isFinite(requestId)) return;
@@ -484,8 +509,6 @@ export default function Home() {
 
     const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
     const [activeSankeyRows, setActiveSankeyRows] = useState<SankeySampleRow[]>([]);
-    const [isGeneratingRange, setIsGeneratingRange] = useState(false);
-    const [generateStatusText, setGenerateStatusText] = useState("");
     const [topkData, setTopkData] = useState<
         {
             layer_name: string;
@@ -685,11 +708,11 @@ export default function Home() {
     useEffect(() => {
         if (!pendingResetToLatestRef.current) return;
         if (!overviewData) return;
-        const latest = deriveLatestEpochLayerFromOverview(overviewData, selectedDataSet, effectiveShowFfn2);
+        const latest = deriveLatestEpochLayerFromOverview(overviewData, selectedDataSet, false);
         setSelectedModel(latest.model);
         setSelectedLayer(latest.layer);
         pendingResetToLatestRef.current = false;
-    }, [overviewData, selectedDataSet, selectedDataSplit, effectiveShowFfn2]);
+    }, [overviewData, selectedDataSet, selectedDataSplit]);
 
     useEffect(() => {
         if (!showLargeHoverPreview) {
@@ -914,161 +937,16 @@ export default function Home() {
         selectedDataSplit,
     ]);
 
-    function sleep(ms: number) {
-        return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
-    async function submitGenerateRangeJob(
-        body: Record<string, unknown>,
-        statusPrefix: string
-    ) {
-        const submitRes = await fetch(`${apiBase}/generate-range`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...body, async: true }),
-        });
-        if (!submitRes.ok) {
-            throw new Error(`Generate submit failed: ${submitRes.status}`);
-        }
-        const submitJson = await submitRes.json();
-        const jobId = String(submitJson?.job_id ?? "");
-        if (!jobId) {
-            throw new Error("Generate submit missing job_id");
-        }
-
-        const deadline = Date.now() + 70 * 60 * 1000;
-        while (true) {
-            const statusRes = await fetch(`${apiBase}/generate-range/jobs/${encodeURIComponent(jobId)}`);
-            if (!statusRes.ok) {
-                throw new Error(`Generate status failed: ${statusRes.status}`);
-            }
-            const statusJson = await statusRes.json();
-            const status = String(statusJson?.status ?? "");
-            const msg = typeof statusJson?.message === "string" ? statusJson.message : "";
-            if (status === "succeeded") {
-                if (statusJson?.result && typeof statusJson.result === "object") {
-                    return statusJson.result;
-                }
-                // Backward compatibility: some backends may return final payload at top-level.
-                if (statusJson && typeof statusJson === "object") {
-                    return statusJson;
-                }
-                return null;
-            }
-            if (status === "failed") {
-                const detail =
-                    statusJson?.error?.detail ??
-                    statusJson?.error?.error ??
-                    statusJson?.error ??
-                    "Generate job failed";
-                throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
-            }
-            setGenerateStatusText(msg ? `${statusPrefix} (${msg})` : `${statusPrefix} (${status})`);
-            if (Date.now() > deadline) {
-                throw new Error("Generate job polling timed out");
-            }
-            await sleep(2000);
-        }
-    }
-
-
-
-    async function generateFromRange(minValue: number, maxValue: number) {
-        if (isGeneratingRange) return;
-        const dataset = selectedDataSet;
-        const clustering = selectedClustering;
-        const dataSplit = selectedDataSplit;
-        setIsGeneratingRange(true);
-        setGenerateStatusText(`Generating ${clustering} [${minValue}, ${maxValue}] ...`);
-        try {
-            const json = await submitGenerateRangeJob(
-                {
-                    dataset,
-                    clustering,
-                    data_split: dataSplit,
-                    include_payload: true,
-                    min: minValue,
-                    max: maxValue,
-                    ...(clustering === "knn" ? { k: minValue } : {}),
-                },
-                `Generating ${clustering} [${minValue}, ${maxValue}]`
-            );
-            if (clustering === "knn") {
-                // Apply K only after user explicitly clicks Generate and backend job succeeds.
-                setAppliedKnnK(minValue);
-            }
-            //applyGeneratedPayload(json, dataset, clustering, dataSplit);
-            setGenerateStatusText("Generate finished.");
-        } catch (err) {
-            console.error("Failed to generate payload:", err);
-            setGenerateStatusText(`Generate failed: ${err instanceof Error ? err.message : String(err)}`);
-        } finally {
-            setIsGeneratingRange(false);
-        }
-    }
-
-    async function generateAgglomerative(config: {
-        k: number | null;
-        linkage: "ward" | "complete" | "average";
-    }) {
-        if (isGeneratingRange) return;
-        const dataset = selectedDataSet;
-        const dataSplit = selectedDataSplit;
-        setIsGeneratingRange(true);
-        setGenerateStatusText(
-            `Re-running agglomerative for ALL cells (k=${config.k == null ? "auto" : config.k}, linkage=${config.linkage}) ...`
-        );
-        try {
-            const kMin = config.k == null ? 2 : config.k;
-            const kMax = config.k == null ? 10 : config.k;
-            const json = await submitGenerateRangeJob(
-                {
-                    dataset,
-                    data_split: dataSplit,
-                    min: kMin,
-                    max: kMax,
-                    clustering: "agglomerative",
-                    k: config.k,
-                    linkage: config.linkage,
-                    include_payload: true,
-                },
-                `Re-running agglomerative (k=${config.k == null ? "auto" : config.k}, linkage=${config.linkage})`
-            );
-            //applyGeneratedPayload(json, dataset, "agglomerative", dataSplit);
-
-            setGenerateStatusText(
-                `Agglomerative regenerate finished (in-memory): k=${config.k == null ? "auto(2-10)" : config.k}, linkage=${config.linkage}.`
-            );
-        } catch (err) {
-            console.error("Failed to regenerate all cells for agglomerative:", err);
-            setGenerateStatusText(`Agg regenerate failed: ${err instanceof Error ? err.message : String(err)}`);
-        } finally {
-            setIsGeneratingRange(false);
-        }
-    }
-
-
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         setSwapAxes(params.get("swap") === "1");
     }, []);
 
-    /*useEffect(() => {
-        let cancelled = false;
-        setIsBlockingInitLoading(true);
-        (async () => {
-
-            return () => {
-                cancelled = true;
-            };
-        }, [selectedDataset, selectedClustering, selectedDataSplit, appliedKnnK]);
-    }*/
     useEffect(() => {
-        if (effectiveShowFfn2) return;
         if (selectedLayer === "ffn_layer_2" || selectedLayer === "fnn_layer_2") {
             setSelectedLayer("ffn_layer_1");
         }
-    }, [effectiveShowFfn2, selectedLayer]);
+    }, [selectedLayer]);
 
     useEffect(() => {
         if (cellSelected || selectedNode != null) {
@@ -2070,7 +1948,7 @@ export default function Home() {
         syncLinkedSankeyViews && !viewIsSyncSource ? sankeyTransform : undefined;
     const hasSelectedMemberIds = Array.isArray(selectedIds) && selectedIds.length > 0;
     const showRightDetailPanels = detailsEverShown || cellSelected || selectedNode != null || hasSelectedMemberIds;
-    const shouldShowBlockingOverlay = isBlockingInitLoading || isGeneratingRange;
+    const shouldShowBlockingOverlay = isBlockingInitLoading;
     const searchResultHighlightIds = useMemo(() => {
         const out = new Set<string>();
         const add = (value: string | number | null | undefined) => {
@@ -2139,7 +2017,6 @@ export default function Home() {
         selectedDataSplit,
         selectedSankeySplits.join(","),
         reverseEpochOrder ? "rev" : "fwd",
-        effectiveShowFfn2 ? "ffn2on" : "ffn2off",
     ].join("|");
     const horizontalSankeyRenderKey = [
         "horizontal",
@@ -2150,7 +2027,6 @@ export default function Home() {
         selectedDataSplit,
         selectedSankeySplits.join(","),
         reverseEpochOrder ? "rev" : "fwd",
-        effectiveShowFfn2 ? "ffn2on" : "ffn2off",
     ].join("|");
 
     return (
@@ -2171,7 +2047,7 @@ export default function Home() {
                         >
                             {<SankeyView
                                 data={overviewData}
-                                showFfn2={effectiveShowFfn2}
+                                showFfn2={false}
                                 metricsPath={null}
                                 transitionStatsPath={null}
                                 onModelSelect={(model) => {
@@ -2237,7 +2113,7 @@ export default function Home() {
                                         selectedDataSet={selectedDataSet}
                                         selectedSplits={selectedSankeySplits}
                                         mode={swapAxes ? "layer" : "model"}
-                                        showFfn2={effectiveShowFfn2}
+                                        showFfn2={false}
                                         layerKey={selectedLayer}
                                         modelKey={selectedModel}
                                         reverseEpochOrder={reverseEpochOrder}
@@ -2294,7 +2170,7 @@ export default function Home() {
                                         selectedDataSet={selectedDataSet}
                                         selectedSplits={selectedSankeySplits}
                                         mode={swapAxes ? "model" : "layer"}
-                                        showFfn2={effectiveShowFfn2}
+                                        showFfn2={false}
                                         modelKey={selectedModel}
                                         layerKey={selectedLayer}
                                         reverseEpochOrder={reverseEpochOrder}
@@ -2774,6 +2650,7 @@ export default function Home() {
                                         setSelectedDataSet(next);
                                         setSelectedDataSplit(nextSplit);
                                         setSelectedSankeySplits(next === "dimenet" ? ["test"] : ["train", "test", "val"]);
+                                        setUsePgmeansSweepParams(false);
                                         //syncSankeyPaths(defaults.model, defaults.layer, next, nextClustering, nextSplit);
                                         /*setScatterPaths(
                                             buildScatterPaths(
@@ -2822,6 +2699,7 @@ export default function Home() {
                                         pendingResetToLatestRef.current = true;
                                         setIsBlockingInitLoading(true);
                                         setSelectedClustering(next);
+                                        setUsePgmeansSweepParams(false);
                                         // Reset to latest valid epoch/layer once the new overview is loaded.
                                         /*syncSankeyPaths(selectedModel, selectedLayer, selectedDataset, next, nextSplit);
                                         setScatterPaths(
@@ -2848,15 +2726,25 @@ export default function Home() {
                                     onToggleLargePreview={() => setShowLargeHoverPreview((prev) => !prev)}
                                     largePreviewSize={largeHoverPreviewSize}
                                     onLargePreviewSizeChange={setLargeHoverPreviewSize}
-                                    showFfn2={effectiveShowFfn2}
-                                    onShowFfn2Change={selectedDataSet === "dimenet" ? undefined : setShowFfn2}
-                                    onGenerateRange={generateFromRange}
-                                    onGenerateAgglomerative={generateAgglomerative}
+                                    onPgmeansRangeChange={(minValue, maxValue) =>
+                                        {
+                                            setUsePgmeansSweepParams(true);
+                                            setSelectedPgmeansRange((prev) =>
+                                                prev.min === minValue && prev.max === maxValue
+                                                    ? prev
+                                                    : { min: minValue, max: maxValue }
+                                            );
+                                        }
+                                    }
+                                    onAgglomerativeParamsChange={(config) =>
+                                        setSelectedAgglomerativeParams((prev) =>
+                                            prev.k === config.k && prev.linkage === config.linkage
+                                                ? prev
+                                                : config
+                                        )
+                                    }
                                     knnK={selectedKnnK}
                                     onKnnKChange={setSelectedKnnK}
-                                    generateEnabled={true}
-                                    generateBusy={isGeneratingRange}
-                                    generateMessage={generateStatusText}
                                     onExportBookmarks={exportBookmarkedIdsCsv}
                                     bookmarkCount={bookmarkedIds.size}
                                 />
@@ -2897,9 +2785,7 @@ export default function Home() {
                     <div className="fixed inset-0 z-[12000] bg-white/70 backdrop-blur-[1px] flex items-center justify-center">
                         <div className="flex flex-col items-center gap-3 px-5 py-4 rounded-lg border border-zinc-300 bg-white shadow">
                             <div className="h-8 w-8 rounded-full border-4 border-zinc-300 border-t-zinc-700 animate-spin" />
-                            <div className="text-sm text-zinc-700">
-                                {isGeneratingRange ? "Computing, please wait..." : "Loading data, please wait..."}
-                            </div>
+                            <div className="text-sm text-zinc-700">Loading data, please wait...</div>
                         </div>
                     </div>
                 )}

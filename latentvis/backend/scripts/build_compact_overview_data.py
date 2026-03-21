@@ -846,6 +846,64 @@ def build_dataset_config(spec: DatasetSpec, method: str) -> DatasetConfig:
     )
 
 
+def list_sweep_keys(spec: DatasetSpec, method: str) -> List[str]:
+    keys: Set[str] = set()
+    for split in SUPPORTED_SPLITS:
+        root = spec.root / split / "sweeps" / method
+        if not root.is_dir():
+            continue
+        for child in root.iterdir():
+            if child.is_dir():
+                keys.add(child.name)
+
+    def sort_key(value: str) -> Tuple[int, int, int, str]:
+        if method == "pgmeans":
+            m = re.fullmatch(r"kmin_(\d+)_kmax_(\d+)", value)
+            if m:
+                return (0, int(m.group(1)), int(m.group(2)), value)
+        if method == "agglomerative":
+            m = re.fullmatch(r"k_(\d+)_linkage_(.+)", value)
+            if m:
+                return (0, int(m.group(1)), 0, m.group(2))
+        if method == "knn":
+            m = re.fullmatch(r"k_(\d+)", value)
+            if m:
+                return (0, int(m.group(1)), 0, value)
+        return (1, 0, 0, value)
+
+    return sorted(keys, key=sort_key)
+
+
+def build_dataset_config_for_sweep(spec: DatasetSpec, method: str, sweep_key: str) -> DatasetConfig:
+    split_sources: List[SplitSource] = []
+    for split in SUPPORTED_SPLITS:
+        root = spec.root / split / "sweeps" / method / sweep_key
+        if not root.is_dir():
+            continue
+
+        scatter_dir = root / "scatterplot"
+        cluster_csv = root / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
+        representatives_json = root / "topk" / "cluster_representatives.json"
+        sankey_json = root / "sankey" / "all_sankey.json"
+
+        split_sources.append(
+            SplitSource(
+                split=split,
+                scatter_dir=scatter_dir if scatter_dir.exists() else None,
+                cluster_csv=cluster_csv if cluster_csv.is_file() else None,
+                representatives_json=representatives_json if representatives_json.is_file() else None,
+                sankey_json=sankey_json if sankey_json.is_file() else None,
+            )
+        )
+
+    return DatasetConfig(
+        name=spec.name,
+        metadata_json=spec.metadata_json,
+        split_sources=tuple(split_sources),
+        source_variant=f"{method}:{sweep_key}",
+    )
+
+
 def split_overview_base_and_overlay(
     overview: Dict[str, Any],
     method: str,
@@ -902,7 +960,7 @@ def split_overview_base_and_overlay(
 def build_all(output_root: Path, coord_decimals: int) -> Dict[str, Dict[str, Any]]:
     manifest: Dict[str, Dict[str, Any]] = {}
     for spec in dataset_specs():
-        dataset_manifest: Dict[str, Any] = {"clusterings": {}}
+        dataset_manifest: Dict[str, Any] = {"clusterings": {}, "sweeps": {}}
         config_pgmeans = build_dataset_config(spec, "pgmeans")
         if not config_pgmeans.split_sources:
             continue
@@ -926,6 +984,24 @@ def build_all(output_root: Path, coord_decimals: int) -> Dict[str, Dict[str, Any
             method_path = output_root / spec.name / "clusterings" / f"{method}.json"
             write_json(method_path, method_overlay)
             dataset_manifest["clusterings"][method] = str(method_path)
+
+        for method in SUPPORTED_CLUSTERINGS:
+            method_sweeps: Dict[str, str] = {}
+            for sweep_key in list_sweep_keys(spec, method):
+                config = build_dataset_config_for_sweep(spec, method, sweep_key)
+                if not config.split_sources:
+                    continue
+                try:
+                    method_overview = build_overview(config, coord_decimals=coord_decimals)
+                except Exception:
+                    continue
+                method_path = output_root / spec.name / "sweeps" / method / f"{sweep_key}.json"
+                # Sweep outputs may have a different epoch/layer grid from base.json.
+                # Persist the full overview so runtime loading does not rely on base merge.
+                write_json(method_path, method_overview)
+                method_sweeps[sweep_key] = str(method_path)
+            if method_sweeps:
+                dataset_manifest["sweeps"][method] = method_sweeps
 
         overview_path = output_root / spec.name / "overview.json"
         write_json(overview_path, pgmeans_overview)

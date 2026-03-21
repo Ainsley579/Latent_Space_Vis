@@ -659,9 +659,15 @@ export default function SankeyView({
         setLinkValueMin(nextMin);
         setLinkValueMax(nextMaxBound);
 
-        p.set("min", String(nextMin));
-        p.set("max", String(nextMaxBound));
-        window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+        const currentMin = p.get("min");
+        const currentMax = p.get("max");
+        const nextMinStr = String(nextMin);
+        const nextMaxStr = String(nextMaxBound);
+        if (currentMin !== nextMinStr || currentMax !== nextMaxStr) {
+            p.set("min", nextMinStr);
+            p.set("max", nextMaxStr);
+            window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+        }
     }, [data, selectedSplits, showFfn2]);
 
     function applyLinkValueFilter(minVal: number, maxVal: number) {

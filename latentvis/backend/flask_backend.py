@@ -10,7 +10,7 @@ import threading
 import time
 import uuid
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Iterable
+from typing import Any, Dict, List, Optional, Tuple, Iterable
 
 from flask import Flask, jsonify, request, send_file
 
@@ -167,7 +167,148 @@ def _compact_merge_base_overlay(base_payload: dict, overlay_payload: dict) -> di
     return merged
 
 
-def _load_compact_dataset(dataset: str, clustering: str) -> dict:
+def _parse_optional_int(value: Optional[str]) -> Optional[int]:
+    if value is None:
+        return None
+    try:
+        return int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _compact_sweep_key(
+    method: str,
+    *,
+    k_min: Optional[int],
+    k_max: Optional[int],
+    k: Optional[int],
+    linkage: Optional[str],
+) -> Optional[str]:
+    if method == "pgmeans":
+        if k_min is None or k_max is None:
+            return None
+        k0 = max(2, int(k_min))
+        k1 = max(k0, int(k_max))
+        return f"kmin_{k0}_kmax_{k1}"
+    if method == "agglomerative":
+        if k is None:
+            return None
+        k_val = max(2, int(k))
+        link = str(linkage or "ward").strip().lower() or "ward"
+        if link not in ("ward", "complete", "average"):
+            link = "ward"
+        return f"k_{k_val}_linkage_{link}"
+    if method == "knn":
+        if k is None:
+            return None
+        k_val = max(1, int(k))
+        return f"k_{k_val}"
+    if method == "hdbscan":
+        return "default"
+    return None
+
+
+def _compact_sweep_overlay_path(
+    dataset_dir: Path,
+    method: str,
+    *,
+    k_min: Optional[int],
+    k_max: Optional[int],
+    k: Optional[int],
+    linkage: Optional[str],
+) -> Optional[Path]:
+    key = _compact_sweep_key(method, k_min=k_min, k_max=k_max, k=k, linkage=linkage)
+    if not key:
+        return None
+    path = dataset_dir / "sweeps" / method / f"{key}.json"
+    return path if path.is_file() else None
+
+
+def _is_full_compact_overview_payload(payload: Any) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    required_top_level = (
+        "molecule_ids",
+        "split_names",
+        "splits",
+        "epochs",
+        "layers",
+        "cells",
+        "nodes",
+        "connectivity",
+        "split_connectivity",
+        "node_lookup",
+    )
+    if any(key not in payload for key in required_top_level):
+        return False
+    cells = payload.get("cells")
+    if not isinstance(cells, list):
+        return False
+    if not cells:
+        return True
+    first = cells[0]
+    if not isinstance(first, dict):
+        return False
+    # Minimal overlays only include node_key + cluster payload; full overviews carry
+    # explicit cell coordinates and DR payload.
+    return (
+        "epoch" in first
+        and "layer" in first
+        and "cluster_labels" in first
+        and "dr" in first
+    )
+
+
+def _compact_active_split_names(payload: dict) -> List[str]:
+    split_names_raw = payload.get("split_names")
+    nodes = payload.get("nodes")
+    if not isinstance(split_names_raw, list) or not isinstance(nodes, list):
+        return []
+
+    split_names = [str(x).strip().lower() for x in split_names_raw]
+    active: set[str] = set()
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        split_idx_raw = node.get("split")
+        try:
+            split_idx = int(split_idx_raw)
+        except (TypeError, ValueError):
+            continue
+        if split_idx < 0 or split_idx >= len(split_names):
+            continue
+        name = split_names[split_idx]
+        if name:
+            active.add(name)
+    return sorted(active)
+
+
+def _compact_sweep_has_sparse_split_coverage(base_payload: dict, sweep_payload: dict) -> bool:
+    """Detect suspicious sweep payloads that collapse to a single split."""
+    allowed = {"train", "test", "val"}
+    base_names = {
+        str(name).strip().lower()
+        for name in (base_payload.get("split_names") or [])
+        if str(name).strip().lower() in allowed
+    }
+    # If the base dataset itself has <=1 split, a single-split sweep is valid.
+    if len(base_names) <= 1:
+        return False
+
+    active_sweep_names = set(_compact_active_split_names(sweep_payload)) & allowed
+    return len(active_sweep_names) <= 1
+
+
+def _load_compact_dataset(
+    dataset: str,
+    clustering: str,
+    *,
+    k_min: Optional[int] = None,
+    k_max: Optional[int] = None,
+    k: Optional[int] = None,
+    linkage: Optional[str] = None,
+    require_exact_sweep: bool = False,
+) -> dict:
     ds = str(dataset or "").strip()
     method = _normalize_clustering(clustering)
     dataset_dir = Path(DATA_PATH) / ds
@@ -180,10 +321,41 @@ def _load_compact_dataset(dataset: str, clustering: str) -> dict:
     if base_path.is_file():
         base_payload = _read_json(base_path, None)
         if isinstance(base_payload, dict):
-            overlay_payload = _read_json(overlay_path, None)
+            overlay_payload = None
+            sweep_overlay_path = _compact_sweep_overlay_path(
+                dataset_dir,
+                method,
+                k_min=k_min,
+                k_max=k_max,
+                k=k,
+                linkage=linkage,
+            )
+            if require_exact_sweep and sweep_overlay_path is None:
+                sweep_key = _compact_sweep_key(method, k_min=k_min, k_max=k_max, k=k, linkage=linkage)
+                raise FileNotFoundError(
+                    f"Compact sweep not found: dataset={ds}, clustering={method}, sweep={sweep_key or 'unknown'}"
+                )
+            if sweep_overlay_path is not None:
+                overlay_payload = _read_json(sweep_overlay_path, None)
+            if isinstance(overlay_payload, dict):
+                if _is_full_compact_overview_payload(overlay_payload):
+                    if (
+                        sweep_overlay_path is not None
+                        and _compact_sweep_has_sparse_split_coverage(base_payload, overlay_payload)
+                    ):
+                        overlay_payload = None
+                    else:
+                        return overlay_payload
+                else:
+                    return _compact_merge_base_overlay(base_payload, overlay_payload)
+
+            if not isinstance(overlay_payload, dict):
+                overlay_payload = _read_json(overlay_path, None)
             if not isinstance(overlay_payload, dict):
                 overlay_payload = _read_json(fallback_overlay_path, None)
             if isinstance(overlay_payload, dict):
+                if _is_full_compact_overview_payload(overlay_payload):
+                    return overlay_payload
                 return _compact_merge_base_overlay(base_payload, overlay_payload)
 
     if legacy_path.is_file():
@@ -197,8 +369,28 @@ def _load_compact_dataset(dataset: str, clustering: str) -> dict:
 @app.route("/get_dataset/<string:dataset>", methods=["GET"])
 def get_dataset(dataset):
     clustering = request.args.get("clustering", DEFAULT_CLUSTERING)
+    method = _normalize_clustering(clustering)
+    k_min = _parse_optional_int(request.args.get("k_min"))
+    k_max = _parse_optional_int(request.args.get("k_max"))
+    k = _parse_optional_int(request.args.get("k"))
+    linkage = request.args.get("linkage")
+    strict_sweep = str(request.args.get("strict_sweep", "")).strip().lower() in ("1", "true", "yes")
+    require_exact_sweep = (
+        strict_sweep
+        and method == "pgmeans"
+        and k_min is not None
+        and k_max is not None
+    )
     try:
-        payload = _load_compact_dataset(dataset, clustering)
+        payload = _load_compact_dataset(
+            dataset,
+            clustering,
+            k_min=k_min,
+            k_max=k_max,
+            k=k,
+            linkage=linkage,
+            require_exact_sweep=require_exact_sweep,
+        )
     except FileNotFoundError as exc:
         return jsonify({"ok": False, "error": "dataset_not_found", "detail": str(exc)}), 404
     return jsonify(payload)

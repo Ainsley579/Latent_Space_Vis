@@ -25,18 +25,13 @@ type SyncControlPanelProps = {
   onToggleLargePreview: () => void;
   largePreviewSize: number;
   onLargePreviewSizeChange: (size: number) => void;
-  showFfn2?: boolean;
-  onShowFfn2Change?: (show: boolean) => void;
-  onGenerateRange?: (minValue: number, maxValue: number) => void;
-  onGenerateAgglomerative?: (config: {
+  onPgmeansRangeChange?: (minValue: number, maxValue: number) => void;
+  onAgglomerativeParamsChange?: (config: {
     k: number | null;
     linkage: "ward" | "complete" | "average";
   }) => void;
   knnK?: number;
   onKnnKChange?: (k: number) => void;
-  generateEnabled?: boolean;
-  generateBusy?: boolean;
-  generateMessage?: string;
   onExportBookmarks?: () => void;
   bookmarkCount?: number;
 };
@@ -62,15 +57,10 @@ export default function SyncControlPanel({
   onToggleLargePreview,
   largePreviewSize,
   onLargePreviewSizeChange,
-  showFfn2 = false,
-  onShowFfn2Change,
-  onGenerateRange,
-  onGenerateAgglomerative,
+  onPgmeansRangeChange,
+  onAgglomerativeParamsChange,
   knnK: knnKProp,
   onKnnKChange,
-  generateEnabled = true,
-  generateBusy = false,
-  generateMessage = "",
   onExportBookmarks,
   bookmarkCount = 0,
 }: SyncControlPanelProps) {
@@ -259,29 +249,6 @@ export default function SyncControlPanel({
         />
       </div>
 
-      {onShowFfn2Change && (
-        <div className="flex items-center justify-start gap-2 min-w-0 mb-2">
-          <span className="text-[10px] text-zinc-700">SHOW FFN2</span>
-          <button
-            type="button"
-            onClick={() => onShowFfn2Change(!showFfn2)}
-            className={
-              "relative inline-flex h-5 w-10 items-center rounded-full transition-colors " +
-              (showFfn2 ? "bg-emerald-500" : "bg-zinc-300")
-            }
-            aria-pressed={showFfn2}
-            title={showFfn2 ? "FFN2 visible" : "FFN2 hidden"}
-          >
-            <span
-              className={
-                "inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform " +
-                (showFfn2 ? "translate-x-6" : "translate-x-1")
-              }
-            />
-          </button>
-        </div>
-      )}
-
       {isPgmeans ? (
         <>
           <div className="text-[10px] text-zinc-500 text-center mb-0.5">Clustering k range (min-max)</div>
@@ -292,8 +259,10 @@ export default function SyncControlPanel({
               value={minValue}
               onChange={(e) => {
                 const next = Number(e.target.value);
+                const nextMax = maxValue < next ? next : maxValue;
                 setMinValue(next);
-                if (maxValue < next) setMaxValue(next);
+                if (maxValue < next) setMaxValue(nextMax);
+                onPgmeansRangeChange?.(next, nextMax);
               }}
             >
               {minOptions.map((v) => (
@@ -311,8 +280,10 @@ export default function SyncControlPanel({
               value={maxValue}
               onChange={(e) => {
                 const next = Number(e.target.value);
+                const nextMin = minValue > next ? next : minValue;
                 setMaxValue(next);
-                if (minValue > next) setMinValue(next);
+                if (minValue > next) setMinValue(nextMin);
+                onPgmeansRangeChange?.(nextMin, next);
               }}
             >
               {maxOptions.map((v) => (
@@ -331,9 +302,14 @@ export default function SyncControlPanel({
             <select
               className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
               value={agglomerativeLinkage}
-              onChange={(e) =>
-                setAgglomerativeLinkage(e.target.value as "ward" | "complete" | "average")
-              }
+              onChange={(e) => {
+                const nextLinkage = e.target.value as "ward" | "complete" | "average";
+                setAgglomerativeLinkage(nextLinkage);
+                onAgglomerativeParamsChange?.({
+                  k: agglomerativeKMode === "manual" ? agglomerativeK : null,
+                  linkage: nextLinkage,
+                });
+              }}
             >
               <option value="ward">ward</option>
               <option value="complete">complete</option>
@@ -345,7 +321,14 @@ export default function SyncControlPanel({
             <select
               className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
               value={agglomerativeKMode}
-              onChange={(e) => setAgglomerativeKMode(e.target.value as "auto" | "manual")}
+              onChange={(e) => {
+                const nextMode = e.target.value as "auto" | "manual";
+                setAgglomerativeKMode(nextMode);
+                onAgglomerativeParamsChange?.({
+                  k: nextMode === "manual" ? agglomerativeK : null,
+                  linkage: agglomerativeLinkage,
+                });
+              }}
             >
               <option value="auto">auto (BIC)</option>
               <option value="manual">manual</option>
@@ -357,7 +340,14 @@ export default function SyncControlPanel({
               <select
                 className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
                 value={agglomerativeK}
-                onChange={(e) => setAgglomerativeK(Number(e.target.value))}
+                onChange={(e) => {
+                  const nextK = Number(e.target.value);
+                  setAgglomerativeK(nextK);
+                  onAgglomerativeParamsChange?.({
+                    k: nextK,
+                    linkage: agglomerativeLinkage,
+                  });
+                }}
               >
                 {Array.from({ length: 9 }, (_, i) => i + 2).map((v) => (
                   <option key={`agg-k-${v}`} value={v}>
@@ -396,32 +386,6 @@ export default function SyncControlPanel({
           type="button"
           className={
             "h-6 px-3 rounded border text-xs shrink-0 " +
-            (generateEnabled && !generateBusy
-              ? "border-zinc-300 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
-              : "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed")
-          }
-          disabled={!generateEnabled || generateBusy}
-          onClick={() => {
-            if (isAgglomerative) {
-              onGenerateAgglomerative?.({
-                k: agglomerativeKMode === "manual" ? agglomerativeK : null,
-                linkage: agglomerativeLinkage,
-              });
-              return;
-            }
-            if (isKnn) {
-              onGenerateRange?.(knnK, knnK);
-              return;
-            }
-            onGenerateRange?.(minValue, maxValue);
-          }}
-        >
-          {generateBusy ? "Generating..." : "Generate"}
-        </button>
-        <button
-          type="button"
-          className={
-            "h-6 px-3 rounded border text-xs shrink-0 " +
             (bookmarkCount > 0
               ? "border-zinc-300 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
               : "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed")
@@ -433,9 +397,6 @@ export default function SyncControlPanel({
           Export ({bookmarkCount})
         </button>
       </div>
-      {generateMessage ? (
-        <div className="text-[10px] text-zinc-500 text-center break-words">{generateMessage}</div>
-      ) : null}
       </div>
     </div>
   );
