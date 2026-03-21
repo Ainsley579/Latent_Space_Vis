@@ -637,10 +637,19 @@ export default function Sankey({
             }
 
             const axisLabels = d3.select(groupsRef.axisLabels!);
-            const renderOrder = mode === "model" ? data.epochs : data.layers;
+            // model transition within a single layer
+            const visibleEpochOrder =
+                mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
+                    ? (reverseEpochOrder ? [...visibleEpochs].reverse() : visibleEpochs).map((x) => String(x))
+                    : null;
+            const renderOrder =
+                mode === "model"
+                    ? (visibleEpochOrder && visibleEpochOrder.length > 0
+                        ? visibleEpochOrder
+                        : (Array.isArray(data?.epochs) ? data.epochs.map((x: any) => String(x)) : []))
+                    : (Array.isArray(data?.layers) ? data.layers.map((x: any) => String(x)) : []);
             axisLabels.selectAll("text").remove();
 
-            const minGap = mode === "model" ? MIN_EPOCH_GAP : MIN_LAYER_GAP;
             const MODEL_GAP = CELL_H;
             const baseLeft = 10;
             const offsetY = CELL_H * SYNC_VERTICAL_SHIFT_RATIO;
@@ -681,13 +690,6 @@ export default function Sankey({
                     .text((d) => toShortLayerName(String(d)));
 
             }
-
-
-            // model transition within a single layer
-            const visibleEpochOrder =
-                mode === "model" && Array.isArray(visibleEpochs) && visibleEpochs.length > 0
-                    ? (reverseEpochOrder ? [...visibleEpochs].reverse() : visibleEpochs).map((x) => String(x))
-                    : null;
             const order =
                 mode === "model" && visibleEpochOrder
                     ? visibleEpochOrder
@@ -876,10 +878,18 @@ export default function Sankey({
             const nodeGroup = d3.select(groupsRef.nodes!);
 
             linkGroup
-                .selectAll("path")
-                .data(links)
-                .enter()
-                .append("path")
+                .selectAll<SVGPathElement, { src: string; tgt: string; value: number }>("path")
+                .data(links, (d: any) => `${d.src}->${d.tgt}`)
+                .join(
+                    (enter) =>
+                        enter.append("path")
+                            .attr("fill", "none")
+                            .attr("stroke", SANKEY_LINK_COLOR)
+                            .attr("stroke-opacity", 0.35)
+                            .attr("vector-effect", "non-scaling-stroke"),
+                    (update) => update,
+                    (exit) => exit.remove()
+                )
                 .attr("d", (d) => {
                     const s = nodeByKey.get(d.src);
                     const t = nodeByKey.get(d.tgt);
@@ -897,10 +907,6 @@ export default function Sankey({
                     const dx = Math.abs(x2 - x1) * 0.5;
                     return `M ${x1},${y1} C ${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
                 })
-                .attr("fill", "none")
-                .attr("stroke", SANKEY_LINK_COLOR)
-                .attr("stroke-opacity", 0.35)
-                .attr("vector-effect", "non-scaling-stroke")
                 .attr("stroke-width", (d) => {
                     const s = nodeByKey.get(d.src);
                     if (!s) return 1;
