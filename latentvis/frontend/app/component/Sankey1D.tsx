@@ -468,6 +468,10 @@ const MIN_LAYER_GAP = 30;
 const MIN_EPOCH_GAP = 60;
 const MAX_LAYER_GAP = 90;
 const MAX_EPOCH_GAP = 140;
+const MIN_LAYER_GAP_HORIZONTAL = 30;
+const MIN_EPOCH_GAP_HORIZONTAL = 60;
+const MAX_LAYER_GAP_HORIZONTAL = 320;
+const MAX_EPOCH_GAP_HORIZONTAL = 360;
 const SYNC_VERTICAL_SHIFT_RATIO = 0.5;
 const CELL_W = 120;
 const CELL_MARGIN_LEFT = 10;
@@ -509,6 +513,8 @@ export default function Sankey({
     visibleEpochs,
     reverseEpochOrder = false,
     activeNodeKey,
+    highlightId,
+    highlightIds,
     onNodeSelect,
     layout = "vertical",
 }: SankeyProps) {
@@ -650,9 +656,30 @@ export default function Sankey({
                     : (Array.isArray(data?.layers) ? data.layers.map((x: any) => String(x)) : []);
             axisLabels.selectAll("text").remove();
 
-            const MODEL_GAP = CELL_H;
-            const baseLeft = 10;
-            const offsetY = CELL_H * SYNC_VERTICAL_SHIFT_RATIO;
+            const axisPadStart = layout === "vertical" ? UNSYNC_TOP_PAD : UNSYNC_LEFT_PAD;
+            const axisPadEnd = layout === "vertical" ? UNSYNC_BOTTOM_PAD : UNSYNC_RIGHT_PAD;
+            const minGap =
+                mode === "model"
+                    ? (layout === "horizontal" ? MIN_EPOCH_GAP_HORIZONTAL : MIN_EPOCH_GAP)
+                    : (layout === "horizontal" ? MIN_LAYER_GAP_HORIZONTAL : MIN_LAYER_GAP);
+            const maxGap =
+                mode === "model"
+                    ? (layout === "horizontal" ? MAX_EPOCH_GAP_HORIZONTAL : MAX_EPOCH_GAP)
+                    : (layout === "horizontal" ? MAX_LAYER_GAP_HORIZONTAL : MAX_LAYER_GAP);
+            const slotCount = Math.max(1, renderOrder.length);
+            const usableAxisSpan = Math.max(1, drawW - axisPadStart - axisPadEnd);
+            let axisGap = 0;
+            if (slotCount > 1) {
+                const rawGap = (usableAxisSpan - NODE_W) / (slotCount - 1);
+                axisGap = Math.max(minGap, Math.min(maxGap, rawGap));
+                // If min-gap cannot fit, fall back to the available span to avoid clipping.
+                if (NODE_W + axisGap * (slotCount - 1) > usableAxisSpan) {
+                    axisGap = Math.max(0, rawGap);
+                }
+            }
+            const occupiedAxisSpan = NODE_W + axisGap * Math.max(0, slotCount - 1);
+            const axisStart = axisPadStart + Math.max(0, (usableAxisSpan - occupiedAxisSpan) / 2);
+            const axisCenterFor = (idx: number) => axisStart + idx * axisGap + NODE_W / 2;
 
             if (layout === "vertical") {
                 axisLabels
@@ -660,7 +687,7 @@ export default function Sankey({
                     .data(renderOrder)
                     .join("text")
                     .attr("x", width - 6)
-                    .attr("y", (_d, i) => baseLeft + i * MODEL_GAP + offsetY + labelYOffset)
+                    .attr("y", (_d, i) => axisCenterFor(i) + labelYOffset)
                     .attr("text-anchor", "end")
                     .attr("dominant-baseline", "middle")
                     .attr("font-size", 12)
@@ -676,7 +703,7 @@ export default function Sankey({
                     .selectAll("text")
                     .data(renderOrder)
                     .join("text")
-                    .attr("x", (_d, i) => baseLeft + i * MODEL_GAP + offsetY + NODE_W / 2)
+                    .attr("x", (_d, i) => axisCenterFor(i))
                     .attr("y", height - 14)
                     .attr("text-anchor", "middle")
                     .attr("dominant-baseline", "middle")
@@ -745,25 +772,9 @@ export default function Sankey({
             const isSynced = !!syncTransform;
             const inferredOrderCombined = inferSequenceFromRows(combinedRows as SampleRow[], mode, order);
 
-            // In rotated rendering, x-axis maps to screen Y (vertical direction).
-            const unsyncedLeftPad = UNSYNC_TOP_PAD;
-            const unsyncedRightPad = UNSYNC_BOTTOM_PAD;
-            const unsyncedGap =
-                renderOrder.length <= 1
-                    ? 0
-                    : (() => {
-                        const rawGap =
-                            (drawW - unsyncedLeftPad - unsyncedRightPad - NODE_W) / (renderOrder.length - 1);
-                        const minGap = mode === "model" ? MIN_EPOCH_GAP : MIN_LAYER_GAP;
-                        const maxGap = mode === "model" ? MAX_EPOCH_GAP : MAX_LAYER_GAP;
-                        return Math.max(minGap, Math.min(maxGap, rawGap));
-                    })();
-
-            // Synced mode keeps alignment with 2D; unsynced mode fills available width.
-            const totalHeight = Math.max(
-                height,
-                baseLeft + (Math.max(1, renderOrder.length) - 0.5) * MODEL_GAP + offsetY + NODE_W / 2 + 10
-            );
+            const axisEnd = axisStart + occupiedAxisSpan;
+            // In vertical mode the rotated x-axis maps to screen Y; allow overflow with native scroll if needed.
+            const totalHeight = layout === "vertical" ? Math.max(height, Math.ceil(axisEnd + 18)) : height;
             svg.attr("height", totalHeight);
 
             // Layer/model labels for each row (right side; screen-space, not rotated with data group).
@@ -779,8 +790,7 @@ export default function Sankey({
                 let cur = TOP;
                 list.forEach((n) => {
                     const h = (n.value / total) * availH;
-                    const baseX = baseLeft + i * MODEL_GAP;
-                    const x = baseX + offsetY;
+                    const x = axisCenterFor(i) - NODE_W / 2;
                     nodes.push({ key: n.key, model, value: n.value, x, y: cur, h });
                     cur += h + NODE_PAD;
                 });
@@ -928,6 +938,54 @@ export default function Sankey({
                 nodeSamples.get(src)!.add(sampleId);
                 nodeSamples.get(tgt)!.add(sampleId);
             });
+            const buildIdAliases = (raw: unknown): Set<string> => {
+                const out = new Set<string>();
+                const s0 = String(raw ?? "").trim();
+                if (!s0) return out;
+                const s = s0.toLowerCase();
+                out.add(s);
+                const parsed = stripTaggedRealId(s0);
+                const base = String(parsed.id ?? "").trim().toLowerCase();
+                if (base) out.add(base);
+                const idx = s.indexOf("::");
+                if (idx >= 0) {
+                    const tail = s.slice(idx + 2).trim();
+                    if (tail) out.add(tail);
+                }
+                const n = Number(base || s);
+                if (Number.isFinite(n)) {
+                    out.add(String(n));
+                    out.add(String(Math.trunc(n)));
+                }
+                return out;
+            };
+            const highlightedAliases = new Set<string>();
+            const appendHighlightId = (raw: unknown) => {
+                buildIdAliases(raw).forEach((k) => highlightedAliases.add(k));
+            };
+            if (highlightId) appendHighlightId(highlightId);
+            if (Array.isArray(highlightIds)) {
+                highlightIds.forEach((id) => appendHighlightId(id));
+            }
+            const highlightedNodeKeys = new Set<string>();
+            if (highlightedAliases.size > 0) {
+                nodeSamples.forEach((sampleSet, nodeKey) => {
+                    let hit = false;
+                    sampleSet.forEach((sid) => {
+                        if (hit) return;
+                        const aliases = buildIdAliases(sid);
+                        for (const a of aliases) {
+                            if (highlightedAliases.has(a)) {
+                                hit = true;
+                                break;
+                            }
+                        }
+                    });
+                    if (hit) {
+                        highlightedNodeKeys.add(nodeKey);
+                    }
+                });
+            }
 
 
             // Remove point-level trajectories entirely.
@@ -976,8 +1034,9 @@ export default function Sankey({
                             }
                             return SANKEY_NODE_COLOR;
                         })
-                        .attr("stroke", (d) => (displayActiveNode && d.key === displayActiveNode ? HIGHLIGHT_RED : "none"))
-                        .attr("stroke-width", (d) => (displayActiveNode && d.key === displayActiveNode ? 2.2 : 0)),
+                        .attr("stroke", "none")
+                        .attr("stroke-width", 0)
+                        .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0")),
                 (update) => update
                     .attr("x", (d: any) => d.x)
                     .attr("y", (d) => d.y)
@@ -986,12 +1045,13 @@ export default function Sankey({
                         if (focusGroup && d.model === focusGroup) {
                             const idx = d.key.lastIndexOf("_");
                             const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
-                            if (Number.isFinite(cluster)) return color(Math.max(0, cluster));
+                                if (Number.isFinite(cluster)) return color(Math.max(0, cluster));
                             }
                             return SANKEY_NODE_COLOR;
                         })
-                    .attr("stroke", (d) => (displayActiveNode && d.key === displayActiveNode ? HIGHLIGHT_RED : "none"))
-                    .attr("stroke-width", (d) => (displayActiveNode && d.key === displayActiveNode ? 2.2 : 0)),
+                    .attr("stroke", "none")
+                    .attr("stroke-width", 0)
+                    .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0")),
                 (exit) => exit.remove());
 
             nodeGroup
@@ -1031,6 +1091,9 @@ export default function Sankey({
                                 return darker(SANKEY_NODE_COLOR, 0.6);
                             })
                             .attr("data-key", (d) => d.key)
+                            .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0"))
+                            .attr("stroke", "none")
+                            .attr("stroke-width", 0)
                             .style("pointer-events", "none"),
                     (update) =>
                         update
@@ -1061,6 +1124,10 @@ export default function Sankey({
                                 }
                                 return darker(SANKEY_NODE_COLOR, 0.6);
                             })
+                            .attr("data-key", (d) => d.key)
+                            .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0"))
+                            .attr("stroke", "none")
+                            .attr("stroke-width", 0)
                     ,
                     (exit) => exit.remove()
                 );
@@ -1098,6 +1165,9 @@ export default function Sankey({
                                 return darker(SANKEY_NODE_COLOR, 1.0);
                             })
                             .attr("data-key", (d) => d.key)
+                            .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0"))
+                            .attr("stroke", "none")
+                            .attr("stroke-width", 0)
                             .style("pointer-events", "none"),
                     (update) =>
                         update
@@ -1125,9 +1195,39 @@ export default function Sankey({
                                     if (Number.isFinite(cluster)) return darker(color(Math.max(0, cluster)), 1.0);
                                 }
                                 return darker(SANKEY_NODE_COLOR, 1.0);
-                            }),
+                            })
+                            .attr("data-key", (d) => d.key)
+                            .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0")),
                     (exit) => exit.remove()
                 );
+            nodeGroup
+                .selectAll("rect.node-outline")
+                .data(nodes, (d: any) => d.key)
+                .join(
+                    (enter) =>
+                        enter
+                            .append("rect")
+                            .attr("class", "node-outline")
+                            .attr("fill", "none")
+                            .attr("data-key", (d) => d.key)
+                            .style("pointer-events", "none"),
+                    (update) => update,
+                    (exit) => exit.remove()
+                )
+                .attr("x", (d) => d.x)
+                .attr("y", (d) => d.y)
+                .attr("width", NODE_W)
+                .attr("height", (d) => Math.max(1, d.h))
+                .attr("data-path-hit", (d) => (highlightedNodeKeys.has(d.key) ? "1" : "0"))
+                .attr("stroke", (d) => {
+                    if (displayActiveNode && d.key === displayActiveNode) return HIGHLIGHT_RED;
+                    return highlightedNodeKeys.has(d.key) ? HIGHLIGHT_RED : "none";
+                })
+                .attr("stroke-width", (d) => {
+                    if (displayActiveNode && d.key === displayActiveNode) return 2.6;
+                    return highlightedNodeKeys.has(d.key) ? 2 : 0;
+                })
+                .attr("vector-effect", "non-scaling-stroke");
             nodeSel.append("title").text((d) => d.key);
             nodeGroup.raise();
 
@@ -1219,6 +1319,8 @@ export default function Sankey({
         showFfn2,
         !!syncTransform,
         activeNodeKey,
+        highlightId,
+        highlightIds,
     ]);
 
     useEffect(() => {
@@ -1231,8 +1333,10 @@ export default function Sankey({
         const activeModel = activeName ? activeName.slice(0, Math.max(0, activeName.lastIndexOf("_"))) : null;
         const focusGroup = activeModel ?? (mode === "model" ? modelKey ?? null : layerKey ?? null);
 
-        const rects = Array.from(svg.querySelectorAll("g.nodes rect[data-key]")) as SVGRectElement[];
-        rects.forEach((rect) => {
+        const fillRects = Array.from(
+            svg.querySelectorAll("g.nodes rect.node-main[data-key], g.nodes rect.node-test[data-key], g.nodes rect.node-val[data-key]")
+        ) as SVGRectElement[];
+        fillRects.forEach((rect) => {
             const key = rect.getAttribute("data-key") || "";
             const idx = key.lastIndexOf("_");
             const model = idx === -1 ? key : key.slice(0, idx);
@@ -1249,13 +1353,20 @@ export default function Sankey({
 
             rect.setAttribute("fill", isValRect ? valColor : isTestRect ? testColor : baseColor);
 
-            if (isTestRect || isValRect) {
-                rect.setAttribute("stroke", "none");
-                rect.setAttribute("stroke-width", "0");
-                return;
-            }
+            rect.setAttribute("stroke", "none");
+            rect.setAttribute("stroke-width", "0");
+        });
 
+        const outlineRects = Array.from(
+            svg.querySelectorAll("g.nodes rect.node-outline[data-key]")
+        ) as SVGRectElement[];
+        outlineRects.forEach((rect) => {
+            const key = rect.getAttribute("data-key") || "";
+            const isPathHit = rect.getAttribute("data-path-hit") === "1";
             if (activeName && key === activeName) {
+                rect.setAttribute("stroke", HIGHLIGHT_RED);
+                rect.setAttribute("stroke-width", "2.6");
+            } else if (isPathHit) {
                 rect.setAttribute("stroke", HIGHLIGHT_RED);
                 rect.setAttribute("stroke-width", "2");
             } else {
@@ -1264,7 +1375,7 @@ export default function Sankey({
             }
         });
 
-    }, [displayActiveNode, mode, modelKey, layerKey]);
+    }, [displayActiveNode, highlightId, highlightIds, mode, modelKey, layerKey]);
 
     useEffect(() => {
         const container = containerRef.current;

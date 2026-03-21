@@ -237,10 +237,24 @@ export default function TopkNearestPanel({
                     </div>
                   </div>
                   <div className="flex flex-col items-center">
+                    {/*
+                      Substructure preview represents the cluster rather than a single molecule.
+                      Use the first top-k member as the hover proxy so scatter can highlight on image hover.
+                    */}
+                    {(() => {
+                      const hoverProxyId =
+                        row.top_k_closest_real_ids.length > 0 ? String(row.top_k_closest_real_ids[0]) : null;
+                      return (
                     <div
                       className="relative w-full max-w-[100px] aspect-square mx-auto"
-                      onMouseEnter={(e) => onSmilesPreviewStart?.(subData.knnSmiles, e.currentTarget)}
-                      onMouseLeave={() => onSmilesPreviewEnd?.()}
+                      onMouseEnter={(e) => {
+                        if (hoverProxyId) onHoverIdChange(hoverProxyId);
+                        onSmilesPreviewStart?.(subData.knnSmiles, e.currentTarget);
+                      }}
+                      onMouseLeave={() => {
+                        onHoverIdChange(null);
+                        onSmilesPreviewEnd?.();
+                      }}
                     >
                       {subData.knn ? (
                         <div
@@ -265,6 +279,8 @@ export default function TopkNearestPanel({
                         </div>
                       )}
                     </div>
+                      );
+                    })()}
                     <div className="mt-0.5 text-[11px] text-zinc-600 text-center">
                       Tanimoto:{" "}
                       <span className="font-medium text-zinc-700">
