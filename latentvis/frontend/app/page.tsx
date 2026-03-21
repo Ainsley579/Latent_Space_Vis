@@ -299,6 +299,21 @@ export default function Home() {
     const [swapAxes, setSwapAxes] = useState(false);
     const [reverseEpochOrder, setReverseEpochOrder] = useState(true);
     const [visibleEpochs, setVisibleEpochs] = useState<string[] | null>(null);
+    const handleVisibleEpochsChange = useCallback((epochs: string[]) => {
+        const next =
+            Array.isArray(epochs) && epochs.length > 0
+                ? epochs.map((e) => String(e))
+                : null;
+        setVisibleEpochs((prev) => {
+            if (prev == null && next == null) return prev;
+            if (prev == null || next == null) return next;
+            if (prev.length !== next.length) return next;
+            for (let i = 0; i < prev.length; i += 1) {
+                if (prev[i] !== next[i]) return next;
+            }
+            return prev;
+        });
+    }, []);
 
     const [suppressScatterCluster, setSuppressScatterCluster] = useState(false);
     const [activeSankeyRows, setActiveSankeyRows] = useState<SankeySampleRow[]>([]);
@@ -865,12 +880,6 @@ export default function Home() {
             };
         }, [selectedDataset, selectedClustering, selectedDataSplit, appliedKnnK]);
     }*/
-    useEffect(() => {
-        if (!selectedNode) {
-            setCellSelected(false);
-        }
-    }, [selectedNode]);
-
     useEffect(() => {
         if (effectiveShowFfn2) return;
         if (selectedLayer === "ffn_layer_2" || selectedLayer === "fnn_layer_2") {
@@ -1979,9 +1988,7 @@ export default function Home() {
                                 selectedSplits={selectedSankeySplits}
                                 reverseEpochOrder={reverseEpochOrder}
                                 onToggleEpochOrder={() => setReverseEpochOrder((v) => !v)}
-                                onVisibleEpochsChange={(epochs) => {
-                                    setVisibleEpochs(Array.isArray(epochs) && epochs.length > 0 ? epochs : null);
-                                }}
+                                onVisibleEpochsChange={handleVisibleEpochsChange}
                                 cellMetricByCell={null}
                                 selectedCellMetric={selectedCellBgMetric}
                                 externalTransform={sankeyViewExternalTransform}

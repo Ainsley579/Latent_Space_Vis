@@ -1161,6 +1161,32 @@ export default function SankeyView({
             const linkGroup = gRoot.append("g").attr("class", "links column-links");
             const linkGroup2 = gRoot.append("g").attr("class", "links row-links");
             const nodeLayer = gRoot.append("g").attr("class", "cell-nodes");
+            const toggleCellLock = (epochName: string, layerName: string, col: number, row: number) => {
+                const isSameLocked =
+                    lockedCell?.rowName === epochName &&
+                    lockedCell?.columnName === layerName;
+
+                if (isSameLocked) {
+                    lockedCell = null;
+                    setPinnedCellInfo(null);
+                    setHoverTooltip(null);
+                    onCellSelect?.(false);
+                    return;
+                }
+
+                lockedCell = { rowName: epochName, columnName: layerName };
+                setPinnedCellInfo({
+                    rowName: epochName,
+                    columnName: layerName,
+                    epochName,
+                    layerName,
+                    col,
+                    row,
+                });
+                onModelSelect?.(epochName);
+                onLayerSelect?.(layerName);
+                onCellSelect?.(true);
+            };
 
             drawArcs([...intraEpoch, ...syntheticIntraEpoch], linkGroup, "column");
             drawArcs(intraLayer, linkGroup2, "row");
@@ -1193,30 +1219,7 @@ export default function SankeyView({
                         .style("cursor", "pointer")
                         .on("click", (event: any) => {
                             event.stopPropagation();
-                            const isSameLocked =
-                                lockedCell?.rowName === epochName &&
-                                lockedCell?.columnName === layerName;
-
-                            if (isSameLocked) {
-                                lockedCell = null;
-                                setPinnedCellInfo(null);
-                                setHoverTooltip(null);
-                                onCellSelect?.(false);
-                                return;
-                            }
-
-                            lockedCell = { rowName: epochName, columnName: layerName };
-                            setPinnedCellInfo({
-                                rowName: epochName,
-                                columnName: layerName,
-                                epochName,
-                                layerName,
-                                col,
-                                row,
-                            });
-                            onModelSelect?.(epochName);
-                            onLayerSelect?.(layerName);
-                            onCellSelect?.(true);
+                            toggleCellLock(epochName, layerName, col, row);
                         });
 
                     const g = nodeLayer
@@ -1340,7 +1343,10 @@ export default function SankeyView({
                                 : Number.isFinite(clusterFromData)
                                     ? clusterFromData
                                     : Number.NaN;
-                            if (!Number.isFinite(c)) return;
+                            if (!Number.isFinite(c)) {
+                                toggleCellLock(epochName, layerName, col, row);
+                                return;
+                            }
                             onNodeSelect?.({ model: epochName, layer: layerName, cluster: c });
                         });
                 })
