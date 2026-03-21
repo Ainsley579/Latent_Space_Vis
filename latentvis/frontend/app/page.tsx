@@ -475,6 +475,10 @@ export default function Home() {
         },
         [cellMetricNames]
     );
+    const sankeyCellMetricByCell = useMemo(
+        () => (selectedCellBgMetric === "cluster_count" ? null : cellMetricByCell),
+        [selectedCellBgMetric, cellMetricByCell]
+    );
     const syncRafRef = useRef<number | null>(null);
     const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
     const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
@@ -2084,7 +2088,7 @@ export default function Home() {
                                 reverseEpochOrder={reverseEpochOrder}
                                 onToggleEpochOrder={() => setReverseEpochOrder((v) => !v)}
                                 onVisibleEpochsChange={handleVisibleEpochsChange}
-                                cellMetricByCell={cellMetricByCell}
+                                cellMetricByCell={sankeyCellMetricByCell}
                                 selectedCellMetric={selectedCellBgMetric}
                                 externalTransform={sankeyViewExternalTransform}
                                 onTransform={(t) => handleSankeyTransformSync(t, "view")}
