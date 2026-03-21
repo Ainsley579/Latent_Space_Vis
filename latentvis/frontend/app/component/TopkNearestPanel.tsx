@@ -40,6 +40,8 @@ type TopkNearestPanelProps = {
   onToggleBookmark: (id: string) => void;
   knnTopm: "5" | "10" | "20" | "all";
   onKnnTopmChange: (value: "5" | "10" | "20" | "all") => void;
+  substructureSplit: "all" | "train";
+  onSubstructureSplitChange: (value: "all" | "train") => void;
   isKnnTopmLoading?: boolean;
   tanimotoByCluster?: Record<number, number | null>;
   isTanimotoLoading?: boolean;
@@ -75,6 +77,8 @@ export default function TopkNearestPanel({
   onToggleBookmark,
   knnTopm,
   onKnnTopmChange,
+  substructureSplit,
+  onSubstructureSplitChange,
   isKnnTopmLoading = false,
   tanimotoByCluster = {},
   isTanimotoLoading = false,
@@ -183,6 +187,15 @@ export default function TopkNearestPanel({
                     <option value="10">10</option>
                     <option value="20">20</option>
                     <option value="all">all</option>
+                  </select>
+                  <select
+                    className="rounded border border-zinc-300 bg-white px-1 py-0.5 text-[11px]"
+                    value={substructureSplit}
+                    onChange={(e) => onSubstructureSplitChange(e.target.value as "all" | "train")}
+                    title="Substructure source split"
+                  >
+                    <option value="all">all</option>
+                    <option value="train">train</option>
                   </select>
                   {isKnnTopmLoading && <span className="text-zinc-500">...</span>}
                 </label>

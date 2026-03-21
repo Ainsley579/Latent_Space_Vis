@@ -389,12 +389,15 @@ def _safe_relpath(raw: str) -> Optional[Path]:
 
 
 def _preferred_cluster_sorted_members_path(
-    dataset: str, clustering: Optional[str] = None
+    dataset: str,
+    clustering: Optional[str] = None,
+    data_split: Optional[str] = None,
 ) -> Optional[Path]:
     """
     User-pinned topk sorted-members source.
-    For now we pin chemprop+agglomerative to:
-      backend/data/chemprop/train/agglomerative/topk/cluster_sorted_members.json
+    For chemprop+agglomerative, prefer split-specific topk sorted-members.
+    For split selectors that imply multiple splits (e.g. "all"), return None
+    so callers can merge train/test via the normal path.
     """
     ds = str(dataset or "").strip().lower()
     if ds != "chemprop":
@@ -402,10 +405,16 @@ def _preferred_cluster_sorted_members_path(
     method = _normalize_clustering(clustering)
     if method != "agglomerative":
         return None
+    split_raw = "" if data_split is None else str(data_split).strip().lower()
+    if split_raw in ("", "all", "train+test", "test+train"):
+        return None
+    split = _normalize_split(split_raw)
+    if split not in ("train", "test"):
+        return None
     p = (
         DATA_ROOT
         / "chemprop"
-        / "train"
+        / split
         / "agglomerative"
         / "topk"
         / "cluster_sorted_members.json"
@@ -2155,6 +2164,7 @@ def data_file():
         preferred_sorted = _preferred_cluster_sorted_members_path(
             dataset,
             clustering=str(clustering or DEFAULT_CLUSTERING).strip().lower(),
+            data_split=split_raw,
         )
         if preferred_sorted is not None:
             rows = _read_json(preferred_sorted, [])
@@ -2163,6 +2173,7 @@ def data_file():
         preferred_sorted = _preferred_cluster_sorted_members_path(
             dataset,
             clustering=str(clustering or DEFAULT_CLUSTERING).strip().lower(),
+            data_split=split_raw,
         )
         if preferred_sorted is not None:
             sorted_rows = _read_json(preferred_sorted, [])
@@ -3292,7 +3303,8 @@ def _average_tanimoto(
 
 
 def _mcs_for_real_ids(
-    real_ids: List[object], id_to_smiles: Dict[str, str]
+    real_ids: List[object],
+    id_to_smiles: Dict[str, str],
 ) -> Dict[str, object]:
     try:
         from rdkit import Chem
@@ -3304,6 +3316,8 @@ def _mcs_for_real_ids(
             "mcs_smarts": None,
             "mcs_smiles": None,
             "mcs_note": "RDKit unavailable",
+            "mcs_match_count": 0,
+            "mcs_match_ratio": 0.0,
         }
     try:
         from mcs_common import common_substructure_smarts_smiles
@@ -3344,11 +3358,33 @@ def _mcs_for_real_ids(
     else:
         mcs_smarts, mcs_smiles = None, None
 
+    mcs_match_count = 0
+    mcs_match_ratio = 0.0
+
+    # Validation step: if the pattern does not parse or is not shared by all valid
+    # molecules, treat as no common substructure.
+    if mcs_smarts and mols:
+        query = Chem.MolFromSmarts(str(mcs_smarts))
+        if query is None:
+            mcs_smarts, mcs_smiles = None, None
+        else:
+            mcs_match_count = sum(1 for mol in mols if mol.HasSubstructMatch(query))
+            mcs_match_ratio = (
+                float(mcs_match_count) / float(len(mols)) if len(mols) > 0 else 0.0
+            )
+            if mcs_match_count != len(mols):
+                mcs_smarts, mcs_smiles = None, None
+
     mcs_note = None
     if not smiles_list:
         mcs_note = "No valid molecules for MCS"
+    elif len(smiles_list) < 2:
+        mcs_note = "Need at least two valid molecules for MCS"
     elif mcs_smarts is None and mcs_smiles is None:
-        mcs_note = "No common substructure found"
+        if mcs_match_count > 0 and mcs_match_count != len(mols):
+            mcs_note = "MCS validation failed: not shared by all valid molecules"
+        else:
+            mcs_note = "No common substructure found"
     elif missing:
         mcs_note = "Missing SMILES for {} real_id(s)".format(len(missing))
     return {
@@ -3358,6 +3394,8 @@ def _mcs_for_real_ids(
         "mcs_smarts": mcs_smarts,
         "mcs_smiles": mcs_smiles,
         "mcs_note": mcs_note,
+        "mcs_match_count": int(mcs_match_count),
+        "mcs_match_ratio": float(mcs_match_ratio),
     }
 
 
@@ -3369,7 +3407,8 @@ def substructures_cluster_topm():
     - If cluster_id is provided: return that single cluster.
     - If cluster_id is omitted or "all": return all clusters in the cell.
     Supports GET query or POST JSON with: dataset, epoch, layer, m,
-    optional: cluster_id, group (knn|kfn|both), clustering, data_split.
+    optional: cluster_id, group (knn|kfn|both), clustering, data_split,
+    cluster_real_ids_by_cluster.
     """
     if request.method == "OPTIONS":
         return ("", 204)
@@ -3390,6 +3429,7 @@ def substructures_cluster_topm():
     group = str(pick("group", "both")).strip().lower()
     clustering = _normalize_clustering(pick("clustering", DEFAULT_CLUSTERING))
     data_split = pick("data_split") or pick("preferred_split")
+    cluster_real_ids_by_cluster_raw = pick("cluster_real_ids_by_cluster")
     _ = pick("use_current", None)  # deprecated, ignored
 
     if dataset not in DEFAULT_CASES:
@@ -3421,41 +3461,43 @@ def substructures_cluster_topm():
         except (TypeError, ValueError):
             return jsonify({"ok": False, "error": "invalid_m"}), 400
 
+    provided_ids_by_cluster: Dict[int, List[str]] = {}
+    if isinstance(cluster_real_ids_by_cluster_raw, dict):
+        for cid_raw, ids_raw in cluster_real_ids_by_cluster_raw.items():
+            try:
+                cid = int(cid_raw)
+            except (TypeError, ValueError):
+                continue
+            if not isinstance(ids_raw, list):
+                continue
+            ids = [str(x) for x in ids_raw if str(x).strip() != ""]
+            if ids:
+                provided_ids_by_cluster[cid] = ids
+
     splits = _resolve_train_test_splits(data_split, default="test")
     targets = []
     checked_paths: List[str] = []
-    preferred_sorted = _preferred_cluster_sorted_members_path(
-        dataset, clustering=clustering
-    )
-    if preferred_sorted is not None:
-        checked_paths.append(str(preferred_sorted))
-        rows = _read_json(preferred_sorted, [])
-        if isinstance(rows, list):
-            for row in rows:
-                if not isinstance(row, dict):
-                    continue
-                if str(row.get("model_type")) != str(epoch):
-                    continue
-                if str(row.get("layer_name")) != str(layer):
-                    continue
-                try:
-                    row_cluster = int(row.get("cluster_id"))
-                except (TypeError, ValueError):
-                    continue
-                if cluster_all or row_cluster == cluster_id:
-                    item = dict(row)
-                    item["_split"] = "train"
-                    targets.append(item)
+    if provided_ids_by_cluster:
+        for row_cluster in sorted(provided_ids_by_cluster.keys()):
+            if not (cluster_all or row_cluster == cluster_id):
+                continue
+            targets.append(
+                {
+                    "cluster_id": int(row_cluster),
+                    "sorted_real_ids": list(provided_ids_by_cluster[row_cluster]),
+                    "_split": _normalize_split(data_split) or "test",
+                }
+            )
     else:
-        for split in splits:
-            case_dir = _case_dir(dataset, clustering, split)
-            sorted_path = case_dir / "topk" / "cluster_sorted_members.json"
-            checked_paths.append(str(sorted_path))
-            if not sorted_path.is_file():
-                continue
-            rows = _read_json(sorted_path, [])
+        preferred_sorted = _preferred_cluster_sorted_members_path(
+            dataset, clustering=clustering, data_split=data_split
+        )
+        if preferred_sorted is not None:
+            preferred_split = _normalize_split(data_split) or "train"
+            checked_paths.append(str(preferred_sorted))
+            rows = _read_json(preferred_sorted, [])
             if not isinstance(rows, list):
-                continue
+                rows = []
             for row in rows:
                 if not isinstance(row, dict):
                     continue
@@ -3469,8 +3511,33 @@ def substructures_cluster_topm():
                     continue
                 if cluster_all or row_cluster == cluster_id:
                     item = dict(row)
-                    item["_split"] = split
+                    item["_split"] = preferred_split
                     targets.append(item)
+        else:
+            for split in splits:
+                case_dir = _case_dir(dataset, clustering, split)
+                sorted_path = case_dir / "topk" / "cluster_sorted_members.json"
+                checked_paths.append(str(sorted_path))
+                if not sorted_path.is_file():
+                    continue
+                rows = _read_json(sorted_path, [])
+                if not isinstance(rows, list):
+                    continue
+                for row in rows:
+                    if not isinstance(row, dict):
+                        continue
+                    if str(row.get("model_type")) != str(epoch):
+                        continue
+                    if str(row.get("layer_name")) != str(layer):
+                        continue
+                    try:
+                        row_cluster = int(row.get("cluster_id"))
+                    except (TypeError, ValueError):
+                        continue
+                    if cluster_all or row_cluster == cluster_id:
+                        item = dict(row)
+                        item["_split"] = split
+                        targets.append(item)
 
     if not targets:
         if cluster_all:
@@ -3500,6 +3567,17 @@ def substructures_cluster_topm():
     by_cluster: Dict[int, List[str]] = {}
     by_cluster_split: Dict[int, List[str]] = {}
     multi_split = len(splits) > 1
+
+    def _split_for_tagged_id(rid: str, default_split: str) -> str:
+        s = str(rid)
+        if "::" in s:
+            head = s.split("::", 1)[0].strip().lower()
+            if head == "val":
+                return "test"
+            if head in ("train", "test"):
+                return head
+        return str(default_split)
+
     for target in targets:
         row_cluster = int(target.get("cluster_id"))
         split_name = str(target.get("_split", "test"))
@@ -3507,13 +3585,15 @@ def substructures_cluster_topm():
         if not isinstance(sorted_real_ids, list):
             continue
         tagged = [
-            f"{split_name}::{str(x)}" if multi_split else str(x)
+            (str(x) if ("::" in str(x) or not multi_split) else f"{split_name}::{str(x)}")
             for x in sorted_real_ids
         ]
         by_cluster.setdefault(row_cluster, [])
         by_cluster_split.setdefault(row_cluster, [])
         by_cluster[row_cluster].extend(tagged)
-        by_cluster_split[row_cluster].extend([split_name] * len(tagged))
+        by_cluster_split[row_cluster].extend(
+            [_split_for_tagged_id(rid, split_name) for rid in tagged]
+        )
 
     for row_cluster in sorted(by_cluster.keys()):
         sorted_ids = by_cluster.get(row_cluster, [])
@@ -3532,8 +3612,16 @@ def substructures_cluster_topm():
         m_use = len(dedup_ids) if m_all else min(m, len(dedup_ids))
         knn_ids = dedup_ids[:m_use]
         knn_splits = dedup_split[:m_use]
-        kfn_ids = list(reversed(dedup_ids[-m_use:]))
-        kfn_splits = list(reversed(dedup_split[-m_use:]))
+        closest_set = set(knn_ids)
+        kfn_ids: List[str] = []
+        kfn_splits: List[str] = []
+        for rid, sp in zip(reversed(dedup_ids), reversed(dedup_split)):
+            if rid in closest_set:
+                continue
+            kfn_ids.append(rid)
+            kfn_splits.append(sp)
+            if len(kfn_ids) >= m_use:
+                break
         cluster_summary.append(
             {
                 "cluster_id": row_cluster,
@@ -3564,6 +3652,8 @@ def substructures_cluster_topm():
                     "mcs_smarts": mcs["mcs_smarts"],
                     "mcs_smiles": mcs["mcs_smiles"],
                     "mcs_note": mcs["mcs_note"],
+                    "mcs_match_count": mcs["mcs_match_count"],
+                    "mcs_match_ratio": mcs["mcs_match_ratio"],
                 }
             )
 
@@ -3585,6 +3675,7 @@ def substructures_cluster_topm():
             "cluster_id": "all" if cluster_all else int(cluster_id),
             "cluster_count": len(cluster_summary),
             "m_requested": "all" if m_all else int(m),
+            "ids_source": "payload" if provided_ids_by_cluster else "cluster_sorted_members",
             "clusters": cluster_summary,
             "rows": out_rows,
         }

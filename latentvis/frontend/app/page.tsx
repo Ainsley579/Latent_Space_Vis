@@ -65,6 +65,7 @@ type CellMetricByCellPayload = {
 };
 
 type KnnTopmOption = "5" | "10" | "20" | "all";
+type SubstructureSplitOption = "all" | "train";
 type HoverPreviewState =
     | { kind: "image"; src: string; left: number; top: number; source?: "topk" | "members" | "other" }
     | { kind: "smiles"; smiles: string; left: number; top: number; source?: "topk" | "members" | "other" };
@@ -312,15 +313,39 @@ export default function Home() {
             return sp === selectedDataSplit;
         };
 
-        const sortIds = (ids: string[]) => {
-            return [...ids].sort((a, b) => {
-                const pa = parseSplitTaggedId(a);
-                const pb = parseSplitTaggedId(b);
-                const na = Number(pa.realId);
-                const nb = Number(pb.realId);
-                if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
-                return pa.realId.localeCompare(pb.realId, undefined, { numeric: true });
-            });
+        const compareDisplayIds = (a: string, b: string) => {
+            const pa = parseSplitTaggedId(a);
+            const pb = parseSplitTaggedId(b);
+            const na = Number(pa.realId);
+            const nb = Number(pb.realId);
+            if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+            return pa.realId.localeCompare(pb.realId, undefined, { numeric: true });
+        };
+
+        const getDrProjectionMap = (cell: any): Record<string, unknown> => {
+            const drRoot = cell?.dr;
+            if (!drRoot || typeof drRoot !== "object" || Array.isArray(drRoot)) return {};
+            const byProjection =
+                (drRoot as Record<string, unknown>)[scatterProjection] ??
+                (drRoot as Record<string, unknown>).default;
+            if (!byProjection || typeof byProjection !== "object" || Array.isArray(byProjection)) return {};
+            return byProjection as Record<string, unknown>;
+        };
+
+        const getPointXY = (drMap: Record<string, unknown>, molIdRaw: string): [number, number] | null => {
+            const point = drMap[String(molIdRaw)] as unknown;
+            if (Array.isArray(point) && point.length >= 2) {
+                const x = Number(point[0]);
+                const y = Number(point[1]);
+                if (Number.isFinite(x) && Number.isFinite(y)) return [x, y];
+            }
+            if (point && typeof point === "object") {
+                const obj = point as Record<string, unknown>;
+                const x = Number((obj as any).x ?? (obj as any)[0]);
+                const y = Number((obj as any).y ?? (obj as any)[1]);
+                if (Number.isFinite(x) && Number.isFinite(y)) return [x, y];
+            }
+            return null;
         };
 
         const derivedSorted: Array<{
@@ -343,17 +368,49 @@ export default function Home() {
             const model = String(cell?.epoch ?? "");
             const layer = String(cell?.layer ?? "");
             const labels = cell?.cluster_labels && typeof cell.cluster_labels === "object" ? cell.cluster_labels : {};
-            const idsByCluster = new Map<number, string[]>();
+            const drMap = getDrProjectionMap(cell);
+            const idsByCluster = new Map<number, Array<{ rid: string; x: number | null; y: number | null }>>();
             Object.entries(labels).forEach(([molIdRaw, clusterRaw]) => {
                 if (!shouldKeepMol(String(molIdRaw))) return;
                 const cid = Number(clusterRaw);
                 if (!Number.isFinite(cid)) return;
                 const rid = normalizeDisplayId(String(molIdRaw));
+                const xy = getPointXY(drMap, String(molIdRaw));
                 if (!idsByCluster.has(cid)) idsByCluster.set(cid, []);
-                idsByCluster.get(cid)!.push(rid);
+                idsByCluster.get(cid)!.push({
+                    rid,
+                    x: xy ? xy[0] : null,
+                    y: xy ? xy[1] : null,
+                });
             });
             Array.from(idsByCluster.keys()).sort((a, b) => a - b).forEach((cid) => {
-                const sorted = sortIds(idsByCluster.get(cid) ?? []);
+                const members = idsByCluster.get(cid) ?? [];
+                const hasGeometry = members.some((m) => m.x != null && m.y != null);
+                let sorted: string[] = [];
+                if (hasGeometry) {
+                    const withXY = members.filter((m) => m.x != null && m.y != null) as Array<{
+                        rid: string;
+                        x: number;
+                        y: number;
+                    }>;
+                    const cx = withXY.reduce((s, m) => s + m.x, 0) / Math.max(1, withXY.length);
+                    const cy = withXY.reduce((s, m) => s + m.y, 0) / Math.max(1, withXY.length);
+                    const ordered = [...members].sort((a, b) => {
+                        const ad =
+                            a.x == null || a.y == null
+                                ? Number.POSITIVE_INFINITY
+                                : (a.x - cx) * (a.x - cx) + (a.y - cy) * (a.y - cy);
+                        const bd =
+                            b.x == null || b.y == null
+                                ? Number.POSITIVE_INFINITY
+                                : (b.x - cx) * (b.x - cx) + (b.y - cy) * (b.y - cy);
+                        if (ad !== bd) return ad - bd;
+                        return compareDisplayIds(a.rid, b.rid);
+                    });
+                    sorted = ordered.map((m) => m.rid);
+                } else {
+                    sorted = members.map((m) => m.rid).sort(compareDisplayIds);
+                }
                 derivedSorted.push({
                     layer_name: layer,
                     model_type: model,
@@ -375,7 +432,7 @@ export default function Home() {
 
         setClusterSortedMembers(derivedSorted);
         setTopkData(derivedTopk);
-    }, [overviewData, selectedDataSplit]);
+    }, [overviewData, selectedDataSplit, scatterProjection]);
 
     //const scatterOverrideUrlRef = useRef<string | null>(null);
     const [selectedNode, setSelectedNode] = useState<{ model: string; layer: string; cluster: number } | null>(null);
@@ -400,6 +457,7 @@ export default function Home() {
         }[]
     >([]);
     const [knnTopm, setKnnTopm] = useState<KnnTopmOption>("5");
+    const [substructureSplit, setSubstructureSplit] = useState<SubstructureSplitOption>("all");
     const [isKnnTopmLoading, setIsKnnTopmLoading] = useState(false);
     const [clusterTanimotoByCluster, setClusterTanimotoByCluster] = useState<Record<number, number | null>>({});
     const [isClusterTanimotoLoading, setIsClusterTanimotoLoading] = useState(false);
@@ -1569,6 +1627,40 @@ export default function Home() {
         const fetchCellTopm = async () => {
             setIsKnnTopmLoading(true);
             try {
+                const mLimit = knnTopm === "all" ? null : Number(knnTopm);
+                const clusterRealIdsByCluster: Record<string, string[]> = {};
+                topkNearestRows.forEach((d) => {
+                    const cid = Number(d.cluster_id);
+                    if (!Number.isFinite(cid)) return;
+                    const ids = Array.isArray(d.top_k_closest_real_ids)
+                        ? d.top_k_closest_real_ids.map((x) => String(x))
+                        : [];
+                    if (ids.length === 0) return;
+                    const filtered = ids.filter((rid) => {
+                        if (substructureSplit !== "train") return true;
+                        const parsed = parseSplitTaggedId(rid);
+                        if (parsed.split) return parsed.split === "train";
+                        return selectedDataSplit === "train";
+                    });
+                    const limited =
+                        mLimit == null ? filtered : filtered.slice(0, Math.max(1, mLimit));
+                    if (limited.length > 0) {
+                        clusterRealIdsByCluster[String(cid)] = limited;
+                    }
+                });
+                if (Object.keys(clusterRealIdsByCluster).length === 0) {
+                    setSubstructures((prev) =>
+                        prev.filter(
+                            (d) =>
+                                !(
+                                    String(d.model_type) === String(selectedModel) &&
+                                    String(d.layer_name) === String(selectedLayer) &&
+                                    d.group === "knn"
+                                )
+                        )
+                    );
+                    return;
+                }
                 const res = await fetch(`${apiBase}/substructures/cluster-topm`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -1582,6 +1674,7 @@ export default function Home() {
                         cluster_id: "all",
                         m: knnTopm,
                         group: "knn",
+                        cluster_real_ids_by_cluster: clusterRealIdsByCluster,
                     }),
                 });
                 if (res.status === 404) {
@@ -1658,9 +1751,11 @@ export default function Home() {
         selectedDataSet,
         selectedClustering,
         selectedDataSplit,
+        substructureSplit,
         selectedModel,
         selectedLayer,
         knnTopm,
+        topkNearestRows,
     ]);
 
     useEffect(() => {
@@ -2643,6 +2738,8 @@ export default function Home() {
                                             onToggleBookmark={toggleBookmark}
                                             knnTopm={knnTopm}
                                             onKnnTopmChange={setKnnTopm}
+                                            substructureSplit={substructureSplit}
+                                            onSubstructureSplitChange={setSubstructureSplit}
                                             isKnnTopmLoading={isKnnTopmLoading}
                                             tanimotoByCluster={clusterTanimotoByCluster}
                                             isTanimotoLoading={isClusterTanimotoLoading}
