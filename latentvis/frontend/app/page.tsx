@@ -206,6 +206,8 @@ export default function Home() {
     const [scatterProjection, setScatterProjection] = useState<"pca" | "mds" | "umap" | "tsne">("pca");
     const [isBlockingInitLoading, setIsBlockingInitLoading] = useState(true);
     const [overviewData, setOverviewData] = useState(null);
+    const latestSankeyRenderRequestRef = useRef(0);
+    const [sankeyRenderRequestId, setSankeyRenderRequestId] = useState(0);
     const availableSankeySplits = useMemo<SankeySplitKey[]>(() => {
         const splitNames: string[] = Array.isArray((overviewData as any)?.split_names)
             ? (overviewData as any).split_names.map((x: any) => String(x).toLowerCase())
@@ -229,21 +231,44 @@ export default function Home() {
     }, [availableSankeySplits]);
 
     useEffect(() => {
-        fetch(`${apiBase}/get_dataset/${selectedDataSet}?clustering=${encodeURIComponent(selectedClustering)}`, { method: "GET" })
+        const controller = new AbortController();
+        let cancelled = false;
+        const requestId = latestSankeyRenderRequestRef.current + 1;
+        latestSankeyRenderRequestRef.current = requestId;
+        setSankeyRenderRequestId(requestId);
+        setIsBlockingInitLoading(true);
+        setOverviewData(null);
+        fetch(`${apiBase}/get_dataset/${selectedDataSet}?clustering=${encodeURIComponent(selectedClustering)}`, {
+            method: "GET",
+            signal: controller.signal,
+        })
             .then((response) => {
-                setIsBlockingInitLoading(false);
                 if (!response.ok) {
                     throw new Error(`Network error: ${response.status}`);
                 }
                 return response.json();
-            }).then((data) => {
+            })
+            .then((data) => {
+                if (cancelled) return;
                 setOverviewData(data);
             })
             .catch((err) => {
+                if ((err as Error)?.name === "AbortError") return;
                 alert(`Failed to load dataset ${selectedDataSet}: ${err}`);
+                setIsBlockingInitLoading(false);
             });
 
+        return () => {
+            cancelled = true;
+            controller.abort();
+        };
     }, [selectedDataSet, selectedClustering]);
+
+    const handleSankeyViewRendered = useCallback((requestId: number) => {
+        if (!Number.isFinite(requestId)) return;
+        if (requestId !== latestSankeyRenderRequestRef.current) return;
+        setIsBlockingInitLoading(false);
+    }, []);
 
     useEffect(() => {
         if (!overviewData || !Array.isArray((overviewData as any)?.cells)) {
@@ -2094,6 +2119,8 @@ export default function Home() {
                                 selectedCellMetric={selectedCellBgMetric}
                                 externalTransform={sankeyViewExternalTransform}
                                 onTransform={(t) => handleSankeyTransformSync(t, "view")}
+                                renderRequestId={sankeyRenderRequestId}
+                                onRenderComplete={handleSankeyViewRendered}
                             />}
                         </div>
                     </div>
@@ -2645,6 +2672,7 @@ export default function Home() {
                                         const nextSplit: DataSplitKey =
                                             next === "dimenet" ? "test" : selectedDataSplit;
                                         pendingResetToLatestRef.current = true;
+                                        setIsBlockingInitLoading(true);
                                         // Clear stale overview immediately so split defaults are computed
                                         // against the new dataset instead of old split_names.
                                         setOverviewData(null);
@@ -2697,6 +2725,7 @@ export default function Home() {
                                     onClusteringChange={(c) => {
                                         const next = String(c).trim().toLowerCase() as ClusteringKey;
                                         pendingResetToLatestRef.current = true;
+                                        setIsBlockingInitLoading(true);
                                         setSelectedClustering(next);
                                         // Reset to latest valid epoch/layer once the new overview is loaded.
                                         /*syncSankeyPaths(selectedModel, selectedLayer, selectedDataset, next, nextSplit);

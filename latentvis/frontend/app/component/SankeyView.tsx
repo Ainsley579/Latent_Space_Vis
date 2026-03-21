@@ -317,6 +317,8 @@ type SankeyViewProps = {
     onVisibleEpochsChange?: (epochs: string[]) => void;
     cellMetricByCell?: Record<string, Record<string, number | null>> | null;
     selectedCellMetric?: string;
+    renderRequestId?: number;
+    onRenderComplete?: (requestId: number) => void;
 };
 
 type SankeyRenderNode = {
@@ -555,6 +557,8 @@ export default function SankeyView({
     onVisibleEpochsChange,
     cellMetricByCell,
     selectedCellMetric = "cluster_count",
+    renderRequestId = 0,
+    onRenderComplete,
 }: SankeyViewProps) {
     const chartRef = useRef<HTMLDivElement | null>(null);
     const chartPanelRef = useRef<HTMLDivElement | null>(null);
@@ -2015,6 +2019,9 @@ export default function SankeyView({
             if (btnSwap) btnSwap.style.fontWeight = SWAP_AXES ? "600" : "400";
             setMode("default");
             applyLinkValueFilter(linkValueMin, Math.min(linkValueMax, linkValueMaxBound));
+            if (!cancelled && chartRef.current === container) {
+                onRenderComplete?.(renderRequestId);
+            }
 
             function setCellHighlight(rowName: string, columnName: string, on: boolean) {
                 if (on) {
@@ -2082,6 +2089,8 @@ export default function SankeyView({
         cellMetricByCell,
         showFfn2,
         selectedSplits,
+        renderRequestId,
+        onRenderComplete,
     ]);
 
     useEffect(() => {
