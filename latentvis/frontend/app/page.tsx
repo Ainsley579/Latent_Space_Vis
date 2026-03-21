@@ -1942,11 +1942,12 @@ export default function Home() {
         nowTs - (syncSourceRef.current?.ts ?? 0) < 180;
     const sankeyViewExternalTransform =
         syncLinkedSankeyViews && !viewIsSyncSource ? sankeyTransform : undefined;
+    const hasSelectedMemberIds = Array.isArray(selectedIds) && selectedIds.length > 0;
     const globalHighlightIds =
         showSearchResultsInMembers
             ? searchResultIds
             : (selectedIds && selectedIds.length > 0 ? selectedIds : null);
-    const showRightDetailPanels = detailsEverShown || cellSelected || selectedNode != null;
+    const showRightDetailPanels = detailsEverShown || cellSelected || selectedNode != null || hasSelectedMemberIds;
     const shouldShowBlockingOverlay = isBlockingInitLoading || isGeneratingRange;
     const searchResultHighlightIds = useMemo(() => {
         const out = new Set<string>();
@@ -2346,7 +2347,7 @@ export default function Home() {
                                                     className="w-full h-full border border-zinc-400 bg-white min-w-0 flex-1"
                                                 >
                                                     <div className="w-full h-full p-2 box-border overflow-hidden">
-                                                        {!selectedNode && !showSearchResultsInMembers && (
+                                                        {!selectedNode && !showSearchResultsInMembers && !hasSelectedMemberIds && (
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <div className="flex flex-col gap-1">
                                                                     <div className="text-sm text-zinc-500">Select a cluster to view all instances.</div>
@@ -2374,11 +2375,15 @@ export default function Home() {
                                                                 )}
                                                             </div>
                                                         )}
-                                                        {(selectedNode || showSearchResultsInMembers) && (
+                                                        {(selectedNode || showSearchResultsInMembers || hasSelectedMemberIds) && (
                                                             <div className="h-full min-h-0 flex flex-col gap-2">
                                                                 <div className="flex items-center justify-between gap-2">
                                                                     <div className="text-sm font-semibold text-zinc-700">
-                                                                        {showSearchResultsInMembers ? `Search Results (${displayedMemberIds.length})` : `Cluster Members (${displayedMemberIds.length})`}
+                                                                        {showSearchResultsInMembers
+                                                                            ? `Search Results (${displayedMemberIds.length})`
+                                                                            : selectedNode
+                                                                                ? `Cluster Members (${displayedMemberIds.length})`
+                                                                                : `Selected Members (${displayedMemberIds.length})`}
                                                                     </div>
                                                                     {searchResultIds.length > 0 && (
                                                                         <button
@@ -2414,7 +2419,9 @@ export default function Home() {
                                                                     <div className="text-sm text-zinc-500">
                                                                         {showSearchResultsInMembers
                                                                             ? "No search results found for current SMILES."
-                                                                            : `No instances found for ${selectedNode?.model} / ${selectedNode?.layer} / cluster ${selectedNode?.cluster}.`}
+                                                                            : selectedNode
+                                                                                ? `No instances found for ${selectedNode?.model} / ${selectedNode?.layer} / cluster ${selectedNode?.cluster}.`
+                                                                                : "No selected instances."}
                                                                     </div>
                                                                 )}
                                                                 {displayedMemberIds.length > 0 && (
