@@ -5,7 +5,6 @@ import ZoomPan from "./ZoomPan";
 import { CLUSTER_COLORS, SANKEY_2D_COLUMN_LINK_COLOR, SANKEY_2D_ROW_LINK_COLOR } from "../theme/colors";
 import { fetchJsonCached } from "../utils/fetchCache";
 
-const SHOW_FMI_CSPA = false;
 const HIDDEN_LAYER = "ffn_layer_2";
 
 type SankeyEdge = {
@@ -326,6 +325,7 @@ const CELL_H = 60;
 const CELL_GAP = 10;
 const cellStepX = CELL_W + CELL_GAP;
 const cellStepY = CELL_H + CELL_GAP;
+const MAX_NODE_BAR_WIDTH = 20;
 
 
 export default function SankeyView({
@@ -376,7 +376,7 @@ export default function SankeyView({
     const [gapLegendMax, setGapLegendMax] = useState(1);
     const [linkValueMin, setLinkValueMin] = useState(0);
     const [linkValueMax, setLinkValueMax] = useState(Number.MAX_SAFE_INTEGER);
-    const [linkValueMaxBound, setLinkValueMaxBound] = useState(1);
+    const [linkValueMaxBound, setLinkValueMaxBound] = useState(152);
     const autoInitLinkMaxRef = useRef(true);
     const [hoveredCellInfo, setHoveredCellInfo] = useState<CellInfoTag | null>(null);
     const [pinnedCellInfo, setPinnedCellInfo] = useState<CellInfoTag | null>(null);
@@ -585,8 +585,7 @@ export default function SankeyView({
                 return;
             }
             const COLUMN_NAMES: string[] = sortLayerKeys(Object.keys(data?.layer || {}));
-            const MODEL_SET = new Set(ROW_NAMES);
-            const LAYER_SET = new Set(COLUMN_NAMES);
+
 
             const ROW_INDEX = new Map(ROW_NAMES.map((d, i) => [d, i]));
             const COLUMN_INDEX = new Map(COLUMN_NAMES.map((d, i) => [d, i]));
@@ -700,6 +699,124 @@ export default function SankeyView({
             };
 
 
+            const maxClusters = Math.max(...data.cells.map((x) => x.children.length));
+            const xScale = d3.scaleBand<number>().range([0, innerW]).domain(d3.range(maxClusters)).padding(0.2);
+
+            // at most you can have the entire dataset in one cluster
+            const yScale = d3.scaleLinear().domain([1, data.molecule_ids.length]).range([innerH, 0]);
+
+            const nodeBarWidth = Math.min(xScale.bandwidth(), MAX_NODE_BAR_WIDTH);
+            const nodeBarOffset = (xScale.bandwidth() - nodeBarWidth) / 2;
+
+            /*const allEdgeValues: number[] = [];
+            const maxEdgeVal = d3.max(allEdgeValues) || 1;
+            const cellTotals: number[] = nodeDrawQueue.map(({ nodesForCell }) =>
+                (Array.isArray(nodesForCell) ? nodesForCell : []).reduce(
+                    (sum: number, n: any) => sum + (Number(n?.value ?? 0) || 0),
+                    0
+                )
+            );
+            const maxCellTotal = d3.max(cellTotals) || 1;
+            const nextMaxBound = Math.max(1, Math.ceil(maxEdgeVal), Math.ceil(maxCellTotal));
+            setLinkValueMaxBound(nextMaxBound);
+            setLinkValueMin((v) => Math.max(0, Math.min(v, nextMaxBound)));
+            if (autoInitLinkMaxRef.current) {
+                setLinkValueMax(nextMaxBound);
+                const p = new URLSearchParams(window.location.search);
+                p.set("max", String(nextMaxBound));
+                p.set("min", String(Math.max(0, Math.min(linkValueMin, nextMaxBound))));
+                p.set("epochMin", String(epochTransitionThreshold.toFixed(2)));
+                window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
+                autoInitLinkMaxRef.current = false;
+            } else {
+                setLinkValueMax((v) => Math.max(0, Math.min(v, nextMaxBound)));
+            }*/
+            const linkWidthScale = d3.scaleSqrt().domain([0, data.molecule_ids.length]).range([0.5, 20]).clamp(true);
+
+            // get horizontal and vertical links
+            const intraEpoch = [];
+            const intraLayer = [];
+            const seenPairs = new Set();
+            data.connectivity.keys().forEach(function(x) {
+                const thisNode = data.nodes[x];
+                const vals = data.connectivity[x];
+                const vNodes = vals.map((x) => data.nodes[x[0]]);
+                vNodes.forEach(function(y, idx) {
+                    if (seenPairs.has([x, y]) || seenPairs.has([y, x])) {
+                        return;
+                    }
+                    // across epochs
+                    if (thisNode.layer_idx === y.layer_idx) {
+                        intraEpoch.push([thisNode, y, vals[idx][1]])
+                    } else {
+                        // across layers
+                        intraLayer.push([thisNode, y, vals[idx][1]])
+                    }
+                });
+            });
+
+            console.log(intraEpoch, intraLayer);
+
+            const drawArcs = (dataGroup, svgGroup) => {
+                dataGroup.forEach(function(x) {
+                    const fromN = x[0];
+                    const toN = x[1];
+                    const moveCount = x[2];
+                    const srcBand = xScale(fromN.cluster_id);
+                    const tgtBand = xScale(toN.cluster_id);
+
+                    const sBarY = innerH;
+                    const sBarH = innerH - yScale(fromN.member_count);
+                    const tBarY = innerH;
+                    const tBarH = innerH - yScale(toN.member_count);
+
+                    const strokeW = linkWidthScale(moveCount);
+
+
+                    let pathD = "";
+                    if (!SWAP_AXES) {
+                        const srcCenterX = fromN.epoch_idx * cellStepX + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
+                        const srcCenterY = fromN.layer_idx * cellStepY + cellMargin.top + sBarY + Math.max(0, sBarH);
+                        const tgtCenterX = toN.epoch_idx * cellStepX + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
+                        const tgtCenterY = toN.epoch_idx * cellStepY + cellMargin.top + tBarY;
+                        const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
+                        pathD = `M ${srcCenterX},${srcCenterY}
+                         C ${srcCenterX},${srcCenterY + dy}
+                           ${tgtCenterX},${tgtCenterY - dy}
+                           ${tgtCenterX},${tgtCenterY}`;
+                        /*} else {
+                            const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
+                            const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
+                            const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
+                            const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
+                            const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
+                            pathD = `M ${srcCenterX},${srcCenterY}
+                                 C ${srcCenterX + dx},${srcCenterY}
+                                   ${tgtCenterX - dx},${tgtCenterY}
+                                   ${tgtCenterX},${tgtCenterY}`;
+                        }*/
+                        svgGroup
+                            .append("path")
+                            .attr("d", pathD)
+                            .attr("fill", "red")
+                            .attr("stroke", moveCount)
+                            .attr("stroke-width", strokeW)
+                            .attr("stroke-opacity", SANKEY_2D_COLUMN_LINK_COLOR)
+                            .attr("class", "2link-path")
+                            .attr("data-value", moveCount);
+
+                        //p.attr("data-column", columnKey);
+                    }
+                });
+
+            }
+
+            const linkGroup = gRoot.append("g").attr("class", "links column-links");
+            const linkGroup2 = gRoot.append("g").attr("class", "links column-links");
+
+            drawArcs(intraEpoch, linkGroup);
+            //drawArcs(intraLayer, linkGroup2);
+
             xs.forEach((xKey, col) => {
                 ys.forEach((yKey, row) => {
 
@@ -710,7 +827,8 @@ export default function SankeyView({
                         .datum({ rowName: xKey, columnName: yKey, col, row });
 
                     // only works for epochs as x and layers as y
-                    const cellCount = data.cells[col * data.epochs.length + row];
+                    const cellIdx = col * data.epochs.length + row;
+                    const cellCount = data.cells[cellIdx];
                     //const cellCount = cellClusterCount.get(`${rowName}|${columnName}`) ?? 0;
                     //const metricVal = cellMetricValue.get(`${rowName}|${columnName}`) ?? 0;
                     g.append("rect")
@@ -723,6 +841,80 @@ export default function SankeyView({
 
                     const innerG = g.append("g").attr("transform", `translate(${cellMargin.left}, ${cellMargin.top})`);
                     cells.push(innerG);
+
+                    const nodesForCell = data.cells[cellIdx].children.map((x) => data.nodes[x]);
+                    const bars = innerG.selectAll("rect.bar-main")
+                        .data(nodesForCell)
+                        .enter()
+                        .append("rect")
+                        .attr("class", "bar bar-main")
+                        .attr("x", (_d: any, i: number) => (xScale(i) as number) + nodeBarOffset)
+                        .attr("y", (d: any) => innerH - yScale(d.previous))
+                        .attr("width", nodeBarWidth)
+                        .attr("height", (d: any) => innerH - yScale(d.member_count))
+                        .attr("fill", "#aaa")
+                        .attr("data-row", xKey)
+                        .attr("data-column", yKey)
+                        .attr("data-cluster", (d: any) => {
+                            const c = d?.cluster_id;
+                            if (c !== null && c !== undefined && c !== "") return Number(c);
+                            const label = String(d?.label ?? "");
+                            const i = label.lastIndexOf("_C");
+                            if (i === -1) return "";
+                            return Number(label.slice(i + 2));
+                        });
+
+                    /*g.selectAll("rect.bar-test")
+                        .data(nodesForCell)
+                        .enter()
+                        .append("rect")
+                        .attr("class", "bar bar-test")
+                        .attr("x", (_d: any, i: number) => (xScale(i) as number) + nodeBarOffset)
+                        .attr("y", (d: any) => {
+                            const cluster =
+                                d?.cluster != null && d?.cluster !== "" ? Number(d.cluster) : parseClusterFromLabel(String(d?.label ?? ""));
+                            const totalValue = Number(d?.value ?? 0);
+                            const totalHeight = innerH - yScale(totalValue);
+                            const testValue = Number(
+                                secondaryNodeValueByCellCluster.get(`${rowName}|${columnName}|${String(cluster)}`) ?? 0
+                            );
+                            const clampedTest = Math.max(0, Math.min(totalValue, testValue));
+                            const testHeight = totalValue > 0 ? (totalHeight * clampedTest) / totalValue : 0;
+                            const topY = innerH - y(d.previous);
+                            return topY + Math.max(0, totalHeight - testHeight);
+                        })
+                        .attr("width", nodeBarWidth)
+                        .attr("height", (d: any) => {
+                            const cluster =
+                                d?.cluster != null && d?.cluster !== "" ? Number(d.cluster) : parseClusterFromLabel(String(d?.label ?? ""));
+                            const totalValue = Number(d?.value ?? 0);
+                            const totalHeight = innerH - y(totalValue);
+                            const testValue = Number(
+                                secondaryNodeValueByCellCluster.get(`${rowName}|${columnName}|${String(cluster)}`) ?? 0
+                            );
+                            const clampedTest = Math.max(0, Math.min(totalValue, testValue));
+                            return totalValue > 0 ? (totalHeight * clampedTest) / totalValue : 0;
+                        })
+                        .attr("fill", "#888")
+                        .attr("data-row", rowName)
+                        .attr("data-column", columnName)
+                        .attr("data-cluster", (d: any) => {
+                            const c = d?.cluster;
+                            if (c !== null && c !== undefined && c !== "") return Number(c);
+                            const label = String(d?.label ?? "");
+                            const i = label.lastIndexOf("_C");
+                            if (i === -1) return "";
+                            return Number(label.slice(i + 2));
+                        })
+                        .style("pointer-events", "none");*/
+
+                    bars
+                        .style("cursor", "pointer")
+                        .on("click", (event: any, d: any) => {
+                            event.stopPropagation();
+                            const c = d?.cluster_id;
+                            onNodeSelect?.({ model: xKey, layer: yKey, cluster: c });
+                        });
                 })
 
                 /* g.on("click", (_event: any, datum: any) => {
@@ -844,56 +1036,14 @@ export default function SankeyView({
             });
 
 
-            const maxClusters = (() => {
-                let max = 0;
-                ROW_NAMES.forEach((rowKey) => {
-                    const nodesByColumn = data.epoch?.[rowKey]?.nodes || {};
-                    Object.keys(nodesByColumn).forEach((columnKey) => {
-                        const list = nodesByColumn[columnKey] || [];
-                        if (list.length > max) max = list.length;
-                    });
-                });
-                return Math.max(1, max);
-            })();
 
-            const maxInstance = (() => {
-                let max = 0;
-                ROW_NAMES.forEach((rowKey) => {
-                    const nodesByColumn = data.epoch?.[rowKey]?.nodes || {};
-                    Object.keys(nodesByColumn).forEach((columnKey) => {
-                        const list = nodesByColumn[columnKey] || [];
-                        list.forEach((node: any) => {
-                            const val = Number(node?.value ?? 0);
-                            const prev = Number(node?.previous ?? 0);
-                            const total = prev + val;
-                            if (total > max) max = total;
-                        });
-                    });
-                });
-                return Math.max(1, max);
-            })();
-            const x = d3.scaleBand<number>().range([0, innerW]).domain(d3.range(maxClusters)).padding(0.2);
-            const y = d3.scaleLinear().domain([0, maxInstance]).range([innerH, 0]);
-            const MAX_NODE_BAR_WIDTH = 20;
-            const nodeBarWidth = Math.min(x.bandwidth(), MAX_NODE_BAR_WIDTH);
-            const nodeBarOffset = (x.bandwidth() - nodeBarWidth) / 2;
-
-            const pctByEpochTransition = new Map<string, number>();
             const normalizeTransitionLayer = (name: string): string => {
                 const n = String(name ?? "").trim();
                 if (n === "fp") return "fingerprint";
                 if (/^fnn_layer_/.test(n)) return n.replace(/^fnn_layer_/, "ffn_layer_");
                 return n;
             };
-            const transitionLayerAliases = (name: string): string[] => {
-                const n = normalizeTransitionLayer(name);
-                const out = new Set<string>([n, String(name ?? "").trim()]);
-                if (/^ffn_layer_/.test(n)) out.add(n.replace(/^ffn_layer_/, "fnn_layer_"));
-                if (/^fnn_layer_/.test(n)) out.add(n.replace(/^fnn_layer_/, "ffn_layer_"));
-                if (n === "fingerprint") out.add("fp");
-                if (n === "fp") out.add("fingerprint");
-                return Array.from(out);
-            };
+
             /*transitionEntriesByEpoch.forEach((d) => {
                 const epoch = String(d?.epoch ?? "").trim();
                 const fromLayerRaw = String(d?.from_layer ?? "").trim();
@@ -1122,147 +1272,6 @@ export default function SankeyView({
                 }
             }*/
 
-            const nodeLookup = new Map<string, { rowName: string; columnName: string; idx: number; node: any }>();
-            const nodeIdLookup = new Map<string, { rowName: string; columnName: string; idx: number; node: any }>();
-
-            function columnFromLabel(label: string) {
-                const i = label.lastIndexOf("_C");
-                if (i === -1) return label;
-                return label.slice(0, i);
-            }
-
-            function canonicalLayerName(name: string): string {
-                if (name === "fp") return "fingerprint";
-                if (/^fnn_layer_/.test(name)) return name.replace(/^fnn_layer_/, "ffn_layer_");
-                return name;
-            }
-
-            function layerNameAliases(name: string): string[] {
-                const out = new Set<string>([name, canonicalLayerName(name)]);
-                if (/^ffn_layer_/.test(name)) out.add(name.replace(/^ffn_layer_/, "fnn_layer_"));
-                if (/^fnn_layer_/.test(name)) out.add(name.replace(/^fnn_layer_/, "ffn_layer_"));
-                return Array.from(out);
-            }
-
-            function resolveExistingColumnName(name: string): string {
-                for (const alias of layerNameAliases(name)) {
-                    if (COLUMN_INDEX.has(alias)) return alias;
-                }
-                return name;
-            }
-
-            function resolveColumnIndex(name: string): number | null {
-                for (const alias of layerNameAliases(name)) {
-                    const idx = COLUMN_INDEX.get(alias);
-                    if (idx != null) return idx;
-                }
-                return null;
-            }
-
-            function lookupNode(
-                rowName: string,
-                columnName: string,
-                label: string,
-                nodeId: number | undefined
-            ): { rowName: string; columnName: string; idx: number; node: any } | null {
-                for (const colName of layerNameAliases(columnName)) {
-                    const byLabel = nodeLookup.get(`${rowName}|${colName}|${label}`);
-                    if (byLabel) return byLabel;
-                    if (nodeId !== undefined) {
-                        const byId = nodeIdLookup.get(`${rowName}|${colName}|${String(nodeId)}`);
-                        if (byId) return byId;
-                    }
-                }
-                return null;
-            }
-
-            const nodeDrawQueue: Array<{
-                g: d3.Selection<SVGGElement, any, any, any>;
-                rowName: string;
-                columnName: string;
-                nodesForCell: any[];
-            }> = [];
-            cells.forEach((g) => {
-                const { rowName, columnName } = g.datum();
-                const rowData = data.epoch?.[rowName];
-                const nodesForCell = (rowData && rowData.nodes && rowData.nodes[columnName]) || [];
-                nodeDrawQueue.push({ g, rowName, columnName, nodesForCell });
-
-                nodesForCell.forEach((node: any, idx: number) => {
-                    const label = String(node.label ?? "");
-                    const key = `${rowName}|${columnName}|${label}`;
-                    nodeLookup.set(key, { rowName, columnName, idx, node });
-                    const nodeId = node?.id;
-                    if (nodeId !== undefined && nodeId !== null) {
-                        const idKey = `${rowName}|${columnName}|${String(nodeId)}`;
-                        nodeIdLookup.set(idKey, { rowName, columnName, idx, node });
-                    }
-                });
-            });
-
-            const allEdgeValues: number[] = [];
-            const collectAggregatedEdgeValues = (edges: any[]) => {
-                const sumByEdge = new Map<string, number>();
-                (Array.isArray(edges) ? edges : []).forEach((e: any) => {
-                    const srcLabel = String(e?.source_label ?? "");
-                    const tgtLabel = String(e?.target_label ?? "");
-                    const srcId = String(e?.source_node_id ?? "");
-                    const tgtId = String(e?.target_node_id ?? "");
-                    const key = `${srcLabel}|${tgtLabel}|${srcId}|${tgtId}`;
-                    const v = Number(e?.value ?? 0) || 0;
-                    sumByEdge.set(key, (sumByEdge.get(key) ?? 0) + v);
-                });
-                sumByEdge.forEach((v) => allEdgeValues.push(v));
-            };
-            /*Object.keys(data.epoch || {}).forEach((k) => {
-                collectAggregatedEdgeValues(data.epoch[k].edges || []);
-            });
-            Object.keys(data.layer || {}).forEach((k) => {
-                collectAggregatedEdgeValues(data.layer[k].edges || []);
-            });*/
-            const maxEdgeVal = d3.max(allEdgeValues) || 1;
-            const cellTotals: number[] = nodeDrawQueue.map(({ nodesForCell }) =>
-                (Array.isArray(nodesForCell) ? nodesForCell : []).reduce(
-                    (sum: number, n: any) => sum + (Number(n?.value ?? 0) || 0),
-                    0
-                )
-            );
-            const maxCellTotal = d3.max(cellTotals) || 1;
-            const nextMaxBound = Math.max(1, Math.ceil(maxEdgeVal), Math.ceil(maxCellTotal));
-            setLinkValueMaxBound(nextMaxBound);
-            setLinkValueMin((v) => Math.max(0, Math.min(v, nextMaxBound)));
-            if (autoInitLinkMaxRef.current) {
-                setLinkValueMax(nextMaxBound);
-                const p = new URLSearchParams(window.location.search);
-                p.set("max", String(nextMaxBound));
-                p.set("min", String(Math.max(0, Math.min(linkValueMin, nextMaxBound))));
-                p.set("epochMin", String(epochTransitionThreshold.toFixed(2)));
-                window.history.replaceState({}, "", window.location.pathname + "?" + p.toString());
-                autoInitLinkMaxRef.current = false;
-            } else {
-                setLinkValueMax((v) => Math.max(0, Math.min(v, nextMaxBound)));
-            }
-            const linkWidthScale = d3.scaleSqrt().domain([0, maxEdgeVal]).range([0.5, 20]).clamp(true);
-
-            function appendLinkPath(
-                group: d3.Selection<SVGGElement, unknown, null, undefined>,
-                pathD: string,
-                edgeValue: number,
-                strokeW: number,
-                strokeColor: string,
-                opacity: number
-            ) {
-                return group
-                    .append("path")
-                    .attr("d", pathD)
-                    .attr("fill", "none")
-                    .attr("stroke", strokeColor)
-                    .attr("stroke-width", strokeW)
-                    .attr("stroke-opacity", opacity)
-                    .attr("class", "link-path")
-                    .attr("data-value", +edgeValue || 0);
-            }
-
             function buildGreedyBridgeLinks(
                 sourceNodes: any[],
                 targetNodes: any[]
@@ -1292,430 +1301,172 @@ export default function SankeyView({
                 return out;
             }
 
-            let linkGroup: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
-            let linkGroup2: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
-            /*if (showSankeyPaths) {
-                // column-links (per layer) -> vertical inside a column
-                linkGroup = gRoot.append("g").attr("class", "links column-links");
-                Object.keys(data.layer || {}).forEach((columnKey) => {
-                    const columnObj = data.layer[columnKey];
-                    if (COLUMN_INDEX.get(columnKey) == null) return;
-                    const acceptedEpochPairSet = new Set<string>();
-     
-                    (columnObj.edges || []).forEach((edge: any) => {
-                        let sourceInfo: any = null;
-                        let targetInfo: any = null;
-                        const nodesByRow = columnObj.nodes || {};
-                        const sourceLabel = String(edge.source_label ?? "");
-                        const targetLabel = String(edge.target_label ?? "");
-     
-                        Object.keys(nodesByRow).forEach((rowName) => {
-                            (nodesByRow[rowName] || []).forEach((node: any, idx: number) => {
-                                const nodeLabel = String(node?.label ?? "");
-                                const sourceByLabel = sourceLabel !== "" && nodeLabel === sourceLabel;
-                                const targetByLabel = targetLabel !== "" && nodeLabel === targetLabel;
-                                const sourceById =
-                                    sourceLabel === "" && edge.source_node_id !== undefined && node?.id === edge.source_node_id;
-                                const targetById =
-                                    targetLabel === "" && edge.target_node_id !== undefined && node?.id === edge.target_node_id;
-     
-                                if (sourceByLabel || sourceById) sourceInfo = { node, rowName, idx };
-                                if (targetByLabel || targetById) targetInfo = { node, rowName, idx };
-                            });
-                        });
-     
-                        if (!sourceInfo || !targetInfo) return;
-     
-                        const srcRowIdxRaw = ROW_INDEX.get(sourceInfo.rowName);
-                        const tgtRowIdxRaw = ROW_INDEX.get(targetInfo.rowName);
-                        if (srcRowIdxRaw == null || tgtRowIdxRaw == null) return;
-                        if (Math.abs(tgtRowIdxRaw - srcRowIdxRaw) !== 1) return;
-                        // Keep adjacent-only links; auto-flip reversed edges to forward order.
-                        const forwardColumn =
-                            tgtRowIdxRaw > srcRowIdxRaw
-                                ? { source: sourceInfo, target: targetInfo }
-                                : { source: targetInfo, target: sourceInfo };
-                        acceptedEpochPairSet.add(`${forwardColumn.source.rowName}->${forwardColumn.target.rowName}`);
-     
-                        const srcO = cellOrigin(forwardColumn.source.rowName, columnKey, cellStepX, cellStepY);
-                        const tgtO = cellOrigin(forwardColumn.target.rowName, columnKey, cellStepX, cellStepY);
-     
-                        const srcIdx = forwardColumn.source.idx;
-                        const tgtIdx = forwardColumn.target.idx;
-                        const srcBand = x(srcIdx);
-                        const tgtBand = x(tgtIdx);
-                        if (srcBand == null || tgtBand == null) return;
-     
-                        const sPrev = forwardColumn.source.node.previous ?? 0;
-                        const sVal = forwardColumn.source.node.value ?? 0;
-                        const tPrev = forwardColumn.target.node.previous ?? 0;
-                        const tVal = forwardColumn.target.node.value ?? 0;
-     
-                        const sBarY = innerH - y(sPrev);
-                        const sBarH = innerH - y(sVal);
-                        const tBarY = innerH - y(tPrev);
-                        const tBarH = innerH - y(tVal);
-     
-                        const strokeW = linkWidthScale(+edge.value || 0);
-     
-                        let pathD = "";
-                        if (!SWAP_AXES) {
-                            const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
-                            const srcCenterY = srcO.y + cellMargin.top + sBarY + Math.max(0, sBarH);
-                            const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
-                            const tgtCenterY = tgtO.y + cellMargin.top + tBarY;
-                            const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
-                            pathD = `M ${srcCenterX},${srcCenterY}
-                         C ${srcCenterX},${srcCenterY + dy}
-                           ${tgtCenterX},${tgtCenterY - dy}
-                           ${tgtCenterX},${tgtCenterY}`;
-                        } else {
-                            const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
-                            const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
-                            const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
-                            const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
-                            const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
-                            pathD = `M ${srcCenterX},${srcCenterY}
-                         C ${srcCenterX + dx},${srcCenterY}
-                           ${tgtCenterX - dx},${tgtCenterY}
-                           ${tgtCenterX},${tgtCenterY}`;
-                        }
-     
-                        const p = appendLinkPath(linkGroup as any, pathD, edge.value, strokeW, SANKEY_2D_COLUMN_LINK_COLOR, 0.3);
-                        p.attr("data-column", columnKey);
-                    });
-     
-                    // Ensure every adjacent visible epoch pair has paths within this layer.
-                    // If source data lacks a direct visible pair after filtering, synthesize conservative bridges.
-                    for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
-                        const fromRow = ROW_NAMES[i];
-                        const toRow = ROW_NAMES[i + 1];
-                        const pairKey = `${fromRow}->${toRow}`;
-                        if (acceptedEpochPairSet.has(pairKey)) continue;
-     
-                        const srcNodes = ((columnObj?.nodes?.[fromRow] || []) as any[]).filter((n) => (n?.value ?? 0) > 0);
-                        const tgtNodes = ((columnObj?.nodes?.[toRow] || []) as any[]).filter((n) => (n?.value ?? 0) > 0);
-                        if (srcNodes.length === 0 || tgtNodes.length === 0) continue;
-     
-                        const bridges = buildGreedyBridgeLinks(srcNodes, tgtNodes);
-                        const srcO = cellOrigin(fromRow, columnKey, cellStepX, cellStepY);
-                        const tgtO = cellOrigin(toRow, columnKey, cellStepX, cellStepY);
-     
-                        bridges.forEach((bridge) => {
-                            const srcIdx = bridge.sourceIdx;
-                            const tgtIdx = bridge.targetIdx;
-                            const srcNode = srcNodes[srcIdx];
-                            const tgtNode = tgtNodes[tgtIdx];
-                            const srcBand = x(srcIdx);
-                            const tgtBand = x(tgtIdx);
-                            if (srcBand == null || tgtBand == null) return;
-     
-                            const sPrev = srcNode.previous ?? 0;
-                            const sVal = srcNode.value ?? 0;
-                            const tPrev = tgtNode.previous ?? 0;
-                            const tVal = tgtNode.value ?? 0;
-                            const sBarY = innerH - y(sPrev);
-                            const sBarH = innerH - y(sVal);
-                            const tBarY = innerH - y(tPrev);
-                            const tBarH = innerH - y(tVal);
-     
-                            let pathD = "";
-                            if (!SWAP_AXES) {
-                                const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
-                                const srcCenterY = srcO.y + cellMargin.top + sBarY + Math.max(0, sBarH);
-                                const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
-                                const tgtCenterY = tgtO.y + cellMargin.top + tBarY;
-                                const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
-                                pathD = `M ${srcCenterX},${srcCenterY}
-                         C ${srcCenterX},${srcCenterY + dy}
-                           ${tgtCenterX},${tgtCenterY - dy}
-                           ${tgtCenterX},${tgtCenterY}`;
-                            } else {
-                                const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
-                                const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
-                                const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
-                                const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
-                                const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
-                                pathD = `M ${srcCenterX},${srcCenterY}
-                         C ${srcCenterX + dx},${srcCenterY}
-                           ${tgtCenterX - dx},${tgtCenterY}
-                           ${tgtCenterX},${tgtCenterY}`;
-                            }
-     
-                            const syntheticW = Math.max(0.8, linkWidthScale(bridge.value));
-                            const synthetic = appendLinkPath(
-                                linkGroup as any,
-                                pathD,
-                                bridge.value,
-                                syntheticW,
-                                SANKEY_2D_COLUMN_LINK_COLOR,
-                                0.18
-                            );
-                            synthetic.attr("data-column", columnKey).attr("data-synthetic", "1");
-                        });
-                    }
-                });
-     
-                // row-links (per epoch/model) -> horizontal inside a row
-                linkGroup2 = gRoot.append("g").attr("class", "links row-links");
-                ROW_NAMES.forEach((rowKey) => {
-                    const rowObj = data.epoch[rowKey];
-                    if (ROW_INDEX.get(rowKey) == null) return;
-                    const acceptedPairSet = new Set<string>();
-     
-                    (rowObj.edges || []).forEach((edge: any) => {
-                        const sLabelRaw = String(edge.source_label ?? "");
-                        const tLabelRaw = String(edge.target_label ?? "");
-                        const sColRaw = columnFromLabel(sLabelRaw);
-                        const tColRaw = columnFromLabel(tLabelRaw);
-                        const sourceInfo = lookupNode(rowKey, sColRaw, sLabelRaw, edge.source_node_id);
-                        const targetInfo = lookupNode(rowKey, tColRaw, tLabelRaw, edge.target_node_id);
-     
-                        if (!sourceInfo || !targetInfo) return;
-                        const sourceColResolved = resolveExistingColumnName(sourceInfo.columnName);
-                        const targetColResolved = resolveExistingColumnName(targetInfo.columnName);
-                        const srcColIdxRaw = resolveColumnIndex(sourceColResolved);
-                        const tgtColIdxRaw = resolveColumnIndex(targetColResolved);
-                        if (srcColIdxRaw == null || tgtColIdxRaw == null) return;
-                        // Strict adjacency only: previous layer <-> next layer.
-                        if (Math.abs(tgtColIdxRaw - srcColIdxRaw) !== 1) return;
-                        // Auto-orient reversed data to forward order by column index.
-                        const forwardRow =
-                            tgtColIdxRaw > srcColIdxRaw
-                                ? { source: sourceInfo, target: targetInfo }
-                                : { source: targetInfo, target: sourceInfo };
-                        const forwardSrcCol = forwardRow.source.columnName;
-                        const forwardTgtCol = forwardRow.target.columnName;
-                        acceptedPairSet.add(
-                            `${resolveExistingColumnName(forwardSrcCol)}->${resolveExistingColumnName(forwardTgtCol)}`
-                        );
-     
-                        const srcO = cellOrigin(rowKey, forwardSrcCol, cellStepX, cellStepY);
-                        const tgtO = cellOrigin(rowKey, forwardTgtCol, cellStepX, cellStepY);
-     
-                        const srcIdx = forwardRow.source.idx;
-                        const tgtIdx = forwardRow.target.idx;
-                        const srcBand = x(srcIdx);
-                        const tgtBand = x(tgtIdx);
-                        if (srcBand == null || tgtBand == null) return;
-     
-                        const sPrev = forwardRow.source.node.previous ?? 0;
-                        const sVal = forwardRow.source.node.value ?? 0;
-                        const tPrev = forwardRow.target.node.previous ?? 0;
-                        const tVal = forwardRow.target.node.value ?? 0;
-     
-                        const sBarY = innerH - y(sPrev);
-                        const sBarH = innerH - y(sVal);
-                        const tBarY = innerH - y(tPrev);
-                        const tBarH = innerH - y(tVal);
-     
-                        const strokeW = linkWidthScale(+edge.value || 0);
-     
-                        let pathD = "";
-                        if (!SWAP_AXES) {
-                            const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
-                            const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
-                            const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
-                            const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
-                            const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
-                            pathD = `M ${srcCenterX},${srcCenterY}
-                         C ${srcCenterX + dx},${srcCenterY}
-                           ${tgtCenterX - dx},${tgtCenterY}
-                           ${tgtCenterX},${tgtCenterY}`;
-                        } else {
-                            const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
-                            const srcCenterY = srcO.y + cellMargin.top + sBarY + Math.max(0, sBarH);
-                            const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
-                            const tgtCenterY = tgtO.y + cellMargin.top + tBarY;
-                            const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
-                            pathD = `M ${srcCenterX},${srcCenterY}
-                         C ${srcCenterX},${srcCenterY + dy}
-                           ${tgtCenterX},${tgtCenterY - dy}
-                           ${tgtCenterX},${tgtCenterY}`;
-                        }
-     
-                        const p2 = appendLinkPath(linkGroup2 as any, pathD, edge.value, strokeW, SANKEY_2D_ROW_LINK_COLOR, 0.2);
-                        p2.attr("data-row", rowKey);
-                    });
-     
-                    // Ensure every adjacent layer pair has ordered paths.
-                    // If raw edges have none for a pair, synthesize a complete conservative bridge
-                    // from both sides' node masses (cluster-wise), not a single coarse link.
-                    const getNodesForColumn = (columnName: string): any[] => {
-                        for (const alias of layerNameAliases(columnName)) {
-                            const arr = rowObj?.nodes?.[alias];
-                            if (Array.isArray(arr) && arr.length > 0) return arr;
-                        }
-                        return [];
-                    };
-                    for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
-                        const fromCol = resolveExistingColumnName(COLUMN_NAMES[i]);
-                        const toCol = resolveExistingColumnName(COLUMN_NAMES[i + 1]);
-                        const pairKey = `${fromCol}->${toCol}`;
-                        if (acceptedPairSet.has(pairKey)) continue;
-     
-                        const srcNodes = (getNodesForColumn(fromCol) as any[]).filter((n) => (n?.value ?? 0) > 0);
-                        const tgtNodes = (getNodesForColumn(toCol) as any[]).filter((n) => (n?.value ?? 0) > 0);
-                        if (srcNodes.length === 0 || tgtNodes.length === 0) continue;
-     
-                        const bridges = buildGreedyBridgeLinks(srcNodes, tgtNodes);
-                        const srcO = cellOrigin(rowKey, fromCol, cellStepX, cellStepY);
-                        const tgtO = cellOrigin(rowKey, toCol, cellStepX, cellStepY);
-     
-                        bridges.forEach((bridge) => {
-                            const srcIdx = bridge.sourceIdx;
-                            const tgtIdx = bridge.targetIdx;
-                            const srcNode = srcNodes[srcIdx];
-                            const tgtNode = tgtNodes[tgtIdx];
-                            const srcBand = x(srcIdx);
-                            const tgtBand = x(tgtIdx);
-                            if (srcBand == null || tgtBand == null) return;
-     
-                            const sPrev = srcNode.previous ?? 0;
-                            const sVal = srcNode.value ?? 0;
-                            const tPrev = tgtNode.previous ?? 0;
-                            const tVal = tgtNode.value ?? 0;
-                            const sBarY = innerH - y(sPrev);
-                            const sBarH = innerH - y(sVal);
-                            const tBarY = innerH - y(tPrev);
-                            const tBarH = innerH - y(tVal);
-     
-                            let pathD = "";
-                            if (!SWAP_AXES) {
-                                const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
-                                const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
-                                const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
-                                const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
-                                const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
-                                pathD = `M ${srcCenterX},${srcCenterY}
-                         C ${srcCenterX + dx},${srcCenterY}
-                           ${tgtCenterX - dx},${tgtCenterY}
-                           ${tgtCenterX},${tgtCenterY}`;
-                            } else {
-                                const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
-                                const srcCenterY = srcO.y + cellMargin.top + sBarY + Math.max(0, sBarH);
-                                const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
-                                const tgtCenterY = tgtO.y + cellMargin.top + tBarY;
-                                const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
-                                pathD = `M ${srcCenterX},${srcCenterY}
-                         C ${srcCenterX},${srcCenterY + dy}
-                           ${tgtCenterX},${tgtCenterY - dy}
-                           ${tgtCenterX},${tgtCenterY}`;
-                            }
-     
-                            const syntheticW = Math.max(0.8, linkWidthScale(bridge.value));
-                            const synthetic = appendLinkPath(
-                                linkGroup2 as any,
-                                pathD,
-                                bridge.value,
-                                syntheticW,
-                                SANKEY_2D_ROW_LINK_COLOR,
-                                0.14
-                            );
-                            synthetic.attr("data-row", rowKey).attr("data-synthetic", "1");
-                        });
-                    }
-                });
-            }*/
 
-            // draw nodes after links so they are on top
-            /*if (showSankeyNodes) {
-                nodeDrawQueue.forEach(({ g, rowName, columnName, nodesForCell }) => {
-                    const bars = g.selectAll("rect.bar-main")
-                        .data(nodesForCell)
-                        .enter()
-                        .append("rect")
-                        .attr("class", "bar bar-main")
-                        .attr("x", (_d: any, i: number) => (x(i) as number) + nodeBarOffset)
-                        .attr("y", (d: any) => innerH - y(d.previous))
-                        .attr("width", nodeBarWidth)
-                        .attr("height", (d: any) => innerH - y(d.value))
-                        .attr("fill", "#aaa")
-                        .attr("data-row", rowName)
-                        .attr("data-column", columnName)
-                        .attr("data-cluster", (d: any) => {
-                            const c = d?.cluster;
-                            if (c !== null && c !== undefined && c !== "") return Number(c);
-                            const label = String(d?.label ?? "");
-                            const i = label.lastIndexOf("_C");
-                            if (i === -1) return "";
-                            return Number(label.slice(i + 2));
-                        });
-     
-                    g.selectAll("rect.bar-test")
-                        .data(nodesForCell)
-                        .enter()
-                        .append("rect")
-                        .attr("class", "bar bar-test")
-                        .attr("x", (_d: any, i: number) => (x(i) as number) + nodeBarOffset)
-                        .attr("y", (d: any) => {
-                            const cluster =
-                                d?.cluster != null && d?.cluster !== "" ? Number(d.cluster) : parseClusterFromLabel(String(d?.label ?? ""));
-                            const totalValue = Number(d?.value ?? 0);
-                            const totalHeight = innerH - y(totalValue);
-                            const testValue = Number(
-                                secondaryNodeValueByCellCluster.get(`${rowName}|${columnName}|${String(cluster)}`) ?? 0
-                            );
-                            const clampedTest = Math.max(0, Math.min(totalValue, testValue));
-                            const testHeight = totalValue > 0 ? (totalHeight * clampedTest) / totalValue : 0;
-                            const topY = innerH - y(d.previous);
-                            return topY + Math.max(0, totalHeight - testHeight);
-                        })
-                        .attr("width", nodeBarWidth)
-                        .attr("height", (d: any) => {
-                            const cluster =
-                                d?.cluster != null && d?.cluster !== "" ? Number(d.cluster) : parseClusterFromLabel(String(d?.label ?? ""));
-                            const totalValue = Number(d?.value ?? 0);
-                            const totalHeight = innerH - y(totalValue);
-                            const testValue = Number(
-                                secondaryNodeValueByCellCluster.get(`${rowName}|${columnName}|${String(cluster)}`) ?? 0
-                            );
-                            const clampedTest = Math.max(0, Math.min(totalValue, testValue));
-                            return totalValue > 0 ? (totalHeight * clampedTest) / totalValue : 0;
-                        })
-                        .attr("fill", "#888")
-                        .attr("data-row", rowName)
-                        .attr("data-column", columnName)
-                        .attr("data-cluster", (d: any) => {
-                            const c = d?.cluster;
-                            if (c !== null && c !== undefined && c !== "") return Number(c);
-                            const label = String(d?.label ?? "");
-                            const i = label.lastIndexOf("_C");
-                            if (i === -1) return "";
-                            return Number(label.slice(i + 2));
-                        })
-                        .style("pointer-events", "none");
-     
-                    bars
-                        .style("cursor", "pointer")
-                        .on("click", (event: any, d: any) => {
-                            event.stopPropagation();
-                            const c = d?.cluster;
-                            let cluster = c !== null && c !== undefined && c !== "" ? Number(c) : NaN;
-                            if (Number.isNaN(cluster)) {
-                                const label = String(d?.label ?? "");
-                                const i = label.lastIndexOf("_C");
-                                if (i !== -1) cluster = Number(label.slice(i + 2));
-                            }
-                            if (!Number.isNaN(cluster)) {
-                                onNodeSelect?.({ model: rowName, layer: columnName, cluster });
-                            }
-                        });
+            // Ensure every adjacent visible epoch pair has paths within this layer.
+            // If source data lacks a direct visible pair after filtering, synthesize conservative bridges.
+            /*for (let i = 0; i < ROW_NAMES.length - 1; i += 1) {
+                const fromRow = ROW_NAMES[i];
+                const toRow = ROW_NAMES[i + 1];
+                const pairKey = `${fromRow}->${toRow}`;
+                if (acceptedEpochPairSet.has(pairKey)) continue;
+
+                const srcNodes = ((columnObj?.nodes?.[fromRow] || []) as any[]).filter((n) => (n?.value ?? 0) > 0);
+                const tgtNodes = ((columnObj?.nodes?.[toRow] || []) as any[]).filter((n) => (n?.value ?? 0) > 0);
+                if (srcNodes.length === 0 || tgtNodes.length === 0) continue;
+
+                const bridges = buildGreedyBridgeLinks(srcNodes, tgtNodes);
+                const srcO = cellOrigin(fromRow, columnKey, cellStepX, cellStepY);
+                const tgtO = cellOrigin(toRow, columnKey, cellStepX, cellStepY);
+
+                bridges.forEach((bridge) => {
+                    const srcIdx = bridge.sourceIdx;
+                    const tgtIdx = bridge.targetIdx;
+                    const srcNode = srcNodes[srcIdx];
+                    const tgtNode = tgtNodes[tgtIdx];
+                    const srcBand = x(srcIdx);
+                    const tgtBand = x(tgtIdx);
+                    if (srcBand == null || tgtBand == null) return;
+
+                    const sPrev = srcNode.previous ?? 0;
+                    const sVal = srcNode.value ?? 0;
+                    const tPrev = tgtNode.previous ?? 0;
+                    const tVal = tgtNode.value ?? 0;
+                    const sBarY = innerH - y(sPrev);
+                    const sBarH = innerH - y(sVal);
+                    const tBarY = innerH - y(tPrev);
+                    const tBarH = innerH - y(tVal);
+
+                    let pathD = "";
+                    if (!SWAP_AXES) {
+                        const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
+                        const srcCenterY = srcO.y + cellMargin.top + sBarY + Math.max(0, sBarH);
+                        const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
+                        const tgtCenterY = tgtO.y + cellMargin.top + tBarY;
+                        const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
+                        pathD = `M ${srcCenterX},${srcCenterY}
+                         C ${srcCenterX},${srcCenterY + dy}
+                           ${tgtCenterX},${tgtCenterY - dy}
+                           ${tgtCenterX},${tgtCenterY}`;
+                    } else {
+                        const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
+                        const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
+                        const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
+                        const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
+                        const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
+                        pathD = `M ${srcCenterX},${srcCenterY}
+                         C ${srcCenterX + dx},${srcCenterY}
+                           ${tgtCenterX - dx},${tgtCenterY}
+                           ${tgtCenterX},${tgtCenterY}`;
+                    }
+
+                    const syntheticW = Math.max(0.8, linkWidthScale(bridge.value));
+                    const synthetic = appendLinkPath(
+                        linkGroup as any,
+                        pathD,
+                        bridge.value,
+                        syntheticW,
+                        SANKEY_2D_COLUMN_LINK_COLOR,
+                        0.18
+                    );
+                    synthetic.attr("data-column", columnKey).attr("data-synthetic", "1");
                 });
             }
-     
+        });*/
+
+            /*// Ensure every adjacent layer pair has ordered paths.
+                // If raw edges have none for a pair, synthesize a complete conservative bridge
+                // from both sides' node masses (cluster-wise), not a single coarse link.
+                const getNodesForColumn = (columnName: string): any[] => {
+                    for (const alias of layerNameAliases(columnName)) {
+                        const arr = rowObj?.nodes?.[alias];
+                        if (Array.isArray(arr) && arr.length > 0) return arr;
+                    }
+                    return [];
+                };
+                for (let i = 0; i < COLUMN_NAMES.length - 1; i += 1) {
+                    const fromCol = resolveExistingColumnName(COLUMN_NAMES[i]);
+                    const toCol = resolveExistingColumnName(COLUMN_NAMES[i + 1]);
+                    const pairKey = `${fromCol}->${toCol}`;
+                    if (acceptedPairSet.has(pairKey)) continue;
+
+                    const srcNodes = (getNodesForColumn(fromCol) as any[]).filter((n) => (n?.value ?? 0) > 0);
+                    const tgtNodes = (getNodesForColumn(toCol) as any[]).filter((n) => (n?.value ?? 0) > 0);
+                    if (srcNodes.length === 0 || tgtNodes.length === 0) continue;
+
+                    const bridges = buildGreedyBridgeLinks(srcNodes, tgtNodes);
+                    const srcO = cellOrigin(rowKey, fromCol, cellStepX, cellStepY);
+                    const tgtO = cellOrigin(rowKey, toCol, cellStepX, cellStepY);
+
+                    bridges.forEach((bridge) => {
+                        const srcIdx = bridge.sourceIdx;
+                        const tgtIdx = bridge.targetIdx;
+                        const srcNode = srcNodes[srcIdx];
+                        const tgtNode = tgtNodes[tgtIdx];
+                        const srcBand = x(srcIdx);
+                        const tgtBand = x(tgtIdx);
+                        if (srcBand == null || tgtBand == null) return;
+
+                        const sPrev = srcNode.previous ?? 0;
+                        const sVal = srcNode.value ?? 0;
+                        const tPrev = tgtNode.previous ?? 0;
+                        const tVal = tgtNode.value ?? 0;
+                        const sBarY = innerH - y(sPrev);
+                        const sBarH = innerH - y(sVal);
+                        const tBarY = innerH - y(tPrev);
+                        const tBarH = innerH - y(tVal);
+
+                        let pathD = "";
+                        if (!SWAP_AXES) {
+                            const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth;
+                            const srcCenterY = srcO.y + cellMargin.top + (sBarY + Math.max(0, sBarH) / 2);
+                            const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset;
+                            const tgtCenterY = tgtO.y + cellMargin.top + (tBarY + Math.max(0, tBarH) / 2);
+                            const dx = Math.abs(tgtCenterX - srcCenterX) * 0.5;
+                            pathD = `M ${srcCenterX},${srcCenterY}
+                         C ${srcCenterX + dx},${srcCenterY}
+                           ${tgtCenterX - dx},${tgtCenterY}
+                           ${tgtCenterX},${tgtCenterY}`;
+                        } else {
+                            const srcCenterX = srcO.x + cellMargin.left + (srcBand as number) + nodeBarOffset + nodeBarWidth / 2;
+                            const srcCenterY = srcO.y + cellMargin.top + sBarY + Math.max(0, sBarH);
+                            const tgtCenterX = tgtO.x + cellMargin.left + (tgtBand as number) + nodeBarOffset + nodeBarWidth / 2;
+                            const tgtCenterY = tgtO.y + cellMargin.top + tBarY;
+                            const dy = Math.abs(tgtCenterY - srcCenterY) * 0.5;
+                            pathD = `M ${srcCenterX},${srcCenterY}
+                         C ${srcCenterX},${srcCenterY + dy}
+                           ${tgtCenterX},${tgtCenterY - dy}
+                           ${tgtCenterX},${tgtCenterY}`;
+                        }
+
+                        const syntheticW = Math.max(0.8, linkWidthScale(bridge.value));
+                        const synthetic = appendLinkPath(
+                            linkGroup2 as any,
+                            pathD,
+                            bridge.value,
+                            syntheticW,
+                            SANKEY_2D_ROW_LINK_COLOR,
+                            0.14
+                        );
+                        synthetic.attr("data-row", rowKey).attr("data-synthetic", "1");
+                    });
+                }
+            });*/
+
+
+
+
             const btnDefault = document.getElementById("btnDefault") as HTMLButtonElement | null;
             const btnColumn = document.getElementById("btnColumn") as HTMLButtonElement | null;
             const btnRow = document.getElementById("btnRow") as HTMLButtonElement | null;
             const btnSwap = document.getElementById("btnSwap") as HTMLButtonElement | null;
-     
+
             function setMode(m: "default" | "column" | "row") {
                 if (btnDefault && btnColumn && btnRow) {
                     btnDefault.style.fontWeight = m === "default" ? "600" : "400";
                     btnColumn.style.fontWeight = m === "column" ? "600" : "400";
                     btnRow.style.fontWeight = m === "row" ? "600" : "400";
                 }
-     
+
                 if (m === "default") {
                     d3.selectAll('#chart svg g[id^="cell-"] rect').classed("cell-dimmed", false).classed("cell-highlight", false);
                     d3.selectAll('#chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", false);
@@ -1743,22 +1494,22 @@ export default function SankeyView({
                     }
                 }
             }
-     
+
             btnDefault?.addEventListener("click", () => setMode("default"));
             btnColumn?.addEventListener("click", () => setMode("column"));
             btnRow?.addEventListener("click", () => setMode("row"));
             btnSwap?.addEventListener("click", () => setSwapParam(!SWAP_AXES));
-     
+
             if (btnSwap) btnSwap.style.fontWeight = SWAP_AXES ? "600" : "400";
             setMode("default");
             applyLinkValueFilter(linkValueMin, Math.min(linkValueMax, nextMaxBound));
-     
+
             function setCellHighlight(rowName: string, columnName: string, on: boolean) {
                 if (on) {
                     d3.selectAll('#chart svg g[id^="cell-"] rect, #chart svg g[id^="cell-"] rect.bar').classed("cell-dimmed", true).classed("cell-highlight", false);
                     d3.selectAll("path.link-path").classed("link-dimmed", true).classed("link-highlight", false);
                     d3.selectAll("rect.gap-rect").classed("gap-dimmed", true);
-     
+
                     ROW_NAMES.forEach((row) => {
                         const cellSel = d3.select(`#cell-${row}-${columnName}`);
                         if (!cellSel.empty()) {
@@ -1766,7 +1517,7 @@ export default function SankeyView({
                             cellSel.selectAll("rect.bar").classed("cell-dimmed", false);
                         }
                     });
-     
+
                     COLUMN_NAMES.forEach((column) => {
                         const cellSel = d3.select(`#cell-${rowName}-${column}`);
                         if (!cellSel.empty()) {
@@ -1774,12 +1525,12 @@ export default function SankeyView({
                             cellSel.selectAll("rect.bar").classed("cell-dimmed", false);
                         }
                     });
-     
+
                     d3.selectAll("g.row-links path.link-path").each(function() {
                         const el = d3.select(this);
                         if (el.attr("data-row") === rowName) el.classed("link-dimmed", false).classed("link-highlight", true);
                     });
-     
+
                     d3.selectAll("g.column-links path.link-path").each(function() {
                         const el = d3.select(this);
                         if (el.attr("data-column") === columnName) el.classed("link-dimmed", false).classed("link-highlight", true);
@@ -1796,7 +1547,7 @@ export default function SankeyView({
                     d3.selectAll("path.link-path").classed("link-dimmed", false).classed("link-highlight", false);
                     d3.selectAll("rect.gap-rect").classed("gap-dimmed", false);
                 }
-            }*/
+            }
         }
         return () => {
             cancelled = true;
@@ -1936,290 +1687,6 @@ export default function SankeyView({
         if (!showTooltips) setHoverTooltip(null);
     }, [showTooltips]);
 
-    useEffect(() => {
-        if (!SHOW_FMI_CSPA) return;
-        fetch(metricsPath)
-            .then((res) => {
-                if (!res.ok) throw new Error("Failed to load avg fmi/cspa metrics");
-                return res.json();
-            })
-            .then((json) => {
-                const layers: Array<{ layer: string; avg_fmi: number; avg_cspa: number }> = json?.layers || [];
-                const models: Array<{ model: string; avg_fmi: number; avg_cspa: number }> = json?.models || [];
-                const next = layers
-                    .map((d) => ({
-                        layer: d.layer,
-                        fmi: Number(d.avg_fmi),
-                        cspa: Number(d.avg_cspa),
-                    }))
-                    .filter((d) => Number.isFinite(d.fmi) && Number.isFinite(d.cspa));
-                const nextModels = models
-                    .map((d) => ({
-                        model: d.model,
-                        fmi: Number(d.avg_fmi),
-                        cspa: Number(d.avg_cspa),
-                    }))
-                    .filter((d) => Number.isFinite(d.fmi) && Number.isFinite(d.cspa));
-                setFmiData(next);
-                setRowMetricData(nextModels);
-            })
-            .catch((err) => {
-                console.error(err);
-            });
-    }, [metricsPath]);
-
-    // FMI_CPSA? this should be its own component
-    useEffect(() => {
-        if (!SHOW_FMI_CSPA) {
-            const container = fmiRef.current;
-            if (container) container.innerHTML = "";
-            return;
-        }
-        const container = fmiRef.current;
-        if (!container) return;
-        if (!layout || !fmiData.length) {
-            container.innerHTML = "";
-            return;
-        }
-
-        const ro = new ResizeObserver(() => draw());
-        ro.observe(container);
-
-        function draw() {
-            if (!container || !layout) return;
-            container.innerHTML = "";
-
-            const width = Math.max(1, container.clientWidth);
-            const height = Math.max(30, container.clientHeight || 40);
-            const margin = { top: 6, right: 8, bottom: 6, left: 0 };
-            const innerH = Math.max(1, height - margin.top - margin.bottom);
-            const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
-            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-            const fmiByLayer = new Map(fmiData.map((d) => [d.layer, d.fmi]));
-            const cspaByLayer = new Map(fmiData.map((d) => [d.layer, d.cspa]));
-            const fmiValues = fmiData.map((d) => d.fmi);
-            const cspaValues = fmiData.map((d) => d.cspa);
-            const fmiMin = Math.min(...fmiValues);
-            const fmiMax = Math.max(...fmiValues);
-            const fmiColor = d3
-                .scaleLinear<string>()
-                .domain([fmiMin, fmiMin + (fmiMax - fmiMin) * 0.4, fmiMin + (fmiMax - fmiMin) * 0.8, fmiMax])
-                .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
-            const cspaMin = Math.min(...cspaValues);
-            const cspaMax = Math.max(...cspaValues);
-            const cspaColor = d3
-                .scaleLinear<string>()
-                .domain([cspaMin, cspaMin + (cspaMax - cspaMin) * 0.4, cspaMin + (cspaMax - cspaMin) * 0.8, cspaMax])
-                .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
-
-            const points = layout.colNames
-                .map((name, i) => {
-                    const x =
-                        transform.x +
-                        transform.scale *
-                        (layout.margin.left + i * layout.cellStepX + layout.cellMargin.left + layout.innerW / 2);
-                    const fmi = fmiByLayer.get(name);
-                    const cspa = cspaByLayer.get(name);
-                    if (fmi == null || cspa == null) return null;
-                    return { x, fmi, cspa };
-                })
-                .filter((d): d is { x: number; fmi: number; cspa: number } => !!d);
-
-            const cellW = transform.scale * layout.cellW;
-            const rowHeight = Math.max(6, innerH * 0.28);
-            const rowGap = 6;
-            const fmiY = 16;
-            const cspaY = fmiY + rowHeight + rowGap;
-
-            g.append("text")
-                .attr("x", -8 + 30)
-                .attr("y", fmiY + rowHeight / 2 + 2)
-                .attr("text-anchor", "end")
-                .attr("font-size", 11)
-                .attr("fill", "#64748b")
-                .text("FMI");
-            g.append("text")
-                .attr("x", -8 + 30)
-                .attr("y", cspaY + rowHeight / 2 + 2)
-                .attr("text-anchor", "end")
-                .attr("font-size", 11)
-                .attr("fill", "#64748b")
-                .text("CSPA");
-
-            g.selectAll("rect.fmi-cell")
-                .data(points)
-                .enter()
-                .append("rect")
-                .attr("class", "fmi-cell")
-                .attr("x", (d) => (d.x - margin.left) - cellW / 2 + 40)
-                .attr("y", fmiY)
-                .attr("width", Math.max(1, cellW - 2))
-                .attr("height", rowHeight)
-                .attr("rx", 2)
-                .attr("fill", (d) => fmiColor(d.fmi));
-
-            g.selectAll("text.fmi-val")
-                .data(points)
-                .enter()
-                .append("text")
-                .attr("class", "fmi-val")
-                .attr("x", (d) => d.x - margin.left + 40)
-                .attr("y", fmiY + rowHeight / 2 + 3)
-                .attr("text-anchor", "middle")
-                .attr("font-size", 11)
-                .attr("fill", "#0f172a")
-                .text((d) => d.fmi.toFixed(3));
-
-            g.selectAll("rect.cspa-cell")
-                .data(points)
-                .enter()
-                .append("rect")
-                .attr("class", "cspa-cell")
-                .attr("x", (d) => (d.x - margin.left) - cellW / 2 + 40)
-                .attr("y", cspaY)
-                .attr("width", Math.max(1, cellW - 2))
-                .attr("height", rowHeight)
-                .attr("rx", 2)
-                .attr("fill", (d) => cspaColor(d.cspa));
-
-            g.selectAll("text.cspa-val")
-                .data(points)
-                .enter()
-                .append("text")
-                .attr("class", "cspa-val")
-                .attr("x", (d) => d.x - margin.left + 40)
-                .attr("y", cspaY + rowHeight / 2 + 3)
-                .attr("text-anchor", "middle")
-                .attr("font-size", 11)
-                .attr("fill", "#0f172a")
-                .text((d) => d.cspa.toFixed(3));
-        }
-
-        draw();
-        return () => ro.disconnect();
-    }, [layout, transform, fmiData]);
-
-    // not sure what this is?
-    useEffect(() => {
-        if (!SHOW_FMI_CSPA) {
-            const container = rowMetricRef.current;
-            if (container) container.innerHTML = "";
-            return;
-        }
-        const container = rowMetricRef.current;
-        if (!container) return;
-        if (!layout || !rowMetricData.length) {
-            container.innerHTML = "";
-            return;
-        }
-
-        const ro = new ResizeObserver(() => draw());
-        ro.observe(container);
-
-        function draw() {
-            if (!container || !layout) return;
-            container.innerHTML = "";
-            const width = Math.max(1, container.clientWidth);
-            const height = Math.max(30, container.clientHeight || 40);
-            const margin = { top: 6, right: 6, bottom: 6, left: 6 };
-            const innerW = Math.max(1, width - margin.left - margin.right);
-
-            const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
-            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-            const fmiByModel = new Map(rowMetricData.map((d) => [d.model, d.fmi]));
-            const cspaByModel = new Map(rowMetricData.map((d) => [d.model, d.cspa]));
-            const fmiValues = rowMetricData.map((d) => d.fmi);
-            const cspaValues = rowMetricData.map((d) => d.cspa);
-            const fmiMin = Math.min(...fmiValues);
-            const fmiMax = Math.max(...fmiValues);
-            const cspaMin = Math.min(...cspaValues);
-            const cspaMax = Math.max(...cspaValues);
-
-            const fmiColor = d3
-                .scaleLinear<string>()
-                .domain([fmiMin, fmiMin + (fmiMax - fmiMin) * 0.4, fmiMin + (fmiMax - fmiMin) * 0.8, fmiMax])
-                .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
-            const cspaColor = d3
-                .scaleLinear<string>()
-                .domain([cspaMin, cspaMin + (cspaMax - cspaMin) * 0.4, cspaMin + (cspaMax - cspaMin) * 0.8, cspaMax])
-                .range(["#f0f0f0", "#f0f0f0", "#cda67f", "#9c795b"]);
-
-            const rowHeight = Math.max(10, transform.scale * layout.cellH);
-            const blockH = rowHeight;
-            const gap = 2;
-            const blockW = Math.min(15, Math.max(6, Math.floor(innerW / 2) - gap));
-            const fmiX = 8;
-            const cspaX = Math.min(innerW - blockW, blockW + gap) + 8;
-            const labelY = 6;
-
-            layout.rowNames.forEach((name, i) => {
-                const y =
-                    transform.y +
-                    transform.scale * (layout.margin.top + i * layout.cellStepY + layout.cellMargin.top + layout.innerH / 2);
-                const fmi = fmiByModel.get(name);
-                const cspa = cspaByModel.get(name);
-                if (fmi == null || cspa == null) return;
-
-                const yTop = y - margin.top - blockH / 2 + 7;
-                g.append("rect")
-                    .attr("x", fmiX)
-                    .attr("y", yTop)
-                    .attr("width", blockW)
-                    .attr("height", blockH)
-                    .attr("rx", 2)
-                    .attr("fill", fmiColor(fmi));
-
-                g.append("rect")
-                    .attr("x", cspaX)
-                    .attr("y", yTop)
-                    .attr("width", blockW)
-                    .attr("height", blockH)
-                    .attr("rx", 2)
-                    .attr("fill", cspaColor(cspa));
-
-                g.append("text")
-                    .attr("x", fmiX + blockW / 2)
-                    .attr("y", yTop + blockH / 2 + 2)
-                    .attr("text-anchor", "middle")
-                    .attr("font-size", 9)
-                    .attr("fill", "#111827")
-                    .attr("transform", `rotate(-90, ${fmiX + blockW / 2}, ${yTop + blockH / 2})`)
-                    .text(fmi.toFixed(3));
-
-                g.append("text")
-                    .attr("x", cspaX + blockW / 2)
-                    .attr("y", yTop + blockH / 2 + 2)
-                    .attr("text-anchor", "middle")
-                    .attr("font-size", 9)
-                    .attr("fill", "#111827")
-                    .attr("transform", `rotate(-90, ${cspaX + blockW / 2}, ${yTop + blockH / 2})`)
-                    .text(cspa.toFixed(3));
-            });
-
-            g.append("text")
-                .attr("x", fmiX + blockW / 2 + 5)
-                .attr("y", labelY + 2)
-                .attr("text-anchor", "middle")
-                .attr("font-size", 10)
-                .attr("fill", "#6b7280")
-                .attr("transform", `rotate(-90, ${fmiX + blockW / 2}, ${labelY})`)
-                .text("FMI");
-
-            g.append("text")
-                .attr("x", cspaX + blockW / 2 + 5)
-                .attr("y", labelY + 2)
-                .attr("text-anchor", "middle")
-                .attr("font-size", 8)
-                .attr("fill", "#6b7280")
-                .attr("transform", `rotate(-90, ${cspaX + blockW / 2}, ${labelY})`)
-                .text("CSPA");
-        }
-
-        draw();
-        return () => ro.disconnect();
-    }, [layout, transform, rowMetricData]);
 
     const clampedLinkMin = Math.max(0, Math.min(linkValueMin, linkValueMaxBound));
     const clampedLinkMax = Math.max(0, Math.min(linkValueMax, linkValueMaxBound));
