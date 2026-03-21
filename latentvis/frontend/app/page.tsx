@@ -353,6 +353,7 @@ export default function Home() {
     const [showSearchResultsInMembers, setShowSearchResultsInMembers] = useState(false);
     const [lastSearchCount, setLastSearchCount] = useState<number | null>(null);
     const [uploadedUserClustering, setUploadedUserClustering] = useState<UploadedUserClustering | null>(null);
+    const [cellMetricByCell, setCellMetricByCell] = useState<Record<string, Record<string, number | null>> | null>(null);
     const [cellMetricNames, setCellMetricNames] = useState<string[]>([]);
     const [selectedCellBgMetric, setSelectedCellBgMetric] = useState<string>("cluster_count");
     const memberListRef = useRef<HTMLDivElement | null>(null);
@@ -682,9 +683,9 @@ export default function Home() {
         }
     }, [cellBgMetricOptions, selectedCellBgMetric]);
 
-    /*useEffect(() => {
+    useEffect(() => {
         if (!uploadedUserClustering || uploadedUserClustering.rows.length === 0) {
-            //setCellMetricByCell(null);
+            setCellMetricByCell(null);
             setCellMetricNames([]);
             return;
         }
@@ -694,7 +695,7 @@ export default function Home() {
             headers: { "Content-Type": "application/json" },
             signal: controller.signal,
             body: JSON.stringify({
-                dataset: selectedDataset,
+                dataset: selectedDataSet,
                 clustering: selectedClustering,
                 data_split: selectedDataSplit,
                 use_current: true,
@@ -726,10 +727,10 @@ export default function Home() {
     }, [
         apiBase,
         uploadedUserClustering,
-        selectedDataset,
+        selectedDataSet,
         selectedClustering,
         selectedDataSplit,
-    ]);*/
+    ]);
 
     function sleep(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms));
@@ -1989,7 +1990,7 @@ export default function Home() {
                                 reverseEpochOrder={reverseEpochOrder}
                                 onToggleEpochOrder={() => setReverseEpochOrder((v) => !v)}
                                 onVisibleEpochsChange={handleVisibleEpochsChange}
-                                cellMetricByCell={null}
+                                cellMetricByCell={cellMetricByCell}
                                 selectedCellMetric={selectedCellBgMetric}
                                 externalTransform={sankeyViewExternalTransform}
                                 onTransform={(t) => handleSankeyTransformSync(t, "view")}

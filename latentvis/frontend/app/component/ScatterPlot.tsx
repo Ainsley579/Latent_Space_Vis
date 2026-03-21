@@ -28,6 +28,15 @@ function normalizeLayerKey(value: unknown): string {
   return raw;
 }
 
+function stripSplitTag(rawId: string): string {
+  const raw = String(rawId ?? "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("train::")) return raw.slice("train::".length).trim();
+  if (raw.startsWith("test::")) return raw.slice("test::".length).trim();
+  if (raw.startsWith("val::")) return raw.slice("val::".length).trim();
+  return raw;
+}
+
 type ScatterPlotProps = {
   compactOverview?: any;
   dataPathXY?: string;
@@ -399,21 +408,115 @@ export default function ScatterPlot({
     file
       .text()
       .then((text) => {
-        const rows = d3.csvParse(text);
+        const parseCandidates = [
+          d3.csvParse(text),
+          d3.tsvParse(text),
+          d3.dsvFormat(";").parse(text),
+        ];
+        let rows = parseCandidates[0];
+        let bestScore = -1;
+        parseCandidates.forEach((candidate) => {
+          const colCount = Array.isArray(candidate?.columns) ? candidate.columns.length : 0;
+          const rowCount = Array.isArray(candidate) ? candidate.length : 0;
+          const score = colCount * 100000 + rowCount;
+          if (score > bestScore) {
+            bestScore = score;
+            rows = candidate;
+          }
+        });
         if (!rows.length) throw new Error("CSV is empty.");
         const columns = rows.columns ?? [];
-        const labelCol = columns.find((c) => c.trim().toLowerCase() === "label");
-        if (!labelCol) throw new Error("CSV must contain a 'label' column.");
 
-        const idCol =
-          columns.find((c) => c.trim().toLowerCase() === "real_id") ??
-          columns.find((c) => c.trim().toLowerCase() === "id") ??
-          columns.find((c) => c.trim().toLowerCase() === "realid") ??
-          columns.find((c) => c.trim().toLowerCase() === "mol_id");
-        const smilesCol = columns.find((c) => c.trim().toLowerCase() === "smiles");
+        const normalizeColKey = (s: string) => String(s ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
+        const columnByNormalized = new Map<string, string>();
+        columns.forEach((c) => columnByNormalized.set(normalizeColKey(c), c));
+        const findCol = (aliases: string[]): string | undefined => {
+          for (let i = 0; i < aliases.length; i += 1) {
+            const hit = columnByNormalized.get(aliases[i]);
+            if (hit) return hit;
+          }
+          return undefined;
+        };
+
+        const labelCol =
+          findCol([
+            "label",
+            "labelled",
+            "labeled",
+            "user_label",
+            "user_cluster",
+            "user_cluster_id",
+            "cluster",
+            "cluster_id",
+            "group",
+            "class",
+          ]) ??
+          columns.find((c) => {
+            const k = normalizeColKey(c);
+            return k.includes("label") || k.includes("cluster") || k.includes("group") || k.includes("class");
+          });
+        if (!labelCol) {
+          throw new Error("CSV must contain a label column (e.g. label / labelled / user_cluster_id).");
+        }
+
+        let idCol =
+          findCol([
+            "real_id",
+            "id",
+            "realid",
+            "mol_id",
+            "molid",
+            "molecule_id",
+            "molecule_idx",
+            "mol_index",
+            "compound_id",
+            "sample_id",
+            "data_id",
+            "datapoint_id",
+            "idx",
+            "index",
+          ]) ??
+          columns.find((c) => {
+            if (c === labelCol) return false;
+            const k = normalizeColKey(c);
+            if (!k.endsWith("_id")) return false;
+            if (k.includes("cluster") || k.includes("label")) return false;
+            return true;
+          });
+        const smilesCol = findCol(["smiles", "smile"]);
+        if (!idCol) {
+          const points = rowsRef.current ?? [];
+          const pointKeySet = new Set<string>();
+          points.forEach((pt) => {
+            idLookupKeys(String(pt.real_id)).forEach((k) => pointKeySet.add(k));
+            const stripped = stripSplitTag(String(pt.real_id));
+            idLookupKeys(stripped).forEach((k) => pointKeySet.add(k));
+          });
+          let bestCol: string | null = null;
+          let bestMatch = 0;
+          columns.forEach((col) => {
+            if (col === labelCol || col === smilesCol) return;
+            let matched = 0;
+            let total = 0;
+            rows.forEach((row) => {
+              const value = String((row as Record<string, unknown>)[col] ?? "").trim();
+              if (!value) return;
+              total += 1;
+              const keys = idLookupKeys(value);
+              if (keys.some((k) => pointKeySet.has(k))) matched += 1;
+            });
+            const ratio = total > 0 ? matched / total : 0;
+            if (ratio > bestMatch) {
+              bestMatch = ratio;
+              bestCol = col;
+            }
+          });
+          if (bestCol && bestMatch >= 0.2) idCol = bestCol;
+        }
 
         const nextLabelById: Record<string, string> = {};
         const nextLabelBySmiles: Record<string, string> = {};
+        const uploadedIdLabelRows: Array<{ real_id: string; label: string }> = [];
         if (smilesCol) {
           rows.forEach((row) => {
             const smiles = String((row as Record<string, unknown>)[smilesCol] ?? "").trim();
@@ -427,11 +530,12 @@ export default function ScatterPlot({
             const id = String((row as Record<string, unknown>)[idCol] ?? "").trim();
             const label = String((row as Record<string, unknown>)[labelCol] ?? "").trim();
             if (!id || !label) return;
+            uploadedIdLabelRows.push({ real_id: id, label });
             idLookupKeys(id).forEach((k) => {
               nextLabelById[k] = label;
             });
           });
-        } else {
+        } else if (!smilesCol) {
           const points = rowsRef.current ?? [];
           if (points.length !== rows.length) {
             throw new Error("Missing id column. Please provide 'real_id' or 'id'.");
@@ -453,25 +557,47 @@ export default function ScatterPlot({
         const labelToCluster = new Map<string, number>();
         legend.forEach((name, idx) => labelToCluster.set(name, idx));
         const points = rowsRef.current ?? [];
+        const userRowMap = new Map<string, number>();
+        if (uploadedIdLabelRows.length > 0) {
+          uploadedIdLabelRows.forEach(({ real_id, label }) => {
+            const cid = labelToCluster.get(label);
+            if (cid == null) return;
+            const rid = stripSplitTag(real_id);
+            if (!rid) return;
+            userRowMap.set(rid, cid);
+          });
+        } else {
+          points.forEach((pt) => {
+            const rid = String(pt.real_id);
+            let label = lookupLabelById(nextLabelById, rid);
+            if (!label) {
+              const smiles = getSmilesByIdRef.current?.(rid);
+              if (smiles) label = nextLabelBySmiles[String(smiles).trim()];
+            }
+            if (!label) return;
+            const cid = labelToCluster.get(label);
+            if (cid == null) return;
+            const canonicalId = stripSplitTag(rid);
+            if (!canonicalId) return;
+            userRowMap.set(canonicalId, cid);
+          });
+        }
         const userRows: Array<{ real_id: string; user_cluster_id: number }> = [];
-        points.forEach((pt) => {
-          const rid = String(pt.real_id);
-          let label = lookupLabelById(nextLabelById, rid);
-          if (!label) {
-            const smiles = getSmilesByIdRef.current?.(rid);
-            if (smiles) label = nextLabelBySmiles[String(smiles).trim()];
-          }
-          if (!label) return;
-          const cid = labelToCluster.get(label);
-          if (cid == null) return;
-          userRows.push({ real_id: rid, user_cluster_id: cid });
+        userRowMap.forEach((user_cluster_id, real_id) => {
+          userRows.push({ real_id, user_cluster_id });
         });
+        userRows.sort((a, b) => a.real_id.localeCompare(b.real_id, undefined, { numeric: true }));
         setLabelById(nextLabelById);
         setLabelBySmiles(nextLabelBySmiles);
         setLabelColors(colors);
         setLabelLegend(legend);
         setLabelFileName(file.name);
         setColorMode("label");
+        if (userRows.length === 0) {
+          setLabelLoadError("Labels loaded, but no points matched current scatter IDs/SMILES.");
+          onUserClusteringUpload?.(null);
+          return;
+        }
         onUserClusteringUpload?.({
           fileName: file.name,
           labelNames: legend,
@@ -1107,7 +1233,7 @@ export default function ScatterPlot({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
