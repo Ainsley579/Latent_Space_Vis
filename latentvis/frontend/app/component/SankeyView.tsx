@@ -330,6 +330,11 @@ type SankeyRenderNode = {
     member_count: number;
     value: number;
     previous: number;
+    split_counts: {
+        train: number;
+        test: number;
+        val: number;
+    };
 };
 
 type SankeyRenderData = {
@@ -420,10 +425,18 @@ function buildRenderData(input: any, selectedSplits?: string[]): SankeyRenderDat
                 member_count: 0,
                 value: 0,
                 previous: 0,
+                split_counts: { train: 0, test: 0, val: 0 },
             });
         }
         aggNodes[aggId].member_count += Math.max(0, memberCount);
         aggNodes[aggId].value = aggNodes[aggId].member_count;
+        const splitName =
+            Number.isFinite(nodeSplit) && nodeSplit >= 0 && nodeSplit < splitNames.length
+                ? String(splitNames[nodeSplit]).toLowerCase()
+                : "";
+        if (splitName === "train") aggNodes[aggId].split_counts.train += Math.max(0, memberCount);
+        else if (splitName === "test") aggNodes[aggId].split_counts.test += Math.max(0, memberCount);
+        else if (splitName === "val") aggNodes[aggId].split_counts.val += Math.max(0, memberCount);
         originalToAgg.set(idx, aggId);
     });
 
@@ -1154,49 +1167,79 @@ export default function SankeyView({
                             return Number(label.slice(i + 2));
                         });
 
-                    /*g.selectAll("rect.bar-test")
+                    innerG.selectAll("rect.bar-test")
                         .data(nodesForCell)
                         .enter()
                         .append("rect")
                         .attr("class", "bar bar-test")
                         .attr("x", (_d: any, i: number) => (xScale(i) as number) + nodeBarOffset)
                         .attr("y", (d: any) => {
-                            const cluster =
-                                d?.cluster != null && d?.cluster !== "" ? Number(d.cluster) : parseClusterFromLabel(String(d?.label ?? ""));
-                            const totalValue = Number(d?.value ?? 0);
+                            const totalValue = Math.max(0, Number(d?.member_count ?? 0));
                             const totalHeight = innerH - yScale(totalValue);
-                            const testValue = Number(
-                                secondaryNodeValueByCellCluster.get(`${rowName}|${columnName}|${String(cluster)}`) ?? 0
-                            );
-                            const clampedTest = Math.max(0, Math.min(totalValue, testValue));
-                            const testHeight = totalValue > 0 ? (totalHeight * clampedTest) / totalValue : 0;
-                            const topY = innerH - y(d.previous);
-                            return topY + Math.max(0, totalHeight - testHeight);
+                            const topY = innerH - yScale(Number(d?.previous ?? 0));
+                            const splitCounts = d?.split_counts ?? {};
+                            const valValue = Math.max(0, Number(splitCounts?.val ?? 0));
+                            const testValue = Math.max(0, Number(splitCounts?.test ?? 0));
+                            const valHeight = totalValue > 0 ? (totalHeight * Math.min(totalValue, valValue)) / totalValue : 0;
+                            const testHeight = totalValue > 0 ? (totalHeight * Math.min(totalValue, testValue)) / totalValue : 0;
+                            return topY + Math.max(0, totalHeight - valHeight - testHeight);
                         })
                         .attr("width", nodeBarWidth)
                         .attr("height", (d: any) => {
-                            const cluster =
-                                d?.cluster != null && d?.cluster !== "" ? Number(d.cluster) : parseClusterFromLabel(String(d?.label ?? ""));
-                            const totalValue = Number(d?.value ?? 0);
-                            const totalHeight = innerH - y(totalValue);
-                            const testValue = Number(
-                                secondaryNodeValueByCellCluster.get(`${rowName}|${columnName}|${String(cluster)}`) ?? 0
-                            );
-                            const clampedTest = Math.max(0, Math.min(totalValue, testValue));
-                            return totalValue > 0 ? (totalHeight * clampedTest) / totalValue : 0;
+                            const totalValue = Math.max(0, Number(d?.member_count ?? 0));
+                            const totalHeight = innerH - yScale(totalValue);
+                            const splitCounts = d?.split_counts ?? {};
+                            const testValue = Math.max(0, Number(splitCounts?.test ?? 0));
+                            return totalValue > 0 ? (totalHeight * Math.min(totalValue, testValue)) / totalValue : 0;
                         })
                         .attr("fill", "#888")
-                        .attr("data-row", rowName)
-                        .attr("data-column", columnName)
+                        .attr("data-row", epochName)
+                        .attr("data-column", layerName)
                         .attr("data-cluster", (d: any) => {
-                            const c = d?.cluster;
+                            const c = d?.cluster_id;
                             if (c !== null && c !== undefined && c !== "") return Number(c);
                             const label = String(d?.label ?? "");
                             const i = label.lastIndexOf("_C");
                             if (i === -1) return "";
                             return Number(label.slice(i + 2));
                         })
-                        .style("pointer-events", "none");*/
+                        .style("pointer-events", "none");
+
+                    innerG.selectAll("rect.bar-val")
+                        .data(nodesForCell)
+                        .enter()
+                        .append("rect")
+                        .attr("class", "bar bar-val")
+                        .attr("x", (_d: any, i: number) => (xScale(i) as number) + nodeBarOffset)
+                        .attr("y", (d: any) => {
+                            const totalValue = Math.max(0, Number(d?.member_count ?? 0));
+                            const totalHeight = innerH - yScale(totalValue);
+                            const topY = innerH - yScale(Number(d?.previous ?? 0));
+                            const splitCounts = d?.split_counts ?? {};
+                            const valValue = Math.max(0, Number(splitCounts?.val ?? 0));
+                            const valHeight = totalValue > 0 ? (totalHeight * Math.min(totalValue, valValue)) / totalValue : 0;
+                            return topY + Math.max(0, totalHeight - valHeight);
+                        })
+                        .attr("width", nodeBarWidth)
+                        .attr("height", (d: any) => {
+                            const totalValue = Math.max(0, Number(d?.member_count ?? 0));
+                            const totalHeight = innerH - yScale(totalValue);
+                            const splitCounts = d?.split_counts ?? {};
+                            const valValue = Math.max(0, Number(splitCounts?.val ?? 0));
+                            return totalValue > 0 ? (totalHeight * Math.min(totalValue, valValue)) / totalValue : 0;
+                        })
+                        .attr("fill", "#666")
+                        .attr("data-row", epochName)
+                        .attr("data-column", layerName)
+                        .attr("data-cluster", (d: any) => {
+                            const c = d?.cluster_id;
+                            if (c !== null && c !== undefined && c !== "") return Number(c);
+                            const label = String(d?.label ?? "");
+                            const i = label.lastIndexOf("_C");
+                            if (i === -1) return "";
+                            return Number(label.slice(i + 2));
+                        })
+                        .style("pointer-events", "none");
 
                     bars
                         .style("cursor", "pointer")
@@ -1900,9 +1943,19 @@ export default function SankeyView({
         const container = chartRef.current;
         if (!container) return;
         const sel = d3.select(container).selectAll<SVGRectElement, any>("rect.bar");
-        const darker = (hex: string) => {
+        const darker = (hex: string, amount = 0.6) => {
             const c = d3.color(hex);
-            return c ? c.darker(0.6).formatHex() : hex;
+            return c ? c.darker(amount).formatHex() : hex;
+        };
+        const neutralFill = (el: d3.Selection<SVGRectElement, any, any, any>) => {
+            if (el.classed("bar-val")) return "#666";
+            if (el.classed("bar-test")) return "#888";
+            return "#aaa";
+        };
+        const colorizedFill = (el: d3.Selection<SVGRectElement, any, any, any>, base: string) => {
+            if (el.classed("bar-val")) return darker(base, 1.0);
+            if (el.classed("bar-test")) return darker(base, 0.6);
+            return base;
         };
         const focusModel = selectedNode?.model ?? activeCell?.model ?? null;
         const focusLayer = selectedNode?.layer ?? activeCell?.layer ?? null;
@@ -1912,7 +1965,7 @@ export default function SankeyView({
         };
         if (!focusModel || !focusLayer) {
             sel.attr("fill", function() {
-                return d3.select(this).classed("bar-test") ? "#888" : "#aaa";
+                return neutralFill(d3.select(this));
             });
             sel.classed("node-highlight", false).classed("node-dimmed", false);
             // Keep current cell/link highlight state (e.g., locked 2D cell focus) when cluster selection is cleared.
@@ -1939,9 +1992,9 @@ export default function SankeyView({
             const cluster = Number(el.attr("data-cluster"));
             if (inColorCell(row, col) && Number.isFinite(cluster)) {
                 const base = color(Math.max(0, cluster));
-                el.attr("fill", el.classed("bar-test") ? darker(base) : base);
+                el.attr("fill", colorizedFill(el, base));
             } else {
-                el.attr("fill", el.classed("bar-test") ? "#888" : "#aaa");
+                el.attr("fill", neutralFill(el));
             }
             if (!selectedNode) {
                 el.classed("node-highlight", false);

@@ -14,6 +14,7 @@ type SampleRow = {
     to_model?: string;
     from_cluster: number;
     to_cluster: number;
+    split?: SplitTag;
 };
 
 function rowsFromCompactOverview(
@@ -54,7 +55,8 @@ function rowsFromCompactOverview(
     }
     splitNames.forEach((name, idx) => {
         const ids: any[] = Array.isArray(splits[idx]) ? splits[idx] : [];
-        const split: SplitTag | null = name === "train" ? "train" : (name === "test" || name === "val" ? "test" : null);
+        const split: SplitTag | null =
+            name === "train" ? "train" : name === "test" ? "test" : name === "val" ? "val" : null;
         if (!split) return;
         ids.forEach((id) => {
             splitById.set(String(id), split);
@@ -86,7 +88,9 @@ function rowsFromCompactOverview(
             const molId = String(molIdRaw);
             const visibleId = labelByMoleculeId[molId] ?? molId;
             const split = splitById.get(molId);
-            const realId = split ? `${split}::${visibleId}` : visibleId;
+            // Keep val ids tagged as test for downstream id lookups; split stays on row.split for rendering.
+            const taggedSplit = split ? (split === "train" ? "train" : "test") : null;
+            const realId = taggedSplit ? `${taggedSplit}::${visibleId}` : visibleId;
             rows.push({
                 real_id: realId,
                 from_model: epochs[fromEpochIdx],
@@ -95,6 +99,7 @@ function rowsFromCompactOverview(
                 to_layer: toLayerName,
                 from_cluster: fromCluster,
                 to_cluster: toCluster,
+                split,
             });
         });
     };
@@ -141,7 +146,7 @@ function rowsFromCompactOverview(
     return rows;
 }
 
-type SplitTag = "train" | "test";
+type SplitTag = "train" | "test" | "val";
 const HIDDEN_LAYER = "ffn_layer_2";
 
 function normalizeLayerForVisibility(name: unknown): string {
@@ -159,6 +164,7 @@ function isVisibleRow(row: SampleRow): boolean {
 
 function inferSplitFromPath(path: string | undefined): SplitTag {
     const s = String(path ?? "").toLowerCase();
+    if (s.includes("split=val")) return "val";
     return s.includes("split=test") ? "test" : "train";
 }
 
@@ -166,13 +172,15 @@ function stripTaggedRealId(value: string | number): { id: string; split: SplitTa
     const raw = String(value ?? "");
     if (raw.startsWith("train::")) return { id: raw.slice("train::".length), split: "train" };
     if (raw.startsWith("test::")) return { id: raw.slice("test::".length), split: "test" };
+    if (raw.startsWith("val::")) return { id: raw.slice("val::".length), split: "val" };
     return { id: raw, split: null };
 }
 
 function ensureTaggedSampleId(value: string | number, split: SplitTag): string {
     const parsed = stripTaggedRealId(value);
     if (parsed.split) return String(value);
-    return `${split}::${parsed.id}`;
+    const splitForId = split === "train" ? "train" : "test";
+    return `${splitForId}::${parsed.id}`;
 }
 
 function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): SampleRow[] {
@@ -181,7 +189,7 @@ function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): 
     const allowed = new Set(orderedEpochs);
     const assignmentById = new Map<
         string,
-        Map<string, { cluster: number; model?: string; layer?: string }>
+        Map<string, { cluster: number; model?: string; layer?: string; split?: SplitTag }>
     >();
 
     rows.forEach((r) => {
@@ -191,11 +199,13 @@ function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): 
         if (!id) return;
         if (!assignmentById.has(id)) assignmentById.set(id, new Map());
         const amap = assignmentById.get(id)!;
+        const parsedSplit = stripTaggedRealId(id).split;
+        const rowSplit = r.split ?? parsedSplit ?? undefined;
         if (allowed.has(fromModel)) {
-            amap.set(fromModel, { cluster: r.from_cluster, model: r.from_model, layer: r.from_layer });
+            amap.set(fromModel, { cluster: r.from_cluster, model: r.from_model, layer: r.from_layer, split: rowSplit });
         }
         if (allowed.has(toModel)) {
-            amap.set(toModel, { cluster: r.to_cluster, model: r.to_model, layer: r.to_layer });
+            amap.set(toModel, { cluster: r.to_cluster, model: r.to_model, layer: r.to_layer, split: rowSplit });
         }
     });
 
@@ -215,6 +225,7 @@ function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): 
                 to_layer: toAssign.layer,
                 from_cluster: fromAssign.cluster,
                 to_cluster: toAssign.cluster,
+                split: fromAssign.split ?? toAssign.split,
             });
         }
     });
@@ -384,7 +395,7 @@ function synthesizeMissingAdjacentRows(
     const edgePairCount = new Map<string, number>();
     const assignmentsById = new Map<
         string,
-        Map<string, { cluster: number; model?: string; layer?: string }>
+        Map<string, { cluster: number; model?: string; layer?: string; split?: SplitTag }>
     >();
     rows.forEach((r) => {
         const fk = keyOf(r, "from");
@@ -395,8 +406,10 @@ function synthesizeMissingAdjacentRows(
         const rid = String(r.real_id);
         if (!assignmentsById.has(rid)) assignmentsById.set(rid, new Map());
         const amap = assignmentsById.get(rid)!;
-        amap.set(fk, { cluster: r.from_cluster, model: r.from_model, layer: r.from_layer });
-        amap.set(tk, { cluster: r.to_cluster, model: r.to_model, layer: r.to_layer });
+        const parsedSplit = stripTaggedRealId(rid).split;
+        const rowSplit = r.split ?? parsedSplit ?? undefined;
+        amap.set(fk, { cluster: r.from_cluster, model: r.from_model, layer: r.from_layer, split: rowSplit });
+        amap.set(tk, { cluster: r.to_cluster, model: r.to_model, layer: r.to_layer, split: rowSplit });
     });
 
     const out: SampleRow[] = [];
@@ -416,6 +429,7 @@ function synthesizeMissingAdjacentRows(
                 to_model: mode === "model" ? toKey : (toAssign.model ?? rows[0]?.to_model),
                 from_cluster: fromAssign.cluster,
                 to_cluster: toAssign.cluster,
+                split: fromAssign.split ?? toAssign.split,
             });
         });
     }
@@ -716,16 +730,6 @@ export default function Sankey({
                 nodeValue.set(src, (nodeValue.get(src) ?? 0) + 1);
                 nodeValue.set(tgt, (nodeValue.get(tgt) ?? 0) + 1);
             });
-            const secondaryNodeValue = new Map<string, number>();
-            secondaryRows.forEach((r) => {
-                const fromKey = fromKeyFn(r);
-                const toKey = toKeyFn(r);
-                const src = `${fromKey}_${r.from_cluster}`;
-                const tgt = `${toKey}_${r.to_cluster}`;
-                secondaryNodeValue.set(src, (secondaryNodeValue.get(src) ?? 0) + 1);
-                secondaryNodeValue.set(tgt, (secondaryNodeValue.get(tgt) ?? 0) + 1);
-            });
-
             const nodesByModel = new Map<string, Array<{ key: string; cluster: number; value: number }>>();
             nodeValue.forEach((value, key) => {
                 const idx = key.lastIndexOf("_");
@@ -791,12 +795,42 @@ export default function Sankey({
             const primarySplit: SplitTag =
                 String(selectedDataSet ?? "").toLowerCase() === "dimenet" ? "test" : "train";
             const secondarySplit: SplitTag = secondaryDataPath
-                ? (String(secondaryDataPath).toLowerCase().includes("split=train") ? "train" : "test")
+                ? inferSplitFromPath(String(secondaryDataPath))
                 : primarySplit;
             const primaryRowsWithSplit = rows.map((r) => ({ ...r, __split: primarySplit as SplitTag }));
             const secondaryRowsWithSplit = secondaryRows.map((r) => ({ ...r, __split: secondarySplit as SplitTag }));
             const combinedRowsWithSplit =
                 secondaryRowsWithSplit.length > 0 ? [...primaryRowsWithSplit, ...secondaryRowsWithSplit] : primaryRowsWithSplit;
+            const splitCountByNode = new Map<string, { train: number; test: number; val: number }>();
+            const normalizeSplit = (value: unknown): SplitTag | null => {
+                if (value === "train" || value === "test" || value === "val") return value;
+                return null;
+            };
+            const getRowSplit = (r: any): SplitTag => {
+                const rowSplit = normalizeSplit(r?.split);
+                if (rowSplit) return rowSplit;
+                const parsedSplit = stripTaggedRealId(r?.real_id ?? "").split;
+                if (parsedSplit) return parsedSplit;
+                const fallback = normalizeSplit(r?.__split);
+                return fallback ?? primarySplit;
+            };
+            const addSplitCount = (nodeKey: string, split: SplitTag) => {
+                const counts = splitCountByNode.get(nodeKey) ?? { train: 0, test: 0, val: 0 };
+                if (split === "train") counts.train += 1;
+                else if (split === "test") counts.test += 1;
+                else counts.val += 1;
+                splitCountByNode.set(nodeKey, counts);
+            };
+            combinedRowsWithSplit.forEach((r: any) => {
+                const fromKey = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
+                const toKey = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+                if (!fromKey || !toKey) return;
+                const src = `${fromKey}_${r.from_cluster}`;
+                const tgt = `${toKey}_${r.to_cluster}`;
+                const split = getRowSplit(r);
+                addSplitCount(src, split);
+                addSplitCount(tgt, split);
+            });
 
             const clusterValues: number[] = [];
             nodes.forEach((n) => {
@@ -892,9 +926,9 @@ export default function Sankey({
 
             // Remove point-level trajectories entirely.
             sampleGroup.selectAll("line").remove();
-            const darker = (hex: string) => {
+            const darker = (hex: string, amount = 0.6) => {
                 const c = d3.color(hex);
-                return c ? c.darker(0.6).formatHex() : hex;
+                return c ? c.darker(amount).formatHex() : hex;
             };
 
             const nodeSel = nodeGroup
@@ -964,16 +998,21 @@ export default function Sankey({
                             .attr("x", (d) => d.x)
                             .attr("y", (d) => {
                                 const total = Math.max(0, Number(d.value ?? 0));
-                                const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
+                                const splitCounts = splitCountByNode.get(d.key) ?? { train: 0, test: 0, val: 0 };
+                                const test = Math.max(0, Number(splitCounts.test));
+                                const val = Math.max(0, Number(splitCounts.val));
                                 const ratio = total > 0 ? Math.min(1, test / total) : 0;
+                                const valRatio = total > 0 ? Math.min(1, val / total) : 0;
                                 const h = Math.max(1, d.h);
+                                const valH = h * valRatio;
                                 const testH = h * ratio;
-                                return d.y + Math.max(0, h - testH);
+                                return d.y + Math.max(0, h - valH - testH);
                             })
                             .attr("width", NODE_W)
                             .attr("height", (d) => {
                                 const total = Math.max(0, Number(d.value ?? 0));
-                                const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
+                                const splitCounts = splitCountByNode.get(d.key) ?? { train: 0, test: 0, val: 0 };
+                                const test = Math.max(0, Number(splitCounts.test));
                                 const ratio = total > 0 ? Math.min(1, test / total) : 0;
                                 return Math.max(0, Math.max(1, d.h) * ratio);
                             })
@@ -981,9 +1020,9 @@ export default function Sankey({
                                 if (focusGroup && d.model === focusGroup) {
                                     const idx = d.key.lastIndexOf("_");
                                     const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
-                                    if (Number.isFinite(cluster)) return darker(color(Math.max(0, cluster)));
+                                    if (Number.isFinite(cluster)) return darker(color(Math.max(0, cluster)), 0.6);
                                 }
-                                return darker(SANKEY_NODE_COLOR);
+                                return darker(SANKEY_NODE_COLOR, 0.6);
                             })
                             .attr("data-key", (d) => d.key)
                             .style("pointer-events", "none"),
@@ -992,14 +1031,19 @@ export default function Sankey({
                             .attr("x", (d) => d.x)
                             .attr("y", (d) => {
                                 const total = Math.max(0, Number(d.value ?? 0));
-                                const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
+                                const splitCounts = splitCountByNode.get(d.key) ?? { train: 0, test: 0, val: 0 };
+                                const test = Math.max(0, Number(splitCounts.test));
+                                const val = Math.max(0, Number(splitCounts.val));
                                 const ratio = total > 0 ? Math.min(1, test / total) : 0;
+                                const valRatio = total > 0 ? Math.min(1, val / total) : 0;
                                 const h = Math.max(1, d.h);
+                                const valH = h * valRatio;
                                 const testH = h * ratio;
-                                return d.y + Math.max(0, h - testH);
+                                return d.y + Math.max(0, h - valH - testH);
                             }).attr("height", (d) => {
                                 const total = Math.max(0, Number(d.value ?? 0));
-                                const test = Math.max(0, Number(secondaryNodeValue.get(d.key) ?? 0));
+                                const splitCounts = splitCountByNode.get(d.key) ?? { train: 0, test: 0, val: 0 };
+                                const test = Math.max(0, Number(splitCounts.test));
                                 const ratio = total > 0 ? Math.min(1, test / total) : 0;
                                 return Math.max(0, Math.max(1, d.h) * ratio);
                             })
@@ -1007,13 +1051,77 @@ export default function Sankey({
                                 if (focusGroup && d.model === focusGroup) {
                                     const idx = d.key.lastIndexOf("_");
                                     const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
-                                    if (Number.isFinite(cluster)) return darker(color(Math.max(0, cluster)));
+                                    if (Number.isFinite(cluster)) return darker(color(Math.max(0, cluster)), 0.6);
                                 }
-                                return darker(SANKEY_NODE_COLOR);
+                                return darker(SANKEY_NODE_COLOR, 0.6);
                             })
                     ,
                     (exit) => exit.remove()
-                )
+                );
+            nodeGroup
+                .selectAll("rect.node-val")
+                .data(nodes).join(
+                    (enter) =>
+                        enter
+                            .append("rect")
+                            .attr("class", "node-val")
+                            .attr("x", (d) => d.x)
+                            .attr("y", (d) => {
+                                const total = Math.max(0, Number(d.value ?? 0));
+                                const splitCounts = splitCountByNode.get(d.key) ?? { train: 0, test: 0, val: 0 };
+                                const val = Math.max(0, Number(splitCounts.val));
+                                const ratio = total > 0 ? Math.min(1, val / total) : 0;
+                                const h = Math.max(1, d.h);
+                                const valH = h * ratio;
+                                return d.y + Math.max(0, h - valH);
+                            })
+                            .attr("width", NODE_W)
+                            .attr("height", (d) => {
+                                const total = Math.max(0, Number(d.value ?? 0));
+                                const splitCounts = splitCountByNode.get(d.key) ?? { train: 0, test: 0, val: 0 };
+                                const val = Math.max(0, Number(splitCounts.val));
+                                const ratio = total > 0 ? Math.min(1, val / total) : 0;
+                                return Math.max(0, Math.max(1, d.h) * ratio);
+                            })
+                            .attr("fill", (d) => {
+                                if (focusGroup && d.model === focusGroup) {
+                                    const idx = d.key.lastIndexOf("_");
+                                    const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
+                                    if (Number.isFinite(cluster)) return darker(color(Math.max(0, cluster)), 1.0);
+                                }
+                                return darker(SANKEY_NODE_COLOR, 1.0);
+                            })
+                            .attr("data-key", (d) => d.key)
+                            .style("pointer-events", "none"),
+                    (update) =>
+                        update
+                            .attr("x", (d) => d.x)
+                            .attr("y", (d) => {
+                                const total = Math.max(0, Number(d.value ?? 0));
+                                const splitCounts = splitCountByNode.get(d.key) ?? { train: 0, test: 0, val: 0 };
+                                const val = Math.max(0, Number(splitCounts.val));
+                                const ratio = total > 0 ? Math.min(1, val / total) : 0;
+                                const h = Math.max(1, d.h);
+                                const valH = h * ratio;
+                                return d.y + Math.max(0, h - valH);
+                            })
+                            .attr("height", (d) => {
+                                const total = Math.max(0, Number(d.value ?? 0));
+                                const splitCounts = splitCountByNode.get(d.key) ?? { train: 0, test: 0, val: 0 };
+                                const val = Math.max(0, Number(splitCounts.val));
+                                const ratio = total > 0 ? Math.min(1, val / total) : 0;
+                                return Math.max(0, Math.max(1, d.h) * ratio);
+                            })
+                            .attr("fill", (d) => {
+                                if (focusGroup && d.model === focusGroup) {
+                                    const idx = d.key.lastIndexOf("_");
+                                    const cluster = Number(idx === -1 ? 0 : d.key.slice(idx + 1));
+                                    if (Number.isFinite(cluster)) return darker(color(Math.max(0, cluster)), 1.0);
+                                }
+                                return darker(SANKEY_NODE_COLOR, 1.0);
+                            }),
+                    (exit) => exit.remove()
+                );
             nodeSel.append("title").text((d) => d.key);
             nodeGroup.raise();
 
@@ -1124,16 +1232,18 @@ export default function Sankey({
             const model = idx === -1 ? key : key.slice(0, idx);
             const cluster = Number(idx === -1 ? 0 : key.slice(idx + 1));
             const isTestRect = rect.classList.contains("node-test");
+            const isValRect = rect.classList.contains("node-val");
             const baseColor =
                 focusGroup && model === focusGroup && Number.isFinite(cluster)
                     ? CLUSTER_COLORS[Math.max(0, cluster) % CLUSTER_COLORS.length]
                     : SANKEY_NODE_COLOR;
             const c = d3.color(baseColor);
             const testColor = c ? c.darker(0.6).formatHex() : baseColor;
+            const valColor = c ? c.darker(1.0).formatHex() : baseColor;
 
-            rect.setAttribute("fill", isTestRect ? testColor : baseColor);
+            rect.setAttribute("fill", isValRect ? valColor : isTestRect ? testColor : baseColor);
 
-            if (isTestRect) {
+            if (isTestRect || isValRect) {
                 rect.setAttribute("stroke", "none");
                 rect.setAttribute("stroke-width", "0");
                 return;
