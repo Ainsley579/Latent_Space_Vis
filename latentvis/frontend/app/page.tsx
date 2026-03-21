@@ -104,6 +104,90 @@ function normalizeLayerKey(value: string): string {
     return raw;
 }
 
+function deriveLatestEpochLayerFromOverview(
+    overview: any,
+    dataset: DatasetKey,
+    includeFfn2: boolean
+): { model: string; layer: string } {
+    const defaults = DATASET_DEFAULTS[dataset] ?? { model: "0", layer: "fingerprint" };
+    const cells: any[] = Array.isArray(overview?.cells) ? overview.cells : [];
+    const epochsRaw: string[] = Array.isArray(overview?.epochs)
+        ? overview.epochs.map((x: any) => String(x))
+        : [];
+    const layersRaw: string[] = Array.isArray(overview?.layers)
+        ? overview.layers.map((x: any) => normalizeLayerKey(String(x)))
+        : [];
+
+    const epochs =
+        epochsRaw.length > 0
+            ? epochsRaw
+            : Array.from(new Set(cells.map((c: any) => String(c?.epoch ?? "")).filter((v) => v.length > 0)));
+    const layersBase =
+        layersRaw.length > 0
+            ? layersRaw
+            : Array.from(new Set(cells.map((c: any) => normalizeLayerKey(String(c?.layer ?? ""))).filter((v) => v.length > 0)));
+    const layers = includeFfn2 ? layersBase : layersBase.filter((layer) => layer !== "ffn_layer_2");
+
+    const fallbackLayer = normalizeLayerKey(defaults.layer) === "ffn_layer_2" && !includeFfn2
+        ? "ffn_layer_1"
+        : normalizeLayerKey(defaults.layer);
+
+    const hasLabels = (epoch: string, layer: string): boolean => {
+        const cell = cells.find(
+            (c: any) => String(c?.epoch ?? "") === String(epoch) && normalizeLayerKey(String(c?.layer ?? "")) === layer
+        );
+        const labels = cell?.cluster_labels;
+        return !!labels && typeof labels === "object" && Object.keys(labels).length > 0;
+    };
+
+    // For vertical 1D (mode=model), prefer the latest layer that has data in >=2 epochs.
+    let latestLayer = "";
+    for (let i = layers.length - 1; i >= 0; i -= 1) {
+        const layer = layers[i];
+        const validEpochCount = epochs.reduce((acc, epoch) => acc + (hasLabels(epoch, layer) ? 1 : 0), 0);
+        if (validEpochCount >= 2) {
+            latestLayer = layer;
+            break;
+        }
+    }
+    if (!latestLayer) {
+        for (let i = layers.length - 1; i >= 0; i -= 1) {
+            const layer = layers[i];
+            const validEpochCount = epochs.reduce((acc, epoch) => acc + (hasLabels(epoch, layer) ? 1 : 0), 0);
+            if (validEpochCount >= 1) {
+                latestLayer = layer;
+                break;
+            }
+        }
+    }
+
+    // For horizontal 1D (mode=layer), prefer the latest epoch that has >=2 visible layers with data.
+    let latestEpoch = "";
+    for (let i = epochs.length - 1; i >= 0; i -= 1) {
+        const epoch = epochs[i];
+        const validLayerCount = layers.reduce((acc, layer) => acc + (hasLabels(epoch, layer) ? 1 : 0), 0);
+        if (validLayerCount >= 2) {
+            latestEpoch = epoch;
+            break;
+        }
+    }
+    if (!latestEpoch) {
+        for (let i = epochs.length - 1; i >= 0; i -= 1) {
+            const epoch = epochs[i];
+            const validLayerCount = layers.reduce((acc, layer) => acc + (hasLabels(epoch, layer) ? 1 : 0), 0);
+            if (validLayerCount >= 1) {
+                latestEpoch = epoch;
+                break;
+            }
+        }
+    }
+
+    return {
+        model: latestEpoch || (epochs.length > 0 ? epochs[epochs.length - 1] : defaults.model),
+        layer: latestLayer || (layers.length > 0 ? layers[layers.length - 1] : fallbackLayer),
+    };
+}
+
 export default function Home() {
     // this shouldn't be hardcoded. won't change it now but there's a route in the backend to get the datasets available now
     const [selectedDataSet, setSelectedDataSet] = useState<DatasetKey>("dimenet");
@@ -395,6 +479,7 @@ export default function Home() {
     const pendingTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
     const lastSyncedTransformRef = useRef<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
     const syncSourceRef = useRef<{ source: "view" | "vertical" | "horizontal"; ts: number } | null>(null);
+    const pendingResetToLatestRef = useRef<boolean>(true);
     function toggleNode(sel: { model: string; layer: string; cluster: number; ids?: string[] }): boolean {
         setHoverLock(false);
         if (
@@ -508,6 +593,15 @@ export default function Home() {
             }
         };
     }, []);
+
+    useEffect(() => {
+        if (!pendingResetToLatestRef.current) return;
+        if (!overviewData) return;
+        const latest = deriveLatestEpochLayerFromOverview(overviewData, selectedDataSet, effectiveShowFfn2);
+        setSelectedModel(latest.model);
+        setSelectedLayer(latest.layer);
+        pendingResetToLatestRef.current = false;
+    }, [overviewData, selectedDataSet, selectedDataSplit, effectiveShowFfn2]);
 
     useEffect(() => {
         if (!showLargeHoverPreview) {
@@ -2002,50 +2096,58 @@ export default function Home() {
                             id="sankeyVertical"
                             className="w-full h-full border border-zinc-400 min-h-0 relative"
                         >
-                            <div className="absolute top-1 right-2 z-30 pointer-events-none text-xs text-zinc-600 bg-white/90 px-1 rounded shadow-sm">
-                                {swapAxes ? selectedModel : selectedLayer}
-                            </div>
-                            <Sankey
-                                key={verticalSankeyRenderKey}
-                                data={overviewData}
-                                selectedDataSet={selectedDataSet}
-                                selectedSplits={selectedSankeySplits}
-                                mode={swapAxes ? "layer" : "model"}
-                                showFfn2={effectiveShowFfn2}
-                                layerKey={selectedLayer}
-                                modelKey={selectedModel}
-                                reverseEpochOrder={reverseEpochOrder}
-                                visibleEpochs={swapAxes ? null : visibleEpochs}
-                                syncTransform={syncLinkedSankeyViews ? syncTransformVertical : undefined}
-                                onSyncTransform={(t) => {
-                                    if (!syncLinkedSankeyViews) return;
-                                    mergeAndSyncSankeyTransform({ y: t.y, scale: t.scale }, "vertical");
-                                }}
-                                activeNodeKey={
-                                    selectedNode
-                                        ? swapAxes
-                                            ? `${selectedNode.layer}_${selectedNode.cluster}`
-                                            : `${selectedNode.model}_${selectedNode.cluster}`
-                                        : null
-                                }
-                                highlightId={hoveredId}
-                                highlightIds={globalHighlightIds}
-                                onNodeSelect={(sel) => {
-                                    const normalized = resolveSankeyCellSelection(
-                                        { model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster, ids: sel.ids },
-                                        { model: selectedModel, layer: selectedLayer }
-                                    );
-                                    if (!normalized) return;
-                                    const didSelect = toggleNode(normalized);
-                                    setSelectedModel(normalized.model);
-                                    setSelectedLayer(normalized.layer);
-                                    //syncSankeyPaths(sel.model, sel.layer ?? selectedLayer);
-                                    setCellSelected(didSelect);
-                                    // Keep cluster highlight for the clicked 1D node.
-                                    setSuppressScatterCluster(false);
-                                }}
-                                layout="vertical"
-                            />
+                            {cellSelected ? (
+                                <>
+                                    <div className="absolute top-1 right-2 z-30 pointer-events-none text-xs text-zinc-600 bg-white/90 px-1 rounded shadow-sm">
+                                        {swapAxes ? selectedModel : selectedLayer}
+                                    </div>
+                                    <Sankey
+                                        key={verticalSankeyRenderKey}
+                                        data={overviewData}
+                                        selectedDataSet={selectedDataSet}
+                                        selectedSplits={selectedSankeySplits}
+                                        mode={swapAxes ? "layer" : "model"}
+                                        showFfn2={effectiveShowFfn2}
+                                        layerKey={selectedLayer}
+                                        modelKey={selectedModel}
+                                        reverseEpochOrder={reverseEpochOrder}
+                                        visibleEpochs={swapAxes ? null : visibleEpochs}
+                                        syncTransform={syncLinkedSankeyViews ? syncTransformVertical : undefined}
+                                        onSyncTransform={(t) => {
+                                            if (!syncLinkedSankeyViews) return;
+                                            mergeAndSyncSankeyTransform({ y: t.y, scale: t.scale }, "vertical");
+                                        }}
+                                        activeNodeKey={
+                                            selectedNode
+                                                ? swapAxes
+                                                    ? `${selectedNode.layer}_${selectedNode.cluster}`
+                                                    : `${selectedNode.model}_${selectedNode.cluster}`
+                                                : null
+                                        }
+                                        highlightId={hoveredId}
+                                        highlightIds={globalHighlightIds}
+                                        onNodeSelect={(sel) => {
+                                            const normalized = resolveSankeyCellSelection(
+                                                { model: sel.model, layer: sel.layer ?? selectedLayer, cluster: sel.cluster, ids: sel.ids },
+                                                { model: selectedModel, layer: selectedLayer }
+                                            );
+                                            if (!normalized) return;
+                                            const didSelect = toggleNode(normalized);
+                                            setSelectedModel(normalized.model);
+                                            setSelectedLayer(normalized.layer);
+                                            //syncSankeyPaths(sel.model, sel.layer ?? selectedLayer);
+                                            setCellSelected(didSelect);
+                                            // Keep cluster highlight for the clicked 1D node.
+                                            setSuppressScatterCluster(false);
+                                        }}
+                                        layout="vertical"
+                                    />
+                                </>
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-sm text-zinc-500 bg-white">
+                                    Click a 2D Sankey cell to show this 1D view
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="p-1 box-border min-h-0 min-w-0" style={{ gridColumn: "1 / 2", gridRow: "2 / 4" }}>
@@ -2053,49 +2155,57 @@ export default function Home() {
                             id="sankeyHorizontal"
                             className="w-full h-full border border-zinc-400 relative"
                         >
-                            <div className="absolute top-1 left-2 z-30 pointer-events-none text-xs text-zinc-600 bg-white/90 px-1 rounded shadow-sm">
-                                {swapAxes ? selectedLayer : selectedModel}
-                            </div>
-                            <Sankey
-                                key={horizontalSankeyRenderKey}
-                                data={overviewData}
-                                selectedDataSet={selectedDataSet}
-                                selectedSplits={selectedSankeySplits}
-                                mode={swapAxes ? "model" : "layer"}
-                                showFfn2={effectiveShowFfn2}
-                                modelKey={selectedModel}
-                                layerKey={selectedLayer}
-                                reverseEpochOrder={reverseEpochOrder}
-                                visibleEpochs={swapAxes ? visibleEpochs : null}
-                                syncTransform={syncLinkedSankeyViews ? syncTransformHorizontal : undefined}
-                                onSyncTransform={(t) => {
-                                    if (!syncLinkedSankeyViews) return;
-                                    mergeAndSyncSankeyTransform({ x: t.x, scale: t.scale }, "horizontal");
-                                }}
-                                activeNodeKey={
-                                    selectedNode
-                                        ? swapAxes
-                                            ? `${selectedNode.model}_${selectedNode.cluster}`
-                                            : `${selectedNode.layer}_${selectedNode.cluster}`
-                                        : null
-                                }
-                                highlightId={hoveredId}
-                                highlightIds={globalHighlightIds}
-                                onNodeSelect={(sel) => {
-                                    const normalized = resolveSankeyCellSelection(
-                                        { model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: sel.ids },
-                                        { model: selectedModel, layer: selectedLayer }
-                                    );
-                                    if (!normalized) return;
-                                    const didSelect = toggleNode(normalized);
-                                    setSelectedModel(normalized.model);
-                                    setSelectedLayer(normalized.layer);
-                                    setCellSelected(didSelect);
-                                    // Keep cluster highlight for the clicked 1D node.
-                                    setSuppressScatterCluster(false);
-                                }}
-                                layout="horizontal"
-                            />
+                            {cellSelected ? (
+                                <>
+                                    <div className="absolute top-1 left-2 z-30 pointer-events-none text-xs text-zinc-600 bg-white/90 px-1 rounded shadow-sm">
+                                        {swapAxes ? selectedLayer : selectedModel}
+                                    </div>
+                                    <Sankey
+                                        key={horizontalSankeyRenderKey}
+                                        data={overviewData}
+                                        selectedDataSet={selectedDataSet}
+                                        selectedSplits={selectedSankeySplits}
+                                        mode={swapAxes ? "model" : "layer"}
+                                        showFfn2={effectiveShowFfn2}
+                                        modelKey={selectedModel}
+                                        layerKey={selectedLayer}
+                                        reverseEpochOrder={reverseEpochOrder}
+                                        visibleEpochs={swapAxes ? visibleEpochs : null}
+                                        syncTransform={syncLinkedSankeyViews ? syncTransformHorizontal : undefined}
+                                        onSyncTransform={(t) => {
+                                            if (!syncLinkedSankeyViews) return;
+                                            mergeAndSyncSankeyTransform({ x: t.x, scale: t.scale }, "horizontal");
+                                        }}
+                                        activeNodeKey={
+                                            selectedNode
+                                                ? swapAxes
+                                                    ? `${selectedNode.model}_${selectedNode.cluster}`
+                                                    : `${selectedNode.layer}_${selectedNode.cluster}`
+                                                : null
+                                        }
+                                        highlightId={hoveredId}
+                                        highlightIds={globalHighlightIds}
+                                        onNodeSelect={(sel) => {
+                                            const normalized = resolveSankeyCellSelection(
+                                                { model: sel.model, layer: sel.layer, cluster: sel.cluster, ids: sel.ids },
+                                                { model: selectedModel, layer: selectedLayer }
+                                            );
+                                            if (!normalized) return;
+                                            const didSelect = toggleNode(normalized);
+                                            setSelectedModel(normalized.model);
+                                            setSelectedLayer(normalized.layer);
+                                            setCellSelected(didSelect);
+                                            // Keep cluster highlight for the clicked 1D node.
+                                            setSuppressScatterCluster(false);
+                                        }}
+                                        layout="horizontal"
+                                    />
+                                </>
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-sm text-zinc-500 bg-white">
+                                    Click a 2D Sankey cell to show this 1D view
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="p-1 box-border" style={{ gridColumn: "2 / 3", gridRow: "2 / 4" }}>
@@ -2512,18 +2622,15 @@ export default function Home() {
                                     dataset={selectedDataSet}
                                     onDatasetChange={(d) => {
                                         const next = d as DatasetKey;
-                                        const defaults = DATASET_DEFAULTS[next];
-                                        const nextClustering = selectedClustering;
                                         const nextSplit: DataSplitKey =
                                             next === "dimenet" ? "test" : selectedDataSplit;
+                                        pendingResetToLatestRef.current = true;
                                         // Clear stale overview immediately so split defaults are computed
                                         // against the new dataset instead of old split_names.
                                         setOverviewData(null);
                                         setSelectedDataSet(next);
                                         setSelectedDataSplit(nextSplit);
                                         setSelectedSankeySplits(next === "dimenet" ? ["test"] : ["train", "test", "val"]);
-                                        setSelectedModel(defaults.model);
-                                        setSelectedLayer(defaults.layer);
                                         //syncSankeyPaths(defaults.model, defaults.layer, next, nextClustering, nextSplit);
                                         /*setScatterPaths(
                                             buildScatterPaths(
@@ -2543,11 +2650,9 @@ export default function Home() {
                                     datasetOptions={DATASET_OPTIONS_UI}
                                     dataSplit={selectedDataSplit}
                                     onDataSplitChange={(split) => {
-                                        const defaults = DATASET_DEFAULTS[selectedDataSet];
                                         const nextSplit = split as DataSplitKey;
+                                        pendingResetToLatestRef.current = true;
                                         setSelectedDataSplit(nextSplit);
-                                        setSelectedModel(defaults.model);
-                                        setSelectedLayer(defaults.layer);
                                         /*syncSankeyPaths(defaults.model, defaults.layer, selectedDataset, selectedClustering, nextSplit);
                                         setScatterPaths(
                                             buildScatterPaths(
@@ -2571,10 +2676,9 @@ export default function Home() {
                                     clusteringOptions={CLUSTERING_OPTIONS}
                                     onClusteringChange={(c) => {
                                         const next = String(c).trim().toLowerCase() as ClusteringKey;
-                                        const nextSplit = selectedDataSplit;
+                                        pendingResetToLatestRef.current = true;
                                         setSelectedClustering(next);
-                                        // Keep current cell selection when switching clustering so Top-k view
-                                        // reflects the same model/layer instead of forcing dataset defaults.
+                                        // Reset to latest valid epoch/layer once the new overview is loaded.
                                         /*syncSankeyPaths(selectedModel, selectedLayer, selectedDataset, next, nextSplit);
                                         setScatterPaths(
                                             buildScatterPaths(
