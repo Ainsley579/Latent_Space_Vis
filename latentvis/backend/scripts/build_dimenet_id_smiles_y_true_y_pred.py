@@ -15,8 +15,6 @@ file. The first 152 rows are verified to match the current 152-row embedding
 order exactly, so we trim to that prefix.
 """
 
-from __future__ import annotations
-
 import argparse
 import json
 from pathlib import Path
