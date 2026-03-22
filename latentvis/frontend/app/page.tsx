@@ -2053,6 +2053,7 @@ export default function Home() {
                                         data={overviewData}
                                         selectedDataSet={selectedDataSet}
                                         selectedSplits={selectedSankeySplits}
+                                        hoveredSampleId={hoveredId}
                                         mode={swapAxes ? "layer" : "model"}
                                         showFfn2={false}
                                         layerKey={selectedLayer}
@@ -2110,6 +2111,7 @@ export default function Home() {
                                         data={overviewData}
                                         selectedDataSet={selectedDataSet}
                                         selectedSplits={selectedSankeySplits}
+                                        hoveredSampleId={hoveredId}
                                         mode={swapAxes ? "model" : "layer"}
                                         showFfn2={false}
                                         modelKey={selectedModel}

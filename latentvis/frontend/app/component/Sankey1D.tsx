@@ -181,6 +181,65 @@ function ensureTaggedSampleId(value: string | number, split: SplitTag): string {
     return `${splitForId}::${parsed.id}`;
 }
 
+function normalizeSampleSplitForMatch(split: SplitTag | null): "train" | "test" | null {
+    if (split === "train") return "train";
+    if (split === "test" || split === "val") return "test";
+    return null;
+}
+
+function isSameSampleId(a: string, b: string): boolean {
+    const aa = stripTaggedRealId(a);
+    const bb = stripTaggedRealId(b);
+    if (String(a) === String(b)) return true;
+    if (aa.id !== bb.id) return false;
+    const as = normalizeSampleSplitForMatch(aa.split);
+    const bs = normalizeSampleSplitForMatch(bb.split);
+    if (!as || !bs) return true;
+    return as === bs;
+}
+
+function pickHoveredTrajectoryPoints(
+    hoveredSampleId: string | null | undefined,
+    trajectoryBySampleId: Map<string, Array<[number, number]>>
+): Array<[number, number]> {
+    const hovered = String(hoveredSampleId ?? "").trim();
+    if (!hovered) return [];
+    const candidateId = Array.from(trajectoryBySampleId.keys()).find((sampleId) => isSameSampleId(sampleId, hovered));
+    if (!candidateId) return [];
+    return trajectoryBySampleId.get(candidateId) ?? [];
+}
+
+function renderHoveredTrajectory(
+    group: d3.Selection<SVGGElement, unknown, any, any>,
+    points: Array<[number, number]>
+): void {
+    const linePath = d3.line<[number, number]>()
+        .x((d) => d[0])
+        .y((d) => d[1])
+        .curve(d3.curveLinear);
+    const payload = points.length >= 2 ? [points] : [];
+    group
+        .selectAll<SVGPathElement, Array<[number, number]>>("path.sample-trajectory")
+        .data(payload)
+        .join(
+            (enter) =>
+                enter
+                    .append("path")
+                    .attr("class", "sample-trajectory")
+                    .attr("fill", "none")
+                    .attr("stroke", HIGHLIGHT_RED)
+                    .attr("stroke-opacity", 1)
+                    .attr("stroke-width", 2.2)
+                    .attr("stroke-linecap", "round")
+                    .attr("stroke-linejoin", "round")
+                    .style("pointer-events", "none")
+                    .attr("vector-effect", "non-scaling-stroke"),
+            (update) => update,
+            (exit) => exit.remove()
+        )
+        .attr("d", (pts) => linePath(pts) ?? "");
+}
+
 function stitchRowsByVisibleEpochs(rows: SampleRow[], visibleEpochs: string[]): SampleRow[] {
     if (!Array.isArray(visibleEpochs) || visibleEpochs.length < 2) return [];
     const orderedEpochs = visibleEpochs.map((x) => String(x));
@@ -234,6 +293,7 @@ type SankeyProps = {
     data: any;
     selectedDataSet: string;
     selectedSplits?: string[];
+    hoveredSampleId?: string | null;
     secondaryDataPath?: string;
     showFfn2?: boolean;
     syncTransform?: { x: number; y: number; scale: number };
@@ -490,6 +550,7 @@ export default function Sankey({
     data,
     selectedDataSet,
     selectedSplits,
+    hoveredSampleId = null,
     secondaryDataPath,
     showFfn2 = false,
     syncTransform,
@@ -507,6 +568,8 @@ export default function Sankey({
     const onNodeSelectRef = useRef(onNodeSelect);
     const syncTransformRef = useRef(syncTransform);
     const onSyncTransformRef = useRef(onSyncTransform);
+    const hoveredSampleIdRef = useRef<string | null>(hoveredSampleId);
+    const trajectoryBySampleIdRef = useRef<Map<string, Array<[number, number]>>>(new Map());
     const activeNodeKeyRef = useRef(activeNodeKey);
     const isControlledRef = useRef(activeNodeKey !== undefined);
     const displayActiveNodeRef = useRef<string | null>(null);
@@ -533,6 +596,9 @@ export default function Sankey({
     useEffect(() => {
         onSyncTransformRef.current = onSyncTransform;
     }, [onSyncTransform]);
+    useEffect(() => {
+        hoveredSampleIdRef.current = hoveredSampleId;
+    }, [hoveredSampleId]);
 
     useEffect(() => {
         activeNodeKeyRef.current = activeNodeKey;
@@ -559,6 +625,7 @@ export default function Sankey({
 
         const groupsRef = {
             links: null as SVGGElement | null,
+            sampleTrajectories: null as SVGGElement | null,
             nodes: null as SVGGElement | null,
             axisLabels: null as SVGGElement | null,
         };
@@ -579,8 +646,18 @@ export default function Sankey({
                 d3.select(rotationAxis).attr("transform", `translate(${container.clientWidth},0) rotate(90)`).node();
             }
             groupsRef.links = d3.select(rotationAxis).append("g").attr("class", "links").node() as SVGGElement;
+            groupsRef.sampleTrajectories = d3.select(rotationAxis).append("g").attr("class", "sample-trajectories").node() as SVGGElement;
             groupsRef.nodes = d3.select(rotationAxis).append("g").attr("class", "nodes").node() as SVGGElement;
             groupsRef.axisLabels = svg.append("g").attr("class", "axis-labels").node() as SVGGElement;
+        } else {
+            rotationAxis = svg.select<SVGGElement>("g").node();
+            groupsRef.links = svg.select<SVGGElement>("g.links").node();
+            groupsRef.sampleTrajectories = svg.select<SVGGElement>("g.sample-trajectories").node();
+            groupsRef.nodes = svg.select<SVGGElement>("g.nodes").node();
+            groupsRef.axisLabels = svg.select<SVGGElement>("g.axis-labels").node();
+            if (rotationAxis && !groupsRef.sampleTrajectories) {
+                groupsRef.sampleTrajectories = d3.select(rotationAxis).append("g").attr("class", "sample-trajectories").node() as SVGGElement;
+            }
         }
 
         const ro = new ResizeObserver(() => draw());
@@ -856,6 +933,7 @@ export default function Sankey({
             });
 
             const linkGroup = d3.select(groupsRef.links!);
+            const sampleTrajectoryGroup = d3.select(groupsRef.sampleTrajectories!);
             const nodeGroup = d3.select(groupsRef.nodes!);
 
             linkGroup
@@ -894,6 +972,46 @@ export default function Sankey({
                     const sTot = outTotal.get(d.src) || 1;
                     return Math.max(0.5, (d.value / sTot) * s.h);
                 });
+
+            const sampleAssignments = new Map<string, Map<string, number>>();
+            combinedRowsWithSplit.forEach((r: any) => {
+                const fromRaw = mode === "model" ? r.from_model ?? r.from_layer : r.from_layer ?? r.from_model;
+                const toRaw = mode === "model" ? r.to_model ?? r.to_layer : r.to_layer ?? r.to_model;
+                const fromKey = mode === "layer" ? canonicalLayerKey(String(fromRaw ?? "")) : String(fromRaw ?? "");
+                const toKey = mode === "layer" ? canonicalLayerKey(String(toRaw ?? "")) : String(toRaw ?? "");
+                if (!fromKey || !toKey) return;
+                const fromCluster = Number(r.from_cluster);
+                const toCluster = Number(r.to_cluster);
+                if (!Number.isFinite(fromCluster) || !Number.isFinite(toCluster)) return;
+                const split = getRowSplit(r);
+                const sampleId = ensureTaggedSampleId(r.real_id, split);
+                if (!sampleAssignments.has(sampleId)) sampleAssignments.set(sampleId, new Map());
+                const assignments = sampleAssignments.get(sampleId)!;
+                assignments.set(fromKey, fromCluster);
+                assignments.set(toKey, toCluster);
+            });
+            const sequenceRaw = inferSequenceFromRows(rows, mode, order);
+            const sequence =
+                mode === "layer" ? sequenceRaw.map((key) => canonicalLayerKey(String(key))) : sequenceRaw.map(String);
+            const trajectoryBySampleId = new Map<string, Array<[number, number]>>();
+            sampleAssignments.forEach((assignments, sampleId) => {
+                const points = sequence
+                    .map((axisKey): [number, number] | null => {
+                        const cluster = assignments.get(axisKey);
+                        if (cluster == null) return null;
+                        const nodeKey = `${axisKey}_${cluster}`;
+                        const node = nodeByKey.get(nodeKey);
+                        if (!node) return null;
+                        return [node.x + NODE_W / 2, node.y + Math.max(1, node.h) / 2];
+                    })
+                    .filter((pt): pt is [number, number] => Array.isArray(pt));
+                if (points.length >= 2) trajectoryBySampleId.set(sampleId, points);
+            });
+            trajectoryBySampleIdRef.current = trajectoryBySampleId;
+            renderHoveredTrajectory(
+                sampleTrajectoryGroup,
+                pickHoveredTrajectoryPoints(hoveredSampleIdRef.current, trajectoryBySampleId)
+            );
 
             const nodeSamples = new Map<string, Set<string>>();
             combinedRowsWithSplit.forEach((r: any) => {
@@ -1233,6 +1351,19 @@ export default function Sankey({
         !!syncTransform,
         activeNodeKey,
     ]);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+        const svgSel = d3.select(container).select<SVGSVGElement>("svg.app-sankey");
+        if (svgSel.empty()) return;
+        const trajectoryGroup = svgSel.select<SVGGElement>("g.sample-trajectories");
+        if (trajectoryGroup.empty()) return;
+        renderHoveredTrajectory(
+            trajectoryGroup,
+            pickHoveredTrajectoryPoints(hoveredSampleId, trajectoryBySampleIdRef.current)
+        );
+    }, [hoveredSampleId]);
 
     useEffect(() => {
         const container = containerRef.current;
