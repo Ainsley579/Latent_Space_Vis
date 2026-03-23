@@ -21,7 +21,6 @@ type CellMetricByCellPayload = {
 };
 
 type KnnTopmOption = "5" | "10" | "20" | "all";
-type SubstructureSplitOption = "all" | "train";
 type HoverPreviewState =
     | { kind: "image"; src: string; left: number; top: number; source?: "topk" | "members" | "other" }
     | { kind: "smiles"; smiles: string; left: number; top: number; source?: "topk" | "members" | "other" };
@@ -438,7 +437,6 @@ export default function Home() {
         }[]
     >([]);
     const [knnTopm, setKnnTopm] = useState<KnnTopmOption>("5");
-    const [substructureSplit, setSubstructureSplit] = useState<SubstructureSplitOption>("all");
     const [isKnnTopmLoading, setIsKnnTopmLoading] = useState(false);
     const [clusterTanimotoByCluster, setClusterTanimotoByCluster] = useState<Record<number, number | null>>({});
     const [isClusterTanimotoLoading, setIsClusterTanimotoLoading] = useState(false);
@@ -1464,14 +1462,8 @@ export default function Home() {
                         ? d.top_k_closest_real_ids.map((x) => String(x))
                         : [];
                     if (ids.length === 0) return;
-                    const filtered = ids.filter((rid) => {
-                        if (substructureSplit !== "train") return true;
-                        const parsed = parseSplitTaggedId(rid);
-                        if (parsed.split) return parsed.split === "train";
-                        return selectedDataSplit === "train";
-                    });
                     const limited =
-                        mLimit == null ? filtered : filtered.slice(0, Math.max(1, mLimit));
+                        mLimit == null ? ids : ids.slice(0, Math.max(1, mLimit));
                     if (limited.length > 0) {
                         clusterRealIdsByCluster[String(cid)] = limited;
                     }
@@ -1578,7 +1570,6 @@ export default function Home() {
         selectedDataSet,
         selectedClustering,
         selectedDataSplit,
-        substructureSplit,
         selectedModel,
         selectedLayer,
         knnTopm,
@@ -1655,16 +1646,31 @@ export default function Home() {
 
     useEffect(() => {
         if (!selectedNode) return;
-        if (Array.isArray(selectedIds) && selectedIds.length > 0) return;
+        // Keep point-pick behavior unchanged; only auto-sync in cluster-view mode.
+        if (showSearchResultsInMembers) return;
+        if (suppressScatterCluster || hoverLock) return;
+
         const row = clusterSortedMembers.find(
             (d) =>
                 String(d.model_type) === String(selectedNode.model) &&
                 String(d.layer_name) === String(selectedNode.layer) &&
                 Number(d.cluster_id) === Number(selectedNode.cluster)
         );
-        const ids = Array.isArray(row?.sorted_real_ids) ? row!.sorted_real_ids.map((x) => String(x)) : [];
-        if (ids.length > 0) setSelectedIds(ids);
-    }, [selectedNode, selectedIds, clusterSortedMembers]);
+        const nextIds = Array.isArray(row?.sorted_real_ids) ? row!.sorted_real_ids.map((x) => String(x)) : [];
+        const prevIds = Array.isArray(selectedIds) ? selectedIds.map((x) => String(x)) : [];
+        const sameOrder =
+            nextIds.length === prevIds.length && nextIds.every((v, i) => v === prevIds[i]);
+        if (!sameOrder) {
+            setSelectedIds(nextIds.length > 0 ? nextIds : null);
+        }
+    }, [
+        selectedNode,
+        selectedIds,
+        clusterSortedMembers,
+        showSearchResultsInMembers,
+        suppressScatterCluster,
+        hoverLock,
+    ]);
 
     function showSmilesPreviewAt(
         smiles: string | null | undefined,
@@ -2553,8 +2559,6 @@ export default function Home() {
                                             onToggleBookmark={toggleBookmark}
                                             knnTopm={knnTopm}
                                             onKnnTopmChange={setKnnTopm}
-                                            substructureSplit={substructureSplit}
-                                            onSubstructureSplitChange={setSubstructureSplit}
                                             isKnnTopmLoading={isKnnTopmLoading}
                                             tanimotoByCluster={clusterTanimotoByCluster}
                                             isTanimotoLoading={isClusterTanimotoLoading}

@@ -338,15 +338,13 @@ def _load_compact_dataset(
             if sweep_overlay_path is not None:
                 overlay_payload = _read_json(sweep_overlay_path, None)
             if isinstance(overlay_payload, dict):
-                if _is_full_compact_overview_payload(overlay_payload):
-                    if (
-                        sweep_overlay_path is not None
-                        and _compact_sweep_has_sparse_split_coverage(base_payload, overlay_payload)
-                    ):
-                        overlay_payload = None
-                    else:
-                        return overlay_payload
+                if (
+                    sweep_overlay_path is not None
+                    and _compact_sweep_has_sparse_split_coverage(base_payload, overlay_payload)
+                ):
+                    overlay_payload = None
                 else:
+                    # Always keep geometry (dr) from base.json; only overlay clustering payload.
                     return _compact_merge_base_overlay(base_payload, overlay_payload)
 
             if not isinstance(overlay_payload, dict):
@@ -354,8 +352,7 @@ def _load_compact_dataset(
             if not isinstance(overlay_payload, dict):
                 overlay_payload = _read_json(fallback_overlay_path, None)
             if isinstance(overlay_payload, dict):
-                if _is_full_compact_overview_payload(overlay_payload):
-                    return overlay_payload
+                # Always keep geometry (dr) from base.json; only overlay clustering payload.
                 return _compact_merge_base_overlay(base_payload, overlay_payload)
 
     if legacy_path.is_file():
