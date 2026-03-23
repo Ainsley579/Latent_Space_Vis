@@ -1,8 +1,11 @@
 #!/bin/bash
-# Submit one ESOL split materialization worker.
+# Submit one ESOL case materialization worker.
 #
 # Usage:
 #   sbatch scripts/submit_materialize_esol_split.slurm <dataset:chemprop|chemeleon> <split:train|val|test> [time_hint]
+#
+# The split argument is retained for compatibility, but the materialization step now
+# clusters train/val/test jointly and refreshes all three split directories.
 
 #SBATCH --job-name=latentvis_split_materialize
 #SBATCH --nodes=1
@@ -59,7 +62,7 @@ resubmit_self() {
 RESUBMITTED_ON_TIMEOUT=0
 trap 'if [[ "$RESUBMITTED_ON_TIMEOUT" -eq 0 ]]; then RESUBMITTED_ON_TIMEOUT=1; echo "Received USR1 near time limit"; resubmit_self; fi' USR1
 
-module load conda
+source /global/common/software/nersc/pe/conda/26.1.0/Miniforge3-25.11.0-1/etc/profile.d/conda.sh
 conda activate latentvis
 export PYTHONUNBUFFERED=1
 

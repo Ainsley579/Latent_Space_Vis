@@ -48,6 +48,12 @@ LAYER_MAP_10CONF="${SCRIPT_DIR}/layer_map_dimenet10conf_cas.json"
 DIMENET_SPLIT_JSON="${DIMENET_SPLIT_JSON:-/global/cfs/cdirs/m636/nhadler/projects/Libra-ML-Modeling/model-training/butene/dimenet-noaug/data/jsons/split_0.json}"
 HF_LITERATURE_TSV="${HF_LITERATURE_TSV:-/global/cfs/cdirs/m636/nhadler/projects/Libra-ML-Modeling/data/HF-Literature.tsv}"
 CONDA_ENV_PATH="${CONDA_ENV_PATH:-/global/homes/j/jiaqing/.conda/envs/latentvis}"
+export NUMBA_CACHE_DIR="${NUMBA_CACHE_DIR:-/tmp/latentvis_numba_cache}"
+mkdir -p "$NUMBA_CACHE_DIR"
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
+export MKL_NUM_THREADS="${MKL_NUM_THREADS:-1}"
+export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-1}"
+export NUMEXPR_NUM_THREADS="${NUMEXPR_NUM_THREADS:-1}"
 
 AGG_LINKAGES_RAW="${AGG_LINKAGES:-ward,complete,average}"
 KNN_K_MIN="${KNN_K_MIN:-2}"
@@ -144,6 +150,7 @@ run_one() {
     return 1
   fi
 
+  rm -rf "$out_dir/.pipeline_resume"
   cp "$SMILES_JSON_PATH" "$out_dir/real_id_to_smiles.json"
   python3 "${SCRIPT_DIR}/materialize_sankey_compat_files.py" \
     --dataset-root "$out_dir" \

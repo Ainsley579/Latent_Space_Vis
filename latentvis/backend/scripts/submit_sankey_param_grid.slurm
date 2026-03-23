@@ -1,6 +1,8 @@
 #!/bin/bash
 # Submit one parameter-sweep worker for a single (dataset, split, method).
 # Auto-resubmits itself on failure or near time limit; completed configs are skipped.
+# Each sweep run clusters all available ESOL splits jointly, then writes the
+# requested split back into the existing sweep directory.
 #
 # Usage:
 #   sbatch scripts/submit_sankey_param_grid.slurm <dataset> <split> <method> [time_hint]
@@ -48,18 +50,23 @@ esac
 # For METHOD=agglomerative, optionally restrict linkage list via env:
 #   AGG_LINKAGES=complete,average  (default: ward,complete,average)
 AGG_LINKAGES_RAW="${AGG_LINKAGES:-ward,complete,average}"
-# For METHOD=knn, default to the narrower range that most often yields 3-5 clusters.
+# For METHOD=knn, default to the full frontend-supported range.
 # Override with env when needed, e.g. KNN_K_MIN=2 KNN_K_MAX=5 sbatch ...
 KNN_K_MIN="${KNN_K_MIN:-2}"
-KNN_K_MAX="${KNN_K_MAX:-4}"
+KNN_K_MAX="${KNN_K_MAX:-10}"
 # Set FORCE_RERUN=1 to replace existing completed sweep outputs instead of skipping them.
 FORCE_RERUN="${FORCE_RERUN:-0}"
+LATENTVIS_DISABLE_RESUBMIT="${LATENTVIS_DISABLE_RESUBMIT:-0}"
 
 SCRIPT_DIR="/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend/scripts"
 BACKEND_DIR="/global/cfs/cdirs/m636/nhadler/projects/Latent_Space_Vis/latentvis/backend"
 DATA_ROOT="${LATENTVIS_DATA_ROOT:-$BACKEND_DIR/data}"
 INPUT="/global/cfs/projectdirs/m636/nhadler/projects/esol/data/${DATASET}-embeddings.pt"
 OUT_ROOT="$DATA_ROOT/$DATASET/$SPLIT/sweeps/$METHOD"
+REGULAR_SCRIPT="$SCRIPT_DIR/submit_sankey_param_grid.slurm"
+SHARED_SCRIPT="$SCRIPT_DIR/submit_sankey_param_grid_shared.slurm"
+OVERRUN_SCRIPT="$SCRIPT_DIR/submit_sankey_param_grid_shared_overrun.slurm"
+source "$SCRIPT_DIR/slurm_fallback_lib.sh"
 
 if [[ ! -d "$BACKEND_DIR" ]]; then echo "ERROR: BACKEND_DIR missing: $BACKEND_DIR"; exit 1; fi
 if [[ ! -f "$BACKEND_DIR/run_pipeline_from_embeddings.py" ]]; then echo "ERROR: run_pipeline_from_embeddings.py not found"; exit 1; fi
@@ -73,18 +80,40 @@ mkdir -p "$OUT_ROOT"
 cd "$BACKEND_DIR"
 
 resubmit_self() {
-  echo "[resubmit] dataset=$DATASET split=$SPLIT method=$METHOD"
+  local sbatch_args=()
+  local script_args=("$DATASET" "$SPLIT" "$METHOD" "$TIME_HINT")
+  sbatch_args+=(--export="ALL,FORCE_RERUN=$FORCE_RERUN,AGG_LINKAGES=$AGG_LINKAGES_RAW,KNN_K_MIN=$KNN_K_MIN,KNN_K_MAX=$KNN_K_MAX")
   if [[ -n "$TIME_HINT" ]]; then
-    sbatch --time="$TIME_HINT" "$SCRIPT_DIR/submit_sankey_param_grid.slurm" "$DATASET" "$SPLIT" "$METHOD" "$TIME_HINT"
-  else
-    sbatch "$SCRIPT_DIR/submit_sankey_param_grid.slurm" "$DATASET" "$SPLIT" "$METHOD"
+    sbatch_args+=(--time="$TIME_HINT")
   fi
+  echo "[resubmit] dataset=$DATASET split=$SPLIT method=$METHOD"
+  latentvis_submit_with_fallback "$REGULAR_SCRIPT" "$SHARED_SCRIPT" "$OVERRUN_SCRIPT" sbatch_args script_args
 }
 
-RESUBMITTED_ON_TIMEOUT=0
-trap 'if [[ "$RESUBMITTED_ON_TIMEOUT" -eq 0 ]]; then RESUBMITTED_ON_TIMEOUT=1; echo "[trap] Received USR1 near time limit"; resubmit_self; fi' USR1
+RESUBMITTED=0
+resubmit_once() {
+  local reason="$1"
+  if [[ "$LATENTVIS_DISABLE_RESUBMIT" == "1" ]]; then
+    echo "[trap] resubmit disabled reason=$reason"
+    return 0
+  fi
+  if [[ "$RESUBMITTED" -eq 0 ]]; then
+    RESUBMITTED=1
+    echo "[trap] resubmit reason=$reason"
+    resubmit_self
+  fi
+}
+on_exit() {
+  local rc=$?
+  if [[ $rc -ne 0 ]]; then
+    resubmit_once "exit_rc=$rc"
+  fi
+  exit "$rc"
+}
+trap 'resubmit_once "signal_usr1"' USR1
+trap on_exit EXIT
 
-module load conda
+source /global/common/software/nersc/pe/conda/26.1.0/Miniforge3-25.11.0-1/etc/profile.d/conda.sh
 conda activate latentvis
 export PYTHONUNBUFFERED=1
 
@@ -114,6 +143,10 @@ run_one() {
   local params_json="$2"
   shift 2
   local out_dir="$OUT_ROOT/$tag"
+  local tmp_root
+  local tmp_case_root
+  local tmp_output_root
+  local split_method_dir
 
   if [[ "$FORCE_RERUN" != "1" ]] && is_complete_dir "$out_dir"; then
     echo "[skip] complete: $out_dir"
@@ -125,26 +158,54 @@ run_one() {
     rm -rf "$out_dir"
   fi
 
-  mkdir -p "$out_dir"
+  mkdir -p "$OUT_ROOT"
+  tmp_root="$(mktemp -d "/tmp/latentvis_sweep_${DATASET}_${SPLIT}_${METHOD}_${tag}.XXXXXX")"
+  tmp_case_root="$tmp_root/case"
+  tmp_output_root="$tmp_root/all_samples"
+  mkdir -p "$tmp_case_root" "$tmp_output_root"
+  for seed_split in train val test; do
+    local seed_scatter_dir="$DATA_ROOT/$DATASET/$seed_split/pgmeans/scatterplot"
+    if [[ -d "$seed_scatter_dir" ]]; then
+      mkdir -p "$tmp_case_root/$seed_split/pgmeans"
+      cp -a "$seed_scatter_dir" "$tmp_case_root/$seed_split/pgmeans/"
+    fi
+  done
   echo "[run] $DATASET/$SPLIT/$METHOD/$tag"
   set +e
   python3 run_pipeline_from_embeddings.py \
     --input "$INPUT" \
-    --output-dir "$out_dir" \
-    --data-split "$SPLIT" \
+    --output-dir "$tmp_output_root" \
+    --split-output-root "$tmp_case_root" \
+    --reuse-scatter-coords \
     --default-reduction pca \
     "$@"
   local rc=$?
   set -e
   if [[ $rc -ne 0 ]]; then
     echo "[error] pipeline failed (rc=$rc): $out_dir"
+    rm -rf "$tmp_root"
     return $rc
   fi
+  if [[ "$METHOD" == "pgmeans" ]]; then
+    split_method_dir="$tmp_case_root/$SPLIT/pgmeans"
+  else
+    split_method_dir="$tmp_case_root/$SPLIT/$METHOD"
+  fi
+  if [[ ! -d "$split_method_dir" ]]; then
+    echo "[error] missing split output: $split_method_dir"
+    rm -rf "$tmp_root"
+    return 1
+  fi
+  rm -rf "$out_dir"
+  cp -a "$split_method_dir" "$out_dir"
+  rm -rf "$out_dir/.pipeline_resume"
   if ! is_complete_dir "$out_dir"; then
     echo "[error] incomplete outputs: $out_dir"
+    rm -rf "$tmp_root"
     return 1
   fi
   write_meta "$out_dir" "$params_json"
+  rm -rf "$tmp_root"
   return 0
 }
 

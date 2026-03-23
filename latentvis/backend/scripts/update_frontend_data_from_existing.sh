@@ -41,7 +41,7 @@ log "  TOPK_DIR=$TOPK_DIR"
 log "  SUBSTRUCTURES_JSON=$SUBSTRUCTURES_JSON"
 
 log "=== Step 1/2: Generate topk + cluster_sorted_members from scatter CSVs ==="
-log "  (Usually takes 1–3 min. If this hangs, check disk/network.)"
+log "  (Usually takes 1-3 min. If this hangs, check disk/network.)"
 if [[ ! -f "$SCATTER_TENCONF" || ! -f "$SCATTER_NOAUG" ]]; then
   log "Warning: scatter CSVs not found, skip step 1."
   log "  tenconf: $SCATTER_TENCONF"
@@ -63,7 +63,7 @@ fi
 
 log ""
 log "=== Step 2/2: Regenerate MCS substructures (topk + SMILES) -> frontend ==="
-log "  (Can take 5–25 min; you will see progress lines below.)"
+log "  (Can take 5-25 min; you will see progress lines below.)"
 if [[ ! -f "$TOPK_DIR/cluster_representatives.json" ]]; then
   log "Warning: cluster_representatives.json not found, skip step 2."
 elif [[ ! -f "$SMILES_CSV" ]]; then

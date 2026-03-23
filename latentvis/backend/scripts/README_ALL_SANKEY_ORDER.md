@@ -18,7 +18,7 @@ Re-run **reorder_all_sankey_keys.py** on existing all_sankey, then **compute_lay
 All `all_sankey.json` under `frontend/public/data` for **chemprop**, **chemeleon**, and **dimenet** (where applicable) have been reordered so that `"layer"` keys follow model order:
 
 - **Chemprop:** `fingerprint`, `gnn_layer_1`, `gnn_layer_2`, `gnn_layer_3`, `ffn_layer_1`, `ffn_layer_2`
-- **Chemeleon:** `fingerprint`, `gnn_layer_1` … `gnn_layer_6`, `ffn_layer_1`, `ffn_layer_2`
+- **Chemeleon:** `fingerprint`, `gnn_layer_1` ... `gnn_layer_6`, `ffn_layer_1`, `ffn_layer_2`
 - **Dimenet** (clustering dirs with same layer set): same as chemprop for the shared layers.
 
 Backend pipeline test/validation dirs (`pipeline_output_chemprop`, `pipeline_validate_chemeleon`, `pipeline_validate_test/chemprop_short`) have also been reordered.
@@ -50,7 +50,7 @@ Or use `--layer-order-from-csv` to take the order from the same case's `clusteri
 
 ## Layer transition stats (Sankey-consistent percentages)
 
-The percentage is computed from the same flow logic as the Sankey (outflow from each source cluster). Cell-to-cell change percentages (`layer_transition_by_epoch.json`, `layer_transition_by_layer.json`) are computed for **consecutive** layers in the order you specify. That order must match `all_sankey.json` so the frontend’s “from layer A to layer B” matches the stats.
+The percentage is computed from the same flow logic as the Sankey (outflow from each source cluster). Cell-to-cell change percentages (`layer_transition_by_epoch.json`, `layer_transition_by_layer.json`) are computed for **consecutive** layers in the order you specify. That order must match `all_sankey.json` so the frontend's "from layer A to layer B" matches the stats.
 
 After reordering all_sankey (or when using old CSVs with wrong column order), run:
 

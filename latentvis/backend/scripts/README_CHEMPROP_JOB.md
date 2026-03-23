@@ -35,7 +35,7 @@ sbatch scripts/submit_chemeleon_full.slurm
 
 ## Output Layout (per case)
 
-- `sankey/` - 2D Sankey (epoch × layer)
+- `sankey/` - 2D Sankey (epoch x layer)
 - `scatterplot/` - PCA, MDS, UMAP, t-SNE projections
 - `topk/` - cluster representatives and sorted members
 - `bic_aic/` - PGMeans model selection curves

@@ -5,6 +5,7 @@
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/slurm_fallback_lib.sh"
 cd "$BACKEND_DIR"
 
 SKIP_VALIDATE=false
@@ -19,6 +20,13 @@ if [[ "$SKIP_VALIDATE" != true ]]; then
   echo ""
 fi
 
-echo "=== Submitting chemeleon SLURM job (2hr, auto-resubmit) ==="
+echo "=== Submitting chemeleon SLURM job (auto shared fallback enabled) ==="
 mkdir -p "$BACKEND_DIR/logs/slurm"
-sbatch "$SCRIPT_DIR/submit_chemeleon_full.slurm"
+sbatch_args=()
+script_args=()
+latentvis_submit_with_fallback \
+  "$SCRIPT_DIR/submit_chemeleon_full.slurm" \
+  "$SCRIPT_DIR/submit_chemeleon_full_shared.slurm" \
+  "$SCRIPT_DIR/submit_chemeleon_full_shared_overrun.slurm" \
+  sbatch_args \
+  script_args
