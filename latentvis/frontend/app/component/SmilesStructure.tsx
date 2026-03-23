@@ -11,9 +11,23 @@ type SmilesStructureProps = {
 
 const OCL_CDN =
   "https://www.lactame.com/lib/openchemlib/5.2.0/openchemlib-minimal.js";
+const OCL_LOAD_TIMEOUT_MS = 3500;
+const SMILES_DRAWER_TIMEOUT_MS = 2500;
+const SMILES_SVG_CACHE_LIMIT = 1200;
 
 let oclLoadPromise: Promise<any> | null = null;
 let smilesDrawerLoadPromise: Promise<any> | null = null;
+const smilesSvgCache = new Map<string, string>();
+const smilesSvgInflight = new Map<string, Promise<string | null>>();
+
+function rememberSvgCache(key: string, svg: string) {
+  if (!key || !svg) return;
+  if (smilesSvgCache.has(key)) smilesSvgCache.delete(key);
+  smilesSvgCache.set(key, svg);
+  if (smilesSvgCache.size <= SMILES_SVG_CACHE_LIMIT) return;
+  const oldest = smilesSvgCache.keys().next().value;
+  if (oldest) smilesSvgCache.delete(oldest);
+}
 
 function loadOCL(): Promise<any> {
   if (typeof window === "undefined") return Promise.reject(new Error("no_window"));
@@ -22,24 +36,67 @@ function loadOCL(): Promise<any> {
   if (oclLoadPromise) return oclLoadPromise;
 
   oclLoadPromise = new Promise((resolve, reject) => {
+    const settleWithWindowOcl = () => {
+      const ocl = (window as any).OCL;
+      if (ocl) resolve(ocl);
+      else reject(new Error("ocl_missing"));
+    };
+
+    const waitExistingScript = (script: HTMLScriptElement) => {
+      let timer: number | null = null;
+      const cleanup = () => {
+        script.removeEventListener("load", onLoad);
+        script.removeEventListener("error", onError);
+        if (timer != null) window.clearTimeout(timer);
+      };
+      const onLoad = () => {
+        script.setAttribute("data-ocl-state", "loaded");
+        cleanup();
+        settleWithWindowOcl();
+      };
+      const onError = () => {
+        script.setAttribute("data-ocl-state", "failed");
+        cleanup();
+        reject(new Error("ocl_load_failed"));
+      };
+      script.addEventListener("load", onLoad, { once: true });
+      script.addEventListener("error", onError, { once: true });
+      timer = window.setTimeout(() => {
+        cleanup();
+        reject(new Error("ocl_load_timeout"));
+      }, OCL_LOAD_TIMEOUT_MS);
+    };
+
+    const injectScript = () => {
+      const script = document.createElement("script");
+      script.src = OCL_CDN;
+      script.async = true;
+      script.defer = true;
+      script.setAttribute("data-ocl", "1");
+      script.setAttribute("data-ocl-state", "loading");
+      script.onload = () => {
+        script.setAttribute("data-ocl-state", "loaded");
+        settleWithWindowOcl();
+      };
+      script.onerror = () => {
+        script.setAttribute("data-ocl-state", "failed");
+        reject(new Error("ocl_load_failed"));
+      };
+      document.head.appendChild(script);
+    };
+
     const existing = document.querySelector<HTMLScriptElement>("script[data-ocl='1']");
     if (existing) {
-      existing.addEventListener("load", () => resolve((window as any).OCL), { once: true });
-      existing.addEventListener("error", () => reject(new Error("ocl_load_failed")), { once: true });
+      const state = existing.getAttribute("data-ocl-state");
+      if (state === "failed") {
+        existing.remove();
+        injectScript();
+        return;
+      }
+      waitExistingScript(existing);
       return;
     }
-    const script = document.createElement("script");
-    script.src = OCL_CDN;
-    script.async = true;
-    script.defer = true;
-    script.setAttribute("data-ocl", "1");
-    script.onload = () => {
-      const ocl = (window as any).OCL;
-      if (!ocl) reject(new Error("ocl_missing"));
-      else resolve(ocl);
-    };
-    script.onerror = () => reject(new Error("ocl_load_failed"));
-    document.head.appendChild(script);
+    injectScript();
   });
 
   oclLoadPromise = oclLoadPromise.catch((err) => {
@@ -84,10 +141,15 @@ async function renderWithSmilesDrawer(
     host.appendChild(svg);
     document.body.appendChild(host);
 
+    let settled = false;
     const done = (markup: string | null) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
       host.remove();
       resolve(markup ? normalizeSmilesSvgMarkup(markup) : null);
     };
+    const timer = window.setTimeout(() => done(null), SMILES_DRAWER_TIMEOUT_MS);
 
     try {
       const drawer = new SD.SvgDrawer({ width, height });
@@ -128,6 +190,13 @@ export async function renderSmilesSvg(
 ): Promise<string | null> {
   const s = String(smiles ?? "").trim();
   if (!s) return null;
+  const cacheKey = `${width}x${height}|${s}`;
+  const cached = smilesSvgCache.get(cacheKey);
+  if (cached) return cached;
+  const existingTask = smilesSvgInflight.get(cacheKey);
+  if (existingTask) return existingTask;
+
+  const task = (async () => {
   const candidates = Array.from(
     new Set(
       [s, s.replace(/:/g, "="), s.replace(/:/g, "")].filter((x) => x.length > 0)
@@ -140,7 +209,11 @@ export async function renderSmilesSvg(
       try {
         const mol = OCL.Molecule.fromSmiles(c);
         const svg = mol.toSVG(width, height, "", { suppressCIPParity: true });
-        if (svg && svg.includes("<svg")) return normalizeSmilesSvgMarkup(svg);
+        if (svg && svg.includes("<svg")) {
+          const out = normalizeSmilesSvgMarkup(svg);
+          rememberSvgCache(cacheKey, out);
+          return out;
+        }
       } catch {
         // try next candidate
       }
@@ -151,9 +224,19 @@ export async function renderSmilesSvg(
 
   for (const c of candidates) {
     const svg = await renderWithSmilesDrawer(c, width, height);
-    if (svg && svg.includes("<svg")) return svg;
+    if (svg && svg.includes("<svg")) {
+      rememberSvgCache(cacheKey, svg);
+      return svg;
+    }
   }
   return null;
+  })();
+
+  const guardedTask = task.finally(() => {
+    smilesSvgInflight.delete(cacheKey);
+  });
+  smilesSvgInflight.set(cacheKey, guardedTask);
+  return guardedTask;
 }
 
 export default function SmilesStructure({
