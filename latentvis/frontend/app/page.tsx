@@ -217,6 +217,11 @@ export default function Home() {
         latestSankeyRenderRequestRef.current = requestId;
         setSankeyRenderRequestId(requestId);
         setIsBlockingInitLoading(true);
+        // Clear stale point/cluster selection when switching dataset/clustering params.
+        setSelectedNode(null);
+        setSelectedIds(null);
+        setCellSelected(false);
+        setShowSearchResultsInMembers(false);
         setOverviewData(null);
         setSelectedSankeySplits(selectedDataSet === "dimenet" ? ["test"] : ["train", "test", "val"]);
         const datasetParams = new URLSearchParams();
