@@ -211,6 +211,14 @@ export default function Home() {
     }, [selectedClustering, selectedDataSet]);
 
     useEffect(() => {
+        if (selectedDataSet !== "chemeleon" || selectedClustering !== "agglomerative") return;
+        if (selectedAgglomerativeParams.linkage !== "average") return;
+        setSelectedAgglomerativeParams((prev) =>
+            prev.linkage === "average" ? { ...prev, linkage: "ward" } : prev
+        );
+    }, [selectedDataSet, selectedClustering, selectedAgglomerativeParams.linkage]);
+
+    useEffect(() => {
         const controller = new AbortController();
         let cancelled = false;
         const requestId = latestSankeyRenderRequestRef.current + 1;
@@ -232,7 +240,11 @@ export default function Home() {
             datasetParams.set("k_min", String(selectedPgmeansRange.min));
             datasetParams.set("k_max", String(selectedPgmeansRange.max));
         } else if (selectedClustering === "agglomerative") {
-            datasetParams.set("linkage", selectedAgglomerativeParams.linkage);
+            const linkageForRequest =
+                selectedDataSet === "chemeleon" && selectedAgglomerativeParams.linkage === "average"
+                    ? "ward"
+                    : selectedAgglomerativeParams.linkage;
+            datasetParams.set("linkage", linkageForRequest);
             if (selectedAgglomerativeParams.k != null) {
                 datasetParams.set("k", String(selectedAgglomerativeParams.k));
             }
