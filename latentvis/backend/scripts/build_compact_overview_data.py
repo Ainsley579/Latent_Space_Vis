@@ -939,6 +939,7 @@ def split_overview_base_and_overlay(
         "api_version": overview["api_version"],
         "dataset": overview["dataset"],
         "source_variant": method,
+        "split_names": overview["split_names"],
         "cells": [],
         "nodes": overview["nodes"],
         "connectivity": overview["connectivity"],
@@ -996,9 +997,10 @@ def build_all(output_root: Path, coord_decimals: int) -> Dict[str, Dict[str, Any
                 except Exception:
                     continue
                 method_path = output_root / spec.name / "sweeps" / method / f"{sweep_key}.json"
-                # Sweep outputs may have a different epoch/layer grid from base.json.
-                # Persist the full overview so runtime loading does not rely on base merge.
-                write_json(method_path, method_overview)
+                # Keep sweep outputs as compact overlays (no DR payload); runtime
+                # always merges clustering payload onto base.json geometry.
+                _method_base, method_overlay = split_overview_base_and_overlay(method_overview, f"{method}:{sweep_key}")
+                write_json(method_path, method_overlay)
                 method_sweeps[sweep_key] = str(method_path)
             if method_sweeps:
                 dataset_manifest["sweeps"][method] = method_sweeps
