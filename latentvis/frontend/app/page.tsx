@@ -45,6 +45,23 @@ const DEFAULT_WORKSPACE_WIDTH_PCT = 50; // right column default 50%
 const HALF_RIGHT_WORKSPACE_WIDTH_PCT = 83;
 const apiBase = (process.env.NEXT_PUBLIC_FLASK_API_BASE || "http://127.0.0.1:5001").replace(/\/+$/, "");
 
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetriableDatasetLoadError(err: unknown): boolean {
+    const msg = String((err as any)?.message ?? err ?? "").toLowerCase();
+    const name = String((err as any)?.name ?? "").toLowerCase();
+    if (name === "aborterror") return false;
+    return (
+        msg.includes("content-length") ||
+        msg.includes("networkerror") ||
+        msg.includes("failed to fetch") ||
+        msg.includes("load failed") ||
+        name === "typeerror"
+    );
+}
+
 function parseSplitTaggedId(value: string | number): { split: "train" | "test" | "val" | null; realId: string } {
     const raw = String(value ?? "").trim();
     if (raw.startsWith("train::")) return { split: "train", realId: raw.slice("train::".length) };
@@ -217,25 +234,36 @@ export default function Home() {
         } else if (selectedClustering === "knn") {
             datasetParams.set("k", String(knnKForRequest));
         }
-        fetch(`${apiBase}/get_dataset/${selectedDataSet}?${datasetParams.toString()}`, {
-            method: "GET",
-            signal: controller.signal,
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`Network error: ${response.status}`);
+        const datasetUrl = `${apiBase}/get_dataset/${selectedDataSet}?${datasetParams.toString()}`;
+        const loadWithRetry = async () => {
+            const maxAttempts = 3;
+            for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+                try {
+                    const response = await fetch(datasetUrl, {
+                        method: "GET",
+                        signal: controller.signal,
+                        cache: "no-store",
+                    });
+                    if (!response.ok) {
+                        throw new Error(`Network error: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    if (cancelled) return;
+                    setOverviewData(data);
+                    return;
+                } catch (err) {
+                    if ((err as Error)?.name === "AbortError") return;
+                    const retriable = isRetriableDatasetLoadError(err);
+                    if (!retriable || attempt >= maxAttempts) {
+                        alert(`Failed to load dataset ${selectedDataSet}: ${err}`);
+                        setIsBlockingInitLoading(false);
+                        return;
+                    }
+                    await sleep(350 * attempt);
                 }
-                return response.json();
-            })
-            .then((data) => {
-                if (cancelled) return;
-                setOverviewData(data);
-            })
-            .catch((err) => {
-                if ((err as Error)?.name === "AbortError") return;
-                alert(`Failed to load dataset ${selectedDataSet}: ${err}`);
-                setIsBlockingInitLoading(false);
-            });
+            }
+        };
+        void loadWithRetry();
 
         return () => {
             cancelled = true;
