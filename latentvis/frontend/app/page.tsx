@@ -1697,11 +1697,27 @@ export default function Home() {
             rect = anchor as DOMRect;
         }
         if (!rect) return;
+        const VIEWPORT_PAD = 8;
+        const ANCHOR_GAP = 10;
+        const PREVIEW_CHROME = 18; // container padding + border
+        const previewBoxSize = Math.max(120, largeHoverPreviewSize + PREVIEW_CHROME);
+        const viewportW = window.innerWidth;
+        const viewportH = window.innerHeight;
+        const rightCandidate = rect.right + ANCHOR_GAP;
+        const leftCandidate = rect.left - ANCHOR_GAP - previewBoxSize;
+        const rightHasSpace = rightCandidate + previewBoxSize <= viewportW - VIEWPORT_PAD;
+        const leftHasSpace = leftCandidate >= VIEWPORT_PAD;
+        let left = rightCandidate;
+        if (!rightHasSpace && leftHasSpace) {
+            left = leftCandidate;
+        }
+        left = Math.max(VIEWPORT_PAD, Math.min(left, viewportW - previewBoxSize - VIEWPORT_PAD));
+        const top = Math.max(VIEWPORT_PAD, Math.min(rect.top, viewportH - previewBoxSize - VIEWPORT_PAD));
         setHoverPreview({
             kind: "smiles",
             smiles: text,
-            left: rect.right + 10,
-            top: rect.top,
+            left,
+            top,
             source,
         });
     }
