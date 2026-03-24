@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type SyncControlPanelProps = {
   dataset: string;
@@ -75,8 +75,25 @@ export default function SyncControlPanel({
   const isAgglomerative = clusteringKey === "agglomerative";
   const isPgmeans = clusteringKey === "pgmeans";
   const isKnn = clusteringKey === "knn";
+  const datasetKey = String(dataset ?? "").trim().toLowerCase();
+  const isChemeleon = datasetKey === "chemeleon";
   const knnK = knnKProp ?? knnKLocal;
   const setKnnK = onKnnKChange ?? setKnnKLocal;
+  const knnKOptions = useMemo(
+    () => (isChemeleon ? [2, 3, 4] : Array.from({ length: 9 }, (_, i) => i + 2)),
+    [isChemeleon]
+  );
+  const minKnnK = knnKOptions[0];
+  const maxKnnK = knnKOptions[knnKOptions.length - 1];
+  const normalizedKnnK = Number.isFinite(Number(knnK)) ? Number(knnK) : minKnnK;
+  const clampedKnnK = Math.max(minKnnK, Math.min(maxKnnK, normalizedKnnK));
+
+  useEffect(() => {
+    if (!isKnn) return;
+    if (clampedKnnK !== knnK) {
+      setKnnK(clampedKnnK);
+    }
+  }, [clampedKnnK, isKnn, knnK, setKnnK]);
 
   const minOptions = useMemo(() => {
     const list = Array.from({ length: 9 }, (_, i) => i + 2).filter((v) => v <= maxValue);
@@ -365,10 +382,10 @@ export default function SyncControlPanel({
             <label className="text-xs text-zinc-600 shrink-0">k</label>
             <select
               className="h-6 min-w-0 flex-1 px-1 text-xs border border-zinc-300 rounded bg-white"
-              value={knnK}
+              value={clampedKnnK}
               onChange={(e) => setKnnK(Number(e.target.value))}
             >
-              {Array.from({ length: 9 }, (_, i) => i + 2).map((v) => (
+              {knnKOptions.map((v) => (
                 <option key={`knn-k-${v}`} value={v}>
                   {v}
                 </option>

@@ -189,6 +189,11 @@ export default function Home() {
     }, [availableSankeySplits]);
 
     useEffect(() => {
+        if (selectedDataSet !== "chemeleon" || selectedClustering !== "knn") return;
+        setSelectedKnnK((prev) => Math.max(2, Math.min(4, prev)));
+    }, [selectedClustering, selectedDataSet]);
+
+    useEffect(() => {
         const controller = new AbortController();
         let cancelled = false;
         const requestId = latestSankeyRenderRequestRef.current + 1;
@@ -198,6 +203,8 @@ export default function Home() {
         setOverviewData(null);
         setSelectedSankeySplits(selectedDataSet === "dimenet" ? ["test"] : ["train", "test", "val"]);
         const datasetParams = new URLSearchParams();
+        const knnKForRequest =
+            selectedDataSet === "chemeleon" ? Math.max(2, Math.min(4, selectedKnnK)) : selectedKnnK;
         datasetParams.set("clustering", selectedClustering);
         if (selectedClustering === "pgmeans" && usePgmeansSweepParams) {
             datasetParams.set("k_min", String(selectedPgmeansRange.min));
@@ -208,7 +215,7 @@ export default function Home() {
                 datasetParams.set("k", String(selectedAgglomerativeParams.k));
             }
         } else if (selectedClustering === "knn") {
-            datasetParams.set("k", String(selectedKnnK));
+            datasetParams.set("k", String(knnKForRequest));
         }
         fetch(`${apiBase}/get_dataset/${selectedDataSet}?${datasetParams.toString()}`, {
             method: "GET",
@@ -2685,7 +2692,11 @@ export default function Home() {
                                                 : config
                                         )
                                     }
-                                    knnK={selectedKnnK}
+                                    knnK={
+                                        selectedDataSet === "chemeleon"
+                                            ? Math.max(2, Math.min(4, selectedKnnK))
+                                            : selectedKnnK
+                                    }
                                     onKnnKChange={setSelectedKnnK}
                                     onExportBookmarks={exportBookmarkedIdsCsv}
                                     bookmarkCount={bookmarkedIds.size}
