@@ -14,11 +14,13 @@ const OCL_CDN =
 const OCL_LOAD_TIMEOUT_MS = 3500;
 const SMILES_DRAWER_TIMEOUT_MS = 2500;
 const SMILES_SVG_CACHE_LIMIT = 1200;
+const OCL_RETRY_COOLDOWN_MS = 30000;
 
 let oclLoadPromise: Promise<any> | null = null;
 let smilesDrawerLoadPromise: Promise<any> | null = null;
 const smilesSvgCache = new Map<string, string>();
 const smilesSvgInflight = new Map<string, Promise<string | null>>();
+let lastOclLoadFailureAt = 0;
 
 function rememberSvgCache(key: string, svg: string) {
   if (!key || !svg) return;
@@ -33,6 +35,9 @@ function loadOCL(): Promise<any> {
   if (typeof window === "undefined") return Promise.reject(new Error("no_window"));
   const w = window as any;
   if (w.OCL) return Promise.resolve(w.OCL);
+  if (Date.now() - lastOclLoadFailureAt < OCL_RETRY_COOLDOWN_MS) {
+    return Promise.reject(new Error("ocl_retry_cooldown"));
+  }
   if (oclLoadPromise) return oclLoadPromise;
 
   oclLoadPromise = new Promise((resolve, reject) => {
@@ -100,6 +105,7 @@ function loadOCL(): Promise<any> {
   });
 
   oclLoadPromise = oclLoadPromise.catch((err) => {
+    lastOclLoadFailureAt = Date.now();
     oclLoadPromise = null;
     throw err;
   });
@@ -190,6 +196,11 @@ export async function renderSmilesSvg(
 ): Promise<string | null> {
   const s = String(smiles ?? "").trim();
   if (!s) return null;
+  const candidates = Array.from(
+    new Set(
+      [s, s.replace(/:/g, "="), s.replace(/:/g, "")].filter((x) => x.length > 0)
+    )
+  );
   const cacheKey = `${width}x${height}|${s}`;
   const cached = smilesSvgCache.get(cacheKey);
   if (cached) return cached;
@@ -197,39 +208,34 @@ export async function renderSmilesSvg(
   if (existingTask) return existingTask;
 
   const task = (async () => {
-  const candidates = Array.from(
-    new Set(
-      [s, s.replace(/:/g, "="), s.replace(/:/g, "")].filter((x) => x.length > 0)
-    )
-  );
-
-  try {
-    const OCL = await loadOCL();
     for (const c of candidates) {
-      try {
-        const mol = OCL.Molecule.fromSmiles(c);
-        const svg = mol.toSVG(width, height, "", { suppressCIPParity: true });
-        if (svg && svg.includes("<svg")) {
-          const out = normalizeSmilesSvgMarkup(svg);
-          rememberSvgCache(cacheKey, out);
-          return out;
-        }
-      } catch {
-        // try next candidate
+      const svg = await renderWithSmilesDrawer(c, width, height);
+      if (svg && svg.includes("<svg")) {
+        rememberSvgCache(cacheKey, svg);
+        return svg;
       }
     }
-  } catch {
-    // fallback to smiles-drawer below
-  }
 
-  for (const c of candidates) {
-    const svg = await renderWithSmilesDrawer(c, width, height);
-    if (svg && svg.includes("<svg")) {
-      rememberSvgCache(cacheKey, svg);
-      return svg;
+    try {
+      const OCL = await loadOCL();
+      for (const c of candidates) {
+        try {
+          const mol = OCL.Molecule.fromSmiles(c);
+          const svg = mol.toSVG(width, height, "", { suppressCIPParity: true });
+          if (svg && svg.includes("<svg")) {
+            const out = normalizeSmilesSvgMarkup(svg);
+            rememberSvgCache(cacheKey, out);
+            return out;
+          }
+        } catch {
+          // try next candidate
+        }
+      }
+    } catch {
+      // local renderer already tried above; give up quietly here
     }
-  }
-  return null;
+
+    return null;
   })();
 
   const guardedTask = task.finally(() => {
@@ -245,7 +251,11 @@ export default function SmilesStructure({
   height = 220,
   className = "",
 }: SmilesStructureProps) {
-  const [svgMarkup, setSvgMarkup] = useState<string>("");
+  const renderKey = `${width}x${height}|${String(smiles ?? "").trim()}`;
+  const [renderedSvg, setRenderedSvg] = useState<{ key: string; markup: string }>({
+    key: "",
+    markup: "",
+  });
 
   useEffect(() => {
     const s = String(smiles ?? "").trim();
@@ -259,7 +269,7 @@ export default function SmilesStructure({
           const svg = await renderSmilesSvg(s, width, height);
           if (!alive) return;
           if (svg) {
-            setSvgMarkup(svg);
+            setRenderedSvg({ key: `${width}x${height}|${s}`, markup: svg });
             return;
           }
         } catch {
@@ -267,6 +277,7 @@ export default function SmilesStructure({
         }
         if (attempt < 2) await wait(80 * (attempt + 1));
       }
+      if (alive) setRenderedSvg({ key: `${width}x${height}|${s}`, markup: "" });
     })();
 
     return () => {
@@ -275,6 +286,8 @@ export default function SmilesStructure({
   }, [smiles, width, height]);
 
   if (!String(smiles ?? "").trim()) return null;
+
+  const svgMarkup = renderedSvg.key === renderKey ? renderedSvg.markup : "";
 
   return (
     <>

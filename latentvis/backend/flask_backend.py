@@ -3284,7 +3284,7 @@ def _substructures_for_cell(
 def _load_id_to_smiles(
     dataset: str, data_split: Optional[str] = None
 ) -> Dict[str, str]:
-    splits = _resolve_train_test_splits(data_split, default="test")
+    splits = _expand_split_selector(data_split)
     out: Dict[str, str] = {}
 
     def merge_from_meta_list(
@@ -3311,8 +3311,10 @@ def _load_id_to_smiles(
             smi_s = str(smi)
             if rid_s not in out:
                 out[rid_s] = smi_s
-            if sp in ("train", "test"):
+            if sp in ("train", "test", "val"):
                 out[f"{sp}::{rid_s}"] = smi_s
+            if sp == "val":
+                out[f"test::{rid_s}"] = smi_s
 
     # Preferred source: backend dataset metadata file.
     # e.g. backend/data/chemprop/id_smiles_y_true_y_pred.json
@@ -3456,6 +3458,39 @@ def _split_tagged_id_candidates(rid: str, split: Optional[str] = None) -> List[s
     return out
 
 
+def _lookup_smiles_for_real_id(
+    rid: object,
+    id_to_smiles: Dict[str, str],
+    *,
+    split: Optional[str] = None,
+) -> Optional[str]:
+    rid_s = str(rid)
+    candidates: List[str] = []
+
+    def add(candidate: object) -> None:
+        s = str(candidate)
+        if s and s not in candidates:
+            candidates.append(s)
+
+    for candidate in _split_tagged_id_candidates(rid_s, split=split):
+        add(candidate)
+
+    raw = rid_s.strip()
+    if "::" in raw:
+        split_tag, base = raw.split("::", 1)
+        split_norm = _normalize_split(split_tag)
+        if split_norm == "val":
+            split_norm = "test"
+        for candidate in _split_tagged_id_candidates(base, split=split_norm):
+            add(candidate)
+
+    for candidate in candidates:
+        value = id_to_smiles.get(candidate)
+        if isinstance(value, str) and value:
+            return value
+    return None
+
+
 def _average_tanimoto(
     smiles_list: List[str], radius: int = 2, n_bits: int = 2048
 ) -> Tuple[float, int, int]:
@@ -3519,7 +3554,7 @@ def _mcs_for_real_ids(
     seen_canonical = set()
     for rid in real_ids:
         rid_str = str(rid)
-        smi = id_to_smiles.get(rid_str)
+        smi = _lookup_smiles_for_real_id(rid_str, id_to_smiles)
         if not smi:
             missing.append(rid_str)
             continue
@@ -3739,18 +3774,6 @@ def substructures_cluster_topm():
 
     id_to_smiles = _load_id_to_smiles(dataset, data_split=data_split)
 
-    def lookup_smiles_for_id(rid: str) -> Optional[str]:
-        s = str(rid)
-        v = id_to_smiles.get(s)
-        if isinstance(v, str) and v:
-            return v
-        if "::" in s:
-            _, base = s.split("::", 1)
-            v2 = id_to_smiles.get(base)
-            if isinstance(v2, str) and v2:
-                return v2
-        return None
-
     out_rows = []
     cluster_summary = []
     by_cluster: Dict[int, List[str]] = {}
@@ -3824,7 +3847,7 @@ def substructures_cluster_topm():
             ids = knn_ids if grp == "knn" else kfn_ids
             id_splits = knn_splits if grp == "knn" else kfn_splits
             mcs = _mcs_for_real_ids(ids, id_to_smiles)
-            member_smiles = [lookup_smiles_for_id(x) for x in ids]
+            member_smiles = [_lookup_smiles_for_real_id(x, id_to_smiles) for x in ids]
             out_rows.append(
                 {
                     "layer_name": str(layer),
