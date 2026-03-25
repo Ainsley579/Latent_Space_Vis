@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import SankeyView from "./component/SankeyView";
 import Sankey from "./component/Sankey1D";
 import ScatterPlot from "./component/ScatterPlot";
+import DatasetMoleculeImage from "./component/DatasetMoleculeImage";
 import TopkNearestPanel from "./component/TopkNearestPanel";
 import SmilesStructure from "./component/SmilesStructure";
 import StructureEditorPanel from "./component/StructureEditorPanel";
@@ -2521,7 +2522,12 @@ export default function Home() {
                                                                                                     : "border-zinc-200")
                                                                                             }
                                                                                         >
-                                                                                            <SmilesStructure smiles={getSmilesById(id)} className="w-full h-full" />
+                                                                                            <DatasetMoleculeImage
+                                                                                                dataset={selectedDataSet}
+                                                                                                realId={id}
+                                                                                                smiles={getSmilesById(id)}
+                                                                                                className="w-full h-full"
+                                                                                            />
                                                                                         </div>
                                                                                         {selectedNode && !showSearchResultsInMembers && (
                                                                                             <div
@@ -2600,6 +2606,7 @@ export default function Home() {
                                             </svg>
                                         </button>
                                         <TopkNearestPanel
+                                            dataset={selectedDataSet}
                                             rows={topkNearestRows}
                                             selectedModel={selectedModel}
                                             selectedLayer={selectedLayer}

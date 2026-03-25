@@ -7,6 +7,7 @@ type SmilesStructureProps = {
   width?: number;
   height?: number;
   className?: string;
+  background?: string;
 };
 
 const OCL_CDN =
@@ -250,6 +251,7 @@ export default function SmilesStructure({
   width = 220,
   height = 220,
   className = "",
+  background = "white",
 }: SmilesStructureProps) {
   const renderKey = `${width}x${height}|${String(smiles ?? "").trim()}`;
   const [renderedSvg, setRenderedSvg] = useState<{ key: string; markup: string }>({
@@ -293,7 +295,7 @@ export default function SmilesStructure({
     <>
       <div
         className={`smiles-structure-root ${className}`}
-        style={{ width: "100%", height: "100%", background: "white", position: "relative", overflow: "hidden" }}
+        style={{ width: "100%", height: "100%", background, position: "relative", overflow: "hidden" }}
         dangerouslySetInnerHTML={{ __html: svgMarkup }}
       />
       <style jsx global>{`

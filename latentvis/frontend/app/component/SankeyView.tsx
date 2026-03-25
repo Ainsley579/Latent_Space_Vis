@@ -939,8 +939,14 @@ export default function SankeyView({
                     const dxAbs = Math.abs(tgtCenterX - srcCenterX);
                     const dyAbs = Math.abs(tgtCenterY - srcCenterY);
                     const isMostlyHorizontal = dxAbs >= dyAbs;
-                    const startY = isMostlyHorizontal ? srcCenterY : (verticalForward ? srcBottomY : srcTopY);
-                    const endY = isMostlyHorizontal ? tgtCenterY : (verticalForward ? tgtTopY : tgtBottomY);
+                    const startY =
+                        kind === "column"
+                            ? srcBottomY
+                            : (isMostlyHorizontal ? srcCenterY : (verticalForward ? srcBottomY : srcTopY));
+                    const endY =
+                        kind === "column"
+                            ? tgtTopY
+                            : (isMostlyHorizontal ? tgtCenterY : (verticalForward ? tgtTopY : tgtBottomY));
                     const startX = srcCenterX;
                     const endX = tgtCenterX;
 

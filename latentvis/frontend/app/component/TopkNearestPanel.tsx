@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
+import DatasetMoleculeImage from "./DatasetMoleculeImage";
 import SmilesStructure from "./SmilesStructure";
+import type { MoleculeImageDataset } from "../utils/moleculeImage";
 
 type TopkNearestRow = {
   cluster_id: number;
@@ -15,6 +17,7 @@ type ClusterSubstructureData = {
 };
 
 type TopkNearestPanelProps = {
+  dataset: MoleculeImageDataset;
   rows: TopkNearestRow[];
   selectedModel: string;
   selectedLayer: string;
@@ -51,6 +54,7 @@ function parseSplitTaggedId(value: string | number): { split: "train" | "test" |
 }
 
 export default function TopkNearestPanel({
+  dataset,
   rows,
   selectedModel,
   selectedLayer,
@@ -337,7 +341,12 @@ export default function TopkNearestPanel({
                                         : "border-zinc-200")
                                   }
                                 >
-                                  <SmilesStructure smiles={getSmilesById(id)} className="w-full h-full" />
+                                  <DatasetMoleculeImage
+                                    dataset={dataset}
+                                    realId={id}
+                                    smiles={getSmilesById(id)}
+                                    className="w-full h-full"
+                                  />
                                 </div>
                                 <div
                                   className="absolute top-0.5 left-0.5 text-[10px] leading-4 px-1.5 py-0.5 rounded-[2px] border border-white/80 text-white font-semibold shadow-sm"
