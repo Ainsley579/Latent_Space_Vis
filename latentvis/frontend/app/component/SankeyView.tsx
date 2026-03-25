@@ -750,11 +750,40 @@ export default function SankeyView({
             const maxClusters = Math.max(1, ...renderData.cells.map((x) => (Array.isArray(x?.children) ? x.children.length : 0)));
             const xScale = d3.scaleBand<number>().range([0, innerW]).domain(d3.range(maxClusters)).padding(0.2);
 
-            // at most you can have the entire dataset in one cluster
-            const yScale = d3.scaleLinear().domain([1, Math.max(1, renderData.molecule_ids.length)]).range([innerH, 0]);
-
             const nodeBarWidth = Math.min(xScale.bandwidth(), MAX_NODE_BAR_WIDTH);
             const nodeBarOffset = (xScale.bandwidth() - nodeBarWidth) / 2;
+            const cellTotalByIndex = new Map<number, number>();
+            renderData.cells.forEach((cell, cellIndex) => {
+                const children = Array.isArray(cell?.children) ? cell.children : [];
+                const total = children.reduce((sum: number, nodeId: number) => {
+                    const node = renderData.nodes[nodeId];
+                    return sum + Math.max(0, Number(node?.member_count ?? node?.value ?? 0));
+                }, 0);
+                cellTotalByIndex.set(cellIndex, total);
+            });
+            const getNodeBarMetrics = (d: any) => {
+                const cellIndex = Number(d?.cell_index ?? -1);
+                const cellTotal = Math.max(0, Number(cellTotalByIndex.get(cellIndex) ?? 0));
+                const previousValue = Math.max(0, Number(d?.previous ?? 0));
+                const memberValue = Math.max(0, Number(d?.member_count ?? d?.value ?? 0));
+                if (cellTotal <= 0 || memberValue <= 0) {
+                    return { cellTotal, topY: innerH, height: 0 };
+                }
+                const clampedPrevious = Math.min(cellTotal, previousValue);
+                const clampedMember = Math.min(Math.max(0, cellTotal - clampedPrevious), memberValue);
+                const topY = (clampedPrevious / cellTotal) * innerH;
+                const height = (clampedMember / cellTotal) * innerH;
+                return { cellTotal, topY, height };
+            };
+            const getSplitSegmentHeight = (d: any, splitName: "train" | "test" | "val") => {
+                const { cellTotal, height } = getNodeBarMetrics(d);
+                if (cellTotal <= 0 || height <= 0) return 0;
+                const splitCounts = d?.split_counts ?? {};
+                const splitValue = Math.max(0, Number(splitCounts?.[splitName] ?? 0));
+                const visibleTotal = Math.max(0, Number(d?.member_count ?? d?.value ?? 0));
+                if (visibleTotal <= 0) return 0;
+                return (height * Math.min(visibleTotal, splitValue)) / visibleTotal;
+            };
             const nodeIndexById = new Map<number, number>();
             renderData.cells.forEach((cell) => {
                 const children = Array.isArray(cell?.children) ? cell.children : [];
@@ -875,10 +904,12 @@ export default function SankeyView({
                     const tgtBand = xScale(tgtIdx);
                     if (srcBand == null || tgtBand == null) return;
 
-                    const sBarTop = innerH - yScale(Number(fromN.previous ?? 0));
-                    const sBarH = innerH - yScale(Number(fromN.member_count ?? 0));
-                    const tBarTop = innerH - yScale(Number(toN.previous ?? 0));
-                    const tBarH = innerH - yScale(Number(toN.member_count ?? 0));
+                    const sMetrics = getNodeBarMetrics(fromN);
+                    const tMetrics = getNodeBarMetrics(toN);
+                    const sBarTop = sMetrics.topY;
+                    const sBarH = sMetrics.height;
+                    const tBarTop = tMetrics.topY;
+                    const tBarH = tMetrics.height;
                     const fromEpochName = String(fromN.epoch ?? "");
                     const fromLayerName = String(fromN.layer ?? "");
                     const toEpochName = String(toN.epoch ?? "");
@@ -1067,9 +1098,9 @@ export default function SankeyView({
                         .append("rect")
                         .attr("class", "bar bar-main")
                         .attr("x", (_d: any, i: number) => (xScale(i) as number) + nodeBarOffset)
-                        .attr("y", (d: any) => innerH - yScale(d.previous))
+                        .attr("y", (d: any) => getNodeBarMetrics(d).topY)
                         .attr("width", nodeBarWidth)
-                        .attr("height", (d: any) => innerH - yScale(d.member_count))
+                        .attr("height", (d: any) => getNodeBarMetrics(d).height)
                         .attr("fill", "#aaa")
                         .attr("data-row", epochName)
                         .attr("data-column", layerName)
@@ -1089,24 +1120,13 @@ export default function SankeyView({
                         .attr("class", "bar bar-test")
                         .attr("x", (_d: any, i: number) => (xScale(i) as number) + nodeBarOffset)
                         .attr("y", (d: any) => {
-                            const totalValue = Math.max(0, Number(d?.member_count ?? 0));
-                            const totalHeight = innerH - yScale(totalValue);
-                            const topY = innerH - yScale(Number(d?.previous ?? 0));
-                            const splitCounts = d?.split_counts ?? {};
-                            const valValue = Math.max(0, Number(splitCounts?.val ?? 0));
-                            const testValue = Math.max(0, Number(splitCounts?.test ?? 0));
-                            const valHeight = totalValue > 0 ? (totalHeight * Math.min(totalValue, valValue)) / totalValue : 0;
-                            const testHeight = totalValue > 0 ? (totalHeight * Math.min(totalValue, testValue)) / totalValue : 0;
-                            return topY + Math.max(0, totalHeight - valHeight - testHeight);
+                            const { topY, height } = getNodeBarMetrics(d);
+                            const valHeight = getSplitSegmentHeight(d, "val");
+                            const testHeight = getSplitSegmentHeight(d, "test");
+                            return topY + Math.max(0, height - valHeight - testHeight);
                         })
                         .attr("width", nodeBarWidth)
-                        .attr("height", (d: any) => {
-                            const totalValue = Math.max(0, Number(d?.member_count ?? 0));
-                            const totalHeight = innerH - yScale(totalValue);
-                            const splitCounts = d?.split_counts ?? {};
-                            const testValue = Math.max(0, Number(splitCounts?.test ?? 0));
-                            return totalValue > 0 ? (totalHeight * Math.min(totalValue, testValue)) / totalValue : 0;
-                        })
+                        .attr("height", (d: any) => getSplitSegmentHeight(d, "test"))
                         .attr("fill", "#888")
                         .attr("data-row", epochName)
                         .attr("data-column", layerName)
@@ -1127,22 +1147,12 @@ export default function SankeyView({
                         .attr("class", "bar bar-val")
                         .attr("x", (_d: any, i: number) => (xScale(i) as number) + nodeBarOffset)
                         .attr("y", (d: any) => {
-                            const totalValue = Math.max(0, Number(d?.member_count ?? 0));
-                            const totalHeight = innerH - yScale(totalValue);
-                            const topY = innerH - yScale(Number(d?.previous ?? 0));
-                            const splitCounts = d?.split_counts ?? {};
-                            const valValue = Math.max(0, Number(splitCounts?.val ?? 0));
-                            const valHeight = totalValue > 0 ? (totalHeight * Math.min(totalValue, valValue)) / totalValue : 0;
-                            return topY + Math.max(0, totalHeight - valHeight);
+                            const { topY, height } = getNodeBarMetrics(d);
+                            const valHeight = getSplitSegmentHeight(d, "val");
+                            return topY + Math.max(0, height - valHeight);
                         })
                         .attr("width", nodeBarWidth)
-                        .attr("height", (d: any) => {
-                            const totalValue = Math.max(0, Number(d?.member_count ?? 0));
-                            const totalHeight = innerH - yScale(totalValue);
-                            const splitCounts = d?.split_counts ?? {};
-                            const valValue = Math.max(0, Number(splitCounts?.val ?? 0));
-                            return totalValue > 0 ? (totalHeight * Math.min(totalValue, valValue)) / totalValue : 0;
-                        })
+                        .attr("height", (d: any) => getSplitSegmentHeight(d, "val"))
                         .attr("fill", "#666")
                         .attr("data-row", epochName)
                         .attr("data-column", layerName)
@@ -1815,8 +1825,6 @@ export default function SankeyView({
     }, [
         data,
         transitionStatsPath,
-        showSankeyPaths,
-        showSankeyNodes,
         showCellBackground,
         showGapHeatmap,
         showTooltips,
@@ -1834,6 +1842,17 @@ export default function SankeyView({
     useEffect(() => {
         applyLinkValueFilter(linkValueMin, Math.min(linkValueMax, linkValueMaxBound));
     }, [linkValueMin, linkValueMax, linkValueMaxBound]);
+
+    useEffect(() => {
+        const container = chartRef.current;
+        if (!container) return;
+        d3.select(container)
+            .selectAll<SVGGElement, unknown>("g.links")
+            .style("display", showSankeyPaths ? null : "none");
+        d3.select(container)
+            .selectAll<SVGGElement, unknown>("g.cell-nodes")
+            .style("display", showSankeyNodes ? null : "none");
+    }, [showSankeyPaths, showSankeyNodes]);
 
     useEffect(() => {
         const container = chartRef.current;
