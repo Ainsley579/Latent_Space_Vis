@@ -935,24 +935,32 @@ export default function SankeyView({
                     const tgtBottomY = tgtTopY + Math.max(0, tBarH);
                     const tgtCenterY = (tgtTopY + tgtBottomY) / 2;
 
-                    const verticalForward = tgtCenterY >= srcCenterY;
                     const dxAbs = Math.abs(tgtCenterX - srcCenterX);
                     const dyAbs = Math.abs(tgtCenterY - srcCenterY);
-                    const isMostlyHorizontal = dxAbs >= dyAbs;
+                    const useVerticalAnchors = dyAbs > 0.5;
+                    const upperNode =
+                        srcCenterY <= tgtCenterY
+                            ? { x: srcCenterX, topY: srcTopY, bottomY: srcBottomY, centerY: srcCenterY }
+                            : { x: tgtCenterX, topY: tgtTopY, bottomY: tgtBottomY, centerY: tgtCenterY };
+                    const lowerNode =
+                        srcCenterY <= tgtCenterY
+                            ? { x: tgtCenterX, topY: tgtTopY, bottomY: tgtBottomY, centerY: tgtCenterY }
+                            : { x: srcCenterX, topY: srcTopY, bottomY: srcBottomY, centerY: srcCenterY };
                     const startY =
-                        kind === "column"
-                            ? srcBottomY
-                            : (isMostlyHorizontal ? srcCenterY : (verticalForward ? srcBottomY : srcTopY));
+                        useVerticalAnchors
+                            ? upperNode.bottomY
+                            : (kind === "column" ? srcBottomY : srcCenterY);
                     const endY =
-                        kind === "column"
-                            ? tgtTopY
-                            : (isMostlyHorizontal ? tgtCenterY : (verticalForward ? tgtTopY : tgtBottomY));
-                    const startX = srcCenterX;
-                    const endX = tgtCenterX;
+                        useVerticalAnchors
+                            ? lowerNode.topY
+                            : (kind === "column" ? tgtTopY : tgtCenterY);
+                    const startX = useVerticalAnchors ? upperNode.x : srcCenterX;
+                    const endX = useVerticalAnchors ? lowerNode.x : tgtCenterX;
 
                     let pathD = "";
                     const drawDxAbs = Math.abs(endX - startX);
                     const drawDyAbs = Math.abs(endY - startY);
+                    const drawVerticalForward = endY >= startY;
                     if (drawDxAbs >= drawDyAbs) {
                         const dx = Math.abs(endX - startX) * 0.45;
                         pathD = `M ${startX},${startY}
@@ -962,8 +970,8 @@ export default function SankeyView({
                     } else {
                         const dy = Math.abs(endY - startY) * 0.45;
                         pathD = `M ${startX},${startY}
-                         C ${startX},${startY + (verticalForward ? dy : -dy)}
-                           ${endX},${endY - (verticalForward ? dy : -dy)}
+                         C ${startX},${startY + (drawVerticalForward ? dy : -dy)}
+                           ${endX},${endY - (drawVerticalForward ? dy : -dy)}
                            ${endX},${endY}`;
                     }
 
@@ -2538,7 +2546,7 @@ export default function SankeyView({
           left: 0;
           top: 7px;
           width: 100%;
-          pointer-events: auto;
+          pointer-events: none;
           touch-action: none;
           -webkit-appearance: none;
           background: transparent;
@@ -2575,6 +2583,12 @@ export default function SankeyView({
           background: #fff;
           border: 1.5px solid #666;
           box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .range-slider input[type="range"]::-moz-range-track {
+          pointer-events: none;
+          background: transparent;
+          border: 0;
         }
 
         .range-track {

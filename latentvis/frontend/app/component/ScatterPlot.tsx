@@ -124,6 +124,7 @@ export default function ScatterPlot({
   const [labelLoadError, setLabelLoadError] = useState<string | null>(null);
   const [labelMatchInfo, setLabelMatchInfo] = useState<string>("");
   const [hasSplitData, setHasSplitData] = useState(false);
+  const [visibleSplits, setVisibleSplits] = useState<SplitTag[]>([]);
   const [yTrueRange, setYTrueRange] = useState<{ min: number; max: number } | null>(null);
   const [yPredRange, setYPredRange] = useState<{ min: number; max: number } | null>(null);
   const [yAbsErrRange, setYAbsErrRange] = useState<{ min: number; max: number } | null>(null);
@@ -948,9 +949,11 @@ export default function ScatterPlot({
       yTrueById: Record<string, number>,
       yPredById: Record<string, number>
     ) => {
+      const visibleRows = merged.filter((d) => d.split !== "val");
       splitByIdRef.current = splitById;
-      const splitKinds = new Set(merged.map((d) => d.split).filter((x): x is SplitTag => !!x));
+      const splitKinds = new Set(visibleRows.map((d) => d.split).filter((x): x is SplitTag => !!x));
       const canUseSplit = splitKinds.size > 0;
+      setVisibleSplits(Array.from(splitKinds).sort());
       setHasSplitData(canUseSplit);
       const yTrueByIdNext: Record<string, number> = {};
       const yPredByIdNext: Record<string, number> = {};
@@ -958,7 +961,7 @@ export default function ScatterPlot({
       const yTrueVals: number[] = [];
       const yPredVals: number[] = [];
       const yAbsErrVals: number[] = [];
-      merged.forEach((d) => {
+      visibleRows.forEach((d) => {
         const rid = String(d.real_id);
         const keys = idLookupKeys(rid);
         const yt = Number(
@@ -994,11 +997,11 @@ export default function ScatterPlot({
       if (colorMode === "y_pred" && yPredVals.length === 0) setColorMode("cluster");
       if (colorMode === "y_abs_err" && yAbsErrVals.length === 0) setColorMode("cluster");
 
-      lastRows = merged;
-      rowsRef.current = merged;
-      const clusterIds = Array.from(new Set(merged.map((d) => d.cluster_id))).sort((a, b) => a - b);
+      lastRows = visibleRows;
+      rowsRef.current = visibleRows;
+      const clusterIds = Array.from(new Set(visibleRows.map((d) => d.cluster_id))).sort((a, b) => a - b);
       const idsByCluster: Record<number, string[]> = {};
-      merged.forEach((d) => {
+      visibleRows.forEach((d) => {
         const cid = d.cluster_id;
         if (!idsByCluster[cid]) idsByCluster[cid] = [];
         idsByCluster[cid].push(String(d.real_id));
@@ -1451,33 +1454,39 @@ export default function ScatterPlot({
         )}
         {colorMode === "split" && (
           <div className="flex flex-nowrap gap-x-3 gap-y-1 min-w-max text-[11px] text-zinc-700">
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
-              onClick={() => emitHighlightIds(idsForSplit("train"))}
-              title="Highlight train points"
-            >
-              <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#f59e0b" }} />
-              train
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
-              onClick={() => emitHighlightIds(idsForSplit("test"))}
-              title="Highlight test points"
-            >
-              <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#2563eb" }} />
-              test
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
-              onClick={() => emitHighlightIds(idsForSplit("val"))}
-              title="Highlight val points"
-            >
-              <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#1e3a8a" }} />
-              val
-            </button>
+            {visibleSplits.includes("train") && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
+                onClick={() => emitHighlightIds(idsForSplit("train"))}
+                title="Highlight train points"
+              >
+                <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#f59e0b" }} />
+                train
+              </button>
+            )}
+            {visibleSplits.includes("test") && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
+                onClick={() => emitHighlightIds(idsForSplit("test"))}
+                title="Highlight test points"
+              >
+                <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#2563eb" }} />
+                test
+              </button>
+            )}
+            {visibleSplits.includes("val") && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
+                onClick={() => emitHighlightIds(idsForSplit("val"))}
+                title="Highlight val points"
+              >
+                <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#1e3a8a" }} />
+                val
+              </button>
+            )}
           </div>
         )}
         {colorMode === "label" && (
