@@ -2773,7 +2773,7 @@ export default function Home() {
                         </div>
                         <button
                             type="button"
-                            className="mt-12 h-9 w-6 rounded-r border border-l-0 border-zinc-400 bg-white text-xs text-zinc-600 shadow pointer-events-auto"
+                            className="mt-22 h-9 w-6 rounded-r border border-l-0 border-zinc-400 bg-white text-xs text-zinc-600 shadow pointer-events-auto"
                             onMouseEnter={() => setIsControlPanelOpen(true)}
                             onClick={() => setIsControlPanelOpen((prev) => !prev)}
                             title={isControlPanelOpen ? "Hide control panel" : "Show control panel"}
