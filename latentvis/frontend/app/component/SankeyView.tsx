@@ -937,7 +937,7 @@ export default function SankeyView({
 
                     const dxAbs = Math.abs(tgtCenterX - srcCenterX);
                     const dyAbs = Math.abs(tgtCenterY - srcCenterY);
-                    const useVerticalAnchors = dyAbs > 0.5;
+                    const useVerticalAnchors = kind === "column" && dyAbs > 0.5;
                     const upperNode =
                         srcCenterY <= tgtCenterY
                             ? { x: srcCenterX, topY: srcTopY, bottomY: srcBottomY, centerY: srcCenterY }
