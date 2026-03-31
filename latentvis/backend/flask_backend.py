@@ -2815,6 +2815,7 @@ def cell_cluster_metrics():
     data_split = payload.get("data_split")
     _ = payload.get("use_current")  # deprecated, ignored
     user_clustering = payload.get("user_clustering")
+    current_cluster_labels_by_cell = payload.get("current_cluster_labels_by_cell")
     if not isinstance(user_clustering, list):
         user_clustering = []
 
@@ -2868,57 +2869,93 @@ def cell_cluster_metrics():
     cell_truth: Dict[str, List[int]] = {}
     cell_pred: Dict[str, List[int]] = {}
     layer_cols: List[str] = []
-    saw_csv = False
+    saw_source = False
     checked_paths: List[str] = []
-    for split in splits:
-        case_dir = _case_dir(dataset, clustering, split)
-        csv_path = (
-            case_dir / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
-        )
-        checked_paths.append(str(csv_path))
-        if not csv_path.is_file():
-            continue
-        saw_csv = True
-        with csv_path.open("r", encoding="utf-8") as f:
-            reader = csv_module.DictReader(f)
-            fields = list(reader.fieldnames or [])
-            layer_cols = [c for c in fields if c.endswith("_cluster")]
-            for row in reader:
-                rid = row.get("real_id")
-                epoch = row.get("epoch")
-                if rid is None or epoch is None:
-                    continue
-                rid_s = str(rid)
+    if isinstance(current_cluster_labels_by_cell, dict) and current_cluster_labels_by_cell:
+        layer_set = set()
+        for cell_key_raw, rid_to_cluster_raw in current_cluster_labels_by_cell.items():
+            if not isinstance(rid_to_cluster_raw, dict):
+                continue
+            cell_key = str(cell_key_raw).strip()
+            if not cell_key:
+                continue
+            if "|" in cell_key:
+                layer_name = cell_key.split("|", 1)[1].strip()
+                if layer_name:
+                    layer_set.add(layer_name)
+            for rid_raw, pred_raw in rid_to_cluster_raw.items():
+                rid_s = str(rid_raw)
                 u = None
-                for candidate in _split_tagged_id_candidates(rid_s, split=split):
+                for candidate in _split_tagged_id_candidates(rid_s, split=None):
                     u = user_rid_to_cluster.get(candidate)
                     if u is not None:
                         break
                 if u is None:
                     continue
-                epoch_key = str(epoch)
-                for col in layer_cols:
-                    raw = row.get(col)
-                    if raw in (None, ""):
+                try:
+                    pred = int(float(pred_raw))
+                except (ValueError, TypeError):
+                    continue
+                if pred < 0:
+                    continue
+                if cell_key not in cell_truth:
+                    cell_truth[cell_key] = []
+                    cell_pred[cell_key] = []
+                cell_truth[cell_key].append(u)
+                cell_pred[cell_key].append(pred)
+        if layer_set:
+            layer_cols = [f"{layer}_cluster" for layer in sorted(layer_set)]
+        saw_source = bool(cell_truth)
+    else:
+        for split in splits:
+            case_dir = _case_dir(dataset, clustering, split)
+            csv_path = (
+                case_dir / "clustering_metrics" / "cluster_assignments_with_real_id.csv"
+            )
+            checked_paths.append(str(csv_path))
+            if not csv_path.is_file():
+                continue
+            saw_source = True
+            with csv_path.open("r", encoding="utf-8") as f:
+                reader = csv_module.DictReader(f)
+                fields = list(reader.fieldnames or [])
+                layer_cols = [c for c in fields if c.endswith("_cluster")]
+                for row in reader:
+                    rid = row.get("real_id")
+                    epoch = row.get("epoch")
+                    if rid is None or epoch is None:
                         continue
-                    try:
-                        pred = int(float(raw))
-                    except (ValueError, TypeError):
+                    rid_s = str(rid)
+                    u = None
+                    for candidate in _split_tagged_id_candidates(rid_s, split=split):
+                        u = user_rid_to_cluster.get(candidate)
+                        if u is not None:
+                            break
+                    if u is None:
                         continue
-                    if pred < 0:
-                        continue
-                    layer = col[: -len("_cluster")]
-                    cell_key = f"{epoch_key}|{layer}"
-                    if cell_key not in cell_truth:
-                        cell_truth[cell_key] = []
-                        cell_pred[cell_key] = []
-                    cell_truth[cell_key].append(u)
-                    cell_pred[cell_key].append(pred)
-    if not saw_csv:
+                    epoch_key = str(epoch)
+                    for col in layer_cols:
+                        raw = row.get(col)
+                        if raw in (None, ""):
+                            continue
+                        try:
+                            pred = int(float(raw))
+                        except (ValueError, TypeError):
+                            continue
+                        if pred < 0:
+                            continue
+                        layer = col[: -len("_cluster")]
+                        cell_key = f"{epoch_key}|{layer}"
+                        if cell_key not in cell_truth:
+                            cell_truth[cell_key] = []
+                            cell_pred[cell_key] = []
+                        cell_truth[cell_key].append(u)
+                        cell_pred[cell_key].append(pred)
+    if not saw_source:
         return jsonify(
             {
                 "ok": False,
-                "error": "cluster_assignments_not_found",
+                "error": "cluster_assignments_not_found_or_empty_current_labels",
                 "checked_paths": checked_paths,
             }
         ), 404
@@ -2965,6 +3002,9 @@ def cell_cluster_metrics():
             "dataset": dataset,
             "clustering": clustering,
             "resolved_splits": splits,
+            "pred_source": "current_cluster_labels_by_cell"
+            if isinstance(current_cluster_labels_by_cell, dict) and current_cluster_labels_by_cell
+            else "cluster_assignments_csv",
             "metric_names": metric_names,
             "layer_columns": layer_cols,
             "metrics_by_cell": metrics_by_cell,

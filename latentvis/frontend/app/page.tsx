@@ -552,6 +552,32 @@ export default function Home() {
     const [uploadedUserClustering, setUploadedUserClustering] = useState<UploadedUserClustering | null>(null);
     const [cellMetricByCell, setCellMetricByCell] = useState<Record<string, Record<string, number | null>> | null>(null);
     const [cellMetricNames, setCellMetricNames] = useState<string[]>([]);
+    const currentClusterLabelsByCell = useMemo<Record<string, Record<string, number>> | null>(() => {
+        const cells: any[] = Array.isArray((overviewData as any)?.cells) ? (overviewData as any).cells : [];
+        if (cells.length === 0) return null;
+        const out: Record<string, Record<string, number>> = {};
+        cells.forEach((cell: any) => {
+            const epoch = String(cell?.epoch ?? "").trim();
+            const layer = String(cell?.layer ?? "").trim();
+            const labels = cell?.cluster_labels;
+            if (!epoch || !layer || !labels || typeof labels !== "object") return;
+            const cellKey = `${epoch}|${layer}`;
+            const ridToCluster: Record<string, number> = {};
+            Object.entries(labels as Record<string, unknown>).forEach(([ridRaw, clusterRaw]) => {
+                const rid = String(ridRaw ?? "").trim();
+                if (!rid) return;
+                const clusterNum = Number(clusterRaw);
+                if (!Number.isFinite(clusterNum)) return;
+                const cid = Math.trunc(clusterNum);
+                if (cid < 0) return;
+                ridToCluster[rid] = cid;
+            });
+            if (Object.keys(ridToCluster).length > 0) {
+                out[cellKey] = ridToCluster;
+            }
+        });
+        return Object.keys(out).length > 0 ? out : null;
+    }, [overviewData]);
     const [selectedCellBgMetric, setSelectedCellBgMetric] = useState<string>("cluster_count");
     const memberListRef = useRef<HTMLDivElement | null>(null);
     const [workspaceWidthPct, setWorkspaceWidthPct] = useState(DEFAULT_WORKSPACE_WIDTH_PCT);
@@ -901,6 +927,7 @@ export default function Home() {
                 data_split: selectedDataSplit,
                 use_current: true,
                 user_clustering: uploadedUserClustering.rows,
+                current_cluster_labels_by_cell: currentClusterLabelsByCell,
             }),
         })
             .then(async (res) => {
@@ -930,6 +957,7 @@ export default function Home() {
         selectedDataSet,
         selectedClustering,
         selectedDataSplit,
+        currentClusterLabelsByCell,
     ]);
 
     useEffect(() => {

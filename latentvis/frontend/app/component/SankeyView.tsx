@@ -958,20 +958,21 @@ export default function SankeyView({
                     const endX = useVerticalAnchors ? lowerNode.x : tgtCenterX;
 
                     let pathD = "";
-                    const drawDxAbs = Math.abs(endX - startX);
-                    const drawDyAbs = Math.abs(endY - startY);
-                    const drawVerticalForward = endY >= startY;
-                    if (drawDxAbs >= drawDyAbs) {
+                    // Keep orientation stable by semantic link type:
+                    // - column links (same layer across epochs) should be vertical
+                    // - row links (same epoch across layers) should be horizontal
+                    if (kind === "column") {
+                        const dy = Math.abs(endY - startY) * 0.45;
+                        const drawVerticalForward = endY >= startY;
+                        pathD = `M ${startX},${startY}
+                         C ${startX},${startY + (drawVerticalForward ? dy : -dy)}
+                           ${endX},${endY - (drawVerticalForward ? dy : -dy)}
+                           ${endX},${endY}`;
+                    } else {
                         const dx = Math.abs(endX - startX) * 0.45;
                         pathD = `M ${startX},${startY}
                          C ${startX + dx},${startY}
                            ${endX - dx},${endY}
-                           ${endX},${endY}`;
-                    } else {
-                        const dy = Math.abs(endY - startY) * 0.45;
-                        pathD = `M ${startX},${startY}
-                         C ${startX},${startY + (drawVerticalForward ? dy : -dy)}
-                           ${endX},${endY - (drawVerticalForward ? dy : -dy)}
                            ${endX},${endY}`;
                     }
 
