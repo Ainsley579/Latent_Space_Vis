@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import DatasetMoleculeImage from "./DatasetMoleculeImage";
 import SmilesStructure from "./SmilesStructure";
 import type { MoleculeImageDataset } from "../utils/moleculeImage";
@@ -81,6 +81,20 @@ export default function TopkNearestPanel({
 }: TopkNearestPanelProps) {
   const PAGE_SIZE = 5;
   const [pageByCluster, setPageByCluster] = useState<Record<number, number>>({});
+
+  const globalRidgeDomain = useMemo(() => {
+    const values: number[] = [];
+    rows.forEach((row) => {
+      row.top_k_closest_real_ids.forEach((id) => {
+        const yTrue = getYTrueById(id);
+        const yPred = getYPredById(id);
+        if (Number.isFinite(Number(yTrue))) values.push(Number(yTrue));
+        if (Number.isFinite(Number(yPred))) values.push(Number(yPred));
+      });
+    });
+    if (values.length === 0) return null;
+    return { min: Math.min(...values), max: Math.max(...values) };
+  }, [rows, getYTrueById, getYPredById]);
 
   function ridgeStats(ids: Array<string | number>, getter: (id: string | number) => number | null) {
     const values = ids
@@ -203,11 +217,6 @@ export default function TopkNearestPanel({
             while (paddedPageIds.length < PAGE_SIZE) paddedPageIds.push(null);
             const yTrueStats = ridgeStats(row.top_k_closest_real_ids, getYTrueById);
             const yPredStats = ridgeStats(row.top_k_closest_real_ids, getYPredById);
-            const sharedValues = [...yTrueStats.values, ...yPredStats.values];
-            const sharedDomain =
-              sharedValues.length > 0
-                ? { min: Math.min(...sharedValues), max: Math.max(...sharedValues) }
-                : null;
 
             return (
               <div key={`nearest-row-${row.cluster_id}`} className="flex items-start gap-2 w-full min-w-0">
@@ -225,12 +234,12 @@ export default function TopkNearestPanel({
 
                 <div className={"flex-1 min-w-0 grid items-start " + (hideTopk ? "grid-cols-[1fr_1fr]" : "grid-cols-[1fr_1fr_14px_5fr]")}>
                   <div className="flex flex-col items-center gap-0.5">
-                    <RidgeMini values={yTrueStats.values} color="#2563eb" sharedDomain={sharedDomain} />
+                    <RidgeMini values={yTrueStats.values} color="#2563eb" sharedDomain={globalRidgeDomain} />
                     <div className="text-[10px] text-zinc-600">
                       ytrue avg {yTrueStats.avg == null ? "-" : yTrueStats.avg.toFixed(3)} std{" "}
                       {yTrueStats.std == null ? "-" : yTrueStats.std.toFixed(3)}
                     </div>
-                    <RidgeMini values={yPredStats.values} color="#d97706" sharedDomain={sharedDomain} />
+                    <RidgeMini values={yPredStats.values} color="#d97706" sharedDomain={globalRidgeDomain} />
                     <div className="text-[10px] text-zinc-600">
                       ypred avg {yPredStats.avg == null ? "-" : yPredStats.avg.toFixed(3)} std{" "}
                       {yPredStats.std == null ? "-" : yPredStats.std.toFixed(3)}
