@@ -2906,7 +2906,8 @@ def cell_cluster_metrics():
         if layer_set:
             layer_cols = [f"{layer}_cluster" for layer in sorted(layer_set)]
         saw_source = bool(cell_truth)
-    else:
+
+    if not saw_source:
         for split in splits:
             case_dir = _case_dir(dataset, clustering, split)
             csv_path = (
